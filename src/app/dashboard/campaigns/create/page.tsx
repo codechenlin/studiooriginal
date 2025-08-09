@@ -186,7 +186,7 @@ export default function CreateCampaignPage() {
                             <SelectItem value="list-3">Nuevos Registros - Q3 (890 contactos)</SelectItem>
                           </SelectContent>
                         </Select>
-                      <Button variant="outline" size="sm"> <PlusCircle className="mr-2" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> Crear Nueva Lista </Button>
+                      <Button variant="outline" size="sm" className="hover:bg-[#00EF10] hover:text-card-foreground"> <PlusCircle className="mr-2" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> Crear Nueva Lista </Button>
                   </div>
                   
                   <div className="relative text-center my-6"> <div className="absolute inset-0 flex items-center"> <span className="w-full border-t border-dashed border-border/70" /> </div> <span className="relative bg-card px-4 text-sm text-muted-foreground">O</span> </div>
@@ -204,7 +204,7 @@ export default function CreateCampaignPage() {
                         <Input placeholder="Asunto del correo electrónico" className="py-6"/>
                         <Input placeholder="CC: admin@ejemplo.com, test@ejemplo.com" className="py-6"/>
                     </div>
-                     <Button variant="outline" className="w-full md:w-auto">
+                     <Button variant="outline" className="w-full md:w-auto hover:bg-[#00EF10] hover:text-card-foreground">
                         <Paperclip className="mr-2" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> Adjuntar Archivos
                     </Button>
                     <div className="space-y-4 pt-4">
