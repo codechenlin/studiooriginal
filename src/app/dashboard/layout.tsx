@@ -86,10 +86,12 @@ export default function DashboardLayout({
   }, [isDarkMode]);
 
   const toggleTheme = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    toast({
-      title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
+    setIsDarkMode(prevMode => {
+        const newMode = !prevMode;
+        toast({
+          title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
+        });
+        return newMode;
     });
   };
   
@@ -158,16 +160,15 @@ export default function DashboardLayout({
         <SidebarFooter className="flex flex-col gap-2">
            <SidebarMenu>
              <SidebarMenuItem>
-              <Link href="/dashboard/settings" passHref>
+               <Link href="/dashboard/settings" passHref>
                   <div className={cn(
                       "group/settings-button relative flex items-center w-full h-12 px-2 rounded-lg cursor-pointer transition-all duration-300",
-                      "dark:bg-[#8500DE] dark:hover:bg-gradient-to-r dark:hover:from-settings-start dark:hover:to-settings-end",
-                      "bg-gradient-to-br from-black to-gray-700 hover:bg-gradient-to-r hover:from-settings-start hover:to-settings-end"
+                      "bg-gradient-to-r from-settings-normal-start to-settings-normal-end hover:from-settings-hover-start hover:to-settings-hover-end"
                   )}>
-                      <div className="flex items-center justify-center size-8 rounded-full dark:bg-black/10 bg-white mr-2">
-                          <Settings className="dark:text-white text-black" />
+                      <div className="flex items-center justify-center size-8 rounded-full bg-black/10">
+                          <Settings className="text-white" />
                       </div>
-                      <span className="font-semibold text-white group-data-[collapsible=icon]:hidden">Ajustes</span>
+                      <span className="font-semibold text-white ml-2 group-data-[collapsible=icon]:hidden">Ajustes</span>
                   </div>
               </Link>
             </SidebarMenuItem>
@@ -186,7 +187,7 @@ export default function DashboardLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 hover:text-white dark:hover:text-white hover:bg-gradient-to-r from-settings-start to-settings-end dark:hover:bg-gradient-to-r dark:hover:from-settings-start dark:hover:to-settings-end"
+                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 hover:text-white dark:hover:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF]"
             >
               {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black" />}
               <span className="sr-only">Cambiar tema</span>

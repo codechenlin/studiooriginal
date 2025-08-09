@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -73,8 +74,10 @@ export default {
           ring: 'hsl(var(--sidebar-ring))',
         },
          settings: {
-          start: '#1700E6',
-          end: '#009AFF',
+          'normal-start': '#1700E6',
+          'normal-end': '#009AFF',
+          'hover-start': '#00CE07',
+          'hover-end': '#A6EE00',
         },
       },
       borderRadius: {
