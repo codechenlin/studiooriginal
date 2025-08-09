@@ -170,13 +170,22 @@ export default function DashboardLayout({
           </SidebarMenu>
           
           <div className="flex items-center justify-center gap-2 border-t border-sidebar-border pt-2 group-data-[collapsible=icon]:flex-col">
-            <Button variant="ghost" size="icon" className="group/button text-muted-foreground hover:text-white focus:text-white relative">
-              <span className="absolute -z-10 inset-0 bg-gradient-to-br from-[#AD00EC] to-[#0018EC] opacity-0 group-hover/button:opacity-100 group-focus/button:opacity-100 transition-opacity duration-300 rounded-md active:opacity-80"/>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="group/button relative rounded-lg shadow-md overflow-hidden text-muted-foreground dark:text-white hover:text-white focus:text-white"
+            >
+              <span className="absolute -z-10 inset-0 bg-gradient-to-br from-[#1700E6] to-[#009AFF] opacity-0 group-hover/button:opacity-100 transition-opacity duration-300 active:opacity-80"/>
               <Bell className="size-5"/>
               <span className="sr-only">Notificaciones</span>
             </Button>
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="group/button text-muted-foreground hover:text-white focus:text-white relative">
-               <span className="absolute -z-10 inset-0 bg-gradient-to-br from-[#AD00EC] to-[#0018EC] opacity-0 group-hover/button:opacity-100 group-focus/button:opacity-100 transition-opacity duration-300 rounded-md active:opacity-80"/>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={toggleTheme} 
+                className="group/button relative rounded-lg shadow-md overflow-hidden text-muted-foreground dark:text-white hover:text-white focus:text-white"
+            >
+               <span className="absolute -z-10 inset-0 bg-gradient-to-br from-[#1700E6] to-[#009AFF] opacity-0 group-hover/button:opacity-100 transition-opacity duration-300 active:opacity-80"/>
               {isDarkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
               <span className="sr-only">Cambiar tema</span>
             </Button>
