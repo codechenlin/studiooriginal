@@ -51,11 +51,9 @@ export default function DashboardPage() {
 
       <Separator className="my-4"/>
 
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-            <AnalyticsChart />
-        </div>
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:gap-8">
+        <AnalyticsChart />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
             <DeliveryRateChart />
             <EngagementSourcesChart />
         </div>
