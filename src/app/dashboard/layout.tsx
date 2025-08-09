@@ -86,9 +86,12 @@ export default function DashboardLayout({
   }, [isDarkMode]);
 
   const toggleTheme = () => {
-    setIsDarkMode(prevMode => !prevMode);
-    toast({
-      title: `Cambiado a modo ${!isDarkMode ? "oscuro" : "claro"}`,
+    setIsDarkMode(prevMode => {
+      const newMode = !prevMode;
+      toast({
+        title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
+      });
+      return newMode;
     });
   };
   
@@ -159,14 +162,14 @@ export default function DashboardLayout({
              <SidebarMenuItem>
               <Link href="/dashboard/settings" passHref>
                   <div className={cn(
-                      "group/settings-button relative flex items-center justify-between w-full h-12 px-2 rounded-lg cursor-pointer transition-all duration-300",
-                      "dark:bg-white dark:hover:bg-gradient-to-r dark:hover:from-settings-start dark:hover:to-settings-end",
+                      "group/settings-button relative flex items-center w-full h-12 px-2 rounded-lg cursor-pointer transition-all duration-300",
+                      "dark:bg-[#8500DE] dark:hover:bg-gradient-to-r dark:hover:from-settings-start dark:hover:to-settings-end",
                       "bg-gradient-to-br from-black to-gray-700 hover:bg-gradient-to-r hover:from-settings-start hover:to-settings-end"
                   )}>
-                      <span className="font-semibold dark:text-black text-white ml-2">Ajustes</span>
-                      <div className="flex items-center justify-center size-8 rounded-full dark:bg-black/10 bg-white">
-                          <Settings className="dark:text-black text-black" />
+                      <div className="flex items-center justify-center size-8 rounded-full dark:bg-black/10 bg-white mr-2">
+                          <Settings className="dark:text-white text-black" />
                       </div>
+                      <span className="font-semibold text-white">Ajustes</span>
                   </div>
               </Link>
             </SidebarMenuItem>
@@ -185,9 +188,9 @@ export default function DashboardLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF] hover:text-white"
+                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 hover:text-white dark:hover:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF]"
             >
-              {isDarkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
+              {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black" />}
               <span className="sr-only">Cambiar tema</span>
             </Button>
           </div>
