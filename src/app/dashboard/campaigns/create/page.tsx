@@ -3,12 +3,13 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, ArrowRight, Bot, Check, FileText, Mail, Sparkles, Wand2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bot, Check, FileText, Mail, Sparkles, Wand2, Users, User, PlusCircle, List, Send } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const steps = [
   {
@@ -37,6 +38,8 @@ export default function CreateCampaignPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [campaignName, setCampaignName] = useState('');
   const [campaignType, setCampaignType] = useState<'regular' | 'plaintext' | null>(null);
+  const [audienceType, setAudienceType] = useState<'list' | 'single' | null>(null);
+
 
   const goToNextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -57,10 +60,18 @@ export default function CreateCampaignPage() {
     if (currentStep === 1) {
       return campaignType === null;
     }
+    if (currentStep === 2) {
+        return audienceType === null;
+    }
     return false;
   };
   
   const progressValue = ((currentStep + 1) / steps.length) * 100;
+  
+  // Custom style for the progress bar gradient
+  const progressStyle = {
+    background: 'linear-gradient(to right, #1700E6, #009AFF)',
+  };
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
@@ -76,7 +87,7 @@ export default function CreateCampaignPage() {
       
       <Card className="bg-card/50 backdrop-blur-sm border-border/40 shadow-xl">
         <CardHeader>
-           <Progress value={progressValue} className="mb-4 h-2" />
+           <Progress value={progressValue} className="mb-4 h-2" style={progressStyle} />
            <div className="flex items-center gap-2">
              <div className="flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary border border-primary/20">
                 <Bot size={18} />
@@ -87,7 +98,7 @@ export default function CreateCampaignPage() {
              </div>
            </div>
         </CardHeader>
-        <CardContent className="min-h-[300px]">
+        <CardContent className="min-h-[400px]">
             <div>
               {currentStep === 0 && (
                 <div className="max-w-lg mx-auto space-y-4 pt-8">
@@ -142,9 +153,57 @@ export default function CreateCampaignPage() {
                     </button>
                 </div>
               )}
+               {currentStep === 2 && (
+                <div className="max-w-2xl mx-auto space-y-8 pt-8">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold flex items-center justify-center gap-2">
+                        <Users className="text-primary"/>
+                        ¿A quién le gustaría enviar?
+                    </h2>
+                    <p className="text-muted-foreground mt-1">Elige cómo seleccionarás a tus destinatarios.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2"><List className="text-accent"/> Enviar a una Lista de Contactos</h3>
+                      <p className="text-sm text-muted-foreground">Selecciona una de tus listas de contactos para un envío masivo. Ideal para newsletters y anuncios.</p>
+                       <Select onValueChange={(value) => setAudienceType(value as any)}>
+                          <SelectTrigger className="py-6 text-base">
+                            <SelectValue placeholder="Selecciona una lista..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="list-1">Lista de Clientes VIP (1,234 contactos)</SelectItem>
+                            <SelectItem value="list-2">Suscriptores del Blog (5,678 contactos)</SelectItem>
+                            <SelectItem value="list-3">Nuevos Registros - Q3 (890 contactos)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      <Button variant="outline" size="sm">
+                          <PlusCircle className="mr-2"/>
+                          Crear Nueva Lista
+                      </Button>
+                  </div>
+                  
+                  <div className="relative text-center my-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-dashed border-border/70" />
+                    </div>
+                    <span className="relative bg-card px-4 text-sm text-muted-foreground">O</span>
+                  </div>
+
+                  <div className="space-y-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2"><Send className="text-accent"/> Enviar a un Destinatario Único</h3>
+                      <p className="text-sm text-muted-foreground">Perfecto para enviar correos de prueba, demostraciones o mensajes personalizados a un solo contacto.</p>
+                      <Input
+                        type="email"
+                        placeholder="ejemplo@dominio.com"
+                        className="py-6 text-base"
+                        onChange={() => setAudienceType('single')}
+                      />
+                  </div>
+                </div>
+              )}
             </div>
         </CardContent>
-        <div className="flex justify-between p-6 border-t border-border/40">
+        <CardFooter className="flex justify-between p-6 border-t border-border/40">
             <Button
               variant="outline"
               onClick={goToPrevStep}
@@ -161,7 +220,7 @@ export default function CreateCampaignPage() {
               Siguiente
               <ArrowRight className="ml-2" />
             </Button>
-          </div>
+        </CardFooter>
       </Card>
     </main>
   );
