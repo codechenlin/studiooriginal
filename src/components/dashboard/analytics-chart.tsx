@@ -1,14 +1,14 @@
 "use client"
 
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 
 const data = [
-  { date: "Jan", openRate: 40, clickRate: 24 },
+  { date: "Ene", openRate: 40, clickRate: 24 },
   { date: "Feb", openRate: 30, clickRate: 14 },
   { date: "Mar", openRate: 20, clickRate: 9.8 },
-  { date: "Apr", openRate: 27.8, clickRate: 39 },
+  { date: "Abr", openRate: 27.8, clickRate: 39 },
   { date: "May", openRate: 18.9, clickRate: 48 },
   { date: "Jun", openRate: 23.9, clickRate: 38 },
   { date: "Jul", openRate: 34.9, clickRate: 43 },
@@ -16,22 +16,22 @@ const data = [
 
 const chartConfig = {
   openRate: {
-    label: "Open Rate",
+    label: "Tasa de Apertura",
     color: "hsl(var(--chart-1))",
   },
   clickRate: {
-    label: "Click Rate",
+    label: "Tasa de Clics",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig
 
 export function AnalyticsChart() {
   return (
-    <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
+    <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg h-full">
       <CardHeader>
-        <CardTitle>Engagement Over Time</CardTitle>
+        <CardTitle>Rendimiento a lo Largo del Tiempo</CardTitle>
         <CardDescription>
-          Tracking open and click rates for the last 7 months.
+          Seguimiento de las tasas de apertura y clics de los últimos 7 meses.
         </CardDescription>
       </CardHeader>
       <CardContent>

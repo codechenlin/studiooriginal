@@ -76,10 +76,10 @@ export function InsightsCard() {
         <div>
           <CardTitle className="flex items-center gap-2">
             <Wand2 className="text-primary" />
-            <span>AI-Powered Insights</span>
+            <span>Perspectivas con IA</span>
           </CardTitle>
           <CardDescription>
-            Let our AI analyze your campaign data for improvements.
+            Deja que nuestra IA analice los datos de tu campaña para mejoras.
           </CardDescription>
         </div>
          <Button onClick={handleGenerateInsights} disabled={isPending} size="sm" variant="outline" className="shrink-0">
@@ -88,7 +88,7 @@ export function InsightsCard() {
             ) : (
               <Lightbulb className="mr-2 h-4 w-4" />
             )}
-            Generate
+            Generar
           </Button>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -105,12 +105,12 @@ export function InsightsCard() {
         {insights && (
             <div className="space-y-6 text-sm">
                 <div>
-                    <h3 className="font-semibold text-lg mb-2 text-primary">Key Insights</h3>
+                    <h3 className="font-semibold text-lg mb-2 text-primary">Perspectivas Clave</h3>
                     <p className="text-muted-foreground whitespace-pre-line">{insights.insights}</p>
                 </div>
                 <Separator />
                 <div>
-                    <h3 className="font-semibold text-lg mb-2 text-accent">Suggestions</h3>
+                    <h3 className="font-semibold text-lg mb-2 text-accent">Sugerencias</h3>
                     <p className="text-muted-foreground whitespace-pre-line">{insights.suggestions}</p>
                 </div>
             </div>
@@ -118,7 +118,7 @@ export function InsightsCard() {
         {!isPending && !insights && !error && (
             <div className="text-center text-muted-foreground flex flex-col items-center justify-center h-full">
                 <Lightbulb className="size-10 mb-4"/>
-                <p>Click "Generate" to get AI insights on your recent campaign performance.</p>
+                <p>Haz clic en "Generar" para obtener perspectivas de IA sobre el rendimiento de tu campaña reciente.</p>
             </div>
         )}
       </CardContent>

@@ -3,6 +3,8 @@ import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
 import { InsightsCard } from "@/components/dashboard/insights-card";
 import { Users, Mail, BarChart, CheckCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { DeliveryRateChart } from "@/components/dashboard/delivery-rate-chart";
+import { EngagementSourcesChart } from "@/components/dashboard/engagement-sources-chart";
 
 export default function DashboardPage() {
   return (
@@ -10,38 +12,38 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
-            Welcome, User
+            Bienvenido, Usuario
           </h1>
-          <p className="text-muted-foreground">Here's the latest on your campaigns.</p>
+          <p className="text-muted-foreground">Aquí están las últimas novedades de tus campañas.</p>
         </div>
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <StatCard 
-          title="Total Subscribers"
+          title="Total de Suscriptores"
           value="12,405"
-          description="+20.1% from last month"
+          description="+20.1% desde el último mes"
           Icon={Users}
           color="from-primary to-purple-400"
         />
         <StatCard 
-          title="Emails Sent"
+          title="Correos Enviados"
           value="72,130"
-          description="In the last 30 days"
+          description="En los últimos 30 días"
           Icon={Mail}
           color="from-sky-500 to-accent"
         />
         <StatCard 
-          title="Avg. Open Rate"
+          title="Tasa de Apertura Prom."
           value="24.5%"
-          description="+2.1% from last month"
+          description="+2.1% desde el último mes"
           Icon={BarChart}
           color="from-orange-500 to-amber-400"
         />
         <StatCard 
-          title="Avg. Click Rate"
+          title="Tasa de Clics Prom."
           value="4.2%"
-          description="+0.5% from last month"
+          description="+0.5% desde el último mes"
           Icon={CheckCircle}
           color="from-green-500 to-emerald-400"
         />
@@ -49,14 +51,20 @@ export default function DashboardPage() {
 
       <Separator className="my-4"/>
 
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <div className="lg:col-span-1 xl:col-span-2">
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
+        <div className="lg:col-span-3">
             <AnalyticsChart />
         </div>
-        <div className="lg:col-span-1">
-            <InsightsCard />
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <DeliveryRateChart />
+            <EngagementSourcesChart />
         </div>
       </div>
+
+       <div className="grid gap-4 md:gap-8">
+         <InsightsCard />
+       </div>
+
     </main>
   );
 }
