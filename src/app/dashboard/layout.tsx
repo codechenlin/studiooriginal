@@ -86,7 +86,7 @@ export default function DashboardLayout({
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
-  const toggleTheme = () => {
+ const toggleTheme = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
     toast({
@@ -198,28 +198,29 @@ export default function DashboardLayout({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-               <button className={cn(
-                "group/profile-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
-                "bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10",
-                "hover:bg-gradient-to-r from-settings-hover-start to-settings-hover-end",
-                "group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
-              )}>
-                <Avatar className="size-8">
-                  <AvatarImage src="https://placehold.co/100x100.png" alt="User" data-ai-hint="profile avatar" />
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col truncate group-data-[collapsible=icon]:hidden">
-                  <span className="font-semibold text-foreground">Usuario</span>
-                  <span className="text-xs text-muted-foreground">user@mailflow.ai</span>
-                </div>
-                <ChevronRight className="size-4 ml-auto text-muted-foreground group-data-[collapsible=icon]:hidden"/>
-              </button>
+               <div className="group/profile-button relative rounded-md p-0.5 bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:from-[#00CE07] hover:to-[#A6EE00]">
+                  <button className={cn(
+                    "flex w-full items-center gap-2 overflow-hidden rounded-md p-1.5 text-left text-sm outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
+                    "bg-background/80 dark:bg-zinc-800/80 backdrop-blur-sm",
+                    "group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+                  )}>
+                    <Avatar className="size-8">
+                      <AvatarImage src="https://placehold.co/100x100.png" alt="User" data-ai-hint="profile avatar" />
+                      <AvatarFallback>U</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col truncate group-data-[collapsible=icon]:hidden">
+                      <span className="font-semibold text-foreground">Usuario</span>
+                      <span className="text-xs text-muted-foreground">user@mailflow.ai</span>
+                    </div>
+                    <ChevronRight className="size-4 ml-auto text-muted-foreground group-data-[collapsible=icon]:hidden"/>
+                  </button>
+               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-56">
               <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings"><User className="mr-2 size-4" /><span>Mi Perfil</span></Link>
+                <Link href="/dashboard/settings"><Settings className="mr-2 size-4" /><span>Ajustes</span></Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/login"><LogOut className="mr-2 size-4" /><span>Cerrar Sesión</span></Link>
@@ -232,5 +233,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
-
-    
