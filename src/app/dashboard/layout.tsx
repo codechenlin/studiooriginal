@@ -116,23 +116,32 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             {menuItems.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = item.submenu ? isSubmenuActive(item.href) : pathname === item.href;
                 return (
                   <SidebarMenuItem key={item.href}>
                     {item.submenu ? (
-                      <Collapsible>
+                      <Collapsible defaultOpen={isActive}>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton
-                            isActive={isSubmenuActive(item.href)}
-                            tooltip={{ children: item.label }}
-                            className="w-full justify-between"
-                          >
-                            <div className="flex items-center gap-3">
-                              <item.icon className="shrink-0"/>
-                              <span className={cn(isSubmenuActive(item.href) && "bg-clip-text text-transparent bg-gradient-to-r from-led-start to-led-end")}>{item.label}</span>
-                            </div>
-                            <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                          </SidebarMenuButton>
+                           <div className={cn(
+                              "group/menu-item-wrapper relative rounded-lg transition-all p-1",
+                              isActive ? "bg-zinc-800/80 dark:bg-zinc-800/80" : "bg-transparent",
+                              "hover:p-0.5 hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
+                            )}>
+                              <div className="bg-sidebar rounded-md p-1">
+                                <SidebarMenuButton
+                                  isActive={false} // We manage active state on the wrapper
+                                  className="w-full justify-between bg-transparent hover:bg-transparent"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-zinc-700/60 rounded-full">
+                                      <item.icon className="shrink-0 text-white"/>
+                                    </div>
+                                    <span className="text-white dark:text-white group-hover/menu-item-wrapper:text-white dark:group-hover/menu-item-wrapper:text-white">{item.label}</span>
+                                  </div>
+                                  <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90 text-white" />
+                                </SidebarMenuButton>
+                              </div>
+                           </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
@@ -150,19 +159,25 @@ export default function DashboardLayout({
                         </CollapsibleContent>
                       </Collapsible>
                     ) : (
-                      <div className="relative">
-                        <Link href={item.href} passHref>
-                          <SidebarMenuButton
-                            isActive={isActive}
-                            tooltip={{ children: item.label }}
-                            className="w-full justify-start gap-3"
-                          >
-                            <item.icon className="shrink-0"/>
-                            <span className={cn(isActive && "bg-clip-text text-transparent bg-gradient-to-r from-led-start to-led-end")}>{item.label}</span>
-                          </SidebarMenuButton>
-                        </Link>
-                        {isActive && <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-led-start to-led-end rounded-full"/>}
-                      </div>
+                       <Link href={item.href} passHref>
+                        <div className={cn(
+                          "group/menu-item-wrapper relative rounded-lg transition-all p-1",
+                          isActive ? "bg-zinc-800/80 dark:bg-zinc-800/80" : "bg-transparent",
+                          "hover:p-0.5 hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
+                        )}>
+                           <div className={cn("bg-sidebar rounded-md p-1", isActive && "bg-transparent")}>
+                            <SidebarMenuButton
+                              isActive={false}
+                              className="w-full justify-start gap-3 bg-transparent hover:bg-transparent"
+                            >
+                               <div className={cn("p-2 rounded-full", isActive ? "bg-zinc-700/90" : "bg-zinc-800/50 dark:bg-zinc-800/50")}>
+                                <item.icon className="shrink-0 text-white dark:text-white"/>
+                              </div>
+                              <span className="text-black dark:text-white">{item.label}</span>
+                            </SidebarMenuButton>
+                          </div>
+                        </div>
+                      </Link>
                     )}
                   </SidebarMenuItem>
                 )
@@ -174,8 +189,6 @@ export default function DashboardLayout({
              <SidebarMenuItem>
                 <div className={cn(
                     "group/settings-button relative flex items-center w-full h-12 px-2 rounded-lg cursor-pointer transition-all duration-300",
-                    "dark:bg-gradient-to-r from-settings-normal-start to-settings-normal-end",
-                    "dark:hover:from-settings-hover-start dark:hover:to-settings-hover-end",
                     "bg-gradient-to-r from-settings-normal-start to-settings-normal-end",
                     "hover:from-settings-hover-start hover:to-settings-hover-end"
                 )}>
