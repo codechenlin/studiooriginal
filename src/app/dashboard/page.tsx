@@ -1,3 +1,8 @@
+
+"use client";
+
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { StatCard } from "@/components/dashboard/stat-card";
 import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
 import { InsightsCard } from "@/components/dashboard/insights-card";
@@ -5,9 +10,30 @@ import { Users, Mail, BarChart, CheckCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { DeliveryRateChart } from "@/components/dashboard/delivery-rate-chart";
 import { EngagementSourcesChart } from "@/components/dashboard/engagement-sources-chart";
+import { useToast } from '@/hooks/use-toast';
+import { OnboardingModal } from '@/components/dashboard/onboarding-modal';
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    if (searchParams.get('welcome') === 'true') {
+      toast({
+        title: "CUENTA ACTIVADA",
+        description: "Tu cuenta ha sido activada correctamente.",
+        className: 'bg-gradient-to-r from-success-start to-success-end border-none text-white',
+        duration: 5000,
+      });
+      // The modal is controlled by the search param directly
+    }
+  }, [searchParams, toast]);
+
+  const showOnboarding = searchParams.get('welcome') === 'true';
+
   return (
+    <>
+    {showOnboarding && <OnboardingModal />}
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
       <div className="flex items-center justify-between">
         <div>
@@ -64,5 +90,6 @@ export default function DashboardPage() {
        </div>
 
     </main>
+    </>
   );
 }

@@ -71,7 +71,7 @@ export default function SignupPage() {
         title: "Cuenta Creada",
         description: "¡Bienvenido! Revisa tu correo para verificar tu cuenta.",
       });
-      router.push("/login");
+      router.push("/login?new_user=true");
     }
   }
 

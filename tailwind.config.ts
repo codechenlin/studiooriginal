@@ -85,6 +85,10 @@ export default {
         },
         'active-led-start': '#AD00EC',
         'active-led-end': '#1700E6',
+        success: {
+          start: '#00CE07',
+          end: '#A6EE00',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

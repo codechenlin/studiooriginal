@@ -48,6 +48,9 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const supabase = createClient();
+    // Check if this is a redirect from signup to show the welcome modal
+    const isNewUser = new URLSearchParams(window.location.search).get('new_user') === 'true';
+
     const { error } = await supabase.auth.signInWithPassword(values);
 
     if (error) {
@@ -65,11 +68,8 @@ export default function LoginPage() {
         });
       }
     } else {
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: "Redirigiendo a tu panel...",
-      });
-      router.push("/dashboard");
+      const redirectPath = isNewUser ? "/dashboard?welcome=true" : "/dashboard";
+      router.push(redirectPath);
       router.refresh();
     }
   }
