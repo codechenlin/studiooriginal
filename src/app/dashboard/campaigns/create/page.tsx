@@ -103,7 +103,7 @@ export default function CreateCampaignPage() {
       
       <Card className="bg-card/50 backdrop-blur-sm border-border/40 shadow-xl">
         <CardHeader>
-           <Progress value={progressValue} className="mb-4 h-2" style={{background: 'linear-gradient(to right, #1700E6, #009AFF)'}} />
+           <Progress value={progressValue} className="mb-4 h-2" indicatorClassName="bg-gradient-to-r from-[#1700E6] to-[#009AFF]" />
            <div className="flex items-center gap-2">
              <div className="flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary border border-primary/20">
                 <Bot size={18} />
@@ -137,25 +137,25 @@ export default function CreateCampaignPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto pt-4">
                     <button
                         onClick={() => setCampaignType('regular')}
-                        className={cn( "p-6 border-2 rounded-lg text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl flex items-start gap-4", campaignType === 'regular' ? 'border-primary shadow-primary/20' : 'border-border' )}
+                        className={cn( "p-6 border-2 rounded-lg text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl flex items-start gap-4", campaignType === 'regular' ? 'border-[#00EF10] shadow-[0_0_15px_#00EF1040]' : 'border-border' )}
                         >
-                        <div className="p-3 rounded-full bg-primary/10"> <Mail className="size-6 text-primary" /> </div>
+                        <div className="p-3 rounded-full bg-accent/10"> <Mail className="size-6 text-accent" /> </div>
                         <div className="flex-1">
                             <h3 className="font-bold text-lg mb-1">Constructor</h3>
                             <p className="text-muted-foreground text-sm">Campaña con contenido de correo HTML, además de imágenes y enlaces. Este es el tipo más común.</p>
                         </div>
-                        {campaignType === 'regular' && <Check className="size-6 text-primary" />}
+                        {campaignType === 'regular' && <Check className="size-6 text-[#00EF10]" />}
                     </button>
                     <button
                         onClick={() => setCampaignType('plaintext')}
-                        className={cn( "p-6 border-2 rounded-lg text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl flex items-start gap-4", campaignType === 'plaintext' ? 'border-accent shadow-accent/20' : 'border-border' )}
+                        className={cn( "p-6 border-2 rounded-lg text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl flex items-start gap-4", campaignType === 'plaintext' ? 'border-[#00EF10] shadow-[0_0_15px_#00EF1040]' : 'border-border' )}
                         >
                         <div className="p-3 rounded-full bg-accent/10"> <FileText className="size-6 text-accent" /> </div>
                         <div className="flex-1">
                             <h3 className="font-bold text-lg mb-1">Texto Plano</h3>
                             <p className="text-muted-foreground text-sm">Envía un correo de texto plano sin seguimiento de enlaces, imágenes o HTML.</p>
                         </div>
-                        {campaignType === 'plaintext' && <Check className="size-6 text-accent" />}
+                        {campaignType === 'plaintext' && <Check className="size-6 text-[#00EF10]" />}
                     </button>
                 </div>
               )}
@@ -167,7 +167,7 @@ export default function CreateCampaignPage() {
                             {servers.map(server => (
                                 <button key={server.id} onClick={() => setSelectedServer(server.id)} className={cn("p-3 border-2 rounded-lg text-left transition-all duration-300 flex items-center gap-2 justify-between text-sm font-medium", selectedServer === server.id ? 'border-[#00EF10] shadow-[0_0_15px_#00EF1040]' : 'border-border')}>
                                     <span>{server.name}</span>
-                                    {server.connected ? <CheckCircle className="size-5 text-green-500"/> : <XCircle className="size-5 text-[#F00000]"/>}
+                                    {server.connected ? <CheckCircle className="size-5 text-green-500"/> : <XCircle className="size-5" style={{color: '#F00000'}}/>}
                                 </button>
                             ))}
                         </div>
@@ -239,9 +239,9 @@ export default function CreateCampaignPage() {
                                 >
                                     <CardContent className="p-0 relative">
                                         <Image src={template.preview} alt={template.name} width={400} height={500} className="object-cover transition-transform group-hover:scale-105" data-ai-hint={template.hint} />
-                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button size="sm" variant="secondary"><Eye className="mr-1"/>Visualizar</Button>
-                                            <Button size="sm" variant="secondary"><Pencil className="mr-1"/>Editar</Button>
+                                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity p-2">
+                                            <Button size="sm" className="w-full" style={{background: 'linear-gradient(to right, #AD00EC, #0018EC)'}}><Eye className="mr-1"/>Visualizar</Button>
+                                            <Button size="sm" className="w-full" style={{background: 'linear-gradient(to right, #AD00EC, #0018EC)'}}><Pencil className="mr-1"/>Editar</Button>
                                         </div>
                                     </CardContent>
                                     <CardFooter className="p-3 flex-col items-start">
@@ -257,12 +257,17 @@ export default function CreateCampaignPage() {
             </div>
         </CardContent>
         <CardFooter className="flex justify-between p-6 border-t border-border/40">
-            <Button variant="outline" onClick={goToPrevStep} disabled={currentStep === 0}> <ArrowLeft className="mr-2" /> Anterior </Button>
+            <Button 
+                variant="outline" 
+                onClick={goToPrevStep} 
+                disabled={currentStep === 0}
+                className="text-foreground hover:bg-[#F00000] hover:text-white active:bg-[#D00000] transition-colors"
+            >
+                <ArrowLeft className="mr-2" /> Anterior 
+            </Button>
             <Button onClick={goToNextStep} disabled={isNextDisabled()} className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity"> Siguiente <ArrowRight className="ml-2" /> </Button>
         </CardFooter>
       </Card>
     </main>
   );
 }
-
-    
