@@ -86,12 +86,10 @@ export default function DashboardLayout({
   }, [isDarkMode]);
 
   const toggleTheme = () => {
-    setIsDarkMode(prevMode => {
-      const newMode = !prevMode;
-      toast({
-        title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
-      });
-      return newMode;
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    toast({
+      title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
     });
   };
   
@@ -169,7 +167,7 @@ export default function DashboardLayout({
                       <div className="flex items-center justify-center size-8 rounded-full dark:bg-black/10 bg-white mr-2">
                           <Settings className="dark:text-white text-black" />
                       </div>
-                      <span className="font-semibold text-white">Ajustes</span>
+                      <span className="font-semibold text-white group-data-[collapsible=icon]:hidden">Ajustes</span>
                   </div>
               </Link>
             </SidebarMenuItem>
@@ -188,7 +186,7 @@ export default function DashboardLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 hover:text-white dark:hover:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF]"
+                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 hover:text-white dark:hover:text-white hover:bg-gradient-to-r from-settings-start to-settings-end dark:hover:bg-gradient-to-r dark:hover:from-settings-start dark:hover:to-settings-end"
             >
               {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black" />}
               <span className="sr-only">Cambiar tema</span>
