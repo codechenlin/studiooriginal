@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, ArrowRight, Bot, Check, FileText, Mail, Sparkles, Wand2, Users, User, PlusCircle, List, Send, Search, Paperclip, FileImage, Server, XCircle, ChevronDown, CheckCircle, Tag, LayoutGrid } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bot, Check, FileText, Mail, Sparkles, Wand2, Users, User, PlusCircle, List, Send, Search, Paperclip, FileImage, Server, XCircle, ChevronDown, CheckCircle, Tag, LayoutGrid, Eye, Pencil } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -65,6 +65,7 @@ export default function CreateCampaignPage() {
   const [campaignType, setCampaignType] = useState<'regular' | 'plaintext' | null>(null);
   const [audienceType, setAudienceType] = useState<'list' | 'single' | null>(null);
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
 
   const goToNextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -82,14 +83,11 @@ export default function CreateCampaignPage() {
     if (currentStep === 0) return campaignName.trim() === '';
     if (currentStep === 1) return campaignType === null;
     if (currentStep === 2) return audienceType === null || selectedServer === null;
-    if (currentStep === 3) return false;
+    if (currentStep === 3) return selectedTemplate === null;
     return false;
   };
   
   const progressValue = ((currentStep + 1) / steps.length) * 100;
-  const progressStyle = {
-    background: 'linear-gradient(to right, #1700E6, #009AFF)',
-  };
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
@@ -105,7 +103,7 @@ export default function CreateCampaignPage() {
       
       <Card className="bg-card/50 backdrop-blur-sm border-border/40 shadow-xl">
         <CardHeader>
-           <Progress value={progressValue} className="mb-4 h-2" style={progressStyle} />
+           <Progress value={progressValue} className="mb-4 h-2" style={{background: 'linear-gradient(to right, #1700E6, #009AFF)'}} />
            <div className="flex items-center gap-2">
              <div className="flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary border border-primary/20">
                 <Bot size={18} />
@@ -167,9 +165,9 @@ export default function CreateCampaignPage() {
                         <h3 className="font-semibold text-lg flex items-center gap-2 mb-3"><Server className="text-primary"/>Seleccionar Servidor de Envío</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             {servers.map(server => (
-                                <button key={server.id} onClick={() => setSelectedServer(server.id)} className={cn("p-3 border-2 rounded-lg text-left transition-all duration-300 flex items-center gap-2 justify-between text-sm font-medium", selectedServer === server.id ? 'border-primary shadow-primary/20' : 'border-border')}>
+                                <button key={server.id} onClick={() => setSelectedServer(server.id)} className={cn("p-3 border-2 rounded-lg text-left transition-all duration-300 flex items-center gap-2 justify-between text-sm font-medium", selectedServer === server.id ? 'border-[#00EF10] shadow-[0_0_15px_#00EF1040]' : 'border-border')}>
                                     <span>{server.name}</span>
-                                    {server.connected ? <CheckCircle className="size-5 text-green-500"/> : <XCircle className="size-5 text-destructive"/>}
+                                    {server.connected ? <CheckCircle className="size-5 text-green-500"/> : <XCircle className="size-5 text-[#F00000]"/>}
                                 </button>
                             ))}
                         </div>
@@ -232,9 +230,19 @@ export default function CreateCampaignPage() {
                          </div>
                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             {templates.map(template => (
-                                <Card key={template.id} className="overflow-hidden group cursor-pointer transition-all hover:shadow-primary/20 hover:border-primary">
-                                    <CardContent className="p-0">
+                                <Card key={template.id} 
+                                    onClick={() => setSelectedTemplate(template.id)}
+                                    className={cn(
+                                        "overflow-hidden group cursor-pointer transition-all border-2",
+                                        selectedTemplate === template.id ? 'border-[#00EF10] shadow-[0_0_15px_#00EF1040]' : 'border-transparent hover:shadow-primary/20 hover:border-primary'
+                                    )}
+                                >
+                                    <CardContent className="p-0 relative">
                                         <Image src={template.preview} alt={template.name} width={400} height={500} className="object-cover transition-transform group-hover:scale-105" data-ai-hint={template.hint} />
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button size="sm" variant="secondary"><Eye className="mr-1"/>Visualizar</Button>
+                                            <Button size="sm" variant="secondary"><Pencil className="mr-1"/>Editar</Button>
+                                        </div>
                                     </CardContent>
                                     <CardFooter className="p-3 flex-col items-start">
                                         <h4 className="font-semibold text-sm truncate w-full">{template.name}</h4>
@@ -256,3 +264,5 @@ export default function CreateCampaignPage() {
     </main>
   );
 }
+
+    
