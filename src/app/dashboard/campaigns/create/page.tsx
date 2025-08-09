@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -89,14 +88,7 @@ export default function CreateCampaignPage() {
            </div>
         </CardHeader>
         <CardContent className="min-h-[300px]">
-           <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-            >
+            <div>
               {currentStep === 0 && (
                 <div className="max-w-lg mx-auto space-y-4 pt-8">
                    <Label htmlFor="campaignName" className="text-lg font-medium flex items-center gap-2">
@@ -150,8 +142,7 @@ export default function CreateCampaignPage() {
                     </button>
                 </div>
               )}
-            </motion.div>
-          </AnimatePresence>
+            </div>
         </CardContent>
         <div className="flex justify-between p-6 border-t border-border/40">
             <Button
@@ -175,4 +166,3 @@ export default function CreateCampaignPage() {
     </main>
   );
 }
-
