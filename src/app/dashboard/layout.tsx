@@ -86,7 +86,7 @@ export default function DashboardLayout({
   }, [isDarkMode]);
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+    setIsDarkMode(prevMode => !prevMode);
     toast({
       title: `Cambiado a modo ${!isDarkMode ? "oscuro" : "claro"}`,
     });
@@ -173,7 +173,7 @@ export default function DashboardLayout({
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="group/button relative rounded-lg shadow-md overflow-hidden text-muted-foreground dark:text-white hover:text-white focus:text-white"
+                className="group/button relative rounded-lg shadow-md dark:shadow-black/50 overflow-hidden text-muted-foreground dark:text-white hover:text-white focus:text-white"
             >
               <span className="absolute -z-10 inset-0 bg-gradient-to-br from-[#1700E6] to-[#009AFF] opacity-0 group-hover/button:opacity-100 transition-opacity duration-300 active:opacity-80"/>
               <Bell className="size-5"/>
@@ -183,10 +183,10 @@ export default function DashboardLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="group/button relative rounded-lg shadow-md overflow-hidden text-muted-foreground dark:text-white hover:text-white focus:text-white"
+                className="group/button relative rounded-lg shadow-md dark:shadow-black/50 overflow-hidden text-muted-foreground dark:text-white hover:text-white focus:text-white"
             >
                <span className="absolute -z-10 inset-0 bg-gradient-to-br from-[#1700E6] to-[#009AFF] opacity-0 group-hover/button:opacity-100 transition-opacity duration-300 active:opacity-80"/>
-              {isDarkMode ? <Sun className="size-5" /> : <Moon className="size-5" />}
+              {isDarkMode ? <Sun className="size-5" /> : <Moon className="size-5 text-black dark:text-white" />}
               <span className="sr-only">Cambiar tema</span>
             </Button>
           </div>

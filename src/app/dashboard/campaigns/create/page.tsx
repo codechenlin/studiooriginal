@@ -204,7 +204,7 @@ export default function CreateCampaignPage() {
                         <Input placeholder="Asunto del correo electrónico" className="py-6"/>
                         <Input placeholder="CC: admin@ejemplo.com, test@ejemplo.com" className="py-6"/>
                     </div>
-                     <Button variant="outline" className="w-full md:w-auto border-2 border-transparent hover:border-[#00EF10] hover:bg-card">
+                     <Button variant="outline" className="w-full md:w-auto border-2 border-transparent hover:border-[#00EF10] hover:text-foreground dark:hover:text-foreground hover:bg-transparent">
                         <Paperclip className="mr-2" style={{color: 'hsl(var(--accent-light-mode-override))'}}/> Adjuntar Archivos
                     </Button>
                     <div className="space-y-4 pt-4">
