@@ -156,24 +156,27 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter className="flex flex-col gap-2">
            <SidebarMenu>
-              <SidebarMenuItem>
-                <Link href="/dashboard/settings" passHref>
-                    <SidebarMenuButton
-                      isActive={pathname.startsWith('/dashboard/settings')}
-                      tooltip={{ children: 'Ajustes' }}
-                    >
-                      <Settings />
-                      <span>Ajustes</span>
-                    </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
+             <SidebarMenuItem>
+              <Link href="/dashboard/settings" passHref>
+                  <div className={cn(
+                      "group/settings-button relative flex items-center justify-between w-full h-12 px-2 rounded-lg cursor-pointer transition-all duration-300",
+                      "dark:bg-white dark:hover:bg-gradient-to-r dark:hover:from-settings-start dark:hover:to-settings-end",
+                      "bg-gradient-to-br from-black to-gray-700 hover:bg-gradient-to-r hover:from-settings-start hover:to-settings-end"
+                  )}>
+                      <span className="font-semibold dark:text-black text-white ml-2">Ajustes</span>
+                      <div className="flex items-center justify-center size-8 rounded-full dark:bg-black/10 bg-white">
+                          <Settings className="dark:text-black text-black" />
+                      </div>
+                  </div>
+              </Link>
+            </SidebarMenuItem>
           </SidebarMenu>
           
           <div className="flex items-center justify-center gap-4 p-2 group-data-[collapsible=icon]:flex-col">
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-[#1700E6] dark:hover:bg-[#009AFF] hover:text-white"
+                className="rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-[#009AFF] dark:hover:bg-[#009AFF] hover:text-white"
             >
               <Bell className="size-5"/>
               <span className="sr-only">Notificaciones</span>

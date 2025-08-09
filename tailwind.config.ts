@@ -72,6 +72,10 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+         settings: {
+          start: '#1700E6',
+          end: '#009AFF',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
