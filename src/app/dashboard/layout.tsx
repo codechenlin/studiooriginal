@@ -29,6 +29,9 @@ import {
   Sun,
   Moon,
   Bell,
+  LayoutDashboard,
+  LayoutTemplate,
+  Code,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,11 +46,14 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/campaigns", label: "Campaña", icon: Mails },
   { href: "/dashboard/lists", label: "Lista", icon: Users },
+  { href: "/dashboard/templates", label: "Plantillas", icon: LayoutTemplate },
   { href: "/dashboard/automation", label: "Automatización", icon: Zap },
   { href: "/dashboard/servers", label: "Servidores", icon: Server },
   { href: "/dashboard/integration", label: "Integración", icon: Plug },
+  { href: "/dashboard/campaign-api", label: "API Campaña", icon: Code },
 ];
 
 export default function DashboardLayout({
@@ -85,7 +91,7 @@ export default function DashboardLayout({
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href} passHref>
                   <SidebarMenuButton
-                    isActive={pathname.startsWith(item.href)}
+                    isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
                     tooltip={{ children: item.label }}
                   >
                     <item.icon />
