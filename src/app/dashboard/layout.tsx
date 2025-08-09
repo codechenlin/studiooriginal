@@ -38,6 +38,7 @@ import {
   Code,
   PlusCircle,
   History,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,21 +81,17 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = React.useState(true);
-  const isInitialMount = React.useRef(true);
-
+  
   React.useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
-    if (!isInitialMount.current) {
-        toast({
-          title: `Cambiado a modo ${isDarkMode ? "oscuro" : "claro"}`,
-        });
-    } else {
-      isInitialMount.current = false;
-    }
-  }, [isDarkMode, toast]);
+  }, [isDarkMode]);
 
   const toggleTheme = () => {
-    setIsDarkMode(prevMode => !prevMode);
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    toast({
+      title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
+    });
   };
   
   const isSubmenuActive = (basePath: string) => {
@@ -162,17 +159,20 @@ export default function DashboardLayout({
         <SidebarFooter className="flex flex-col gap-2">
            <SidebarMenu>
              <SidebarMenuItem>
-               <Link href="/dashboard/settings" passHref>
-                  <div className={cn(
-                      "group/settings-button relative flex items-center w-full h-12 px-2 rounded-lg cursor-pointer transition-all duration-300",
-                      "bg-gradient-to-r from-settings-normal-start to-settings-normal-end hover:from-settings-hover-start hover:to-settings-hover-end"
-                  )}>
-                      <div className="flex items-center justify-center size-8 rounded-full bg-black/10">
-                          <Settings className="text-white" />
-                      </div>
-                      <span className="font-semibold text-white ml-2 group-data-[collapsible=icon]:hidden">Ajustes</span>
-                  </div>
-              </Link>
+                <div className={cn(
+                    "group/settings-button relative flex items-center w-full h-12 px-2 rounded-lg cursor-pointer transition-all duration-300",
+                    "dark:bg-gradient-to-r from-settings-normal-start to-settings-normal-end",
+                    "dark:hover:from-settings-hover-start dark:hover:to-settings-hover-end",
+                    "bg-gradient-to-r from-settings-normal-start to-settings-normal-end",
+                    "hover:from-settings-hover-start hover:to-settings-hover-end"
+                )}>
+                    <Link href="/dashboard/settings" className="flex items-center w-full h-full">
+                        <div className="flex items-center justify-center size-8 rounded-full bg-black/10">
+                            <Settings className="text-white" />
+                        </div>
+                        <span className="font-semibold text-white ml-2 group-data-[collapsible=icon]:hidden">Ajustes</span>
+                    </Link>
+                </div>
             </SidebarMenuItem>
           </SidebarMenu>
           
@@ -180,7 +180,7 @@ export default function DashboardLayout({
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="group rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r hover:from-[#1700E6] hover:to-[#009AFF] dark:hover:bg-gradient-to-r dark:from-[#1700E6] dark:to-[#009AFF]"
+                className="group rounded-full size-10 bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r from-[#AD00EC] to-[#0018EC] dark:hover:bg-gradient-to-r dark:from-[#AD00EC] dark:to-[#0018EC]"
             >
               <Bell className="size-5 text-black dark:text-white"/>
               <span className="sr-only">Notificaciones</span>
@@ -189,9 +189,9 @@ export default function DashboardLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="group rounded-full size-10 bg-background/50 dark:bg-white/10 shadow-md dark:shadow-black/50 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r hover:from-[#1700E6] hover:to-[#009AFF] dark:hover:bg-gradient-to-r dark:from-[#1700E6] dark:to-[#009AFF]"
+                className="group rounded-full size-10 bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r from-[#AD00EC] to-[#0018EC] dark:hover:bg-gradient-to-r dark:from-[#AD00EC] dark:to-[#0018EC]"
             >
-              {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black group-hover:text-white" />}
+              {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black hover:text-white" />}
               <span className="sr-only">Cambiar tema</span>
             </Button>
           </div>
@@ -219,7 +219,7 @@ export default function DashboardLayout({
               <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings"><Settings className="mr-2 size-4" /><span>Ajustes</span></Link>
+                <Link href="/dashboard/settings"><User className="mr-2 size-4" /><span>Mi Perfil</span></Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/login"><LogOut className="mr-2 size-4" /><span>Cerrar Sesión</span></Link>
@@ -232,3 +232,5 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+
+    
