@@ -128,12 +128,12 @@ export default function DashboardLayout({
                        <SidebarMenuSub>
                         {item.submenu.map((subItem) => (
                            <SidebarMenuSubItem key={subItem.href}>
-                             <Link href={subItem.href} passHref>
-                               <SidebarMenuSubButton isActive={pathname === subItem.href}>
+                             <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
+                               <Link href={subItem.href}>
                                   <subItem.icon />
-                                 <span>{subItem.label}</span>
-                               </SidebarMenuSubButton>
-                             </Link>
+                                  <span>{subItem.label}</span>
+                               </Link>
+                             </SidebarMenuSubButton>
                            </SidebarMenuSubItem>
                         ))}
                        </SidebarMenuSub>
