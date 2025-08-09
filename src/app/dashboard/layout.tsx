@@ -134,11 +134,11 @@ export default function DashboardLayout({
                                 >
                                   <div className="flex items-center gap-2">
                                     <div className="p-1.5 bg-zinc-700/60 rounded-full">
-                                      <item.icon className="shrink-0 text-white size-4"/>
+                                      <item.icon className="shrink-0 text-white size-3"/>
                                     </div>
-                                    <span className="text-black dark:text-white text-sm">{item.label}</span>
+                                    <span className={cn("text-sm", isActive ? "text-black dark:text-white" : "text-black dark:text-white")}>{item.label}</span>
                                   </div>
-                                  <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90 text-white" />
+                                  <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90 text-black dark:text-white" />
                                 </SidebarMenuButton>
                               </div>
                            </div>
@@ -171,7 +171,7 @@ export default function DashboardLayout({
                               className="w-full justify-start gap-2 bg-transparent hover:bg-transparent"
                             >
                                <div className={cn("p-1.5 rounded-full", isActive ? "bg-zinc-700/90" : "bg-zinc-800/50 dark:bg-zinc-800/50")}>
-                                <item.icon className="shrink-0 text-white dark:text-white size-4"/>
+                                <item.icon className="shrink-0 text-white dark:text-white size-3"/>
                               </div>
                               <span className={cn("text-sm", isActive ? "text-black dark:text-white" : "text-black dark:text-white")}>{item.label}</span>
                             </SidebarMenuButton>
