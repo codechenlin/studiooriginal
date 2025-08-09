@@ -80,19 +80,22 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = React.useState(true);
+  const isInitialMount = React.useRef(true);
 
   React.useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
-  }, [isDarkMode]);
+    
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+      toast({
+        title: `Cambiado a modo ${isDarkMode ? "oscuro" : "claro"}`,
+      });
+    }
+  }, [isDarkMode, toast]);
 
   const toggleTheme = () => {
-    setIsDarkMode(prevMode => {
-        const newMode = !prevMode;
-        toast({
-          title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
-        });
-        return newMode;
-    });
+    setIsDarkMode(prevMode => !prevMode);
   };
   
   const isSubmenuActive = (basePath: string) => {
