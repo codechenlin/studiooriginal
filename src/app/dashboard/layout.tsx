@@ -129,26 +129,24 @@ export default function DashboardLayout({
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-          <div className="flex items-center justify-between">
+           <div className="flex items-center justify-between">
             <Logo />
-            <SidebarTrigger>
-                <LayoutGrid className="size-5" />
-            </SidebarTrigger>
+             <SidebarTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="group/trigger relative h-9 w-9 bg-gradient-to-br from-[#AD00EC] to-[#1700E6] text-white hover:bg-gradient-to-br hover:from-[#00CE07] hover:to-[#A6EE00] transition-all duration-300"
+                >
+                    <LayoutGrid className="size-5 text-white" />
+                </Button>
+             </SidebarTrigger>
           </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
             {menuItems.map((item) => {
                 const isActive = item.submenu ? isSubmenuActive(item.href) : pathname === item.href;
-                const buttonContent = (
-                  <>
-                     <div className={cn("p-1.5 bg-zinc-700/60 rounded-full", isActive && "bg-zinc-700/90 dark:bg-zinc-800/80 ")}>
-                      <item.icon className="shrink-0 text-white size-3"/>
-                    </div>
-                    <span className={cn("text-sm text-black dark:text-white", isActive ? "dark:text-white" : "text-black dark:text-white")}>{item.label}</span>
-                  </>
-                );
-
+                
                 return (
                   <SidebarMenuItem key={item.href}>
                     {item.submenu ? (
@@ -162,12 +160,21 @@ export default function DashboardLayout({
                               <div className={cn("rounded-md p-0.5", isActive ? "bg-card/90 dark:bg-zinc-800" : "bg-sidebar")}>
                                 <SidebarMenuButton
                                   isActive={false} // We manage active state on the wrapper
-                                  className="w-full justify-between bg-transparent hover:bg-transparent"
+                                  className={cn(
+                                    "w-full justify-between bg-transparent hover:bg-transparent",
+                                    isActive ? "dark:text-white" : "text-black dark:text-white"
+                                  )}
                                 >
                                   <div className="flex items-center gap-2">
-                                     {buttonContent}
+                                     <div className={cn("p-1.5 bg-zinc-700/60 rounded-full", isActive && "bg-zinc-700/90 dark:bg-zinc-800/80 ")}>
+                                      <item.icon className="shrink-0 text-white size-3"/>
+                                    </div>
+                                    <span className="text-sm">{item.label}</span>
                                   </div>
-                                  <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90 text-black dark:text-white" />
+                                  <ChevronRight className={cn(
+                                    "size-4 transition-transform duration-200 group-data-[state=open]:rotate-90",
+                                    "text-black dark:text-white"
+                                  )} />
                                 </SidebarMenuButton>
                               </div>
                            </div>
@@ -194,12 +201,18 @@ export default function DashboardLayout({
                           isActive ? "bg-gradient-to-r from-active-led-start to-active-led-end" : "bg-transparent",
                           "hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
                         )}>
-                           <div className={cn("rounded-md p-0.5", isActive ? "bg-card/90 dark:bg-zinc-800" : "bg-sidebar")}>
+                           <div className={cn("rounded-md p-0.5", isActive ? "dark:bg-zinc-800 bg-gray-200" : "bg-sidebar")}>
                             <SidebarMenuButton
                               isActive={false}
-                              className="w-full justify-start gap-2 bg-transparent hover:bg-transparent"
+                              className={cn(
+                                "w-full justify-start gap-2 bg-transparent hover:bg-transparent",
+                                isActive ? "dark:text-white text-black" : "text-black dark:text-white"
+                              )}
                             >
-                               {buttonContent}
+                               <div className={cn("p-1.5 bg-zinc-700/60 rounded-full", isActive && "bg-zinc-700/90 dark:bg-zinc-800/80 ")}>
+                                <item.icon className="shrink-0 text-white size-3"/>
+                              </div>
+                              <span className="text-sm">{item.label}</span>
                             </SidebarMenuButton>
                           </div>
                         </div>
