@@ -136,7 +136,7 @@ export default function DashboardLayout({
                                     <div className="p-1.5 bg-zinc-700/60 rounded-full">
                                       <item.icon className="shrink-0 text-white size-4"/>
                                     </div>
-                                    <span className="text-white dark:text-white group-hover/menu-item-wrapper:text-white dark:group-hover/menu-item-wrapper:text-white text-sm">{item.label}</span>
+                                    <span className="text-black dark:text-white text-sm">{item.label}</span>
                                   </div>
                                   <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90 text-white" />
                                 </SidebarMenuButton>
@@ -173,7 +173,7 @@ export default function DashboardLayout({
                                <div className={cn("p-1.5 rounded-full", isActive ? "bg-zinc-700/90" : "bg-zinc-800/50 dark:bg-zinc-800/50")}>
                                 <item.icon className="shrink-0 text-white dark:text-white size-4"/>
                               </div>
-                              <span className="text-black dark:text-white text-sm">{item.label}</span>
+                              <span className={cn("text-sm", isActive ? "text-black dark:text-white" : "text-black dark:text-white")}>{item.label}</span>
                             </SidebarMenuButton>
                           </div>
                         </div>
