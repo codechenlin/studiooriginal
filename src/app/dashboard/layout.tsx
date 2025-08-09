@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -14,6 +15,9 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/common/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,6 +36,8 @@ import {
   LayoutDashboard,
   LayoutTemplate,
   Code,
+  PlusCircle,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,10 +50,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/campaigns", label: "Campaña", icon: Mails },
+  { 
+    href: "/dashboard/campaigns", 
+    label: "Campaña", 
+    icon: Mails,
+    submenu: [
+      { href: "/dashboard/campaigns/create", label: "Crear Campaña", icon: PlusCircle },
+      { href: "/dashboard/campaigns", label: "Ver Campañas", icon: History },
+    ]
+  },
   { href: "/dashboard/lists", label: "Lista", icon: Users },
   { href: "/dashboard/templates", label: "Plantillas", icon: LayoutTemplate },
   { href: "/dashboard/automation", label: "Automatización", icon: Zap },
@@ -75,6 +91,10 @@ export default function DashboardLayout({
       title: `Cambiado a modo ${!isDarkMode ? "oscuro" : "claro"}`,
     });
   };
+  
+  const isSubmenuActive = (basePath: string) => {
+    return pathname.startsWith(basePath);
+  }
 
   return (
     <SidebarProvider>
@@ -89,15 +109,47 @@ export default function DashboardLayout({
           <SidebarMenu>
             {menuItems.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href} passHref>
-                  <SidebarMenuButton
-                    isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
-                    tooltip={{ children: item.label }}
-                  >
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
+                {item.submenu ? (
+                   <Collapsible>
+                    <CollapsibleTrigger asChild>
+                       <SidebarMenuButton
+                        isActive={isSubmenuActive(item.href)}
+                        tooltip={{ children: item.label }}
+                        className="w-full justify-between"
+                      >
+                         <div className="flex items-center gap-2">
+                           <item.icon />
+                           <span>{item.label}</span>
+                         </div>
+                         <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                       </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                     <CollapsibleContent>
+                       <SidebarMenuSub>
+                        {item.submenu.map((subItem) => (
+                           <SidebarMenuSubItem key={subItem.href}>
+                             <Link href={subItem.href} passHref>
+                               <SidebarMenuSubButton isActive={pathname === subItem.href}>
+                                  <subItem.icon />
+                                 <span>{subItem.label}</span>
+                               </SidebarMenuSubButton>
+                             </Link>
+                           </SidebarMenuSubItem>
+                        ))}
+                       </SidebarMenuSub>
+                     </CollapsibleContent>
+                   </Collapsible>
+                ) : (
+                  <Link href={item.href} passHref>
+                    <SidebarMenuButton
+                      isActive={pathname === item.href}
+                      tooltip={{ children: item.label }}
+                    >
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </Link>
+                )}
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
