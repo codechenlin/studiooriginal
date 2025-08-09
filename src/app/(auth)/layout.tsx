@@ -9,18 +9,21 @@ import { useToast } from "@/hooks/use-toast";
 
 function ThemeToggle() {
   const { toast } = useToast();
-  // Initialize state from localStorage or default to dark mode
-  const [isDarkMode, setIsDarkMode] = React.useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("theme") === "dark";
-    }
-    return true; // Default to dark mode on server
-  });
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDarkMode);
-    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
+    setMounted(true);
+    const storedTheme = localStorage.getItem("theme");
+    setIsDarkMode(storedTheme === "dark");
+  }, []);
+
+  React.useEffect(() => {
+    if (mounted) {
+      document.documentElement.classList.toggle("dark", isDarkMode);
+      localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+    }
+  }, [isDarkMode, mounted]);
 
   const toggleTheme = () => {
     const newMode = !isDarkMode;
@@ -29,6 +32,10 @@ function ThemeToggle() {
       title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
     });
   };
+
+  if (!mounted) {
+    return null; 
+  }
 
   return (
     <Button
