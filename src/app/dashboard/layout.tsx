@@ -86,7 +86,7 @@ export default function DashboardLayout({
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
- const toggleTheme = () => {
+  const toggleTheme = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
     toast({
@@ -182,7 +182,7 @@ export default function DashboardLayout({
                 size="icon" 
                 className="group rounded-full size-10 bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r from-[#AD00EC] to-[#0018EC] dark:hover:bg-gradient-to-r dark:from-[#AD00EC] dark:to-[#0018EC]"
             >
-              <Bell className="size-5 text-black dark:text-white"/>
+              <Bell className="size-5 text-black dark:text-white group-hover:text-white dark:group-hover:text-white"/>
               <span className="sr-only">Notificaciones</span>
             </Button>
             <Button 
@@ -191,7 +191,7 @@ export default function DashboardLayout({
                 onClick={toggleTheme} 
                 className="group rounded-full size-10 bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r from-[#AD00EC] to-[#0018EC] dark:hover:bg-gradient-to-r dark:from-[#AD00EC] dark:to-[#0018EC]"
             >
-              {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black hover:text-white" />}
+              {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black group-hover:text-white" />}
               <span className="sr-only">Cambiar tema</span>
             </Button>
           </div>
