@@ -123,20 +123,20 @@ export default function DashboardLayout({
                       <Collapsible defaultOpen={isActive}>
                         <CollapsibleTrigger asChild>
                            <div className={cn(
-                              "group/menu-item-wrapper relative rounded-lg transition-all p-1",
+                              "group/menu-item-wrapper relative rounded-lg p-1",
                               isActive ? "bg-zinc-800/80 dark:bg-zinc-800/80" : "bg-transparent",
-                              "hover:p-0.5 hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
+                              "hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
                             )}>
-                              <div className="bg-sidebar rounded-md p-1">
+                              <div className="bg-sidebar rounded-md p-0.5">
                                 <SidebarMenuButton
                                   isActive={false} // We manage active state on the wrapper
                                   className="w-full justify-between bg-transparent hover:bg-transparent"
                                 >
-                                  <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-zinc-700/60 rounded-full">
-                                      <item.icon className="shrink-0 text-white"/>
+                                  <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-zinc-700/60 rounded-full">
+                                      <item.icon className="shrink-0 text-white size-4"/>
                                     </div>
-                                    <span className="text-white dark:text-white group-hover/menu-item-wrapper:text-white dark:group-hover/menu-item-wrapper:text-white">{item.label}</span>
+                                    <span className="text-white dark:text-white group-hover/menu-item-wrapper:text-white dark:group-hover/menu-item-wrapper:text-white text-sm">{item.label}</span>
                                   </div>
                                   <ChevronRight className="size-4 transition-transform duration-200 group-data-[state=open]:rotate-90 text-white" />
                                 </SidebarMenuButton>
@@ -161,19 +161,19 @@ export default function DashboardLayout({
                     ) : (
                        <Link href={item.href} passHref>
                         <div className={cn(
-                          "group/menu-item-wrapper relative rounded-lg transition-all p-1",
+                          "group/menu-item-wrapper relative rounded-lg p-1",
                           isActive ? "bg-zinc-800/80 dark:bg-zinc-800/80" : "bg-transparent",
-                          "hover:p-0.5 hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
+                          "hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
                         )}>
-                           <div className={cn("bg-sidebar rounded-md p-1", isActive && "bg-transparent")}>
+                           <div className={cn("bg-sidebar rounded-md p-0.5", isActive && "bg-transparent")}>
                             <SidebarMenuButton
                               isActive={false}
-                              className="w-full justify-start gap-3 bg-transparent hover:bg-transparent"
+                              className="w-full justify-start gap-2 bg-transparent hover:bg-transparent"
                             >
-                               <div className={cn("p-2 rounded-full", isActive ? "bg-zinc-700/90" : "bg-zinc-800/50 dark:bg-zinc-800/50")}>
-                                <item.icon className="shrink-0 text-white dark:text-white"/>
+                               <div className={cn("p-1.5 rounded-full", isActive ? "bg-zinc-700/90" : "bg-zinc-800/50 dark:bg-zinc-800/50")}>
+                                <item.icon className="shrink-0 text-white dark:text-white size-4"/>
                               </div>
-                              <span className="text-black dark:text-white">{item.label}</span>
+                              <span className="text-black dark:text-white text-sm">{item.label}</span>
                             </SidebarMenuButton>
                           </div>
                         </div>
@@ -188,15 +188,15 @@ export default function DashboardLayout({
            <SidebarMenu>
              <SidebarMenuItem>
                 <div className={cn(
-                    "group/settings-button relative flex items-center w-full h-12 px-2 rounded-lg cursor-pointer transition-all duration-300",
+                    "group/settings-button relative flex items-center w-full h-12 px-2 rounded-lg cursor-pointer",
                     "bg-gradient-to-r from-settings-normal-start to-settings-normal-end",
                     "hover:from-settings-hover-start hover:to-settings-hover-end"
                 )}>
-                    <Link href="/dashboard/settings" className="flex items-center w-full h-full">
+                    <Link href="/dashboard/settings" className="flex items-center w-full h-full gap-2">
                         <div className="flex items-center justify-center size-8 rounded-full bg-black/10">
                             <Settings className="text-white" />
                         </div>
-                        <span className="font-semibold text-white ml-2 group-data-[collapsible=icon]:hidden">Ajustes</span>
+                        <span className="font-semibold text-white ml-0">Ajustes</span>
                     </Link>
                 </div>
             </SidebarMenuItem>
@@ -259,3 +259,5 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+
+    
