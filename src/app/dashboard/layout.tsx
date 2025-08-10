@@ -120,8 +120,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     const activeItem = menuItems.find(item => item.submenu && pathname.startsWith(item.href));
     if (activeItem) {
         setOpenMenu(activeItem.href);
-    } else {
-        setOpenMenu(null);
     }
   }, [pathname]);
 
