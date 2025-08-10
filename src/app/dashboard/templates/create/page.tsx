@@ -57,8 +57,12 @@ export default function CreateTemplatePage() {
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm"><Undo/> Deshacer</Button>
                 <Button variant="ghost" size="sm"><Redo/> Rehacer</Button>
-                <Button variant="outline" size="sm"><ArrowLeft/> Volver</Button>
-                <Button variant="outline" size="sm" className="border-primary/50 text-primary bg-transparent"><Save/> Guardar Borrador</Button>
+                <Button variant="ghost" size="sm" className="text-xs"><ArrowLeft className="mr-1"/> Volver</Button>
+                 <div className="group rounded-md p-0.5 bg-transparent hover:bg-gradient-to-r from-[#00CE07] to-[#A6EE00] transition-colors">
+                     <Button variant="outline" size="sm" className="bg-transparent dark:text-white hover:bg-transparent hover:text-black dark:hover:text-white">
+                        <Save className="mr-1"/> Guardar Borrador
+                    </Button>
+                </div>
                  <div className="group rounded-md p-0.5 bg-gradient-to-r from-primary to-accent/80 transition-colors">
                     <Button className="bg-card/20 dark:bg-card/20 hover:bg-card/30 dark:hover:bg-card/30 text-foreground">
                         <Rocket className="mr-2"/> Publicar
@@ -171,3 +175,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+    
