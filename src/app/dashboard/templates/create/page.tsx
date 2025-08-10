@@ -46,27 +46,7 @@ export default function CreateTemplatePage() {
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       {/* Left Panel: Content & Blocks */}
       <aside className="w-80 border-r border-border/20 flex flex-col bg-card/5">
-        <div className="p-4 border-b border-border/20 flex items-center gap-2 h-[61px]">
-           <span className="font-semibold text-lg">Bloques</span>
-        </div>
-        <ScrollArea className="flex-1">
-          <div className="p-4 grid grid-cols-2 gap-4">
-            {contentBlocks.map((block) => (
-              <Card 
-                key={block.name} 
-                className="group bg-card/5 border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-primary/50 hover:shadow-lg"
-              >
-                <block.icon className="size-8 mb-2 text-[#00B0F0] transition-colors" />
-                <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
-              </Card>
-            ))}
-          </div>
-        </ScrollArea>
-      </aside>
-
-      {/* Center Panel: Editor/Canvas */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm">
+        <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px]">
             <div className="flex items-center gap-2">
                 <Input defaultValue="Plantilla sin título" className="text-lg font-semibold border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-auto bg-transparent"/>
             </div>
@@ -86,6 +66,23 @@ export default function CreateTemplatePage() {
                 </div>
             </div>
         </header>
+        <ScrollArea className="flex-1">
+          <div className="p-4 grid grid-cols-2 gap-4">
+            {contentBlocks.map((block) => (
+              <Card 
+                key={block.name} 
+                className="group bg-card/5 border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-primary/50 hover:shadow-lg"
+              >
+                <block.icon className="size-8 mb-2 text-[#00B0F0] transition-colors" />
+                <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
+      </aside>
+
+      {/* Center Panel: Editor/Canvas */}
+      <main className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 bg-transparent p-8 overflow-auto">
             <div className="bg-card/5 max-w-3xl mx-auto shadow-2xl rounded-lg h-[1200px] p-8">
                <div className="border-2 border-dashed border-border/30 rounded-lg h-full flex items-center justify-center text-muted-foreground">
@@ -97,75 +94,79 @@ export default function CreateTemplatePage() {
 
       {/* Right Panel: Style & Configuration */}
       <aside className="w-80 border-l border-border/20 flex flex-col bg-card/5">
-         <Tabs defaultValue="style" className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-2 m-2 bg-card/10 border-border/20">
-                <TabsTrigger value="style"><Palette className="mr-2"/> Estilo</TabsTrigger>
-                <TabsTrigger value="config"><ChevronsUpDown className="mr-2"/> Capas</TabsTrigger>
-            </TabsList>
-            <Separator className="bg-border/20" />
-            <ScrollArea className="flex-1">
-                <TabsContent value="style" className="p-4">
-                    <div className="space-y-4">
-                        {/* Dimensions Section */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-medium text-foreground/80">Dimensiones</h3>
-                            <div className="space-y-2">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div><Label>Ancho</Label><Input className="bg-transparent border-border/50" placeholder="600px"/></div>
-                                    <div><Label>Alto</Label><Input className="bg-transparent border-border/50" placeholder="Auto"/></div>
-                                </div>
-                                <div><Label>Padding</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
-                            </div>
-                        </div>
+         <header className="h-[61px] border-b border-border/20 flex-shrink-0">
+             <Tabs defaultValue="style" className="flex-1 flex flex-col h-full">
+                <TabsList className="grid w-full grid-cols-2 m-2 bg-card/10 border-border/20">
+                    <TabsTrigger value="style"><Palette className="mr-2"/> Estilo</TabsTrigger>
+                    <TabsTrigger value="config"><ChevronsUpDown className="mr-2"/> Capas</TabsTrigger>
+                </TabsList>
+             </Tabs>
+         </header>
+         <Separator className="bg-border/20" />
+         <ScrollArea className="flex-1">
+            <Tabs defaultValue="style">
+              <TabsContent value="style" className="p-4">
+                  <div className="space-y-4">
+                      {/* Dimensions Section */}
+                      <div className="space-y-4">
+                          <h3 className="text-sm font-medium text-foreground/80">Dimensiones</h3>
+                          <div className="space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                  <div><Label>Ancho</Label><Input className="bg-transparent border-border/50" placeholder="600px"/></div>
+                                  <div><Label>Alto</Label><Input className="bg-transparent border-border/50" placeholder="Auto"/></div>
+                              </div>
+                              <div><Label>Padding</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
+                          </div>
+                      </div>
 
-                        <Separator className="bg-border/20" />
+                      <Separator className="bg-border/20" />
 
-                        {/* Typography Section */}
-                        <div className="space-y-4">
-                             <h3 className="text-sm font-medium text-foreground/80">Tipografía</h3>
-                             <div className="space-y-4">
-                                <div>
-                                    <Label>Fuente</Label>
-                                    <Select>
-                                        <SelectTrigger className="bg-transparent border-border/50"><SelectValue placeholder="Seleccionar fuente" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="arial">Arial</SelectItem>
-                                            <SelectItem value="helvetica">Helvetica</SelectItem>
-                                            <SelectItem value="georgia">Georgia</SelectItem>
-                                            <SelectItem value="times">Times New Roman</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div><Label>Tamaño</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
-                                    <div><Label>Peso</Label><Input className="bg-transparent border-border/50" placeholder="Normal"/></div>
-                                </div>
-                                 <div className="grid grid-cols-3 gap-1">
-                                    <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Bold/></Button>
-                                    <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Italic/></Button>
-                                    <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Underline/></Button>
-                                </div>
-                             </div>
-                        </div>
-
-                        <Separator className="bg-border/20" />
-
-                        {/* Background & Border Section */}
-                        <div className="space-y-4">
-                           <h3 className="text-sm font-medium text-foreground/80">Fondo y Borde</h3>
+                      {/* Typography Section */}
+                      <div className="space-y-4">
+                           <h3 className="text-sm font-medium text-foreground/80">Tipografía</h3>
                            <div className="space-y-4">
-                                <div><Label>Color de Fondo</Label><Input className="bg-transparent border-border/50" placeholder="#000000"/></div>
-                                <div><Label>Color de Borde</Label><Input className="bg-transparent border-border/50" placeholder="#333333"/></div>
-                                <div><Label>Radio del Borde</Label><Slider defaultValue={[8]} max={40} step={1} /></div>
+                              <div>
+                                  <Label>Fuente</Label>
+                                  <Select>
+                                      <SelectTrigger className="bg-transparent border-border/50"><SelectValue placeholder="Seleccionar fuente" /></SelectTrigger>
+                                      <SelectContent>
+                                          <SelectItem value="arial">Arial</SelectItem>
+                                          <SelectItem value="helvetica">Helvetica</SelectItem>
+                                          <SelectItem value="georgia">Georgia</SelectItem>
+                                          <SelectItem value="times">Times New Roman</SelectItem>
+                                      </SelectContent>
+                                  </Select>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                  <div><Label>Tamaño</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
+                                  <div><Label>Peso</Label><Input className="bg-transparent border-border/50" placeholder="Normal"/></div>
+                              </div>
+                               <div className="grid grid-cols-3 gap-1">
+                                  <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Bold/></Button>
+                                  <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Italic/></Button>
+                                  <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Underline/></Button>
+                              </div>
                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-                <TabsContent value="config" className="p-4 text-center text-muted-foreground">
-                    <p className="text-sm">El panel de capas aparecerá aquí.</p>
-                </TabsContent>
-            </ScrollArea>
-        </Tabs>
+                      </div>
+
+                      <Separator className="bg-border/20" />
+
+                      {/* Background & Border Section */}
+                      <div className="space-y-4">
+                         <h3 className="text-sm font-medium text-foreground/80">Fondo y Borde</h3>
+                         <div className="space-y-4">
+                              <div><Label>Color de Fondo</Label><Input className="bg-transparent border-border/50" placeholder="#000000"/></div>
+                              <div><Label>Color de Borde</Label><Input className="bg-transparent border-border/50" placeholder="#333333"/></div>
+                              <div><Label>Radio del Borde</Label><Slider defaultValue={[8]} max={40} step={1} /></div>
+                         </div>
+                      </div>
+                  </div>
+              </TabsContent>
+              <TabsContent value="config" className="p-4 text-center text-muted-foreground">
+                  <p className="text-sm">El panel de capas aparecerá aquí.</p>
+              </TabsContent>
+            </Tabs>
+         </ScrollArea>
       </aside>
     </div>
   );
