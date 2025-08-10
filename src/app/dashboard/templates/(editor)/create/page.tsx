@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -10,6 +11,16 @@ import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import {
   Square,
   Type,
@@ -34,28 +45,72 @@ import {
   Timer,
   Smile,
   Code,
-  Shapes
+  Shapes,
+  LayoutGrid,
+  Box,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const contentBlocks = [
-  { name: "Columns", icon: Columns },
-  { name: "Heading", icon: Heading1 },
-  { name: "Text", icon: Type },
-  { name: "Image", icon: ImageIcon },
-  { name: "Button", icon: Square },
-  { name: "Separator", icon: Minus },
-  { name: "Video Youtube", icon: Youtube },
-  { name: "Contador", icon: Timer },
-  { name: "Iconos", icon: Shapes },
-  { name: "Emojis", icon: Smile },
-  { name: "Codigo HTML", icon: Code },
+  { name: "Columns", icon: Columns, id: 'columns' },
+  { name: "Heading", icon: Heading1, id: 'heading' },
+  { name: "Text", icon: Type, id: 'text' },
+  { name: "Image", icon: ImageIcon, id: 'image' },
+  { name: "Button", icon: Square, id: 'button' },
+  { name: "Separator", icon: Minus, id: 'separator' },
+  { name: "Video Youtube", icon: Youtube, id: 'youtube' },
+  { name: "Contador", icon: Timer, id: 'timer' },
+  { name: "Iconos", icon: Shapes, id: 'icons' },
+  { name: "Emojis", icon: Smile, id: 'emojis' },
+  { name: "Codigo HTML", icon: Code, id: 'html' },
 ];
+
+const columnOptions = [
+    { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
+    { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 5, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div></div> },
+];
+
+interface ContentBlock {
+  id: string;
+  type: 'columns';
+  payload: {
+    columnCount: number;
+  };
+}
 
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+  const [selectedColumnLayout, setSelectedColumnLayout] = useState<number | null>(null);
+  const [canvasContent, setCanvasContent] = useState<ContentBlock[]>([]);
 
   const handleSave = () => {
     setLastSaved(new Date());
+  };
+  
+  const handleBlockClick = (blockId: string) => {
+    if (blockId === 'columns') {
+      setSelectedColumnLayout(null);
+      setIsColumnModalOpen(true);
+    }
+    // Handle other blocks here in the future
+  };
+
+  const handleAddColumns = () => {
+    if (selectedColumnLayout) {
+      const newBlock: ContentBlock = {
+        id: `block_${Date.now()}`,
+        type: 'columns',
+        payload: {
+          columnCount: selectedColumnLayout,
+        },
+      };
+      setCanvasContent([...canvasContent, newBlock]);
+      setIsColumnModalOpen(false);
+    }
   };
 
   return (
@@ -75,8 +130,9 @@ export default function CreateTemplatePage() {
             <div className="grid grid-cols-2 gap-4">
               {contentBlocks.map((block) => (
                 <Card 
-                  key={block.name} 
-                  className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                  key={block.id} 
+                  onClick={() => handleBlockClick(block.id)}
+                  className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
                 >
                   <block.icon className="size-8 text-[#00B0F0] transition-colors" />
                   <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
@@ -118,10 +174,29 @@ export default function CreateTemplatePage() {
         </header>
 
         <div className="flex-1 bg-transparent p-8 overflow-auto">
-            <div className="bg-card/5 max-w-3xl mx-auto shadow-2xl rounded-lg h-[1200px] p-8">
-               <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-muted-foreground">
+            <div className="bg-card/5 max-w-3xl mx-auto shadow-2xl rounded-lg min-h-[1200px] p-8">
+               {canvasContent.length === 0 ? (
+                 <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-muted-foreground">
                    <p>Arrastra un bloque para empezar a construir tu plantilla.</p>
-               </div>
+                 </div>
+               ) : (
+                <div className="space-y-4">
+                  {canvasContent.map(block => {
+                    if (block.type === 'columns') {
+                      return (
+                        <div key={block.id} className="flex gap-4">
+                          {Array.from({ length: block.payload.columnCount }).map((_, index) => (
+                            <div key={index} className="flex-1 p-4 border-2 border-dashed border-border/30 rounded-lg min-h-[100px] flex items-center justify-center">
+                              <span className="text-muted-foreground text-xs">Columna</span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    }
+                    return null;
+                  })}
+                </div>
+               )}
             </div>
         </div>
       </main>
@@ -192,6 +267,53 @@ export default function CreateTemplatePage() {
           </div>
          </ScrollArea>
       </aside>
+
+      {/* Column Selection Modal */}
+       <Dialog open={isColumnModalOpen} onOpenChange={setIsColumnModalOpen}>
+        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><LayoutGrid className="text-primary"/>Seleccionar Estructura de Columnas</DialogTitle>
+            <DialogDescription>
+              Elige cuántas secciones de columnas quieres añadir a tu plantilla. Podrás arrastrar contenido a cada sección.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {columnOptions.map(option => (
+              <button
+                key={option.num}
+                onClick={() => setSelectedColumnLayout(option.num)}
+                className={cn(
+                  "w-full p-2 border-2 rounded-lg transition-all flex items-center gap-4",
+                  selectedColumnLayout === option.num
+                    ? 'border-primary shadow-lg'
+                    : 'border-border hover:border-primary/50'
+                )}
+              >
+                <div className="flex items-center justify-center p-2 bg-muted rounded-md w-12 h-12">
+                   <Box className="text-primary" />
+                </div>
+                 <div className="flex-1 text-left">
+                  <p className="font-semibold">{option.num} {option.num > 1 ? 'Columnas' : 'Columna'}</p>
+                  <div className="mt-1">
+                    <option.icon />
+                  </div>
+                </div>
+                 {selectedColumnLayout === option.num && <div className="w-5 h-5 rounded-full bg-primary" />}
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancelar
+              </Button>
+            </DialogClose>
+            <Button type="button" onClick={handleAddColumns} disabled={!selectedColumnLayout}>
+              Aceptar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
