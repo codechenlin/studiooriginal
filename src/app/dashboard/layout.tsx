@@ -43,6 +43,7 @@ import {
   LayoutGrid,
   FilePlus,
   Leaf,
+  Trees,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,7 +77,7 @@ const menuItems = [
     icon: LayoutTemplate,
     submenu: [
       { href: "/dashboard/templates/create", label: "Crear Plantilla", icon: Leaf },
-      { href: "/dashboard/templates", label: "Mis Plantillas", icon: LayoutGrid },
+      { href: "/dashboard/templates", label: "Mis Plantillas", icon: Trees },
     ]
   },
   { href: "/dashboard/automation", label: "Automatización", icon: Zap },
@@ -126,7 +127,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     if (pathname === '/dashboard/templates/create') {
       setOpen(false);
     }
-  }, [pathname]);
+  }, [pathname, setOpen]);
   
    React.useEffect(() => {
     const activeItem = menuItems.find(item => item.submenu && pathname.startsWith(item.href));
@@ -346,5 +347,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
-
-    
