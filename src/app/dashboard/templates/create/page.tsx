@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Toggle } from '@/components/ui/toggle';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Square,
   Type,
@@ -71,8 +71,8 @@ export default function CreateTemplatePage() {
                 <Input defaultValue="Plantilla sin título" className="text-lg font-semibold border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-auto bg-transparent"/>
             </div>
             <div className="flex items-center gap-2">
-              <Toggle size="sm" className="border-border/50" pressed><Laptop/></Toggle>
-              <Toggle size="sm" className="border-border/50"><Smartphone/></Toggle>
+              <Button variant="ghost" size="icon"><Laptop/></Button>
+              <Button variant="ghost" size="icon"><Smartphone/></Button>
             </div>
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm"><Undo/> Deshacer</Button>
@@ -140,9 +140,9 @@ export default function CreateTemplatePage() {
                                     <div><Label>Peso</Label><Input className="bg-transparent border-border/50" placeholder="Normal"/></div>
                                 </div>
                                  <div className="grid grid-cols-3 gap-1">
-                                    <Toggle className="border-border/50"><Bold/></Toggle>
-                                    <Toggle className="border-border/50"><Italic/></Toggle>
-                                    <Toggle className="border-border/50"><Underline/></Toggle>
+                                    <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Bold/></Button>
+                                    <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Italic/></Button>
+                                    <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Underline/></Button>
                                 </div>
                              </div>
                         </div>
