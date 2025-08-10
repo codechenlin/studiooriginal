@@ -68,7 +68,15 @@ const menuItems = [
     ]
   },
   { href: "/dashboard/lists", label: "Lista", icon: Users },
-  { href: "/dashboard/templates", label: "Plantillas", icon: LayoutTemplate },
+  { 
+    href: "/dashboard/templates", 
+    label: "Plantillas", 
+    icon: LayoutTemplate,
+    submenu: [
+      { href: "/dashboard/templates/create", label: "Crear Nueva Plantilla", icon: PlusCircle },
+      { href: "/dashboard/templates", label: "Mis Plantillas", icon: LayoutGrid },
+    ]
+  },
   { href: "/dashboard/automation", label: "Automatización", icon: Zap },
   { href: "/dashboard/servers", label: "Servidores", icon: Server },
   { href: "/dashboard/integration", label: "Integración", icon: Plug },
@@ -305,3 +313,5 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+
+    
