@@ -108,7 +108,6 @@ function FloatingActionButton() {
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { toast } = useToast();
-  const { setOpen } = useSidebar();
   const [isDarkMode, setIsDarkMode] = React.useState(true);
   
   const [openMenu, setOpenMenu] = React.useState<string | null>(null);
@@ -116,12 +115,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
-
-  React.useEffect(() => {
-    if (pathname === '/dashboard/templates/(editor)/create') {
-      setOpen(false);
-    }
-  }, [pathname]);
   
    React.useEffect(() => {
     const activeItem = menuItems.find(item => item.submenu && pathname.startsWith(item.href));

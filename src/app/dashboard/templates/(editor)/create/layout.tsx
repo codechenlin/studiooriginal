@@ -15,5 +15,5 @@ export default function CreateTemplateLayout({
     };
   }, []);
 
-  return <>{children}</>;
+  return <div className="bg-editor-dark">{children}</div>;
 }
