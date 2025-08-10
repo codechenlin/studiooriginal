@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -123,6 +123,7 @@ export default function CreateTemplatePage() {
   
   // Canvas State
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
+  const [isPending, startTransition] = useTransition();
 
   const handleSave = () => {
     setLastSaved(new Date());
@@ -224,11 +225,13 @@ export default function CreateTemplatePage() {
   }
 
   const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
-    const newCanvasContent = [...canvasContent];
-    const item = newCanvasContent.splice(index, 1)[0];
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    newCanvasContent.splice(newIndex, 0, item);
-    setCanvasContent(newCanvasContent);
+    startTransition(() => {
+        const newCanvasContent = [...canvasContent];
+        const item = newCanvasContent.splice(index, 1)[0];
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        newCanvasContent.splice(newIndex, 0, item);
+        setCanvasContent(newCanvasContent);
+    });
   };
 
   const promptDeleteBlock = (index: number) => {
@@ -345,7 +348,7 @@ export default function CreateTemplatePage() {
         </header>
 
         <div className="flex-1 bg-transparent p-8 overflow-auto">
-            <div className={cn("bg-card/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] p-8 transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
+            <div className={cn("bg-background/80 dark:bg-zinc-900/50 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] p-8 transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
                {canvasContent.length === 0 ? (
                  <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground">
                    <p>Arrastra un bloque desde el panel izquierdo para empezar a construir tu plantilla. <br/> Comienza con un bloque de 'Columns'.</p>
@@ -353,7 +356,7 @@ export default function CreateTemplatePage() {
                ) : (
                 <div className="space-y-2">
                   {canvasContent.map((block, index) => (
-                    <div key={block.id} className="group/row relative p-2 rounded-lg hover:bg-primary/5 transition-all duration-300">
+                    <div key={block.id} className={cn("group/row relative p-2 rounded-lg hover:bg-primary/5 transition-all duration-300", isPending && 'opacity-50')}>
                       <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
                           <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
                             <ArrowUp className="size-4" />

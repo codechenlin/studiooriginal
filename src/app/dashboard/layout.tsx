@@ -118,16 +118,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, [isDarkMode]);
 
   React.useEffect(() => {
-    // This effect runs only when isDarkMode changes, after the initial render.
-    // We can safely show the toast here.
-    // The initial state is set without a toast.
-  }, [isDarkMode]);
-
-  React.useEffect(() => {
-    if (pathname === '/dashboard/templates/create' || pathname === '/dashboard/templates/(editor)/create') {
+    if (pathname === '/dashboard/templates/(editor)/create') {
       setOpen(false);
     }
-  }, [pathname, setOpen]);
+  }, [pathname]);
   
    React.useEffect(() => {
     const activeItem = menuItems.find(item => item.submenu && pathname.startsWith(item.href));
