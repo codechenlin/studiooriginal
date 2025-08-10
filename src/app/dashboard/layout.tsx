@@ -153,7 +153,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
              </SidebarTrigger>
           </div>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className="custom-scrollbar">
           <SidebarMenu>
             {menuItems.map((item) => {
                 const isActive = item.submenu ? isSubmenuActive(item.href) : pathname === item.href;
@@ -326,6 +326,12 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  if (pathname.startsWith('/dashboard/templates/create')) {
+    return <>{children}</>;
+  }
+  
   return (
     <SidebarProvider>
       <LayoutContent>{children}</LayoutContent>

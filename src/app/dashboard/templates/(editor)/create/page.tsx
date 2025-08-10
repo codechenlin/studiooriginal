@@ -340,7 +340,7 @@ export default function CreateTemplatePage() {
           </div>
         </header>
 
-        <div className="flex-1 bg-transparent overflow-auto">
+        <div className="flex-1 bg-transparent overflow-auto custom-scrollbar">
             <div className="p-8">
                 <div className={cn("bg-background/80 dark:bg-zinc-900/50 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
                    {canvasContent.length === 0 ? (
@@ -411,7 +411,7 @@ export default function CreateTemplatePage() {
              </Tabs>
          </header>
          <Separator className="bg-border/20" />
-         <ScrollArea className="flex-1">
+         <ScrollArea className="flex-1 custom-scrollbar">
             <div className="p-4 space-y-4">
               <div className="space-y-4">
                   <h3 className="text-sm font-medium text-foreground/80">Dimensiones</h3>
