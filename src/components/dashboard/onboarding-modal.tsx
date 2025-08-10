@@ -169,7 +169,7 @@ export function OnboardingModal({ isOpen, onOpenChange }: OnboardingModalProps) 
             <DialogFooter className="px-6 pb-6 sm:justify-between items-center w-full">
                 <Progress value={progressValue} className="w-full sm:w-1/3 h-2" indicatorClassName="bg-gradient-to-r from-success-start to-success-end" />
                 <div className="flex gap-2 justify-end w-full sm:w-auto pt-4 sm:pt-0">
-                    <Button variant="outline" onClick={handleClose}>Cancelar</Button>
+                    <Button variant="outline" onClick={handleClose} className="hover:bg-[#F00000] hover:text-white">Cancelar</Button>
                     <Button 
                         onClick={handleNext} 
                         className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity"
