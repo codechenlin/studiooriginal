@@ -58,7 +58,7 @@ export default function CreateTemplatePage() {
                 key={block.name} 
                 className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-grab transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
               >
-                <block.icon className="size-8 mb-2 text-[#00B0F0] transition-colors" />
+                <block.icon className="size-8 text-[#00B0F0] transition-colors" />
                 <span className="text-sm font-medium text-center text-foreground/80">{block.name}</span>
               </Card>
             ))}
@@ -81,7 +81,7 @@ export default function CreateTemplatePage() {
               <Button variant="ghost" size="sm" className="text-xs"><ArrowLeft className="mr-1"/> Volver</Button>
                <div className="group rounded-md p-0.5 bg-transparent hover:bg-gradient-to-r from-[#00CE07] to-[#A6EE00] transition-colors">
                    <Button variant="outline" size="sm" className="bg-transparent text-foreground dark:text-white hover:bg-transparent hover:text-black dark:hover:text-white">
-                      <Save className="mr-1"/> Guardar Borrador
+                      <Save className="mr-1"/> Guardar
                   </Button>
               </div>
                <div className="group rounded-md p-0.5 bg-gradient-to-r from-primary to-accent/80 transition-colors">
