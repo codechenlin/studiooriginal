@@ -524,7 +524,7 @@ export default function CreateTemplatePage() {
           }
           return col;
         });
-        return { ...row, payload: { columns: newColumns } };
+        return { ...row, payload: { ...row.payload, columns: newColumns } };
       }
       if (row.type === 'wrapper' && row.id === activeContainerId) {
         return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
@@ -713,7 +713,7 @@ export default function CreateTemplatePage() {
               case 'text':
                 return <p className="p-2">{block.payload.text}</p>
               case 'emojis':
-                return <p style={{...block.payload.styles}}>{(block as EmojiBlock).payload.emoji}</p>
+                return <p className="text-center" style={{fontSize: '48px'}}>{(block as EmojiBlock).payload.emoji}</p>
               case 'button':
                 return (
                     <div style={getButtonContainerStyle(block as ButtonBlock)}>
@@ -906,7 +906,7 @@ export default function CreateTemplatePage() {
         onClick={(e) => { e.stopPropagation(); setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId })}}
       >
         <div className={cn("w-full h-full relative flex items-center justify-center", selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id && "outline-dashed outline-1 outline-primary")}>
-            <span style={{ fontSize: `${height * 0.8}px` }}>{block.payload.emoji}</span>
+            <span style={{ fontSize: `${height * 0.8}px`, lineHeight: 1 }}>{block.payload.emoji}</span>
             {selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id && (
                 <>
                     {/* Resize handle */}
@@ -933,10 +933,8 @@ export default function CreateTemplatePage() {
   };
 
   const renderCanvasBlock = (block: CanvasBlock, index: number) => {
-    switch (block.type) {
-      case 'columns':
-        return (
-          <motion.div 
+    return (
+        <motion.div 
             key={block.id} 
             layout
             initial={{ opacity: 0, y: 20 }}
@@ -944,23 +942,24 @@ export default function CreateTemplatePage() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="group/row relative rounded-lg hover:bg-primary/5"
-          >
-            <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
-                <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
-                  <ArrowUp className="size-4" />
-                </Button>
-                <GripVertical className="size-5 text-muted-foreground cursor-grab" />
-                <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
-                  <ArrowDown className="size-4" />
-                </Button>
-            </div>
+        >
+        <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
+            <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
+                <ArrowUp className="size-4" />
+            </Button>
+            <GripVertical className="size-5 text-muted-foreground cursor-grab" />
+            <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
+                <ArrowDown className="size-4" />
+            </Button>
+        </div>
 
-            <div className="absolute top-2 -right-8 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-               <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
-                  <Trash2 className="size-4" />
-               </Button>
-            </div>
-            
+        <div className="absolute top-2 -right-8 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+            <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
+                <Trash2 className="size-4" />
+            </Button>
+        </div>
+        
+        {block.type === 'columns' && (
             <div className="flex overflow-x-auto">
               {block.payload.columns.map((col) => (
                 <div 
@@ -987,28 +986,16 @@ export default function CreateTemplatePage() {
                 </div>
               ))}
             </div>
-          </motion.div>
-        );
-      case 'wrapper':
-        return (
-            <motion.div
+        )}
+        
+        {block.type === 'wrapper' && (
+            <div
               id={block.id}
-              key={block.id}
               ref={wrapperRef}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="group/row relative rounded-lg border-2 border-dashed border-purple-500"
+              className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500"
               style={{ height: `${block.payload.height}px` }}
               onClick={() => handleOpenBlockSelector(block.id)}
             >
-              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
-                <Button variant="destructive" size="icon" className="size-7" onClick={(e) => { e.stopPropagation(); promptDeleteItem(block.id); }}>
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
               <div className="w-full h-full relative">
                 {block.payload.blocks.map(b => {
                   if (b.type === 'emojis') {
@@ -1022,11 +1009,10 @@ export default function CreateTemplatePage() {
                  onMouseDown={(e) => handleMouseDownResize(e, block.id)}
                  className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
               />
-            </motion.div>
-          );
-      default:
-        return null;
-    }
+            </div>
+        )}
+        </motion.div>
+    );
   }
 
 
@@ -1316,6 +1302,7 @@ export default function CreateTemplatePage() {
     
 
     
+
 
 
 
