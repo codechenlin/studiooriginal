@@ -67,14 +67,18 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  RotateCw,
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, PanInfo } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 
-const contentBlocks = [
+const mainContentBlocks = [
   { name: "Columns", icon: Columns, id: 'columns' },
   { name: "Contenedor Flexible", icon: Shapes, id: 'wrapper' },
+];
+
+const contentBlocks = [
   { name: "Heading", icon: Heading1, id: 'heading' },
   { name: "Text", icon: Type, id: 'text' },
   { name: "Image", icon: ImageIcon, id: 'image' },
@@ -96,7 +100,7 @@ const columnOptions = [
 
 const popularEmojis = Array.from(new Set([
   '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
-  '✅', '✉️', '🔗', '📈', '💡', '💯', '👋', '👇', '👉', '🎁',
+  '✅', '✉️', '🔗', '💡', '💯', '👋', '👇', '👉', '🎁', '📈',
   '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸',
   '📊', '💻', '📱'
 ]));
@@ -139,6 +143,13 @@ interface EmojiBlock extends BaseBlock {
         styles: {
             fontSize: string;
             textAlign: TextAlign;
+            transform: {
+                x: number;
+                y: number;
+                width: number;
+                height: number;
+                rotate: number;
+            }
         }
     }
 }
@@ -180,53 +191,35 @@ interface WrapperBlock {
 
 
 type CanvasBlock = ColumnsBlock | WrapperBlock;
-type SelectedElement = { type: 'column', columnId: string, rowId: string } | { type: 'primitive', primitiveId: string, columnId: string, rowId: string } | null;
+type SelectedElement = { type: 'column', columnId: string, rowId: string } | { type: 'primitive', primitiveId: string, columnId: string, rowId: string } | { type: 'wrapper', wrapperId: string } | { type: 'wrapper-primitive', primitiveId: string, wrapperId: string } | null;
+
 
 const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-  if (!selectedElement) return null;
+  if (!selectedElement || selectedElement.type !== 'column') return null;
 
   const getElement = () => {
-    if (selectedElement.type === 'column') {
-      const row = canvasContent.find(r => r.id === selectedElement.rowId);
-      if (row?.type !== 'columns') return null;
-      return row?.payload.columns.find(c => c.id === selectedElement.columnId);
-    }
-    if (selectedElement.type === 'primitive') {
-        const row = canvasContent.find(r => r.id === selectedElement.rowId);
-        if (row?.type !== 'columns') return null;
-        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
-        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type === 'button' ? block.payload : null;
-    }
-    return null;
+    const row = canvasContent.find(r => r.id === selectedElement.rowId);
+    if (row?.type !== 'columns') return null;
+    return row?.payload.columns.find(c => c.id === selectedElement.columnId);
   }
   
   const element = getElement();
   if (!element) return null;
 
-  const { background, borderRadius } = (selectedElement.type === 'column' ? element.styles : (element as ButtonBlock['payload']).styles);
+  const { background, borderRadius } = element.styles;
   
   const updateStyle = (key: string, value: any) => {
     const newCanvasContent = canvasContent.map(row => {
-      if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+      if (row.id !== selectedElement.rowId) return row;
       if (row.type !== 'columns') return row;
       
       const newColumns = row.payload.columns.map(col => {
-        if (selectedElement.type === 'column' && col.id === selectedElement.columnId) {
+        if (col.id === selectedElement.columnId) {
             return { ...col, styles: { ...col.styles, [key]: value } };
-        }
-        if (selectedElement.type === 'primitive' && col.id === selectedElement.columnId) {
-            const newBlocks = col.blocks.map(block => {
-                if (block.id === selectedElement.primitiveId && block.type === 'button') {
-                    return { ...block, payload: { ...block.payload, styles: {...block.payload.styles, [key]: value} }};
-                }
-                return block;
-            })
-            return {...col, blocks: newBlocks};
         }
         return col;
       });
@@ -411,7 +404,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  </div>
             </div>
             <Separator className="bg-border/20"/>
-            <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+            {/* <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} /> */}
         </>
     )
 }
@@ -428,7 +421,7 @@ export default function CreateTemplatePage() {
   const [selectedColumnLayout, setSelectedColumnLayout] = useState<number | null>(null);
   const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
   const [isEmojiSelectorOpen, setIsEmojiSelectorOpen] = useState(false);
-  const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
+  const [activeContainerId, setActiveContainerId] = useState<string | null>(null); // For columns or wrappers
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{rowId: string, colId?: string, primId?: string} | null>(null);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
@@ -483,68 +476,69 @@ export default function CreateTemplatePage() {
     }
   };
 
-  const handleOpenBlockSelector = (columnId: string) => {
-    setActiveColumnId(columnId);
+  const handleOpenBlockSelector = (containerId: string) => {
+    setActiveContainerId(containerId);
     setIsBlockSelectorOpen(true);
   };
 
   const handleSelectBlockToAdd = (blockType: PrimitiveBlockType) => {
-    if (!activeColumnId) return;
-
+    if (!activeContainerId) return;
+  
     if (blockType === 'emojis') {
-        setIsEmojiSelectorOpen(true);
-        setIsBlockSelectorOpen(false);
-        return;
+      setIsEmojiSelectorOpen(true);
+      setIsBlockSelectorOpen(false);
+      return;
     }
-
+  
     let newBlock: PrimitiveBlock;
-
+  
     if (blockType === 'button') {
-        newBlock = {
-            id: `button_${Date.now()}`,
-            type: 'button',
-            payload: {
-                text: 'Botón',
-                url: '#',
-                textAlign: 'center',
-                styles: {
-                    borderRadius: 8,
-                    background: {
-                        type: 'solid',
-                        color1: '#A020F0'
-                    }
-                }
-            }
-        }
-    } else {
-         newBlock = {
-          id: `${blockType}_${Date.now()}`,
-          type: blockType,
-          payload: {
-            ...(blockType === 'heading' && { text: 'Título principal' }),
+      newBlock = {
+        id: `button_${Date.now()}`,
+        type: 'button',
+        payload: {
+          text: 'Botón',
+          url: '#',
+          textAlign: 'center',
+          styles: {
+            borderRadius: 8,
+            background: { type: 'solid', color1: '#A020F0' },
           },
-        };
+        },
+      };
+    } else {
+      newBlock = {
+        id: `${blockType}_${Date.now()}`,
+        type: blockType,
+        payload: {
+          ...(blockType === 'heading' && { text: 'Título principal' }),
+        },
+      };
     }
-    
-
-    const newCanvasContent = canvasContent.map(row => {
-      if (row.type !== 'columns') return row;
-      const newColumns = row.payload.columns.map(col => {
-        if (col.id === activeColumnId) {
-          return { ...col, blocks: [...col.blocks, newBlock] };
-        }
-        return col;
-      });
-      return { ...row, payload: { columns: newColumns } };
+  
+    const newCanvasContent = canvasContent.map((row) => {
+      if (row.type === 'columns') {
+        const newColumns = row.payload.columns.map((col) => {
+          if (col.id === activeContainerId) {
+            return { ...col, blocks: [...col.blocks, newBlock] };
+          }
+          return col;
+        });
+        return { ...row, payload: { ...newColumns } };
+      }
+      if (row.type === 'wrapper' && row.id === activeContainerId) {
+        return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
+      }
+      return row;
     });
-
+  
     setCanvasContent(newCanvasContent as CanvasBlock[]);
     setIsBlockSelectorOpen(false);
-    setActiveColumnId(null);
+    setActiveContainerId(null);
   };
   
   const handleSelectEmoji = (emoji: string) => {
-      if (!activeColumnId) return;
+      if (!activeContainerId) return;
       const newBlock: EmojiBlock = {
         id: `emoji_${Date.now()}`,
         type: 'emojis',
@@ -553,22 +547,29 @@ export default function CreateTemplatePage() {
             styles: {
                 fontSize: '48px',
                 textAlign: 'center',
+                transform: { x: 50, y: 50, width: 50, height: 50, rotate: 0 }
             }
         }
       };
+
       const newCanvasContent = canvasContent.map(row => {
-        if(row.type !== 'columns') return row;
-        const newColumns = row.payload.columns.map(col => {
-          if (col.id === activeColumnId) {
-            return { ...col, blocks: [...col.blocks, newBlock] };
-          }
-          return col;
-        });
-        return { ...row, payload: { columns: newColumns } };
+        if(row.type === 'columns') {
+          const newColumns = row.payload.columns.map(col => {
+            if (col.id === activeContainerId) {
+              return { ...col, blocks: [...col.blocks, newBlock] };
+            }
+            return col;
+          });
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
+        }
+        if (row.type === 'wrapper' && row.id === activeContainerId) {
+            return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
+        }
+        return row;
       });
       setCanvasContent(newCanvasContent as CanvasBlock[]);
       setIsEmojiSelectorOpen(false);
-      setActiveColumnId(null);
+      setActiveContainerId(null);
   }
   
   const handleHeadingTextChange = (blockId: string, newText: string) => {
@@ -599,31 +600,32 @@ export default function CreateTemplatePage() {
   
   const handleDeleteItem = () => {
     if (!itemToDelete) return;
-
+  
     let newCanvasContent;
-
-    if (itemToDelete.primId && itemToDelete.colId) { // Deleting a primitive block
-        newCanvasContent = canvasContent.map(row => {
-            if (row.id !== itemToDelete.rowId) return row;
-            if (row.type !== 'columns') return row;
-            return {
-                ...row,
-                payload: {
-                    ...row.payload,
-                    columns: row.payload.columns.map(col => {
-                        if (col.id !== itemToDelete.colId) return col;
-                        return {
-                            ...col,
-                            blocks: col.blocks.filter(block => block.id !== itemToDelete.primId),
-                        }
-                    })
-                }
-            }
-        });
+  
+    if (itemToDelete.primId) {
+      newCanvasContent = canvasContent.map((row) => {
+        if (row.id !== itemToDelete.rowId) return row;
+  
+        if (row.type === 'columns' && itemToDelete.colId) {
+          const newColumns = row.payload.columns.map((col) => {
+            if (col.id !== itemToDelete.colId) return col;
+            return { ...col, blocks: col.blocks.filter((block) => block.id !== itemToDelete.primId) };
+          });
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
+        }
+  
+        if (row.type === 'wrapper') {
+          const newBlocks = row.payload.blocks.filter((block) => block.id !== itemToDelete.primId);
+          return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+        }
+  
+        return row;
+      });
     } else { // Deleting a whole row
-        newCanvasContent = canvasContent.filter(row => row.id !== itemToDelete.rowId);
+      newCanvasContent = canvasContent.filter((row) => row.id !== itemToDelete.rowId);
     }
-    
+  
     setCanvasContent(newCanvasContent as CanvasBlock[]);
     setIsDeleteModalOpen(false);
     setItemToDelete(null);
@@ -681,6 +683,19 @@ export default function CreateTemplatePage() {
         )}
         onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
        >
+        <div className="absolute top-1/2 -right-8 -translate-y-1/2 flex items-center opacity-0 group-hover/primitive:opacity-100 transition-opacity">
+            <Button
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    promptDeleteItem(rowId, colId, block.id);
+                }}
+            >
+                <X className="size-4" />
+            </Button>
+        </div>
         {
           (() => {
              switch(block.type) {
@@ -778,6 +793,31 @@ export default function CreateTemplatePage() {
     };
   }, [isResizing, handleMouseMoveResize, handleMouseUpResize]);
 
+  const updateWrapperBlockTransform = (wrapperId: string, blockId: string, newTransform: Partial<EmojiBlock['payload']['styles']['transform']>) => {
+    const newCanvasContent = canvasContent.map(row => {
+      if (row.id === wrapperId && row.type === 'wrapper') {
+        const newBlocks = row.payload.blocks.map(block => {
+          if (block.id === blockId && block.type === 'emojis') {
+            return {
+              ...block,
+              payload: {
+                ...block.payload,
+                styles: {
+                  ...block.payload.styles,
+                  transform: { ...block.payload.styles.transform, ...newTransform }
+                }
+              }
+            };
+          }
+          return block;
+        });
+        return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+      }
+      return row;
+    });
+    setCanvasContent(newCanvasContent as CanvasBlock[]);
+  };
+
 
   useEffect(() => {
     setTempTemplateName(templateName);
@@ -834,6 +874,63 @@ export default function CreateTemplatePage() {
       emojis: 'emoji',
       html: 'HTML'
   }
+
+  const ResizableRotatableEmoji = ({ block, wrapperId }: { block: EmojiBlock, wrapperId: string }) => {
+    const { x, y, width, height, rotate } = block.payload.styles.transform;
+  
+    const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      updateWrapperBlockTransform(wrapperId, block.id, { x: x + info.delta.x, y: y + info.delta.y });
+    };
+  
+    const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        updateWrapperBlockTransform(wrapperId, block.id, {
+            width: Math.max(20, width + info.delta.x),
+            height: Math.max(20, height + info.delta.y)
+        });
+    };
+
+    const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        const center = { x: x + width / 2, y: y + height / 2 };
+        const newAngle = Math.atan2(info.point.y - center.y, info.point.x - center.x) * 180 / Math.PI;
+        updateWrapperBlockTransform(wrapperId, block.id, { rotate: newAngle + 90 });
+    }
+  
+    return (
+      <motion.div
+        key={block.id}
+        drag
+        onDrag={handleDrag}
+        dragMomentum={false}
+        className="absolute cursor-grab active:cursor-grabbing"
+        style={{ x, y, width, height, rotate }}
+        onClick={(e) => { e.stopPropagation(); setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId })}}
+      >
+        <div className={cn("w-full h-full relative flex items-center justify-center", selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id && "outline-dashed outline-1 outline-primary")}>
+            <span style={{ fontSize: `${height * 0.8}px` }}>{block.payload.emoji}</span>
+            {selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id && (
+                <>
+                    {/* Resize handle */}
+                    <motion.div
+                        className="absolute bottom-[-4px] right-[-4px] w-4 h-4 bg-white border-2 border-primary rounded-full cursor-nwse-resize"
+                        drag="x,y"
+                        onDrag={handleResize}
+                        dragMomentum={false}
+                    />
+                    {/* Rotate handle */}
+                    <motion.div
+                        className="absolute top-[-20px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full cursor-alias"
+                        drag
+                        onDrag={handleRotate}
+                        dragMomentum={false}
+                    >
+                      <RotateCw className="w-full h-full p-0.5 text-primary"/>
+                    </motion.div>
+                </>
+            )}
+        </div>
+      </motion.div>
+    );
+  };
 
   const renderCanvasBlock = (block: CanvasBlock, index: number) => {
     switch (block.type) {
@@ -894,30 +991,39 @@ export default function CreateTemplatePage() {
         );
       case 'wrapper':
         return (
-          <motion.div
-            id={block.id}
-            key={block.id}
-            ref={wrapperRef}
-            layout
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="group/row relative rounded-lg border-2 border-dashed border-purple-500"
-            style={{ height: `${block.payload.height}px` }}
-          >
-             <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
-               <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
+            <motion.div
+              id={block.id}
+              key={block.id}
+              ref={wrapperRef}
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="group/row relative rounded-lg border-2 border-dashed border-purple-500"
+              style={{ height: `${block.payload.height}px` }}
+              onClick={() => handleOpenBlockSelector(block.id)}
+            >
+              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
+                <Button variant="destructive" size="icon" className="size-7" onClick={(e) => { e.stopPropagation(); promptDeleteItem(block.id); }}>
                   <Trash2 className="size-4" />
-               </Button>
-            </div>
-             <p className="text-muted-foreground text-center text-sm p-4">Contenedor Flexible - Funcionalidad de Arrastrar y Soltar próximamente.</p>
-             <div 
-                onMouseDown={(e) => handleMouseDownResize(e, block.id)}
-                className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
-             />
-          </motion.div>
-        );
+                </Button>
+              </div>
+              <div className="w-full h-full relative">
+                {block.payload.blocks.map(b => {
+                  if (b.type === 'emojis') {
+                    return <ResizableRotatableEmoji key={b.id} block={b as EmojiBlock} wrapperId={block.id} />
+                  }
+                  // Render other primitive blocks if needed, without transformations
+                  return null;
+                })}
+              </div>
+              <div 
+                 onMouseDown={(e) => handleMouseDownResize(e, block.id)}
+                 className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
+              />
+            </motion.div>
+          );
       default:
         return null;
     }
@@ -936,7 +1042,7 @@ export default function CreateTemplatePage() {
           </div>
         </header>
         <div className="p-4 space-y-2">
-            {contentBlocks.map(block => (
+            {mainContentBlocks.map(block => (
                <Card 
                 key={block.id}
                 onClick={() => handleBlockClick(block.id as BlockType)}
@@ -1116,7 +1222,7 @@ export default function CreateTemplatePage() {
           </DialogHeader>
           <ScrollArea className="max-h-[60vh]">
             <div className="grid grid-cols-3 gap-4 p-4">
-                {contentBlocks.filter(b => b.id !== 'columns' && b.id !== 'wrapper').map((block) => (
+                {contentBlocks.map((block) => (
                   <Card 
                     key={block.id} 
                     onClick={() => handleSelectBlockToAdd(block.id as PrimitiveBlockType)}
@@ -1210,5 +1316,6 @@ export default function CreateTemplatePage() {
     
 
     
+
 
 
