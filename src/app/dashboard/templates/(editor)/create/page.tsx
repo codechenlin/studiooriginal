@@ -64,6 +64,9 @@ import {
   Circle,
   X,
   Link as LinkIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -94,12 +97,15 @@ const columnOptions = [
 const popularEmojis = [
   '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
   '✅', '✉️', '🔗', '📈', '💡', '💯', '👋', '👇', '👉', '🎁',
+  '📅', '🧠', '⭐', '💻', '📱', '💬', '📢', '🌍', '⏰', '🔒',
+  '🔑', '💡', '🏆', '📈', '📉'
 ];
 
 
 // --- STATE MANAGEMENT TYPES ---
 type PrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'icons' | 'emojis' | 'html';
 type Viewport = 'desktop' | 'tablet' | 'mobile';
+type TextAlign = 'left' | 'center' | 'right';
 
 interface BaseBlock {
   id: string;
@@ -112,6 +118,7 @@ interface ButtonBlock extends BaseBlock {
     payload: {
         text: string;
         url: string;
+        textAlign: TextAlign;
         styles: {
             borderRadius?: number;
             background?: {
@@ -337,6 +344,10 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         setCanvasContent(newCanvasContent);
     }
     
+    const setTextAlign = (align: TextAlign) => {
+        updatePayload('textAlign', align);
+    };
+
     return (
         <>
             <div className="space-y-4">
@@ -361,6 +372,15 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                             className="bg-transparent border-border/50 pl-10"
                         />
                     </div>
+                 </div>
+            </div>
+            <Separator className="bg-border/20"/>
+            <div className="space-y-4">
+                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
+                 <div className="grid grid-cols-3 gap-2">
+                    <Button variant={element.payload.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => setTextAlign('left')}><AlignLeft/></Button>
+                    <Button variant={element.payload.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => setTextAlign('center')}><AlignCenter/></Button>
+                    <Button variant={element.payload.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => setTextAlign('right')}><AlignRight/></Button>
                  </div>
             </div>
             <Separator className="bg-border/20"/>
@@ -443,6 +463,7 @@ export default function CreateTemplatePage() {
             payload: {
                 text: 'Botón',
                 url: '#',
+                textAlign: 'center',
                 styles: {
                     borderRadius: 8,
                     background: {
@@ -587,6 +608,18 @@ export default function CreateTemplatePage() {
     }
     return style;
   }
+  
+  const getButtonContainerStyle = (block: ButtonBlock): React.CSSProperties => {
+    const textAlignToJustifyContent = {
+        left: 'flex-start',
+        center: 'center',
+        right: 'flex-end',
+    }
+    return {
+        display: 'flex',
+        justifyContent: textAlignToJustifyContent[block.payload.textAlign] || 'center'
+    }
+  }
 
   const renderBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
@@ -599,7 +632,7 @@ export default function CreateTemplatePage() {
         )}
         onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
        >
-         <div className="absolute top-0 -right-8 flex items-center gap-1 opacity-0 group-hover/primitive:opacity-100 transition-opacity">
+         <div className="absolute top-1/2 -translate-y-1/2 -right-8 flex items-center gap-1 opacity-0 group-hover/primitive:opacity-100 transition-opacity">
              <Button variant="destructive" size="icon" className="size-6" onClick={(e) => {e.stopPropagation(); promptDeleteItem(rowId, colId, block.id)}}>
                 <X className="size-3.5" />
              </Button>
@@ -622,9 +655,11 @@ export default function CreateTemplatePage() {
                 return <p style={block.payload.styles}>{block.payload.text}</p>
               case 'button':
                 return (
-                    <button style={getButtonStyle(block)}>
-                        {block.payload.text}
-                    </button>
+                    <div style={getButtonContainerStyle(block)}>
+                        <button style={getButtonStyle(block)}>
+                            {block.payload.text}
+                        </button>
+                    </div>
                 )
               default:
                 return (
@@ -770,7 +805,7 @@ export default function CreateTemplatePage() {
                    <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
                  </div>
                ) : (
-                <div className="p-4 space-y-2">
+                <div className="p-4">
                   <AnimatePresence>
                   {canvasContent.map((block, index) => (
                     <motion.div 
@@ -1005,3 +1040,6 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+
+    
