@@ -249,7 +249,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
         <h3 className="text-sm font-medium text-foreground/80">Radio del Borde</h3>
         <div className="flex items-center gap-2">
           <Slider 
-              defaultValue={[borderRadius || 8]} 
+              value={[borderRadius || 0]}
               max={40} 
               step={1} 
               onValueChange={(value) => updateStyle('borderRadius', value[0])}
@@ -582,7 +582,7 @@ export default function CreateTemplatePage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      className="group/row relative p-2 rounded-lg hover:bg-primary/5"
+                      className="group/row relative rounded-lg hover:bg-primary/5"
                     >
                       <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
                           <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
