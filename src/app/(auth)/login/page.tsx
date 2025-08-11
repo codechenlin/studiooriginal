@@ -64,7 +64,7 @@ export default function LoginPage() {
       } else {
         toast({
           title: "Inicio de sesión incorrecto",
-          description: "Correo electrónico o contraseña no son correctos, intenta nuevamente",
+          description: "Correo electrónico o contraseña nos son validas, intenta nuevamente",
           variant: "destructive",
         });
       }
