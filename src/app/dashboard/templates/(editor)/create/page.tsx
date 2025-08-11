@@ -74,6 +74,7 @@ import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advance
 
 const contentBlocks = [
   { name: "Columns", icon: Columns, id: 'columns' },
+  { name: "Contenedor Flexible", icon: Shapes, id: 'wrapper' },
   { name: "Heading", icon: Heading1, id: 'heading' },
   { name: "Text", icon: Type, id: 'text' },
   { name: "Image", icon: ImageIcon, id: 'image' },
@@ -81,7 +82,6 @@ const contentBlocks = [
   { name: "Separator", icon: Minus, id: 'separator' },
   { name: "Video Youtube", icon: Youtube, id: 'youtube' },
   { name: "Contador", icon: Timer, id: 'timer' },
-  { name: "Iconos", icon: Shapes, id: 'icons' },
   { name: "Emojis", icon: Smile, id: 'emojis' },
   { name: "Codigo HTML", icon: Code, id: 'html' },
 ];
@@ -97,13 +97,12 @@ const columnOptions = [
 const popularEmojis = Array.from(new Set([
   '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
   '✅', '✉️', '🔗', '📈', '💡', '💯', '👋', '👇', '👉', '🎁',
-  '📅', '🧠', '⭐', '💻', '📱', '💬', '📢', '🌍', '⏰', '🔒',
-  '🔑', '🏆', '📉'
 ]));
 
 
 // --- STATE MANAGEMENT TYPES ---
 type PrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'icons' | 'emojis' | 'html';
+type BlockType = PrimitiveBlockType | 'columns' | 'wrapper';
 type Viewport = 'desktop' | 'tablet' | 'mobile';
 type TextAlign = 'left' | 'center' | 'right';
 
@@ -157,7 +156,16 @@ interface ColumnsBlock {
   };
 }
 
-type CanvasBlock = ColumnsBlock;
+interface WrapperBlock {
+  id: string;
+  type: 'wrapper';
+  payload: {
+    blocks: PrimitiveBlock[];
+  };
+}
+
+
+type CanvasBlock = ColumnsBlock | WrapperBlock;
 type SelectedElement = { type: 'column', columnId: string, rowId: string } | { type: 'primitive', primitiveId: string, columnId: string, rowId: string } | null;
 
 const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
@@ -170,10 +178,12 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   const getElement = () => {
     if (selectedElement.type === 'column') {
       const row = canvasContent.find(r => r.id === selectedElement.rowId);
+      if (row?.type !== 'columns') return null;
       return row?.payload.columns.find(c => c.id === selectedElement.columnId);
     }
     if (selectedElement.type === 'primitive') {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
         const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
         const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
         return block?.type === 'button' ? block.payload : null;
@@ -189,6 +199,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   const updateStyle = (key: string, value: any) => {
     const newCanvasContent = canvasContent.map(row => {
       if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+      if (row.type !== 'columns') return row;
       
       const newColumns = row.payload.columns.map(col => {
         if (selectedElement.type === 'column' && col.id === selectedElement.columnId) {
@@ -207,7 +218,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
       });
       return { ...row, payload: { columns: newColumns } };
     });
-    setCanvasContent(newCanvasContent);
+    setCanvasContent(newCanvasContent as CanvasBlock[]);
   };
   
   const setBgType = (type: 'solid' | 'gradient') => {
@@ -317,6 +328,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     
     const getElement = () => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
         const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
         const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
         return block?.type === 'button' ? block : null;
@@ -327,6 +339,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const updatePayload = (key: keyof ButtonBlock['payload'], value: any) => {
         const newCanvasContent = canvasContent.map(row => {
           if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+          if (row.type !== 'columns') return row;
           const newColumns = row.payload.columns.map(col => {
             if (col.id === (selectedElement as { columnId: string }).columnId) {
                 const newBlocks = col.blocks.map(block => {
@@ -341,7 +354,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
           });
           return { ...row, payload: { columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent);
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
     }
     
     const setTextAlign = (align: TextAlign) => {
@@ -415,10 +428,20 @@ export default function CreateTemplatePage() {
     setLastSaved(new Date());
   };
   
-  const handleBlockClick = (blockId: string) => {
+  const handleBlockClick = (blockId: BlockType) => {
     if (blockId === 'columns') {
       setSelectedColumnLayout(null);
       setIsColumnModalOpen(true);
+    }
+    if (blockId === 'wrapper') {
+      const newBlock: WrapperBlock = {
+        id: `wrapper_${Date.now()}`,
+        type: 'wrapper',
+        payload: {
+          blocks: [],
+        },
+      };
+      setCanvasContent([...canvasContent, newBlock]);
     }
   };
 
@@ -485,6 +508,7 @@ export default function CreateTemplatePage() {
     
 
     const newCanvasContent = canvasContent.map(row => {
+      if (row.type !== 'columns') return row;
       const newColumns = row.payload.columns.map(col => {
         if (col.id === activeColumnId) {
           return { ...col, blocks: [...col.blocks, newBlock] };
@@ -494,7 +518,7 @@ export default function CreateTemplatePage() {
       return { ...row, payload: { columns: newColumns } };
     });
 
-    setCanvasContent(newCanvasContent);
+    setCanvasContent(newCanvasContent as CanvasBlock[]);
     setIsBlockSelectorOpen(false);
     setActiveColumnId(null);
   };
@@ -513,6 +537,7 @@ export default function CreateTemplatePage() {
         }
       };
       const newCanvasContent = canvasContent.map(row => {
+        if(row.type !== 'columns') return row;
         const newColumns = row.payload.columns.map(col => {
           if (col.id === activeColumnId) {
             return { ...col, blocks: [...col.blocks, newBlock] };
@@ -521,27 +546,30 @@ export default function CreateTemplatePage() {
         });
         return { ...row, payload: { columns: newColumns } };
       });
-      setCanvasContent(newCanvasContent);
+      setCanvasContent(newCanvasContent as CanvasBlock[]);
       setIsEmojiSelectorOpen(false);
       setActiveColumnId(null);
   }
   
   const handleHeadingTextChange = (blockId: string, newText: string) => {
-    const newCanvasContent = canvasContent.map(row => ({
-      ...row,
-      payload: {
-        columns: row.payload.columns.map(col => ({
-          ...col,
-          blocks: col.blocks.map(block => {
-            if (block.id === blockId) {
-              return { ...block, payload: { ...block.payload, text: newText } };
-            }
-            return block;
-          })
-        }))
-      }
-    }));
-    setCanvasContent(newCanvasContent);
+    const newCanvasContent = canvasContent.map(row => {
+        if (row.type !== 'columns') return row;
+        return {
+          ...row,
+          payload: {
+            columns: row.payload.columns.map(col => ({
+              ...col,
+              blocks: col.blocks.map(block => {
+                if (block.id === blockId) {
+                  return { ...block, payload: { ...block.payload, text: newText } };
+                }
+                return block;
+              })
+            }))
+          }
+        }
+    });
+    setCanvasContent(newCanvasContent as CanvasBlock[]);
   };
   
   const promptDeleteItem = (rowId: string, colId?: string, primId?: string) => {
@@ -557,6 +585,7 @@ export default function CreateTemplatePage() {
     if (itemToDelete.primId && itemToDelete.colId) { // Deleting a primitive block
         newCanvasContent = canvasContent.map(row => {
             if (row.id !== itemToDelete.rowId) return row;
+            if (row.type !== 'columns') return row;
             return {
                 ...row,
                 payload: {
@@ -575,7 +604,7 @@ export default function CreateTemplatePage() {
         newCanvasContent = canvasContent.filter(row => row.id !== itemToDelete.rowId);
     }
     
-    setCanvasContent(newCanvasContent);
+    setCanvasContent(newCanvasContent as CanvasBlock[]);
     setIsDeleteModalOpen(false);
     setItemToDelete(null);
     setSelectedElement(null);
@@ -621,7 +650,7 @@ export default function CreateTemplatePage() {
     }
   }
 
-  const renderBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
+  const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
     return (
        <div 
@@ -720,6 +749,85 @@ export default function CreateTemplatePage() {
     }
     return style;
   };
+  
+  const renderCanvasBlock = (block: CanvasBlock, index: number) => {
+    switch (block.type) {
+      case 'columns':
+        return (
+          <motion.div 
+            key={block.id} 
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="group/row relative rounded-lg hover:bg-primary/5"
+          >
+            <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
+                <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
+                  <ArrowUp className="size-4" />
+                </Button>
+                <GripVertical className="size-5 text-muted-foreground cursor-grab" />
+                <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
+                  <ArrowDown className="size-4" />
+                </Button>
+            </div>
+
+            <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+               <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
+                  <Trash2 className="size-4" />
+               </Button>
+            </div>
+
+            <div className="flex overflow-x-auto">
+              {block.payload.columns.map((col) => (
+                <div 
+                    key={col.id}
+                    onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}}
+                    style={getColumnStyle(col)}
+                    className={cn(
+                      "flex-1 p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]",
+                      selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
+                    )}
+                >
+                   {col.blocks.length > 0 ? (
+                       col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id))
+                   ) : (
+                     <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id); }}>
+                       <PlusCircle className="mb-1"/>
+                       <span className="text-xs font-medium -mb-0.5">Añadir</span>
+                       <span className="text-xs font-medium">Bloque</span>
+                     </Button>
+                   )}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        );
+      case 'wrapper':
+        return (
+          <motion.div
+            key={block.id}
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="group/row relative rounded-lg border-2 border-dashed border-purple-500 p-4 min-h-[200px]"
+          >
+             <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+               <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
+                  <Trash2 className="size-4" />
+               </Button>
+            </div>
+             <p className="text-muted-foreground text-center text-sm">Contenedor Flexible - Funcionalidad de Arrastrar y Soltar próximamente.</p>
+          </motion.div>
+        );
+      default:
+        return null;
+    }
+  }
+
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
@@ -733,14 +841,17 @@ export default function CreateTemplatePage() {
           </div>
         </header>
         <div className="p-4 space-y-2">
-            <Card 
-              onClick={() => handleBlockClick('columns')}
-              className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
-            >
-              <Columns className="size-10 text-[#00B0F0] transition-colors" />
-              <span className="text-md font-semibold text-center text-foreground/80 mt-2">Columns</span>
-               <span className="text-xs font-medium text-center text-muted-foreground">1 - 5</span>
-            </Card>
+            {contentBlocks.filter(b => b.id === 'columns' || b.id === 'wrapper').map(block => (
+               <Card 
+                key={block.id}
+                onClick={() => handleBlockClick(block.id as BlockType)}
+                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+              >
+                <block.icon className="size-10 text-[#00B0F0] transition-colors" />
+                <span className="text-md font-semibold text-center text-foreground/80 mt-2">{block.name}</span>
+                 {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 5</span>}
+              </Card>
+            ))}
         </div>
       </aside>
 
@@ -802,62 +913,12 @@ export default function CreateTemplatePage() {
             <div className={cn("bg-background/80 dark:bg-zinc-900/80 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
                {canvasContent.length === 0 ? (
                  <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground p-4">
-                   <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
+                   <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                  </div>
                ) : (
-                <div className="p-4 space-y-2">
+                <div className="p-4">
                   <AnimatePresence>
-                  {canvasContent.map((block, index) => (
-                    <motion.div 
-                      key={block.id} 
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      className="group/row relative rounded-lg hover:bg-primary/5 p-2"
-                    >
-                      <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
-                          <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
-                            <ArrowUp className="size-4" />
-                          </Button>
-                          <GripVertical className="size-5 text-muted-foreground cursor-grab" />
-                          <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
-                            <ArrowDown className="size-4" />
-                          </Button>
-                      </div>
-
-                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                         <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
-                            <Trash2 className="size-4" />
-                         </Button>
-                      </div>
-
-                      <div className="flex overflow-x-auto">
-                        {block.payload.columns.map((col) => (
-                          <div 
-                              key={col.id}
-                              onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}}
-                              style={getColumnStyle(col)}
-                              className={cn(
-                                "flex-1 p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]",
-                                selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
-                              )}
-                          >
-                             {col.blocks.length > 0 ? (
-                                 col.blocks.map(b => renderBlock(b, block.id, col.id))
-                             ) : (
-                               <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id); }}>
-                                 <PlusCircle className="mb-1"/>
-                                 <span className="text-xs font-medium -mb-0.5">Añadir</span>
-                                 <span className="text-xs font-medium">Bloque</span>
-                               </Button>
-                             )}
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  ))}
+                  {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </AnimatePresence>
                 </div>
                )}
@@ -951,7 +1012,7 @@ export default function CreateTemplatePage() {
           </DialogHeader>
           <ScrollArea className="max-h-[60vh]">
             <div className="grid grid-cols-3 gap-4 p-4">
-                {contentBlocks.filter(b => b.id !== 'columns').map((block) => (
+                {contentBlocks.filter(b => b.id !== 'columns' && b.id !== 'wrapper').map((block) => (
                   <Card 
                     key={block.id} 
                     onClick={() => handleSelectBlockToAdd(block.id as PrimitiveBlockType)}
@@ -1041,5 +1102,7 @@ export default function CreateTemplatePage() {
   );
 }
 
+
+    
 
     
