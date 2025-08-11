@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog,
@@ -56,9 +56,13 @@ import {
   Trash2,
   AlertTriangle,
   Tablet,
+  Droplets,
+  Paintbrush,
+  XIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { ColorPicker } from '@/components/dashboard/color-picker';
 
 const contentBlocks = [
   { name: "Columns", icon: Columns, id: 'columns' },
@@ -97,6 +101,13 @@ interface PrimitiveBlock {
 interface Column {
   id: string;
   blocks: PrimitiveBlock[];
+  styles: {
+    background?: {
+      type: 'solid' | 'gradient';
+      color1: string;
+      color2?: string;
+    }
+  }
 }
 
 interface ColumnsBlock {
@@ -108,6 +119,83 @@ interface ColumnsBlock {
 }
 
 type CanvasBlock = ColumnsBlock;
+type SelectedElement = { type: 'column', columnId: string, rowId: string } | null;
+
+const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+  if (!selectedElement) return null;
+
+  const getElement = () => {
+    if (selectedElement.type === 'column') {
+      const row = canvasContent.find(r => r.id === selectedElement.rowId);
+      return row?.payload.columns.find(c => c.id === selectedElement.columnId);
+    }
+    return null;
+  }
+  
+  const element = getElement();
+  if (!element) return null;
+
+  const { background } = element.styles;
+
+  const updateBackground = (newBg: Column['styles']['background'] | undefined) => {
+    const newCanvasContent = canvasContent.map(row => {
+      if (row.id !== selectedElement.rowId) return row;
+      const newColumns = row.payload.columns.map(col => {
+        if (col.id === selectedElement.columnId) {
+          return { ...col, styles: { ...col.styles, background: newBg } };
+        }
+        return col;
+      });
+      return { ...row, payload: { columns: newColumns } };
+    });
+    setCanvasContent(newCanvasContent);
+  };
+  
+  const setBgType = (type: 'solid' | 'gradient') => {
+     updateBackground({
+        type,
+        color1: background?.color1 || '#000000',
+        color2: background?.color2 || '#ffffff'
+     });
+  };
+
+  const setColor = (colorProp: 'color1' | 'color2', value: string) => {
+      if(background){
+          updateBackground({...background, [colorProp]: value });
+      } else {
+          updateBackground({ type: 'solid', color1: value });
+      }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Paintbrush/>Fondo de Columna</h3>
+        <Button variant="ghost" size="icon" className="size-7" onClick={() => updateBackground(undefined)}><XIcon className="size-4"/></Button>
+      </div>
+       <Tabs value={background?.type || 'solid'} onValueChange={(value) => setBgType(value as any)} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="solid">Sólido</TabsTrigger>
+          <TabsTrigger value="gradient">Degradado</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <div className="space-y-3">
+        <Label>Color 1</Label>
+        <ColorPicker color={background?.color1 || '#A020F0'} setColor={(c) => setColor('color1', c)} />
+      </div>
+      {background?.type === 'gradient' && (
+        <div className="space-y-3">
+          <Label>Color 2</Label>
+          <ColorPicker color={background?.color2 || '#3357FF'} setColor={(c) => setColor('color2', c)} />
+        </div>
+      )}
+    </div>
+  )
+};
 
 
 export default function CreateTemplatePage() {
@@ -127,6 +215,7 @@ export default function CreateTemplatePage() {
   
   // Canvas State
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
+  const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleSave = () => {
@@ -149,6 +238,7 @@ export default function CreateTemplatePage() {
           columns: Array.from({ length: selectedColumnLayout }).map((_, i) => ({
             id: `col_${Date.now()}_${i}`,
             blocks: [],
+            styles: {},
           })),
         },
       };
@@ -263,13 +353,22 @@ export default function CreateTemplatePage() {
     tablet: 'max-w-xl',  
     mobile: 'max-w-sm', 
   };
+  
+  const getColumnStyle = (col: Column) => {
+    if (!col.styles.background) return {};
+    const { type, color1, color2 } = col.styles.background;
+    if (type === 'solid') {
+      return { backgroundColor: color1 };
+    }
+    return { backgroundImage: `linear-gradient(${color1}, ${color2})` };
+  };
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       <aside className="w-56 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
-        <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10">
-          <div className="flex items-center gap-1 flex-1 min-w-0">
-              <span className="text-lg font-semibold truncate flex-1">{templateName}</span>
+        <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="text-base font-semibold truncate flex-1">{templateName}</span>
               <Button variant="outline" size="icon" className="size-8 shrink-0 border-border/50" onClick={() => setIsEditNameModalOpen(true)}>
                 <Pencil className="size-4" />
               </Button>
@@ -340,64 +439,72 @@ export default function CreateTemplatePage() {
           </div>
         </header>
 
-        <div className="flex-1 bg-transparent overflow-auto custom-scrollbar">
-            <div className="p-8">
-                <div className={cn("bg-background/80 dark:bg-zinc-900/50 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
-                   {canvasContent.length === 0 ? (
-                     <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground p-4">
-                       <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
-                     </div>
-                   ) : (
-                    <div className="space-y-2 p-4">
-                      <AnimatePresence>
-                      {canvasContent.map((block, index) => (
-                        <motion.div 
-                          key={block.id} 
-                          layout
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                          transition={{ duration: 0.3, ease: 'easeInOut' }}
-                          className="group/row relative p-2 rounded-lg hover:bg-primary/5"
-                        >
-                          <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
-                              <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
-                                <ArrowUp className="size-4" />
-                              </Button>
-                              <GripVertical className="size-5 text-muted-foreground cursor-grab" />
-                              <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
-                                <ArrowDown className="size-4" />
-                              </Button>
+         <div className="flex-1 overflow-auto">
+          <div className="p-8">
+            <div className={cn("bg-background/80 dark:bg-zinc-900/80 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
+               {canvasContent.length === 0 ? (
+                 <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground p-4">
+                   <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
+                 </div>
+               ) : (
+                <div className="space-y-2 p-4">
+                  <AnimatePresence>
+                  {canvasContent.map((block, index) => (
+                    <motion.div 
+                      key={block.id} 
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="group/row relative p-2 rounded-lg hover:bg-primary/5"
+                    >
+                      <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
+                          <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
+                            <ArrowUp className="size-4" />
+                          </Button>
+                          <GripVertical className="size-5 text-muted-foreground cursor-grab" />
+                          <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
+                            <ArrowDown className="size-4" />
+                          </Button>
+                      </div>
+
+                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                         <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteBlock(index)}>
+                            <Trash2 className="size-4" />
+                         </Button>
+                      </div>
+
+                      <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
+                        {block.payload.columns.map((col) => (
+                          <div 
+                              key={col.id}
+                              onClick={() => setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}
+                              style={getColumnStyle(col)}
+                              className={cn(
+                                "flex-1 p-2 border-2 border-dashed rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]",
+                                selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
+                              )}
+                          >
+                             {col.blocks.length > 0 ? (
+                                 col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
+                             ) : (
+                               <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id); }}>
+                                 <PlusCircle className="mb-1"/>
+                                 <span className="text-xs font-medium -mb-0.5">Añadir</span>
+                                 <span className="text-xs font-medium">Bloque</span>
+                               </Button>
+                             )}
                           </div>
-    
-                          <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                             <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteBlock(index)}>
-                                <Trash2 className="size-4" />
-                             </Button>
-                          </div>
-    
-                          <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
-                            {block.payload.columns.map((col) => (
-                              <div key={col.id} className="flex-1 p-2 border-2 border-dashed border-transparent rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]">
-                                 {col.blocks.length > 0 ? (
-                                     col.blocks.map(b => <div key={b.id} className="w-full">{renderBlock(b)}</div>)
-                                 ) : (
-                                   <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={() => handleOpenBlockSelector(col.id)}>
-                                     <PlusCircle className="mb-1"/>
-                                     <span className="text-xs font-medium -mb-0.5">Añadir</span>
-                                     <span className="text-xs font-medium">Bloque</span>
-                                   </Button>
-                                 )}
-                              </div>
-                            ))}
-                          </div>
-                        </motion.div>
-                      ))}
-                      </AnimatePresence>
-                    </div>
-                   )}
+                        ))}
+                      </div>
+                    </motion.div>
+                  ))}
+                  </AnimatePresence>
                 </div>
+               )}
             </div>
+          </div>
         </div>
       </main>
 
@@ -413,56 +520,63 @@ export default function CreateTemplatePage() {
          <Separator className="bg-border/20" />
          <ScrollArea className="flex-1 custom-scrollbar">
             <div className="p-4 space-y-4">
-              <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-foreground/80">Dimensiones</h3>
-                  <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                          <div><Label>Ancho</Label><Input className="bg-transparent border-border/50" placeholder="600px"/></div>
-                          <div><Label>Alto</Label><Input className="bg-transparent border-border/50" placeholder="Auto"/></div>
-                      </div>
-                      <div><Label>Padding</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
-                  </div>
-              </div>
+              
+              { selectedElement ? (
+                 <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+              ) : (
+                <>
+                <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-foreground/80">Dimensiones</h3>
+                    <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                            <div><Label>Ancho</Label><Input className="bg-transparent border-border/50" placeholder="600px"/></div>
+                            <div><Label>Alto</Label><Input className="bg-transparent border-border/50" placeholder="Auto"/></div>
+                        </div>
+                        <div><Label>Padding</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
+                    </div>
+                </div>
 
-              <Separator className="bg-border/20" />
+                <Separator className="bg-border/20" />
 
-              <div className="space-y-4">
-                   <h3 className="text-sm font-medium text-foreground/80">Tipografía</h3>
+                <div className="space-y-4">
+                     <h3 className="text-sm font-medium text-foreground/80">Tipografía</h3>
+                     <div className="space-y-4">
+                        <div>
+                            <Label>Fuente</Label>
+                            <Select>
+                                <SelectTrigger className="bg-transparent border-border/50"><SelectValue placeholder="Seleccionar fuente" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="arial">Arial</SelectItem>
+                                    <SelectItem value="helvetica">Helvetica</SelectItem>
+                                    <SelectItem value="georgia">Georgia</SelectItem>
+                                    <SelectItem value="times">Times New Roman</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div><Label>Tamaño</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
+                            <div><Label>Peso</Label><Input className="bg-transparent border-border/50" placeholder="Normal"/></div>
+                        </div>
+                         <div className="grid grid-cols-3 gap-1">
+                            <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Bold/></Button>
+                            <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Italic/></Button>
+                            <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Underline/></Button>
+                        </div>
+                     </div>
+                </div>
+
+                <Separator className="bg-border/20" />
+
+                <div className="space-y-4">
+                   <h3 className="text-sm font-medium text-foreground/80">Fondo y Borde</h3>
                    <div className="space-y-4">
-                      <div>
-                          <Label>Fuente</Label>
-                          <Select>
-                              <SelectTrigger className="bg-transparent border-border/50"><SelectValue placeholder="Seleccionar fuente" /></SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="arial">Arial</SelectItem>
-                                  <SelectItem value="helvetica">Helvetica</SelectItem>
-                                  <SelectItem value="georgia">Georgia</SelectItem>
-                                  <SelectItem value="times">Times New Roman</SelectItem>
-                              </SelectContent>
-                          </Select>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                          <div><Label>Tamaño</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
-                          <div><Label>Peso</Label><Input className="bg-transparent border-border/50" placeholder="Normal"/></div>
-                      </div>
-                       <div className="grid grid-cols-3 gap-1">
-                          <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Bold/></Button>
-                          <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Italic/></Button>
-                          <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Underline/></Button>
-                      </div>
+                        <div><Label>Color de Fondo</Label><Input className="bg-transparent border-border/50" placeholder="#000000"/></div>
+                        <div><Label>Color de Borde</Label><Input className="bg-transparent border-border/50" placeholder="#333333"/></div>
+                        <div><Label>Radio del Borde</Label><Slider defaultValue={[8]} max={40} step={1} /></div>
                    </div>
-              </div>
-
-              <Separator className="bg-border/20" />
-
-              <div className="space-y-4">
-                 <h3 className="text-sm font-medium text-foreground/80">Fondo y Borde</h3>
-                 <div className="space-y-4">
-                      <div><Label>Color de Fondo</Label><Input className="bg-transparent border-border/50" placeholder="#000000"/></div>
-                      <div><Label>Color de Borde</Label><Input className="bg-transparent border-border/50" placeholder="#333333"/></div>
-                      <div><Label>Radio del Borde</Label><Slider defaultValue={[8]} max={40} step={1} /></div>
-                 </div>
-              </div>
+                </div>
+                </>
+              )}
           </div>
          </ScrollArea>
       </aside>
