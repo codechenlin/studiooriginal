@@ -63,6 +63,7 @@ import {
   Sun,
   Circle,
   X,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -90,17 +91,40 @@ const columnOptions = [
     { num: 5, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
+const popularEmojis = [
+  '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
+  '✅', '✉️', '🔗', '📈', '💡', '💯', '👋', '👇', '👉', '🎁',
+];
+
+
 // --- STATE MANAGEMENT TYPES ---
 type PrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'icons' | 'emojis' | 'html';
 type Viewport = 'desktop' | 'tablet' | 'mobile';
 
-interface PrimitiveBlock {
+interface BaseBlock {
   id: string;
   type: PrimitiveBlockType;
-  payload: {
-    [key: string]: any;
-  };
+  payload: { [key: string]: any };
 }
+
+interface ButtonBlock extends BaseBlock {
+    type: 'button';
+    payload: {
+        text: string;
+        url: string;
+        styles: {
+            borderRadius?: number;
+            background?: {
+                type: 'solid' | 'gradient';
+                color1: string;
+                color2?: string;
+                direction?: GradientDirection;
+            }
+        }
+    }
+}
+
+type PrimitiveBlock = BaseBlock | ButtonBlock;
 
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 
@@ -134,12 +158,18 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-  if (!selectedElement || selectedElement.type !== 'column') return null;
+  if (!selectedElement) return null;
 
   const getElement = () => {
     if (selectedElement.type === 'column') {
       const row = canvasContent.find(r => r.id === selectedElement.rowId);
       return row?.payload.columns.find(c => c.id === selectedElement.columnId);
+    }
+    if (selectedElement.type === 'primitive') {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'button' ? block.payload : null;
     }
     return null;
   }
@@ -147,14 +177,24 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   const element = getElement();
   if (!element) return null;
 
-  const { background, borderRadius } = element.styles;
-
-  const updateStyle = (key: keyof Column['styles'], value: any) => {
+  const { background, borderRadius } = (selectedElement.type === 'column' ? element.styles : (element as ButtonBlock['payload']).styles);
+  
+  const updateStyle = (key: string, value: any) => {
     const newCanvasContent = canvasContent.map(row => {
       if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+      
       const newColumns = row.payload.columns.map(col => {
-        if (col.id === (selectedElement as { columnId: string }).columnId) {
-          return { ...col, styles: { ...col.styles, [key]: value } };
+        if (selectedElement.type === 'column' && col.id === selectedElement.columnId) {
+            return { ...col, styles: { ...col.styles, [key]: value } };
+        }
+        if (selectedElement.type === 'primitive' && col.id === selectedElement.columnId) {
+            const newBlocks = col.blocks.map(block => {
+                if (block.id === selectedElement.primitiveId && block.type === 'button') {
+                    return { ...block, payload: { ...block.payload, styles: {...block.payload.styles, [key]: value} }};
+                }
+                return block;
+            })
+            return {...col, blocks: newBlocks};
         }
         return col;
       });
@@ -190,7 +230,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
     <>
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Paintbrush/>Fondo de Columna</h3>
+        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Paintbrush/>Fondo</h3>
         <Button 
           variant="outline" 
           size="icon" 
@@ -261,6 +301,74 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   )
 };
 
+const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    if(selectedElement?.type !== 'primitive') return null;
+    
+    const getElement = () => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'button' ? block : null;
+    }
+    const element = getElement();
+    if(!element) return null;
+
+    const updatePayload = (key: keyof ButtonBlock['payload'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+          const newColumns = row.payload.columns.map(col => {
+            if (col.id === (selectedElement as { columnId: string }).columnId) {
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id === selectedElement.primitiveId && block.type === 'button') {
+                        return { ...block, payload: { ...block.payload, [key]: value }};
+                    }
+                    return block;
+                })
+                return {...col, blocks: newBlocks};
+            }
+            return col;
+          });
+          return { ...row, payload: { columns: newColumns } };
+        });
+        setCanvasContent(newCanvasContent);
+    }
+    
+    return (
+        <>
+            <div className="space-y-4">
+                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil/>Contenido del Botón</h3>
+                 <div className="space-y-2">
+                    <Label>Texto</Label>
+                    <Input 
+                        value={element.payload.text}
+                        onChange={(e) => updatePayload('text', e.target.value)}
+                        placeholder="Texto del botón"
+                        className="bg-transparent border-border/50"
+                    />
+                 </div>
+                 <div className="space-y-2">
+                    <Label>URL del Enlace</Label>
+                    <div className="relative">
+                        <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                        <Input 
+                            value={element.payload.url}
+                            onChange={(e) => updatePayload('url', e.target.value)}
+                            placeholder="https://example.com"
+                            className="bg-transparent border-border/50 pl-10"
+                        />
+                    </div>
+                 </div>
+            </div>
+            <Separator className="bg-border/20"/>
+            <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+        </>
+    )
+}
+
 
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -272,6 +380,7 @@ export default function CreateTemplatePage() {
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   const [selectedColumnLayout, setSelectedColumnLayout] = useState<number | null>(null);
   const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
+  const [isEmojiSelectorOpen, setIsEmojiSelectorOpen] = useState(false);
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{rowId: string, colId?: string, primId?: string} | null>(null);
@@ -302,9 +411,7 @@ export default function CreateTemplatePage() {
           columns: Array.from({ length: selectedColumnLayout }).map((_, i) => ({
             id: `col_${Date.now()}_${i}`,
             blocks: [],
-            styles: {
-              borderRadius: 8,
-            },
+            styles: {},
           })),
         },
       };
@@ -321,13 +428,40 @@ export default function CreateTemplatePage() {
   const handleSelectBlockToAdd = (blockType: PrimitiveBlockType) => {
     if (!activeColumnId) return;
 
-    const newBlock: PrimitiveBlock = {
-      id: `${blockType}_${Date.now()}`,
-      type: blockType,
-      payload: {
-        ...(blockType === 'heading' && { text: 'Título principal' }),
-      },
-    };
+    if (blockType === 'emojis') {
+        setIsEmojiSelectorOpen(true);
+        setIsBlockSelectorOpen(false);
+        return;
+    }
+
+    let newBlock: PrimitiveBlock;
+
+    if (blockType === 'button') {
+        newBlock = {
+            id: `button_${Date.now()}`,
+            type: 'button',
+            payload: {
+                text: 'Botón',
+                url: '#',
+                styles: {
+                    borderRadius: 8,
+                    background: {
+                        type: 'solid',
+                        color1: '#A020F0'
+                    }
+                }
+            }
+        }
+    } else {
+         newBlock = {
+          id: `${blockType}_${Date.now()}`,
+          type: blockType,
+          payload: {
+            ...(blockType === 'heading' && { text: 'Título principal' }),
+          },
+        };
+    }
+    
 
     const newCanvasContent = canvasContent.map(row => {
       const newColumns = row.payload.columns.map(col => {
@@ -343,6 +477,33 @@ export default function CreateTemplatePage() {
     setIsBlockSelectorOpen(false);
     setActiveColumnId(null);
   };
+  
+  const handleSelectEmoji = (emoji: string) => {
+      if (!activeColumnId) return;
+      const newBlock: PrimitiveBlock = {
+        id: `text_${Date.now()}`,
+        type: 'text',
+        payload: {
+            text: emoji,
+            styles: {
+                fontSize: '48px',
+                textAlign: 'center',
+            }
+        }
+      };
+      const newCanvasContent = canvasContent.map(row => {
+        const newColumns = row.payload.columns.map(col => {
+          if (col.id === activeColumnId) {
+            return { ...col, blocks: [...col.blocks, newBlock] };
+          }
+          return col;
+        });
+        return { ...row, payload: { columns: newColumns } };
+      });
+      setCanvasContent(newCanvasContent);
+      setIsEmojiSelectorOpen(false);
+      setActiveColumnId(null);
+  }
   
   const handleHeadingTextChange = (blockId: string, newText: string) => {
     const newCanvasContent = canvasContent.map(row => ({
@@ -396,7 +557,36 @@ export default function CreateTemplatePage() {
     setCanvasContent(newCanvasContent);
     setIsDeleteModalOpen(false);
     setItemToDelete(null);
+    setSelectedElement(null);
   };
+  
+  const getButtonStyle = (block: ButtonBlock) => {
+    const style: React.CSSProperties = {
+        padding: '10px 20px',
+        color: '#ffffff', // Assuming white text for now
+        border: 'none',
+        cursor: 'pointer',
+    };
+    const { background, borderRadius } = block.payload.styles;
+
+    if(borderRadius !== undefined) {
+        style.borderRadius = `${borderRadius}px`;
+    }
+
+    if(background) {
+        if(background.type === 'solid') {
+            style.backgroundColor = background.color1;
+        } else if (background.type === 'gradient') {
+             if (background.direction === 'radial') {
+              style.backgroundImage = `radial-gradient(${background.color1}, ${background.color2})`;
+            } else {
+              const angle = background.direction === 'horizontal' ? 'to right' : 'to bottom';
+              style.backgroundImage = `linear-gradient(${angle}, ${background.color1}, ${background.color2})`;
+            }
+        }
+    }
+    return style;
+  }
 
   const renderBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
@@ -428,6 +618,14 @@ export default function CreateTemplatePage() {
                     {block.payload.text}
                   </h1>
                 );
+              case 'text':
+                return <p style={block.payload.styles}>{block.payload.text}</p>
+              case 'button':
+                return (
+                    <button style={getButtonStyle(block)}>
+                        {block.payload.text}
+                    </button>
+                )
               default:
                 return (
                   <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
@@ -572,7 +770,7 @@ export default function CreateTemplatePage() {
                    <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
                  </div>
                ) : (
-                <div className="p-4">
+                <div className="p-4 space-y-2">
                   <AnimatePresence>
                   {canvasContent.map((block, index) => (
                     <motion.div 
@@ -582,7 +780,7 @@ export default function CreateTemplatePage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      className="group/row relative rounded-lg hover:bg-primary/5"
+                      className="group/row relative rounded-lg hover:bg-primary/5 p-2"
                     >
                       <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md">
                           <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
@@ -600,7 +798,7 @@ export default function CreateTemplatePage() {
                          </Button>
                       </div>
 
-                      <div className="flex overflow-x-auto custom-scrollbar">
+                      <div className="flex overflow-x-auto">
                         {block.payload.columns.map((col) => (
                           <div 
                               key={col.id}
@@ -646,61 +844,17 @@ export default function CreateTemplatePage() {
          <ScrollArea className="flex-1 custom-scrollbar">
             <div className="p-4 space-y-4">
               
-              { selectedElement?.type === 'column' ? (
+              { selectedElement?.type === 'column' && (
                  <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-              ) : (
-                <>
-                <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-foreground/80">Dimensiones</h3>
-                    <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                            <div><Label>Ancho</Label><Input className="bg-transparent border-border/50" placeholder="600px"/></div>
-                            <div><Label>Alto</Label><Input className="bg-transparent border-border/50" placeholder="Auto"/></div>
-                        </div>
-                        <div><Label>Padding</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
-                    </div>
-                </div>
-
-                <Separator className="bg-border/20" />
-
-                <div className="space-y-4">
-                     <h3 className="text-sm font-medium text-foreground/80">Tipografía</h3>
-                     <div className="space-y-4">
-                        <div>
-                            <Label>Fuente</Label>
-                            <Select>
-                                <SelectTrigger className="bg-transparent border-border/50"><SelectValue placeholder="Seleccionar fuente" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="arial">Arial</SelectItem>
-                                    <SelectItem value="helvetica">Helvetica</SelectItem>
-                                    <SelectItem value="georgia">Georgia</SelectItem>
-                                    <SelectItem value="times">Times New Roman</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div><Label>Tamaño</Label><Input className="bg-transparent border-border/50" placeholder="16px"/></div>
-                            <div><Label>Peso</Label><Input className="bg-transparent border-border/50" placeholder="Normal"/></div>
-                        </div>
-                         <div className="grid grid-cols-3 gap-1">
-                            <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Bold/></Button>
-                            <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Italic/></Button>
-                            <Button variant="outline" size="sm" className="bg-transparent border-border/50"><Underline/></Button>
-                        </div>
-                     </div>
-                </div>
-
-                <Separator className="bg-border/20" />
-
-                <div className="space-y-4">
-                   <h3 className="text-sm font-medium text-foreground/80">Fondo y Borde</h3>
-                   <div className="space-y-4">
-                        <div><Label>Color de Fondo</Label><Input className="bg-transparent border-border/50" placeholder="#000000"/></div>
-                        <div><Label>Color de Borde</Label><Input className="bg-transparent border-border/50" placeholder="#333333"/></div>
-                        <div><Label>Radio del Borde</Label><Slider defaultValue={[8]} max={40} step={1} /></div>
-                   </div>
-                </div>
-                </>
+              )}
+              { selectedElement?.type === 'primitive' && (
+                  <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+              )}
+              
+              { !selectedElement && (
+                 <div className="text-center text-muted-foreground p-4 text-sm">
+                    Selecciona un elemento en el lienzo para ver sus opciones de estilo.
+                 </div>
               )}
           </div>
          </ScrollArea>
@@ -785,7 +939,7 @@ export default function CreateTemplatePage() {
               Confirmar Eliminación
             </DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de que deseas eliminar este bloque? Todos los contenidos dentro de él se perderán permanentemente. Esta acción no se puede deshacer.
+              ¿Estás seguro de que deseas eliminar este elemento? Todos los contenidos dentro de él se perderán permanentemente. Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -822,6 +976,30 @@ export default function CreateTemplatePage() {
               Guardar Nombre
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isEmojiSelectorOpen} onOpenChange={setIsEmojiSelectorOpen}>
+        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+            <DialogHeader>
+                <DialogTitle>Seleccionar Emoji</DialogTitle>
+                <DialogDescription>
+                    Elige un emoji para insertar en tu plantilla.
+                </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-60">
+                 <div className="grid grid-cols-6 gap-2 p-4">
+                    {popularEmojis.map(emoji => (
+                        <button 
+                            key={emoji}
+                            onClick={() => handleSelectEmoji(emoji)}
+                            className="text-3xl p-2 rounded-lg hover:bg-accent transition-colors"
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                 </div>
+            </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
