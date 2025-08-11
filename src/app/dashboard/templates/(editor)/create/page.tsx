@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useTransition, useEffect } from 'react';
+import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -132,7 +132,18 @@ interface ButtonBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock;
+interface EmojiBlock extends BaseBlock {
+    type: 'emojis',
+    payload: {
+        emoji: string;
+        styles: {
+            fontSize: string;
+            textAlign: TextAlign;
+        }
+    }
+}
+
+type PrimitiveBlock = BaseBlock | ButtonBlock | EmojiBlock;
 
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 
@@ -163,6 +174,7 @@ interface WrapperBlock {
   type: 'wrapper';
   payload: {
     blocks: (PrimitiveBlock | ColumnsBlock)[];
+    height: number;
   };
 }
 
@@ -426,6 +438,11 @@ export default function CreateTemplatePage() {
   const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
   const [isPending, startTransition] = useTransition();
 
+  // Wrapper resize state
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
   const handleSave = () => {
     setLastSaved(new Date());
   };
@@ -441,6 +458,7 @@ export default function CreateTemplatePage() {
         type: 'wrapper',
         payload: {
           blocks: [],
+          height: 200, // Initial height
         },
       };
       setCanvasContent([...canvasContent, newBlock]);
@@ -527,11 +545,11 @@ export default function CreateTemplatePage() {
   
   const handleSelectEmoji = (emoji: string) => {
       if (!activeColumnId) return;
-      const newBlock: PrimitiveBlock = {
-        id: `text_${Date.now()}`,
-        type: 'text',
+      const newBlock: EmojiBlock = {
+        id: `emoji_${Date.now()}`,
+        type: 'emojis',
         payload: {
-            text: emoji,
+            emoji,
             styles: {
                 fontSize: '48px',
                 textAlign: 'center',
@@ -678,15 +696,14 @@ export default function CreateTemplatePage() {
                   </h1>
                 );
               case 'text':
-                 if (block.payload.text?.length > 2) {
-                    return <p>{block.payload.text}</p>
-                 }
-                return <p style={block.payload.styles}>{block.payload.text}</p>
+                return <p className="p-2">{block.payload.text}</p>
+              case 'emojis':
+                return <p style={{...block.payload.styles}}>{(block as EmojiBlock).payload.emoji}</p>
               case 'button':
                 return (
-                    <div style={getButtonContainerStyle(block)}>
-                        <button style={getButtonStyle(block)}>
-                            {block.payload.text}
+                    <div style={getButtonContainerStyle(block as ButtonBlock)}>
+                        <button style={getButtonStyle(block as ButtonBlock)}>
+                            {(block as ButtonBlock).payload.text}
                         </button>
                     </div>
                 )
@@ -715,6 +732,52 @@ export default function CreateTemplatePage() {
     setTemplateName(tempTemplateName);
     setIsEditNameModalOpen(false);
   };
+  
+  // --- Wrapper Resize Logic ---
+  const handleMouseDownResize = (e: React.MouseEvent, wrapperId: string) => {
+    e.preventDefault();
+    setIsResizing(true);
+    setResizingWrapperId(wrapperId);
+  };
+  
+  const handleMouseMoveResize = useCallback((e: MouseEvent) => {
+    if (isResizing && resizingWrapperId && wrapperRef.current) {
+      const wrapperElement = document.getElementById(resizingWrapperId);
+      if(wrapperElement){
+        const newHeight = e.clientY - wrapperElement.getBoundingClientRect().top;
+        const updatedCanvasContent = canvasContent.map(block => {
+          if (block.id === resizingWrapperId && block.type === 'wrapper') {
+            return {
+              ...block,
+              payload: { ...block.payload, height: Math.max(50, newHeight) } // min height 50
+            };
+          }
+          return block;
+        });
+        setCanvasContent(updatedCanvasContent as CanvasBlock[]);
+      }
+    }
+  }, [isResizing, resizingWrapperId, canvasContent, setCanvasContent]);
+  
+  const handleMouseUpResize = useCallback(() => {
+    setIsResizing(false);
+    setResizingWrapperId(null);
+  }, []);
+  
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMoveResize);
+      document.addEventListener('mouseup', handleMouseUpResize);
+    } else {
+      document.removeEventListener('mousemove', handleMouseMoveResize);
+      document.removeEventListener('mouseup', handleMouseUpResize);
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMoveResize);
+      document.removeEventListener('mouseup', handleMouseUpResize);
+    };
+  }, [isResizing, handleMouseMoveResize, handleMouseUpResize]);
+
 
   useEffect(() => {
     setTempTemplateName(templateName);
@@ -832,20 +895,27 @@ export default function CreateTemplatePage() {
       case 'wrapper':
         return (
           <motion.div
+            id={block.id}
             key={block.id}
+            ref={wrapperRef}
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="group/row relative rounded-lg border-2 border-dashed border-purple-500 p-4 min-h-[200px]"
+            className="group/row relative rounded-lg border-2 border-dashed border-purple-500"
+            style={{ height: `${block.payload.height}px` }}
           >
-             <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+             <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
                <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
                   <Trash2 className="size-4" />
                </Button>
             </div>
-             <p className="text-muted-foreground text-center text-sm">Contenedor Flexible - Funcionalidad de Arrastrar y Soltar próximamente.</p>
+             <p className="text-muted-foreground text-center text-sm p-4">Contenedor Flexible - Funcionalidad de Arrastrar y Soltar próximamente.</p>
+             <div 
+                onMouseDown={(e) => handleMouseDownResize(e, block.id)}
+                className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
+             />
           </motion.div>
         );
       default:
@@ -866,7 +936,7 @@ export default function CreateTemplatePage() {
           </div>
         </header>
         <div className="p-4 space-y-2">
-            {contentBlocks.filter(b => b.id === 'columns' || b.id === 'wrapper').map(block => (
+            {contentBlocks.map(block => (
                <Card 
                 key={block.id}
                 onClick={() => handleBlockClick(block.id as BlockType)}
@@ -941,7 +1011,7 @@ export default function CreateTemplatePage() {
                    <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                  </div>
                ) : (
-                <div className="flex flex-col">
+                <div className="flex flex-col gap-y-2">
                   <AnimatePresence>
                   {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </AnimatePresence>
@@ -967,7 +1037,7 @@ export default function CreateTemplatePage() {
                { selectedElement?.type === 'primitive' && (
                 <Button 
                     variant="outline" 
-                    className="w-full border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-foreground dark:hover:text-white justify-between"
+                    className="w-full border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-foreground dark:hover:text-white justify-start gap-2"
                     onClick={() => promptDeleteItem(selectedElement.rowId, selectedElement.columnId, selectedElement.primitiveId)}
                 >
                     Bloque {blockTypeNames[getSelectedBlockType()!]} <Trash2 className="ml-auto"/>
@@ -977,7 +1047,7 @@ export default function CreateTemplatePage() {
               { selectedElement?.type === 'column' && (
                  <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
-              { selectedElement?.type === 'primitive' && (
+              { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'button' && (
                   <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
               
@@ -1140,4 +1210,5 @@ export default function CreateTemplatePage() {
     
 
     
+
 
