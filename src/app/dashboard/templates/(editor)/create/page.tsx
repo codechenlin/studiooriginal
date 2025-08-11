@@ -69,7 +69,7 @@ import {
   AlignRight,
   RotateCw,
 } from 'lucide-react';
-import { AnimatePresence, motion, PanInfo } from 'framer-motion';
+import { AnimatePresence, motion, PanInfo, useMotionValue } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 
@@ -435,6 +435,7 @@ export default function CreateTemplatePage() {
   const [isResizing, setIsResizing] = useState(false);
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleSave = () => {
     setLastSaved(new Date());
@@ -683,19 +684,6 @@ export default function CreateTemplatePage() {
         )}
         onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
        >
-        <div className="absolute top-1/2 -right-8 -translate-y-1/2 flex items-center opacity-0 group-hover/primitive:opacity-100 transition-opacity">
-            <Button
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    promptDeleteItem(rowId, colId, block.id);
-                }}
-            >
-                <X className="size-4" />
-            </Button>
-        </div>
         {
           (() => {
              switch(block.type) {
@@ -875,13 +863,15 @@ export default function CreateTemplatePage() {
       html: 'HTML'
   }
 
-  const ResizableRotatableEmoji = ({ block, wrapperId }: { block: EmojiBlock, wrapperId: string }) => {
-    const { x, y, width, height, rotate } = block.payload.styles.transform;
+  const ResizableRotatableEmoji = ({ block, wrapperId, containerRef }: { block: EmojiBlock, wrapperId: string, containerRef: React.RefObject<HTMLDivElement> }) => {
+    const { width, height, rotate } = block.payload.styles.transform;
+    const x = useMotionValue(block.payload.styles.transform.x);
+    const y = useMotionValue(block.payload.styles.transform.y);
   
-    const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-      updateWrapperBlockTransform(wrapperId, block.id, { x: x + info.delta.x, y: y + info.delta.y });
+    const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      updateWrapperBlockTransform(wrapperId, block.id, { x: info.point.x, y: info.point.y });
     };
-  
+
     const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         updateWrapperBlockTransform(wrapperId, block.id, {
             width: Math.max(20, width + info.delta.x),
@@ -890,17 +880,21 @@ export default function CreateTemplatePage() {
     };
 
     const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        const center = { x: x + width / 2, y: y + height / 2 };
-        const newAngle = Math.atan2(info.point.y - center.y, info.point.x - center.x) * 180 / Math.PI;
-        updateWrapperBlockTransform(wrapperId, block.id, { rotate: newAngle + 90 });
+        const rect = (info.target as HTMLElement).getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const newAngle = Math.atan2(info.point.y - centerY, info.point.x - centerX) * 180 / Math.PI;
+        updateWrapperBlockTransform(wrapperId, block.id, { rotate: newAngle });
     }
   
     return (
       <motion.div
         key={block.id}
         drag
-        onDrag={handleDrag}
+        dragConstraints={containerRef}
+        dragElastic={0}
         dragMomentum={false}
+        onDragEnd={handleDragEnd}
         className="absolute cursor-grab active:cursor-grabbing"
         style={{ x, y, width, height, rotate }}
         onClick={(e) => { e.stopPropagation(); setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId })}}
@@ -912,16 +906,12 @@ export default function CreateTemplatePage() {
                     {/* Resize handle */}
                     <motion.div
                         className="absolute bottom-[-4px] right-[-4px] w-4 h-4 bg-white border-2 border-primary rounded-full cursor-nwse-resize"
-                        drag="x,y"
-                        onDrag={handleResize}
-                        dragMomentum={false}
+                        onPan={handleResize}
                     />
                     {/* Rotate handle */}
                     <motion.div
                         className="absolute top-[-20px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full cursor-alias"
-                        drag
-                        onDrag={handleRotate}
-                        dragMomentum={false}
+                        onPan={handleRotate}
                     >
                       <RotateCw className="w-full h-full p-0.5 text-primary"/>
                     </motion.div>
@@ -953,7 +943,7 @@ export default function CreateTemplatePage() {
             </Button>
         </div>
 
-        <div className="absolute top-2 -right-8 flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+        <div className="absolute top-1/2 -right-8 -translate-y-1/2 flex items-center opacity-0 group-hover/row:opacity-100 transition-opacity">
             <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
                 <Trash2 className="size-4" />
             </Button>
@@ -996,15 +986,15 @@ export default function CreateTemplatePage() {
               style={{ height: `${block.payload.height}px` }}
               onClick={() => handleOpenBlockSelector(block.id)}
             >
-              <div className="w-full h-full relative">
+              <motion.div ref={containerRef} className="w-full h-full relative">
                 {block.payload.blocks.map(b => {
                   if (b.type === 'emojis') {
-                    return <ResizableRotatableEmoji key={b.id} block={b as EmojiBlock} wrapperId={block.id} />
+                    return <ResizableRotatableEmoji key={b.id} block={b as EmojiBlock} wrapperId={block.id} containerRef={containerRef} />
                   }
                   // Render other primitive blocks if needed, without transformations
                   return null;
                 })}
-              </div>
+              </motion.div>
               <div 
                  onMouseDown={(e) => handleMouseDownResize(e, block.id)}
                  className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
@@ -1018,7 +1008,7 @@ export default function CreateTemplatePage() {
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
-      <aside className="w-56 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
+      <aside className="w-80 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
           <div className="flex items-center gap-1 flex-1 min-w-0">
               <span className="text-base font-semibold truncate flex-1">{templateName}</span>
@@ -1027,7 +1017,7 @@ export default function CreateTemplatePage() {
               </Button>
           </div>
         </header>
-        <div className="p-4 space-y-2">
+        <div className="p-4 space-y-4">
             {mainContentBlocks.map(block => (
                <Card 
                 key={block.id}
@@ -1098,17 +1088,17 @@ export default function CreateTemplatePage() {
          <div className="flex-1 overflow-auto custom-scrollbar">
           <div className="p-8">
             <div className={cn("bg-background/80 dark:bg-zinc-900/80 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
-               {canvasContent.length === 0 ? (
-                 <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground p-4">
-                   <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
-                 </div>
-               ) : (
-                <div className="flex flex-col gap-y-2">
-                  <AnimatePresence>
-                  {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
-                  </AnimatePresence>
-                </div>
-               )}
+               <AnimatePresence>
+                 {canvasContent.length === 0 ? (
+                   <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground p-4">
+                     <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
+                   </div>
+                 ) : (
+                  <div className="flex flex-col gap-y-2">
+                    {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
+                  </div>
+                 )}
+               </AnimatePresence>
             </div>
           </div>
         </div>
@@ -1281,7 +1271,7 @@ export default function CreateTemplatePage() {
             </DialogHeader>
             <ScrollArea className="max-h-60">
                  <div className="grid grid-cols-6 gap-2 p-4">
-                    {popularEmojis.map(emoji => (
+                    {popularEmojis.map((emoji) => (
                         <button 
                             key={emoji}
                             onClick={() => handleSelectEmoji(emoji)}
@@ -1302,6 +1292,7 @@ export default function CreateTemplatePage() {
     
 
     
+
 
 
 
