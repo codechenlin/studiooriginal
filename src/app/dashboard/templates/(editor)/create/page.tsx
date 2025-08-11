@@ -99,15 +99,15 @@ const columnOptions = [
 ];
 
 const popularEmojis = Array.from(new Set([
-  '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
-  '✅', '✉️', '🔗', '💡', '💯', '👋', '👇', '👉', '🎁', '📈',
-  '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸',
-  '📊', '💻', '📱'
-]));
+    '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
+    '✅', '✉️', '🔗', '💡', '💯', '👋', '👇', '👉', '🎁', '📈',
+    '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸',
+    '📊', '💻', '📱'
+  ]));
 
 
 // --- STATE MANAGEMENT TYPES ---
-type PrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'icons' | 'emojis' | 'html';
+type PrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emojis' | 'html';
 type BlockType = PrimitiveBlockType | 'columns' | 'wrapper';
 type Viewport = 'desktop' | 'tablet' | 'mobile';
 type TextAlign = 'left' | 'center' | 'right';
@@ -435,7 +435,7 @@ export default function CreateTemplatePage() {
   const [isResizing, setIsResizing] = useState(false);
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
 
-  const wrapperRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+  const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
 
   const handleSave = () => {
@@ -485,15 +485,15 @@ export default function CreateTemplatePage() {
 
   const handleSelectBlockToAdd = (blockType: PrimitiveBlockType) => {
     if (!activeContainerId) return;
-  
+
     if (blockType === 'emojis') {
       setIsEmojiSelectorOpen(true);
       setIsBlockSelectorOpen(false);
       return;
     }
-  
+
     let newBlock: PrimitiveBlock;
-  
+
     if (blockType === 'button') {
       newBlock = {
         id: `button_${Date.now()}`,
@@ -517,23 +517,24 @@ export default function CreateTemplatePage() {
         },
       };
     }
-  
+
     const newCanvasContent = canvasContent.map((row) => {
-      if (row.type === 'columns') {
-        const newColumns = row.payload.columns.map((col) => {
-          if (col.id === activeContainerId) {
-            return { ...col, blocks: [...col.blocks, newBlock] };
-          }
-          return col;
-        });
-        return { ...row, payload: { ...row.payload, columns: newColumns } };
-      }
-      if (row.type === 'wrapper' && row.id === activeContainerId) {
-        return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
-      }
-      return row;
+        if (row.type === 'columns') {
+            const newColumns = row.payload.columns.map((col) => {
+              if (col.id === activeContainerId) {
+                return { ...col, blocks: [...col.blocks, newBlock] };
+              }
+              return col;
+            });
+            // This was the fix: ensure payload structure is maintained
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        }
+        if (row.type === 'wrapper' && row.id === activeContainerId) {
+            return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
+        }
+        return row;
     });
-  
+
     setCanvasContent(newCanvasContent as CanvasBlock[]);
     setIsBlockSelectorOpen(false);
     setActiveContainerId(null);
@@ -860,7 +861,6 @@ export default function CreateTemplatePage() {
       separator: 'separador',
       youtube: 'video de Youtube',
       timer: 'contador',
-      icons: 'iconos',
       emojis: 'emoji',
       html: 'HTML'
   }
@@ -873,7 +873,11 @@ export default function CreateTemplatePage() {
     const containerRef = wrapperRefs.current[wrapperId];
 
     const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-      updateWrapperBlockTransform(wrapperId, block.id, { x: info.point.x, y: info.point.y });
+        if(!containerRef) return;
+        const parentRect = containerRef.getBoundingClientRect();
+        const newX = info.point.x - parentRect.left;
+        const newY = info.point.y - parentRect.top;
+        updateWrapperBlockTransform(wrapperId, block.id, { x: newX, y: newY });
     };
 
     const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -895,7 +899,12 @@ export default function CreateTemplatePage() {
       <motion.div
         key={block.id}
         drag
-        dragConstraints={containerRef}
+        dragConstraints={containerRef ? {
+            left: 0, 
+            right: containerRef.clientWidth - width, 
+            top: 0, 
+            bottom: containerRef.clientHeight - height
+        } : undefined}
         dragElastic={0}
         dragMomentum={false}
         onDragEnd={handleDragEnd}
@@ -927,11 +936,6 @@ export default function CreateTemplatePage() {
   };
 
   const renderCanvasBlock = (block: CanvasBlock, index: number) => {
-    if (block.type === 'wrapper') {
-       if (!wrapperRefs.current[block.id]) {
-        wrapperRefs.current[block.id] = React.createRef<HTMLDivElement>();
-      }
-    }
     return (
         <motion.div 
             key={block.id} 
@@ -952,7 +956,7 @@ export default function CreateTemplatePage() {
             </Button>
         </div>
 
-        <div className="absolute top-1/2 -right-8 -translate-y-1/2 flex items-center opacity-0 group-hover/row:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 flex items-center opacity-0 group-hover/row:opacity-100 transition-opacity">
             <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
                 <Trash2 className="size-4" />
             </Button>
@@ -990,11 +994,12 @@ export default function CreateTemplatePage() {
         {block.type === 'wrapper' && (
             <div
               id={block.id}
+              ref={(el) => { wrapperRefs.current[block.id] = el; }}
               className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500"
               style={{ height: `${block.payload.height}px` }}
               onClick={() => handleOpenBlockSelector(block.id)}
             >
-              <motion.div ref={wrapperRefs.current[block.id]} className="w-full h-full relative">
+              <div className="w-full h-full relative">
                 {block.payload.blocks.map(b => {
                   if (b.type === 'emojis') {
                     return <ResizableRotatableEmoji key={b.id} block={b as EmojiBlock} wrapperId={block.id} />
@@ -1002,7 +1007,7 @@ export default function CreateTemplatePage() {
                   // Render other primitive blocks if needed, without transformations
                   return null;
                 })}
-              </motion.div>
+              </div>
               <div 
                  onMouseDown={(e) => handleMouseDownResize(e, block.id)}
                  className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
@@ -1102,7 +1107,7 @@ export default function CreateTemplatePage() {
                      <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                    </div>
                  ) : (
-                  <div className="flex flex-col gap-y-2">
+                  <div className="flex flex-col gap-y-0">
                     {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </div>
                  )}
@@ -1300,6 +1305,7 @@ export default function CreateTemplatePage() {
     
 
     
+
 
 
 
