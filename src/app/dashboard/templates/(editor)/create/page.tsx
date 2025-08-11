@@ -94,12 +94,12 @@ const columnOptions = [
     { num: 5, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
-const popularEmojis = [
+const popularEmojis = Array.from(new Set([
   '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
   '✅', '✉️', '🔗', '📈', '💡', '💯', '👋', '👇', '👉', '🎁',
   '📅', '🧠', '⭐', '💻', '📱', '💬', '📢', '🌍', '⏰', '🔒',
-  '🔑', '💡', '🏆', '📈', '📉'
-];
+  '🔑', '🏆', '📉'
+]));
 
 
 // --- STATE MANAGEMENT TYPES ---
@@ -732,7 +732,7 @@ export default function CreateTemplatePage() {
               </Button>
           </div>
         </header>
-        <div className="p-4">
+        <div className="p-4 space-y-2">
             <Card 
               onClick={() => handleBlockClick('columns')}
               className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
@@ -805,7 +805,7 @@ export default function CreateTemplatePage() {
                    <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
                  </div>
                ) : (
-                <div className="p-4">
+                <div className="p-4 space-y-2">
                   <AnimatePresence>
                   {canvasContent.map((block, index) => (
                     <motion.div 
