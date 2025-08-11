@@ -97,8 +97,8 @@ const columnOptions = [
 const popularEmojis = Array.from(new Set([
   '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
   '✅', '✉️', '🔗', '📈', '💡', '💯', '👋', '👇', '👉', '🎁',
-  '📅', '🧠', '⭐', '🤔', '✨', '🙌', '👀', '💼', '⏰', '💸',
-  '📊', '📈', '💡', '💻', '📱'
+  '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸',
+  '📊', '💻', '📱'
 ]));
 
 
@@ -162,7 +162,7 @@ interface WrapperBlock {
   id: string;
   type: 'wrapper';
   payload: {
-    blocks: PrimitiveBlock[];
+    blocks: (PrimitiveBlock | ColumnsBlock)[];
   };
 }
 
@@ -678,6 +678,9 @@ export default function CreateTemplatePage() {
                   </h1>
                 );
               case 'text':
+                 if (block.payload.text?.length > 2) {
+                    return <p>{block.payload.text}</p>
+                 }
                 return <p style={block.payload.styles}>{block.payload.text}</p>
               case 'button':
                 return (
@@ -747,6 +750,28 @@ export default function CreateTemplatePage() {
     return style;
   };
   
+  const getSelectedBlockType = () => {
+      if(selectedElement?.type !== 'primitive') return null;
+      const row = canvasContent.find(r => r.id === selectedElement.rowId);
+      if (row?.type !== 'columns') return null;
+      const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+      const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+      return block?.type;
+  }
+  
+  const blockTypeNames: Record<PrimitiveBlockType, string> = {
+      heading: 'título',
+      text: 'texto',
+      image: 'imagen',
+      button: 'botón',
+      separator: 'separador',
+      youtube: 'video de Youtube',
+      timer: 'contador',
+      icons: 'iconos',
+      emojis: 'emoji',
+      html: 'HTML'
+  }
+
   const renderCanvasBlock = (block: CanvasBlock, index: number) => {
     switch (block.type) {
       case 'columns':
@@ -788,7 +813,10 @@ export default function CreateTemplatePage() {
                     )}
                 >
                    {col.blocks.length > 0 ? (
-                       col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id))
+                       <div className="flex flex-col gap-2 w-full">
+                           {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id))}
+                           <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id); }}><PlusCircle className="mr-2"/>Añadir</Button>
+                       </div>
                    ) : (
                      <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id); }}>
                        <PlusCircle className="mb-1"/>
@@ -913,7 +941,7 @@ export default function CreateTemplatePage() {
                    <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                  </div>
                ) : (
-                <div className="p-4 flex flex-col">
+                <div className="flex flex-col">
                   <AnimatePresence>
                   {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </AnimatePresence>
@@ -939,10 +967,10 @@ export default function CreateTemplatePage() {
                { selectedElement?.type === 'primitive' && (
                 <Button 
                     variant="outline" 
-                    className="w-full border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-foreground dark:hover:text-white"
+                    className="w-full border-[#F00000] text-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-foreground dark:hover:text-white justify-between"
                     onClick={() => promptDeleteItem(selectedElement.rowId, selectedElement.columnId, selectedElement.primitiveId)}
                 >
-                    Bloque <X className="ml-auto"/>
+                    Bloque {blockTypeNames[getSelectedBlockType()!]} <Trash2 className="ml-auto"/>
                 </Button>
               )}
 
@@ -1112,3 +1140,4 @@ export default function CreateTemplatePage() {
     
 
     
+
