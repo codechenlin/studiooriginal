@@ -62,6 +62,7 @@ import {
   ArrowRight,
   Sun,
   Circle,
+  X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -107,6 +108,7 @@ interface Column {
   id: string;
   blocks: PrimitiveBlock[];
   styles: {
+    borderRadius?: number;
     background?: {
       type: 'solid' | 'gradient';
       color1: string;
@@ -145,14 +147,14 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   const element = getElement();
   if (!element) return null;
 
-  const { background } = element.styles;
+  const { background, borderRadius } = element.styles;
 
-  const updateBackground = (newBg: Column['styles']['background'] | undefined) => {
+  const updateStyle = (key: keyof Column['styles'], value: any) => {
     const newCanvasContent = canvasContent.map(row => {
       if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
       const newColumns = row.payload.columns.map(col => {
         if (col.id === (selectedElement as { columnId: string }).columnId) {
-          return { ...col, styles: { ...col.styles, background: newBg } };
+          return { ...col, styles: { ...col.styles, [key]: value } };
         }
         return col;
       });
@@ -162,7 +164,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   };
   
   const setBgType = (type: 'solid' | 'gradient') => {
-     updateBackground({
+     updateStyle('background', {
         type,
         color1: background?.color1 || '#A020F0',
         color2: background?.color2 || '#3357FF',
@@ -172,23 +174,31 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
 
   const setColor = (colorProp: 'color1' | 'color2', value: string) => {
       if(background){
-          updateBackground({...background, [colorProp]: value });
+          updateStyle('background', {...background, [colorProp]: value });
       } else {
-          updateBackground({ type: 'solid', color1: value, direction: 'vertical' });
+          updateStyle('background', { type: 'solid', color1: value, direction: 'vertical' });
       }
   }
   
   const setDirection = (direction: GradientDirection) => {
       if(background) {
-          updateBackground({...background, direction });
+          updateStyle('background', {...background, direction });
       }
   }
 
   return (
+    <>
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Paintbrush/>Fondo de Columna</h3>
-        <Button variant="ghost" size="icon" className="size-7" onClick={() => updateBackground(undefined)}><XIcon className="size-4"/></Button>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="size-7 border-[#F00000] hover:bg-[#F00000] hover:text-white" 
+          onClick={() => updateStyle('background', undefined)}
+        >
+            <Trash2 className="size-4"/>
+        </Button>
       </div>
        <Tabs value={background?.type || 'solid'} onValueChange={(value) => setBgType(value as any)} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -234,6 +244,20 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
         </>
       )}
     </div>
+    <Separator className="bg-border/20" />
+    <div className="space-y-4">
+        <h3 className="text-sm font-medium text-foreground/80">Radio del Borde</h3>
+        <div className="flex items-center gap-2">
+          <Slider 
+              defaultValue={[borderRadius || 8]} 
+              max={40} 
+              step={1} 
+              onValueChange={(value) => updateStyle('borderRadius', value[0])}
+          />
+          <span className="text-xs text-muted-foreground w-12 text-right">{borderRadius || 0}px</span>
+        </div>
+    </div>
+    </>
   )
 };
 
@@ -278,7 +302,9 @@ export default function CreateTemplatePage() {
           columns: Array.from({ length: selectedColumnLayout }).map((_, i) => ({
             id: `col_${Date.now()}_${i}`,
             blocks: [],
-            styles: {},
+            styles: {
+              borderRadius: 8,
+            },
           })),
         },
       };
@@ -385,7 +411,7 @@ export default function CreateTemplatePage() {
        >
          <div className="absolute top-0 -right-8 flex items-center gap-1 opacity-0 group-hover/primitive:opacity-100 transition-opacity">
              <Button variant="destructive" size="icon" className="size-6" onClick={(e) => {e.stopPropagation(); promptDeleteItem(rowId, colId, block.id)}}>
-                <Trash2 className="size-3.5" />
+                <X className="size-3.5" />
              </Button>
          </div>
         {
@@ -439,19 +465,27 @@ export default function CreateTemplatePage() {
   };
   
   const getColumnStyle = (col: Column) => {
-    if (!col.styles.background) return {};
-    const { type, color1, color2, direction } = col.styles.background;
-    if (type === 'solid') {
-      return { backgroundColor: color1 };
+    const style: React.CSSProperties = {};
+
+    if (col.styles.borderRadius !== undefined) {
+        style.borderRadius = `${col.styles.borderRadius}px`;
     }
-    if (type === 'gradient') {
-      if (direction === 'radial') {
-        return { backgroundImage: `radial-gradient(${color1}, ${color2})` };
+
+    if (col.styles.background) {
+      const { type, color1, color2, direction } = col.styles.background;
+      if (type === 'solid') {
+        style.backgroundColor = color1;
       }
-      const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
-      return { backgroundImage: `linear-gradient(${angle}, ${color1}, ${color2})` };
+      if (type === 'gradient') {
+        if (direction === 'radial') {
+          style.backgroundImage = `radial-gradient(${color1}, ${color2})`;
+        } else {
+          const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+          style.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
+        }
+      }
     }
-    return {};
+    return style;
   };
 
   return (
@@ -477,7 +511,7 @@ export default function CreateTemplatePage() {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <main className="flex-1 flex flex-col min-w-0">
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] flex-shrink-0">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon"><Undo/></Button>
@@ -530,7 +564,7 @@ export default function CreateTemplatePage() {
           </div>
         </header>
 
-         <div className="flex-1 overflow-auto">
+         <div className="flex-1 overflow-auto custom-scrollbar">
           <div className="p-8">
             <div className={cn("bg-background/80 dark:bg-zinc-900/80 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
                {canvasContent.length === 0 ? (
@@ -538,7 +572,7 @@ export default function CreateTemplatePage() {
                    <p>Haz clic en el bloque "Columns" de la izquierda para empezar a construir tu plantilla.</p>
                  </div>
                ) : (
-                <div className="space-y-2 p-4">
+                <div className="p-4">
                   <AnimatePresence>
                   {canvasContent.map((block, index) => (
                     <motion.div 
@@ -566,14 +600,14 @@ export default function CreateTemplatePage() {
                          </Button>
                       </div>
 
-                      <div className="flex overflow-x-auto custom-scrollbar pb-2">
+                      <div className="flex overflow-x-auto custom-scrollbar">
                         {block.payload.columns.map((col) => (
                           <div 
                               key={col.id}
                               onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}}
                               style={getColumnStyle(col)}
                               className={cn(
-                                "flex-1 p-2 border-2 border-dashed rounded-lg min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]",
+                                "flex-1 p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px]",
                                 selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
                               )}
                           >
