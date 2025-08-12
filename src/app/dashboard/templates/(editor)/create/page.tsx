@@ -72,10 +72,12 @@ import {
   Scale,
   ArrowLeftRight,
   ArrowUpDown,
+  Moon,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
+import { useToast } from '@/hooks/use-toast';
 
 const mainContentBlocks = [
   { name: "Columns", icon: Columns, id: 'columns' },
@@ -191,6 +193,14 @@ interface WrapperBlock {
   payload: {
     blocks: InteractivePrimitiveBlock[];
     height: number;
+     styles: {
+      background?: {
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2?: string;
+        direction?: GradientDirection;
+      }
+    }
   };
 }
 
@@ -209,31 +219,43 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-  if (!selectedElement || selectedElement.type !== 'column') return null;
+  if (!selectedElement || (selectedElement.type !== 'column' && selectedElement.type !== 'wrapper')) return null;
 
   const getElement = () => {
-    const row = canvasContent.find(r => r.id === selectedElement.rowId);
-    if (row?.type !== 'columns') return null;
-    return row?.payload.columns.find(c => c.id === selectedElement.columnId);
+    if (selectedElement.type === 'column') {
+      const row = canvasContent.find(r => r.id === selectedElement.rowId);
+      if (row?.type !== 'columns') return null;
+      return row?.payload.columns.find(c => c.id === selectedElement.columnId);
+    }
+    if (selectedElement.type === 'wrapper') {
+      const row = canvasContent.find(r => r.id === selectedElement.wrapperId);
+      return row?.type === 'wrapper' ? row : null;
+    }
+    return null;
   }
   
   const element = getElement();
   if (!element) return null;
 
-  const { background, borderRadius } = element.styles;
+  const styles = selectedElement.type === 'wrapper' ? (element as WrapperBlock).payload.styles : (element as Column).styles;
+  const { background, borderRadius } = styles || {};
   
   const updateStyle = (key: string, value: any) => {
     const newCanvasContent = canvasContent.map(row => {
-      if (row.id !== selectedElement.rowId) return row;
-      if (row.type !== 'columns') return row;
-      
-      const newColumns = row.payload.columns.map(col => {
-        if (col.id === selectedElement.columnId) {
-            return { ...col, styles: { ...col.styles, [key]: value } };
-        }
-        return col;
-      });
-      return { ...row, payload: { ...row.payload, columns: newColumns } };
+      if (selectedElement.type === 'column' && row.id === selectedElement.rowId && row.type === 'columns') {
+          const newColumns = row.payload.columns.map(col => {
+            if (col.id === selectedElement.columnId) {
+                return { ...col, styles: { ...col.styles, [key]: value } };
+            }
+            return col;
+          });
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
+      }
+      if (selectedElement.type === 'wrapper' && row.id === selectedElement.wrapperId && row.type === 'wrapper') {
+        const currentStyles = row.payload.styles || {};
+        return { ...row, payload: { ...row.payload, styles: { ...currentStyles, [key]: value } } };
+      }
+      return row;
     });
     setCanvasContent(newCanvasContent as CanvasBlock[]);
   };
@@ -248,11 +270,8 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   };
 
   const setColor = (colorProp: 'color1' | 'color2', value: string) => {
-      if(background){
-          updateStyle('background', {...background, [colorProp]: value });
-      } else {
-          updateStyle('background', { type: 'solid', color1: value, direction: 'vertical' });
-      }
+      const currentBg = background || { type: 'solid', color1: '#A020F0', direction: 'vertical' };
+      updateStyle('background', {...currentBg, [colorProp]: value });
   }
   
   const setDirection = (direction: GradientDirection) => {
@@ -260,6 +279,8 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
           updateStyle('background', {...background, direction });
       }
   }
+
+  const isColumn = selectedElement.type === 'column';
 
   return (
     <>
@@ -319,19 +340,23 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
         </>
       )}
     </div>
-    <Separator className="bg-border/20" />
-    <div className="space-y-4">
-        <h3 className="text-sm font-medium text-foreground/80">Radio del Borde</h3>
-        <div className="flex items-center gap-2">
-          <Slider 
-              value={[borderRadius || 0]}
-              max={40} 
-              step={1} 
-              onValueChange={(value) => updateStyle('borderRadius', value[0])}
-          />
-          <span className="text-xs text-muted-foreground w-12 text-right">{borderRadius || 0}px</span>
+    {isColumn && (
+      <>
+        <Separator className="bg-border/20" />
+        <div className="space-y-4">
+            <h3 className="text-sm font-medium text-foreground/80">Radio del Borde</h3>
+            <div className="flex items-center gap-2">
+              <Slider 
+                  value={[borderRadius || 0]}
+                  max={40} 
+                  step={1} 
+                  onValueChange={(value) => updateStyle('borderRadius', value[0])}
+              />
+              <span className="text-xs text-muted-foreground w-12 text-right">{borderRadius || 0}px</span>
+            </div>
         </div>
-    </div>
+      </>
+    )}
     </>
   )
 };
@@ -457,23 +482,23 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
         <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Move />Posición</h3>
         <div className="space-y-3">
           <Label className="flex items-center gap-2"><ArrowLeftRight className="size-4" /> Eje X</Label>
-          <Slider
-            value={[element.payload.x]}
-            min={0}
-            max={100}
-            step={1}
-            onValueChange={(value) => updatePayload('x', value[0])}
-          />
+           <Slider
+              value={[element.payload.x]}
+              min={0}
+              max={100}
+              step={1}
+              onValueChange={(value) => updatePayload('x', value[0])}
+            />
         </div>
         <div className="space-y-3">
            <Label className="flex items-center gap-2"><ArrowUpDown className="size-4" /> Eje Y</Label>
            <Slider
-            value={[element.payload.y]}
-            min={0}
-            max={100}
-            step={1}
-            onValueChange={(value) => updatePayload('y', value[0])}
-          />
+              value={[element.payload.y]}
+              min={0}
+              max={100}
+              step={1}
+              onValueChange={(value) => updatePayload('y', value[0])}
+            />
         </div>
       </div>
       <Separator className="bg-border/20"/>
@@ -506,6 +531,53 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
       </div>
     </div>
   )
+}
+
+function ThemeToggle() {
+  const { toast } = useToast();
+  const [isDarkMode, setIsDarkMode] = React.useState(true);
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+    const storedTheme = localStorage.getItem("theme");
+    setIsDarkMode(storedTheme === "dark");
+  }, []);
+
+  React.useEffect(() => {
+    if (mounted) {
+      document.documentElement.classList.toggle("dark", isDarkMode);
+      localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+    }
+  }, [isDarkMode, mounted]);
+
+  const toggleTheme = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    toast({
+      title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
+    });
+  };
+
+  if (!mounted) {
+    return <div className="size-8" />;
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      className="rounded-full size-8"
+    >
+      {isDarkMode ? (
+        <Sun className="size-5" />
+      ) : (
+        <Moon className="size-5" />
+      )}
+      <span className="sr-only">Cambiar tema</span>
+    </Button>
+  );
 }
 
 export default function CreateTemplatePage() {
@@ -551,7 +623,8 @@ export default function CreateTemplatePage() {
         type: 'wrapper',
         payload: {
           blocks: [],
-          height: 200, // Initial height
+          height: 200,
+          styles: {},
         },
       };
       setCanvasContent([...canvasContent, newBlock]);
@@ -894,15 +967,18 @@ export default function CreateTemplatePage() {
     mobile: 'max-w-sm', 
   };
   
-  const getColumnStyle = (col: Column) => {
+  const getElementStyle = (element: ColumnsBlock | WrapperBlock | Column) => {
+    const styles = 'payload' in element && 'styles' in element.payload ? element.payload.styles : 'styles' in element ? element.styles : {};
+    const { background, borderRadius } = styles || {};
+
     const style: React.CSSProperties = {};
 
-    if (col.styles.borderRadius !== undefined) {
-        style.borderRadius = `${col.styles.borderRadius}px`;
+    if (borderRadius !== undefined) {
+      style.borderRadius = `${borderRadius}px`;
     }
 
-    if (col.styles.background) {
-      const { type, color1, color2, direction } = col.styles.background;
+    if (background) {
+      const { type, color1, color2, direction } = background;
       if (type === 'solid') {
         style.backgroundColor = color1;
       }
@@ -922,8 +998,8 @@ export default function CreateTemplatePage() {
       if(!selectedElement) return null;
 
       const getRow = () => {
-        if ('rowId' in selectedElement) return canvasContent.find(r => r.id === selectedElement.rowId);
-        if ('wrapperId' in selectedElement) return canvasContent.find(r => r.id === selectedElement.wrapperId);
+        if ('rowId' in selectedElement && selectedElement.rowId) return canvasContent.find(r => r.id === selectedElement.rowId);
+        if ('wrapperId' in selectedElement && selectedElement.wrapperId) return canvasContent.find(r => r.id === selectedElement.wrapperId);
         return null;
       }
       const row = getRow();
@@ -986,11 +1062,24 @@ export default function CreateTemplatePage() {
             id={block.id}
             ref={wrapperRef}
             className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500 overflow-hidden" 
-            style={{ height: `${block.payload.height}px` }}
+            style={{ height: `${block.payload.height}px`, ...getElementStyle(block) }}
             onClick={(e) => {
-              if ((e.target as HTMLElement).closest('.interactive-emoji')) return;
-              setSelectedElement({ type: 'wrapper', wrapperId: block.id }); 
-              handleOpenBlockSelector(block.id, 'wrapper', e);
+              const target = e.target as HTMLElement;
+              if (target.closest('.interactive-emoji')) return;
+
+              setSelectedElement({ type: 'wrapper', wrapperId: block.id });
+              
+              const containerElement = target.closest('.group\\/wrapper');
+              if (containerElement) {
+                const rect = containerElement.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                setClickPosition({ x, y });
+              } else {
+                setClickPosition({ x: 50, y: 50 });
+              }
+              setActiveContainer({ id: block.id, type: 'wrapper' });
+              setIsWrapperBlockSelectorOpen(true);
             }}
           >
             <div className="w-full h-full relative">
@@ -1001,8 +1090,8 @@ export default function CreateTemplatePage() {
                       <div
                         key={b.id}
                         className={cn(
-                          "interactive-emoji absolute text-4xl cursor-pointer", 
-                          isSelected ? "ring-2 ring-accent z-10" : "z-0"
+                          "interactive-emoji absolute text-4xl cursor-pointer select-none", 
+                          isSelected ? "ring-2 ring-accent z-10 p-2" : "z-0"
                         )}
                         style={{
                            left: `${b.payload.x}%`,
@@ -1024,8 +1113,10 @@ export default function CreateTemplatePage() {
             </div>
             <div 
                onMouseDown={(e) => handleMouseDownResize(e, block.id)}
-               className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize z-20"
-            />
+               className="absolute bottom-0 left-0 w-full h-4 flex items-center justify-center cursor-ns-resize z-20 bg-gradient-to-t from-primary/20 to-transparent opacity-50 hover:opacity-100 transition-opacity"
+            >
+              <ChevronsUpDown className="size-5 text-primary/80" />
+            </div>
           </div>
         </div>
       );
@@ -1064,7 +1155,7 @@ export default function CreateTemplatePage() {
                 <div 
                     key={col.id}
                     onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}}
-                    style={getColumnStyle(col)}
+                    style={getElementStyle(col)}
                     className={cn(
                       "flex-1 p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px] group/column",
                       selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
@@ -1095,11 +1186,12 @@ export default function CreateTemplatePage() {
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       <aside className="w-80 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
-          <div className="flex items-center gap-1 flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
               <span className="text-base font-semibold truncate flex-1">{templateName}</span>
-              <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => setIsEditNameModalOpen(true)}>
+              <Button variant="ghost" size="icon" className="size-8 rounded-full" onClick={() => setIsEditNameModalOpen(true)}>
                 <Pencil className="size-4" />
               </Button>
+              <ThemeToggle />
           </div>
         </header>
         <div className="p-4 space-y-4">
@@ -1218,8 +1310,7 @@ export default function CreateTemplatePage() {
                 </Button>
               )}
 
-
-              { selectedElement?.type === 'column' && (
+              { (selectedElement?.type === 'column' || selectedElement?.type === 'wrapper') && (
                  <BackgroundEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'button' && (
@@ -1408,6 +1499,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
-
-
