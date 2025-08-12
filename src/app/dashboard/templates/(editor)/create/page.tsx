@@ -428,49 +428,59 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
     isSelected: boolean;
 }) => {
     const nodeRef = useRef<HTMLDivElement>(null);
-    
+    const { x, y, width, height, rotate } = block.payload.styles.transform;
+
     const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        const { x, y, width, height, rotate } = block.payload.styles.transform;
-        const newX = x + info.offset.x;
-        const newY = y + info.offset.y;
-        onUpdate(block.id, { x: newX, y: newY, width, height, rotate });
+        onUpdate(block.id, {
+            x: x + info.offset.x,
+            y: y + info.offset.y,
+            width,
+            height,
+            rotate
+        });
     };
 
-    const handlePanResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        if (!nodeRef.current) return;
-        const { width, height } = block.payload.styles.transform;
-        const newWidth = Math.max(20, width + info.delta.x);
-        const newHeight = Math.max(20, height + info.delta.y);
-        nodeRef.current.style.width = `${newWidth}px`;
-        nodeRef.current.style.height = `${newHeight}px`;
-    };
-
-    const handlePanResizeEnd = () => {
-        if (!nodeRef.current) return;
-        const { x, y, rotate } = block.payload.styles.transform;
-        const newWidth = parseFloat(nodeRef.current.style.width);
-        const newHeight = parseFloat(nodeRef.current.style.height);
-        onUpdate(block.id, { x, y, width: newWidth, height: newHeight, rotate });
-    };
-
-    const handlePanRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        if (!nodeRef.current) return;
-        const { top, left, width, height } = nodeRef.current.getBoundingClientRect();
-        const centerX = left + width / 2;
-        const centerY = top + height / 2;
-        const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX) * (180 / Math.PI);
-        const newRotate = angle + 90;
-        nodeRef.current.style.transform = `translate(${block.payload.styles.transform.x}px, ${block.payload.styles.transform.y}px) rotate(${newRotate}deg)`;
+    const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        if (nodeRef.current) {
+            const newWidth = Math.max(20, width + info.delta.x);
+            const newHeight = Math.max(20, height + info.delta.y);
+            nodeRef.current.style.width = `${newWidth}px`;
+            nodeRef.current.style.height = `${newHeight}px`;
+        }
     };
     
-    const handlePanRotateEnd = () => {
-        if (!nodeRef.current) return;
-        const currentTransform = nodeRef.current.style.transform;
-        const rotationMatch = currentTransform.match(/rotate\(([^deg)]+)deg\)/);
-        const newRotate = rotationMatch ? parseFloat(rotationMatch[1]) : block.payload.styles.transform.rotate;
-        const { x, y, width, height } = block.payload.styles.transform;
-        onUpdate(block.id, { x, y, width, height, rotate: newRotate });
+    const handleResizeEnd = () => {
+        if(nodeRef.current) {
+            onUpdate(block.id, {
+                x,
+                y,
+                width: parseFloat(nodeRef.current.style.width),
+                height: parseFloat(nodeRef.current.style.height),
+                rotate
+            });
+        }
     };
+    
+    const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        if(nodeRef.current) {
+            const { top, left, width, height } = nodeRef.current.getBoundingClientRect();
+            const centerX = left + width / 2;
+            const centerY = top + height / 2;
+            const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX) * (180 / Math.PI);
+            const newRotate = angle + 90; // Adjust for initial handle position
+             nodeRef.current.style.transform = `translate(${x}px, ${y}px) rotate(${newRotate}deg)`;
+        }
+    };
+
+    const handleRotateEnd = () => {
+         if (nodeRef.current) {
+            const currentTransform = nodeRef.current.style.transform;
+            const rotationMatch = currentTransform.match(/rotate\(([^deg)]+)deg\)/);
+            const newRotate = rotationMatch ? parseFloat(rotationMatch[1]) : rotate;
+            onUpdate(block.id, { x, y, width, height, rotate: newRotate });
+        }
+    }
+
 
     return (
         <motion.div
@@ -482,9 +492,11 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
             onTapStart={(e) => { e.stopPropagation(); onSelect(); }}
             className="absolute cursor-grab active:cursor-grabbing z-10"
             style={{
-                width: `${block.payload.styles.transform.width}px`,
-                height: `${block.payload.styles.transform.height}px`,
-                transform: `translate(${block.payload.styles.transform.x}px, ${block.payload.styles.transform.y}px) rotate(${block.payload.styles.transform.rotate}deg)`,
+                width: `${width}px`,
+                height: `${height}px`,
+                x,
+                y,
+                rotate,
                 position: 'absolute'
             }}
         >
@@ -492,20 +504,20 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
                 "w-full h-full relative flex items-center justify-center border-2 border-transparent",
                 isSelected && "border-dashed border-primary"
             )}>
-                <span style={{ fontSize: '100%', lineHeight: 1 }} className="w-full h-full flex items-center justify-center select-none">
+                <span style={{ fontSize: `${height * 0.8}px`, lineHeight: 1 }} className="w-full h-full flex items-center justify-center select-none">
                     {block.payload.emoji}
                 </span>
                 {isSelected && (
                     <>
                         <motion.div
                             className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-nwse-resize z-20"
-                            onPan={handlePanResize}
-                            onPanEnd={handlePanResizeEnd}
+                            onPan={handleResize}
+                            onPanEnd={handleResizeEnd}
                         />
                         <motion.div
                             className="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-alias z-20 flex items-center justify-center"
-                            onPan={handlePanRotate}
-                            onPanEnd={handlePanRotateEnd}
+                            onPan={handleRotate}
+                            onPanEnd={handleRotateEnd}
                         >
                             <RotateCw className="w-full h-full p-0.5 text-white"/>
                         </motion.div>
@@ -515,6 +527,7 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
         </motion.div>
     );
 };
+
 
 
 export default function CreateTemplatePage() {
@@ -588,7 +601,6 @@ export default function CreateTemplatePage() {
 
   const handleOpenBlockSelector = (containerId: string, type: 'column' | 'wrapper', event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
-    // Find the correct container element for relative positioning
     const containerElement = target.closest('.group\\/wrapper, .group\\/column');
     if (containerElement) {
         const rect = containerElement.getBoundingClientRect();
@@ -723,7 +735,6 @@ export default function CreateTemplatePage() {
     let newCanvasContent;
   
     if (itemToDelete.primId) {
-      // Deleting a primitive block from either columns or wrapper
       newCanvasContent = canvasContent.map((row) => {
         if (row.id !== itemToDelete.rowId) return row;
   
