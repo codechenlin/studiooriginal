@@ -69,7 +69,7 @@ import {
   AlignRight,
   RotateCw,
 } from 'lucide-react';
-import { AnimatePresence, motion, PanInfo, useMotionValue } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 
@@ -433,26 +433,48 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
         });
     };
 
-    const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const handleRotate = (event: React.PointerEvent) => {
         const rotateHandle = event.target as HTMLElement;
         const emojiDiv = rotateHandle.closest('.emoji-wrapper');
         if (!emojiDiv || !containerRef.current) return;
-
+    
         const emojiRect = emojiDiv.getBoundingClientRect();
         const containerRect = containerRef.current.getBoundingClientRect();
         
         const emojiCenterX = emojiRect.left - containerRect.left + emojiRect.width / 2;
         const emojiCenterY = emojiRect.top - containerRect.top + emojiRect.height / 2;
         
-        const angle = Math.atan2(info.point.y - (containerRect.top + emojiCenterY), info.point.x - (containerRect.left + emojiCenterX)) * (180 / Math.PI) + 90;
-        rotate.set(angle);
-    };
+        const onPointerMove = (moveEvent: PointerEvent) => {
+          const angle = Math.atan2(moveEvent.clientY - (containerRect.top + emojiCenterY), moveEvent.clientX - (containerRect.left + emojiCenterX)) * (180 / Math.PI) + 90;
+          rotate.set(angle);
+        };
+    
+        const onPointerUp = () => {
+          document.removeEventListener('pointermove', onPointerMove);
+          document.removeEventListener('pointerup', onPointerUp);
+          handleInteractionEnd();
+        };
+    
+        document.addEventListener('pointermove', onPointerMove);
+        document.addEventListener('pointerup', onPointerUp);
+      };
 
-    const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        const newWidth = Math.max(20, width.get() + info.delta.x);
-        const newHeight = Math.max(20, height.get() + info.delta.y);
-        width.set(newWidth);
-        height.set(newHeight);
+    const handleResize = (event: React.PointerEvent) => {
+        const onPointerMove = (moveEvent: PointerEvent) => {
+          const newWidth = Math.max(20, width.get() + moveEvent.movementX);
+          const newHeight = Math.max(20, height.get() + moveEvent.movementY);
+          width.set(newWidth);
+          height.set(newHeight);
+        };
+    
+        const onPointerUp = () => {
+          document.removeEventListener('pointermove', onPointerMove);
+          document.removeEventListener('pointerup', onPointerUp);
+          handleInteractionEnd();
+        };
+    
+        document.addEventListener('pointermove', onPointerMove);
+        document.addEventListener('pointerup', onPointerUp);
     };
     
     return (
@@ -463,18 +485,17 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
             dragConstraints={containerRef}
             dragMomentum={false}
             onDragEnd={handleInteractionEnd}
-            onPanEnd={handleInteractionEnd}
             onTapStart={onSelect}
         >
             <div className="w-full h-full relative flex items-center justify-center">
                 <motion.span style={{ fontSize: height, lineHeight: 1 }}>{block.payload.emoji}</motion.span>
                 <motion.div
                     className="absolute bottom-[-8px] right-[-8px] w-4 h-4 bg-white border-2 border-primary rounded-full cursor-nwse-resize z-20"
-                    onPan={handleResize}
+                    onPointerDown={handleResize}
                 />
                 <motion.div
                     className="absolute top-[-24px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full cursor-alias z-20 flex items-center justify-center"
-                    onPan={handleRotate}
+                    onPointerDown={handleRotate}
                 >
                     <RotateCw className="w-full h-full p-0.5 text-primary"/>
                 </motion.div>
@@ -510,8 +531,7 @@ export default function CreateTemplatePage() {
   const [isResizing, setIsResizing] = useState(false);
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
 
-  const wrapperRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
-
+  const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleSave = () => {
     setLastSaved(new Date());
@@ -962,78 +982,74 @@ export default function CreateTemplatePage() {
   }
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
-    const wrapperRef = useRef<HTMLDivElement>(null);
+      const wrapperRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        wrapperRefs.current[block.id] = wrapperRef;
-    }, [block.id]);
-
-    const handleUpdate = useCallback((blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => {
-        updateWrapperBlockTransform(block.id, blockId, newTransform);
-    }, [block.id]);
-    
-    return (
-      <motion.div 
-        key={block.id} 
-        layout
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20, transition: { duration: 0.2 } }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="group/row relative rounded-lg hover:bg-primary/5 p-2"
-      >
-        <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
-            <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
-                <ArrowUp className="size-4" />
-            </Button>
-            <GripVertical className="size-5 text-muted-foreground cursor-grab" />
-            <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
-                <ArrowDown className="size-4" />
-            </Button>
-        </div>
+      useEffect(() => {
+          wrapperRefs.current[block.id] = wrapperRef.current;
+      }, [block.id]);
   
-        <div className="absolute top-2 right-2 flex items-center opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
-            <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
-                <Trash2 className="size-4" />
-            </Button>
-        </div>
-  
-        <div
-          id={block.id}
-          ref={wrapperRef}
-          className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500"
-          style={{ height: `${block.payload.height}px` }}
-          onClick={(e) => {
-            if((e.target as HTMLElement).closest('.emoji-wrapper')) return;
-            setSelectedElement({ type: 'wrapper', wrapperId: block.id }); 
-            handleOpenBlockSelector(block.id, e);
-          }}
+      const handleUpdate = useCallback((blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => {
+          updateWrapperBlockTransform(block.id, blockId, newTransform);
+      }, [block.id]);
+      
+      return (
+        <motion.div 
+          key={block.id} 
+          layout
+          className="group/row relative rounded-lg hover:bg-primary/5 p-2"
         >
-          <div className="w-full h-full relative overflow-hidden">
-            {block.payload.blocks.map(b => {
-              if (b.type === 'emojis') {
-                return (
-                    <DraggableResizableRotatableEmoji
-                        key={b.id}
-                        block={b as EmojiBlock}
-                        containerRef={wrapperRef}
-                        onUpdate={handleUpdate}
-                        onSelect={() => setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id })}
-                    />
-                )
-              }
-              return null;
-            })}
+          <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
+              <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
+                  <ArrowUp className="size-4" />
+              </Button>
+              <GripVertical className="size-5 text-muted-foreground cursor-grab" />
+              <Button variant="ghost" size="icon" className="size-6" disabled={index === canvasContent.length - 1} onClick={() => handleMoveBlock(index, 'down')}>
+                  <ArrowDown className="size-4" />
+              </Button>
           </div>
-          <div 
-             onMouseDown={(e) => handleMouseDownResize(e, block.id)}
-             className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
-          />
-        </div>
-      </motion.div>
-    );
-  });
-  WrapperComponent.displayName = 'WrapperComponent';
+    
+          <div className="absolute top-2 right-2 flex items-center opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
+              <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
+                  <Trash2 className="size-4" />
+              </Button>
+          </div>
+    
+          <div
+            id={block.id}
+            ref={wrapperRef}
+            className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500"
+            style={{ height: `${block.payload.height}px` }}
+            onClick={(e) => {
+              if((e.target as HTMLElement).closest('.emoji-wrapper')) return;
+              setSelectedElement({ type: 'wrapper', wrapperId: block.id }); 
+              handleOpenBlockSelector(block.id, e);
+            }}
+          >
+            <div className="w-full h-full relative overflow-hidden">
+              {block.payload.blocks.map(b => {
+                if (b.type === 'emojis') {
+                  return (
+                      <DraggableResizableRotatableEmoji
+                          key={b.id}
+                          block={b as EmojiBlock}
+                          containerRef={wrapperRef}
+                          onUpdate={handleUpdate}
+                          onSelect={() => setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id })}
+                      />
+                  )
+                }
+                return null;
+              })}
+            </div>
+            <div 
+               onMouseDown={(e) => handleMouseDownResize(e, block.id)}
+               className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize"
+            />
+          </div>
+        </motion.div>
+      );
+    });
+    WrapperComponent.displayName = 'WrapperComponent';
 
   const renderCanvasBlock = (block: CanvasBlock, index: number) => {
     if (block.type === 'wrapper') {
@@ -1044,10 +1060,6 @@ export default function CreateTemplatePage() {
         <motion.div 
             key={block.id} 
             layout
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20, transition: { duration: 0.2 } }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="group/row relative rounded-lg hover:bg-primary/5 p-2"
         >
         <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
@@ -1181,19 +1193,15 @@ export default function CreateTemplatePage() {
          <div className="flex-1 overflow-auto custom-scrollbar">
           <div className="p-8">
             <div className={cn("bg-background/80 dark:bg-zinc-900/80 dark:border dark:border-white/10 mx-auto shadow-2xl rounded-lg min-h-[1200px] transition-all duration-300 ease-in-out", viewportClasses[viewport])}>
-               <AnimatePresence>
                  {canvasContent.length === 0 ? (
                    <div className="border-2 border-dashed border-border/30 dark:border-border/30 rounded-lg h-full flex items-center justify-center text-center text-muted-foreground p-4">
                      <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                    </div>
                  ) : (
                   <div className="flex flex-col gap-y-0">
-                    <AnimatePresence>
                       {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
-                    </AnimatePresence>
                   </div>
                  )}
-               </AnimatePresence>
             </div>
           </div>
         </div>
