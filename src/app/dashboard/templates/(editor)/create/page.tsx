@@ -78,7 +78,7 @@ const mainContentBlocks = [
   { name: "Contenedor Flexible", icon: Shapes, id: 'wrapper' },
 ];
 
-const contentBlocks = [
+const columnContentBlocks = [
   { name: "Heading", icon: Heading1, id: 'heading' },
   { name: "Text", icon: Type, id: 'text' },
   { name: "Image", icon: ImageIcon, id: 'image' },
@@ -88,6 +88,10 @@ const contentBlocks = [
   { name: "Contador", icon: Timer, id: 'timer' },
   { name: "Emojis", icon: Smile, id: 'emojis' },
   { name: "Codigo HTML", icon: Code, id: 'html' },
+];
+
+const wrapperContentBlocks = [
+   { name: "Emojis", icon: Smile, id: 'emojis' },
 ];
 
 const columnOptions = [
@@ -136,13 +140,11 @@ interface ButtonBlock extends BaseBlock {
     }
 }
 
-interface EmojiBlock extends BaseBlock {
-    type: 'emojis',
+interface InteractiveEmojiBlock extends BaseBlock {
+    type: 'emojis';
     payload: {
         emoji: string;
         styles: {
-            fontSize: string;
-            textAlign: TextAlign;
             position: 'absolute';
             transform: {
                 x: number;
@@ -155,7 +157,7 @@ interface EmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | EmojiBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | InteractiveEmojiBlock;
 
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 
@@ -185,7 +187,7 @@ interface WrapperBlock {
   id: string;
   type: 'wrapper';
   payload: {
-    blocks: (PrimitiveBlock | ColumnsBlock)[];
+    blocks: (PrimitiveBlock | ColumnsBlock | InteractiveEmojiBlock)[];
     height: number;
   };
 }
@@ -411,27 +413,22 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 }
 
 const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSelect, isSelected }: {
-    block: EmojiBlock,
+    block: InteractiveEmojiBlock,
     containerRef: React.RefObject<HTMLDivElement>,
-    onUpdate: (blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => void,
+    onUpdate: (blockId: string, newTransform: InteractiveEmojiBlock['payload']['styles']['transform']) => void,
     onSelect: () => void,
     isSelected: boolean
 }) => {
     const { transform } = block.payload.styles;
-    const x = useMotionValue(transform.x);
-    const y = useMotionValue(transform.y);
-    const width = useMotionValue(transform.width);
-    const height = useMotionValue(transform.height);
-    const rotate = useMotionValue(transform.rotate);
     const nodeRef = useRef<HTMLDivElement>(null);
 
-    const handleInteractionEnd = () => {
+    const handleInteractionEnd = (info: PanInfo) => {
+        if (!nodeRef.current) return;
+        const { x, y } = nodeRef.current.style;
         onUpdate(block.id, {
-            x: x.get(),
-            y: y.get(),
-            width: width.get(),
-            height: height.get(),
-            rotate: rotate.get(),
+            ...transform,
+            x: parseFloat(x),
+            y: parseFloat(y),
         });
     };
 
@@ -441,41 +438,66 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
         const centerX = left + width / 2;
         const centerY = top + height / 2;
         const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX) * (180 / Math.PI);
-        rotate.set(angle + 90);
+        nodeRef.current.style.transform = `${nodeRef.current.style.transform.split(' rotate')[0]} rotate(${angle + 90}deg)`;
     };
 
     const handleResize = (event: React.PointerEvent, info: PanInfo) => {
-        width.set(width.get() + info.delta.x);
-        height.set(height.get() + info.delta.y);
+        if (!nodeRef.current) return;
+        const newWidth = transform.width + info.delta.x;
+        const newHeight = transform.height + info.delta.y;
+        nodeRef.current.style.width = `${newWidth}px`;
+        nodeRef.current.style.height = `${newHeight}px`;
     };
 
+    const handleInteractionEndWithUpdate = () => {
+         if (!nodeRef.current) return;
+        const { x, y } = nodeRef.current.style;
+        const newTransform = {
+            ...transform,
+            x: parseFloat(x) || transform.x,
+            y: parseFloat(y) || transform.y,
+            width: parseFloat(nodeRef.current.style.width) || transform.width,
+            height: parseFloat(nodeRef.current.style.height) || transform.height,
+            rotate: parseFloat(nodeRef.current.style.transform.split('rotate(')[1]) || transform.rotate
+        };
+        onUpdate(block.id, newTransform);
+    }
+    
     return (
         <motion.div
             ref={nodeRef}
             className="absolute cursor-grab active:cursor-grabbing"
-            style={{ x, y, width, height, rotate, zIndex: 10 }}
+            style={{ 
+                ...transform,
+                left: `${transform.x}px`,
+                top: `${transform.y}px`,
+                width: `${transform.width}px`,
+                height: `${transform.height}px`,
+                transform: `rotate(${transform.rotate}deg)`,
+                position: 'absolute'
+            }}
             drag
             dragConstraints={containerRef}
             dragMomentum={false}
-            onDragEnd={handleInteractionEnd}
+            onDragEnd={handleInteractionEndWithUpdate}
             onTapStart={onSelect}
         >
             <div className={cn(
                 "w-full h-full relative flex items-center justify-center border-2 border-transparent",
                 isSelected && "border-dashed border-primary"
             )}>
-                <span style={{ fontSize: width.get(), lineHeight: 1 }}>{block.payload.emoji}</span>
+                <span style={{ fontSize: transform.width, lineHeight: 1 }}>{block.payload.emoji}</span>
                 {isSelected && (
                     <>
                         <motion.div
                             className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-nwse-resize z-20"
                             onPan={handleResize}
-                            onPanEnd={handleInteractionEnd}
+                            onPanEnd={handleInteractionEndWithUpdate}
                         />
                         <motion.div
                             className="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-alias z-20 flex items-center justify-center"
                             onPan={handleRotate}
-                            onPanEnd={handleInteractionEnd}
+                            onPanEnd={handleInteractionEndWithUpdate}
                         >
                             <RotateCw className="w-full h-full p-0.5 text-white"/>
                         </motion.div>
@@ -496,9 +518,10 @@ export default function CreateTemplatePage() {
   // Modals State
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   const [selectedColumnLayout, setSelectedColumnLayout] = useState<number | null>(null);
-  const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
+  const [isColumnBlockSelectorOpen, setIsColumnBlockSelectorOpen] = useState(false);
+  const [isWrapperBlockSelectorOpen, setIsWrapperBlockSelectorOpen] = useState(false);
   const [isEmojiSelectorOpen, setIsEmojiSelectorOpen] = useState(false);
-  const [activeContainer, setActiveContainer] = useState<{ id: string } | null>(null);
+  const [activeContainer, setActiveContainer] = useState<{ id: string, type: 'column' | 'wrapper' } | null>(null);
   const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{rowId: string, colId?: string, primId?: string} | null>(null);
@@ -555,7 +578,7 @@ export default function CreateTemplatePage() {
     }
   };
 
-  const handleOpenBlockSelector = (containerId: string, event: React.MouseEvent) => {
+  const handleOpenBlockSelector = (containerId: string, type: 'column' | 'wrapper', event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     const rect = target.closest('.group\\/wrapper, .group\\/column')?.getBoundingClientRect();
     if (rect) {
@@ -563,77 +586,73 @@ export default function CreateTemplatePage() {
       const y = event.clientY - rect.top;
       setClickPosition({ x, y });
     }
-    setActiveContainer({ id: containerId });
-    setIsBlockSelectorOpen(true);
+    setActiveContainer({ id: containerId, type });
+    if (type === 'column') {
+      setIsColumnBlockSelectorOpen(true);
+    } else {
+      setIsWrapperBlockSelectorOpen(true);
+    }
   };
 
-  const handleSelectBlockToAdd = (blockType: PrimitiveBlockType) => {
-    if (!activeContainer) return;
-
-    if (blockType === 'emojis') {
-      setIsEmojiSelectorOpen(true);
-      setIsBlockSelectorOpen(false);
-      return;
-    }
-
-    let newBlock: PrimitiveBlock;
+  const handleAddBlockToColumn = (blockType: PrimitiveBlockType) => {
+    if (!activeContainer || activeContainer.type !== 'column') return;
+     let newBlock: PrimitiveBlock;
 
     if (blockType === 'button') {
-      newBlock = {
-        id: `button_${Date.now()}`,
-        type: 'button',
-        payload: {
-          text: 'Botón',
-          url: '#',
-          textAlign: 'center',
-          styles: {
-            borderRadius: 8,
-            background: { type: 'solid', color1: '#A020F0' },
-          },
-        },
-      };
+        newBlock = {
+            id: `button_${Date.now()}`,
+            type: 'button',
+            payload: { text: 'Botón', url: '#', textAlign: 'center', styles: { borderRadius: 8, background: { type: 'solid', color1: '#A020F0' } } },
+        };
     } else {
-      newBlock = {
-        id: `${blockType}_${Date.now()}`,
-        type: blockType,
-        payload: {
-          ...(blockType === 'heading' && { text: 'Título principal' }),
-        },
-      };
+        newBlock = {
+            id: `${blockType}_${Date.now()}`,
+            type: blockType,
+            payload: {
+                ...(blockType === 'heading' && { text: 'Título principal' }),
+                ...(blockType === 'emojis' && { emoji: '😀' }), // Default static emoji for columns
+            },
+        };
     }
 
     const newCanvasContent = canvasContent.map((row) => {
-        if (row.type === 'columns') {
-            const newColumns = row.payload.columns.map((col) => {
-              if (col.id === activeContainer.id) {
-                return { ...col, blocks: [...col.blocks, newBlock] };
-              }
-              return col;
-            });
-            return { ...row, payload: { ...row.payload, columns: newColumns } };
-        }
-        if (row.type === 'wrapper' && row.id === activeContainer.id) {
-            return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
-        }
-        return row;
+      if (row.type === 'columns') {
+        const newColumns = row.payload.columns.map((col) => {
+          if (col.id === activeContainer.id) {
+            return { ...col, blocks: [...col.blocks, newBlock] };
+          }
+          return col;
+        });
+        return { ...row, payload: { ...row.payload, columns: newColumns } };
+      }
+      return row;
     });
 
     setCanvasContent(newCanvasContent as CanvasBlock[]);
-    setIsBlockSelectorOpen(false);
+    setIsColumnBlockSelectorOpen(false);
     setActiveContainer(null);
+  }
+
+  const handleAddBlockToWrapper = (blockType: PrimitiveBlockType) => {
+    if (!activeContainer || activeContainer.type !== 'wrapper') return;
+     if (blockType === 'emojis') {
+      setIsEmojiSelectorOpen(true);
+      setIsWrapperBlockSelectorOpen(false);
+      return;
+    }
+    // Handle other block types for wrapper if needed in the future
   };
+
   
   const handleSelectEmoji = (emoji: string) => {
     if (!activeContainer || !clickPosition) return;
 
-    const newBlock: EmojiBlock = {
+    const newBlock: InteractiveEmojiBlock = {
       id: `emoji_${Date.now()}`,
       type: 'emojis',
       payload: {
         emoji,
         styles: {
-          fontSize: '48px',
-          textAlign: 'center',
           position: 'absolute',
           transform: {
             x: clickPosition.x - 25, 
@@ -789,7 +808,7 @@ export default function CreateTemplatePage() {
               case 'text':
                 return <p className="p-2">{block.payload.text || 'Lorem ipsum dolor sit amet...'}</p>
               case 'emojis':
-                return <p className="text-center" style={{fontSize: '48px'}}>{(block as EmojiBlock).payload.emoji}</p>
+                return <p className="text-center" style={{fontSize: '48px'}}>{(block as PrimitiveBlock & { payload: { emoji: string } }).payload.emoji}</p>
               case 'button':
                 return (
                     <div style={getButtonContainerStyle(block as ButtonBlock)}>
@@ -869,7 +888,7 @@ export default function CreateTemplatePage() {
     };
   }, [isResizing, handleMouseMoveResize, handleMouseUpResize]);
 
-  const updateWrapperBlockTransform = (wrapperId: string, blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => {
+  const updateWrapperBlockTransform = (wrapperId: string, blockId: string, newTransform: InteractiveEmojiBlock['payload']['styles']['transform']) => {
     setCanvasContent(prevContent => 
         prevContent.map(row => {
             if (row.id === wrapperId && row.type === 'wrapper') {
@@ -964,7 +983,7 @@ export default function CreateTemplatePage() {
           wrapperRefs.current[block.id] = wrapperRef.current;
       }, [block.id]);
   
-      const handleUpdate = useCallback((blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => {
+      const handleUpdate = useCallback((blockId: string, newTransform: InteractiveEmojiBlock['payload']['styles']['transform']) => {
           updateWrapperBlockTransform(block.id, blockId, newTransform);
       }, [block.id]);
       
@@ -998,7 +1017,7 @@ export default function CreateTemplatePage() {
             onClick={(e) => {
               if((e.target as HTMLElement).closest('.emoji-wrapper')) return;
               setSelectedElement({ type: 'wrapper', wrapperId: block.id }); 
-              handleOpenBlockSelector(block.id, e);
+              handleOpenBlockSelector(block.id, 'wrapper', e);
             }}
           >
             <div className="w-full h-full relative overflow-hidden">
@@ -1008,7 +1027,7 @@ export default function CreateTemplatePage() {
                   return (
                       <DraggableResizableRotatableEmoji
                           key={b.id}
-                          block={b as EmojiBlock}
+                          block={b as InteractiveEmojiBlock}
                           containerRef={wrapperRef}
                           onUpdate={handleUpdate}
                           onSelect={() => setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id })}
@@ -1071,10 +1090,10 @@ export default function CreateTemplatePage() {
                    {col.blocks.length > 0 ? (
                        <div className="flex flex-col gap-2 w-full">
                            {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id))}
-                           <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, e); }}><PlusCircle className="mr-2"/>Añadir</Button>
+                           <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, 'column', e); }}><PlusCircle className="mr-2"/>Añadir</Button>
                        </div>
                    ) : (
-                     <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, e); }}>
+                     <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, 'column', e); }}>
                        <PlusCircle className="mb-1"/>
                        <span className="text-xs font-medium -mb-0.5">Añadir</span>
                        <span className="text-xs font-medium">Bloque</span>
@@ -1279,20 +1298,45 @@ export default function CreateTemplatePage() {
         </DialogContent>
       </Dialog>
       
-       <Dialog open={isBlockSelectorOpen} onOpenChange={setIsBlockSelectorOpen}>
+       <Dialog open={isColumnBlockSelectorOpen} onOpenChange={setIsColumnBlockSelectorOpen}>
         <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><PlusCircle className="text-primary"/>Añadir un Nuevo Bloque</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><PlusCircle className="text-primary"/>Añadir Bloque a Columna</DialogTitle>
             <DialogDescription>
               Selecciona un bloque de contenido para añadirlo a la columna.
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh]">
             <div className="grid grid-cols-3 gap-4 p-4">
-                {contentBlocks.map((block) => (
+                {columnContentBlocks.map((block) => (
                   <Card 
                     key={block.id} 
-                    onClick={() => handleSelectBlockToAdd(block.id as PrimitiveBlockType)}
+                    onClick={() => handleAddBlockToColumn(block.id as PrimitiveBlockType)}
+                    className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                  >
+                    <block.icon className="size-8 text-[#00B0F0] transition-colors" />
+                    <span className="text-sm font-medium text-center text-foreground/80 mt-2">{block.name}</span>
+                  </Card>
+                ))}
+              </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+       <Dialog open={isWrapperBlockSelectorOpen} onOpenChange={setIsWrapperBlockSelectorOpen}>
+        <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><PlusCircle className="text-primary"/>Añadir Bloque a Contenedor</DialogTitle>
+            <DialogDescription>
+              Selecciona un bloque de contenido para añadirlo al contenedor flexible.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="grid grid-cols-3 gap-4 p-4">
+                {wrapperContentBlocks.map((block) => (
+                  <Card 
+                    key={block.id} 
+                    onClick={() => handleAddBlockToWrapper(block.id as PrimitiveBlockType)}
                     className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 aspect-square cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
                   >
                     <block.icon className="size-8 text-[#00B0F0] transition-colors" />
