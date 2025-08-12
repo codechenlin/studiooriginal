@@ -224,7 +224,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
         }
         return col;
       });
-      return { ...row, payload: { columns: newColumns } };
+      return { ...row, payload: { ...row.payload, columns: newColumns } };
     });
     setCanvasContent(newCanvasContent as CanvasBlock[]);
   };
@@ -772,18 +772,6 @@ export default function CreateTemplatePage() {
         )}
         onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'primitive', primitiveId: block.id, columnId: colId, rowId})}}
        >
-        {isSelected && (
-           <div className="absolute -top-2 -right-2 z-10">
-            <Button
-              variant="destructive"
-              size="icon"
-              className="size-7"
-              onClick={(e) => { e.stopPropagation(); promptDeleteItem(rowId, colId, block.id); }}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </div>
-        )}
         {
           (() => {
              switch(block.type) {
