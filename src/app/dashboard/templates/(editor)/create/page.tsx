@@ -73,8 +73,9 @@ import {
   ArrowLeftRight,
   ArrowUpDown,
   Moon,
+  Edit,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 import { useToast } from '@/hooks/use-toast';
@@ -194,6 +195,7 @@ interface WrapperBlock {
     blocks: InteractivePrimitiveBlock[];
     height: number;
      styles: {
+      borderRadius?: number;
       background?: {
         type: 'solid' | 'gradient';
         color1: string;
@@ -241,23 +243,25 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
   const { background, borderRadius } = styles || {};
   
   const updateStyle = (key: string, value: any) => {
-    const newCanvasContent = canvasContent.map(row => {
-      if (selectedElement.type === 'column' && row.id === selectedElement.rowId && row.type === 'columns') {
-          const newColumns = row.payload.columns.map(col => {
-            if (col.id === selectedElement.columnId) {
-                return { ...col, styles: { ...col.styles, [key]: value } };
+    setCanvasContent(prevCanvasContent => {
+        return prevCanvasContent.map(row => {
+            if (selectedElement.type === 'column' && row.id === selectedElement.rowId && row.type === 'columns') {
+                const newColumns = row.payload.columns.map(col => {
+                    if (col.id === selectedElement.columnId) {
+                        return { ...col, styles: { ...col.styles, [key]: value } };
+                    }
+                    return col;
+                });
+                return { ...row, payload: { ...row.payload, columns: newColumns } };
             }
-            return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
-      }
-      if (selectedElement.type === 'wrapper' && row.id === selectedElement.wrapperId && row.type === 'wrapper') {
-        const currentStyles = row.payload.styles || {};
-        return { ...row, payload: { ...row.payload, styles: { ...currentStyles, [key]: value } } };
-      }
-      return row;
+            if (selectedElement.type === 'wrapper' && row.id === selectedElement.wrapperId && row.type === 'wrapper') {
+                const currentStyles = row.payload.styles || {};
+                const newPayload = { ...row.payload, styles: { ...currentStyles, [key]: value } };
+                return { ...row, payload: newPayload };
+            }
+            return row;
+        }) as CanvasBlock[];
     });
-    setCanvasContent(newCanvasContent as CanvasBlock[]);
   };
   
   const setBgType = (type: 'solid' | 'gradient') => {
@@ -280,7 +284,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
       }
   }
 
-  const isColumn = selectedElement.type === 'column';
+  const isWrapper = selectedElement.type === 'wrapper';
 
   return (
     <>
@@ -340,7 +344,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent }: 
         </>
       )}
     </div>
-    {isColumn && (
+    {isWrapper && (
       <>
         <Separator className="bg-border/20" />
         <div className="space-y-4">
@@ -564,19 +568,21 @@ function ThemeToggle() {
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggleTheme}
-      className="rounded-full size-8"
-    >
-      {isDarkMode ? (
-        <Sun className="size-5" />
-      ) : (
-        <Moon className="size-5" />
-      )}
-      <span className="sr-only">Cambiar tema</span>
-    </Button>
+    <div className="group rounded-full p-0.5 bg-transparent hover:bg-gradient-to-r from-primary to-accent transition-colors">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="rounded-full size-8 bg-card dark:bg-card hover:bg-card/80 dark:hover:bg-card/80"
+        >
+          {isDarkMode ? (
+            <Sun className="size-5 text-foreground" />
+          ) : (
+            <Moon className="size-5 text-foreground" />
+          )}
+          <span className="sr-only">Cambiar tema</span>
+        </Button>
+    </div>
   );
 }
 
@@ -597,6 +603,8 @@ export default function CreateTemplatePage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{rowId: string, colId?: string, primId?: string} | null>(null);
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
+  const [isActionSelectorModalOpen, setIsActionSelectorModalOpen] = useState(false);
+  const [actionTargetWrapperId, setActionTargetWrapperId] = useState<string | null>(null);
   
   // Canvas State
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
@@ -1037,6 +1045,25 @@ export default function CreateTemplatePage() {
           wrapperRefs.current[block.id] = wrapperRef.current;
       }, [block.id]);
       
+      const handleWrapperClick = (e: React.MouseEvent) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('.interactive-emoji')) return;
+
+        setActionTargetWrapperId(block.id);
+
+        const containerElement = target.closest('.group\\/wrapper');
+        if (containerElement) {
+            const rect = containerElement.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            setClickPosition({ x, y });
+        } else {
+            setClickPosition({ x: 50, y: 50 }); // Fallback
+        }
+
+        setIsActionSelectorModalOpen(true);
+    };
+
       return (
         <div 
           key={block.id} 
@@ -1061,26 +1088,9 @@ export default function CreateTemplatePage() {
           <div
             id={block.id}
             ref={wrapperRef}
-            className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500 overflow-hidden" 
+            className="group/wrapper relative border-2 border-dashed border-purple-500 overflow-hidden" 
             style={{ height: `${block.payload.height}px`, ...getElementStyle(block) }}
-            onClick={(e) => {
-              const target = e.target as HTMLElement;
-              if (target.closest('.interactive-emoji')) return;
-
-              setSelectedElement({ type: 'wrapper', wrapperId: block.id });
-              
-              const containerElement = target.closest('.group\\/wrapper');
-              if (containerElement) {
-                const rect = containerElement.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                setClickPosition({ x, y });
-              } else {
-                setClickPosition({ x: 50, y: 50 });
-              }
-              setActiveContainer({ id: block.id, type: 'wrapper' });
-              setIsWrapperBlockSelectorOpen(true);
-            }}
+            onClick={handleWrapperClick}
           >
             <div className="w-full h-full relative">
               {block.payload.blocks.map(b => {
@@ -1113,9 +1123,11 @@ export default function CreateTemplatePage() {
             </div>
             <div 
                onMouseDown={(e) => handleMouseDownResize(e, block.id)}
-               className="absolute bottom-0 left-0 w-full h-4 flex items-center justify-center cursor-ns-resize z-20 bg-gradient-to-t from-primary/20 to-transparent opacity-50 hover:opacity-100 transition-opacity"
+               className="absolute bottom-0 left-0 w-full h-4 flex items-center justify-center cursor-ns-resize z-20 group"
             >
-              <ChevronsUpDown className="size-5 text-primary/80" />
+                <div className="w-24 h-2 rounded-full bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 group-hover:from-primary/80 group-hover:via-accent/80 group-hover:to-primary/80 transition-all flex items-center justify-center">
+                    <ChevronsUpDown className="size-4 text-white/50 group-hover:text-white/80 transition-colors"/>
+                </div>
             </div>
           </div>
         </div>
@@ -1496,6 +1508,47 @@ export default function CreateTemplatePage() {
             </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isActionSelectorModalOpen} onOpenChange={setIsActionSelectorModalOpen}>
+          <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+              <DialogHeader>
+                  <DialogTitle>¿Qué deseas hacer?</DialogTitle>
+                  <DialogDescription>
+                      Selecciona una acción para el contenedor flexible.
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="flex gap-4 py-4">
+                  <Button 
+                      variant="outline" 
+                      className="flex-1 h-24 flex-col gap-2"
+                      onClick={() => {
+                          if (actionTargetWrapperId) {
+                              setSelectedElement({ type: 'wrapper', wrapperId: actionTargetWrapperId });
+                          }
+                          setIsActionSelectorModalOpen(false);
+                      }}
+                  >
+                      <Edit className="size-6 text-primary"/>
+                      Editar Contenedor
+                  </Button>
+                  <Button 
+                      variant="outline" 
+                      className="flex-1 h-24 flex-col gap-2"
+                      onClick={() => {
+                           if (actionTargetWrapperId) {
+                              setActiveContainer({ id: actionTargetWrapperId, type: 'wrapper' });
+                              setIsWrapperBlockSelectorOpen(true);
+                           }
+                          setIsActionSelectorModalOpen(false);
+                      }}
+                  >
+                      <PlusCircle className="size-6 text-accent" style={{color: 'hsl(var(--accent-light-mode-override))'}}/>
+                      Añadir Bloque
+                  </Button>
+              </div>
+          </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
