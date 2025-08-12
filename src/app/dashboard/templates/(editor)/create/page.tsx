@@ -143,6 +143,7 @@ interface EmojiBlock extends BaseBlock {
         styles: {
             fontSize: string;
             textAlign: TextAlign;
+            position: 'absolute';
             transform: {
                 x: number;
                 y: number;
@@ -436,13 +437,15 @@ const DraggableResizableRotatableEmoji = ({ block, wrapperId, containerRef, onUp
     const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         const rotateHandle = event.target as HTMLElement;
         const emojiDiv = rotateHandle.closest('.emoji-wrapper');
-        if (!emojiDiv) return;
+        if (!emojiDiv || !containerRef.current) return;
 
         const emojiRect = emojiDiv.getBoundingClientRect();
-        const emojiCenterX = emojiRect.left + emojiRect.width / 2;
-        const emojiCenterY = emojiRect.top + emojiRect.height / 2;
-
-        const angle = Math.atan2(info.point.y - emojiCenterY, info.point.x - emojiCenterX) * (180 / Math.PI) + 90;
+        const containerRect = containerRef.current.getBoundingClientRect();
+        
+        const emojiCenterX = emojiRect.left - containerRect.left + emojiRect.width / 2;
+        const emojiCenterY = emojiRect.top - containerRect.top + emojiRect.height / 2;
+        
+        const angle = Math.atan2(info.point.y - (containerRect.top + emojiCenterY), info.point.x - (containerRect.left + emojiCenterX)) * (180 / Math.PI) + 90;
         rotate.set(angle);
     };
 
@@ -456,11 +459,12 @@ const DraggableResizableRotatableEmoji = ({ block, wrapperId, containerRef, onUp
     return (
         <motion.div
             className="emoji-wrapper absolute cursor-grab active:cursor-grabbing"
-            style={{ x, y, width, height, rotate }}
+            style={{ x, y, width, height, rotate, position: 'absolute' }}
             drag
             dragConstraints={containerRef}
             dragMomentum={false}
             onDragEnd={handleInteractionEnd}
+            onPanEnd={handleInteractionEnd}
             onTapStart={onSelect}
         >
             <div className="w-full h-full relative flex items-center justify-center">
@@ -468,12 +472,10 @@ const DraggableResizableRotatableEmoji = ({ block, wrapperId, containerRef, onUp
                 <motion.div
                     className="absolute bottom-[-8px] right-[-8px] w-4 h-4 bg-white border-2 border-primary rounded-full cursor-nwse-resize z-10"
                     onPan={handleResize}
-                    onPanEnd={handleInteractionEnd}
                 />
                 <motion.div
                     className="absolute top-[-24px] left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full cursor-alias z-10 flex items-center justify-center"
                     onPan={handleRotate}
-                    onPanEnd={handleInteractionEnd}
                 >
                     <RotateCw className="w-full h-full p-0.5 text-primary"/>
                 </motion.div>
@@ -623,6 +625,7 @@ export default function CreateTemplatePage() {
             styles: {
                 fontSize: '48px',
                 textAlign: 'center',
+                position: 'absolute',
                 transform: { x: 50, y: 50, width: 50, height: 50, rotate: 0 }
             }
         }
@@ -947,6 +950,12 @@ export default function CreateTemplatePage() {
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
     const wrapperRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+      wrapperRefs.current[block.id] = wrapperRef.current;
+      return () => {
+        delete wrapperRefs.current[block.id];
+      }
+    }, [block.id]);
     
     const handleUpdate = useCallback((wrapperId: string, blockId: string, newTransform: EmojiBlock['payload']['styles']['transform']) => {
         updateWrapperBlockTransform(wrapperId, blockId, newTransform);
@@ -1359,3 +1368,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
