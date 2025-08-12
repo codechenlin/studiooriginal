@@ -429,7 +429,6 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
 }) => {
     const nodeRef = useRef<HTMLDivElement>(null);
     const { x, y, width, height, rotate } = block.payload.styles.transform;
-    const [isInteracting, setIsInteracting] = useState(false);
 
     const handleUpdate = (newTransform: Partial<InteractiveEmojiBlock['payload']['styles']['transform']>) => {
         onUpdate(block.id, {
@@ -437,6 +436,15 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
             ...newTransform
         });
     }
+
+    const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        if (containerRef.current) {
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const newX = info.point.x - containerRect.left;
+            const newY = info.point.y - containerRect.top;
+            handleUpdate({ x: newX, y: newY });
+        }
+    };
 
     const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         handleUpdate({
@@ -447,9 +455,9 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
     
     const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         if(nodeRef.current) {
-            const { top, left, width, height } = nodeRef.current.getBoundingClientRect();
-            const centerX = left + width / 2;
-            const centerY = top + height / 2;
+            const { top, left, width: elWidth, height: elHeight } = nodeRef.current.getBoundingClientRect();
+            const centerX = left + elWidth / 2;
+            const centerY = top + elHeight / 2;
             const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX);
             const newRotate = (angle * 180) / Math.PI + 90;
             handleUpdate({ rotate: newRotate });
@@ -462,14 +470,14 @@ const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSel
             drag
             dragConstraints={containerRef}
             dragMomentum={false}
-            onDragEnd={(e, info) => handleUpdate({ x: info.point.x, y: info.point.y })}
+            onDragEnd={handleDragEnd}
             onTapStart={(e) => { e.stopPropagation(); onSelect(); }}
             className="absolute cursor-grab active:cursor-grabbing z-10"
             style={{
                 width: `${width}px`,
                 height: `${height}px`,
-                x,
-                y,
+                left: `${x}px`,
+                top: `${y}px`,
                 rotate,
                 transformOrigin: 'center center',
             }}
@@ -989,9 +997,8 @@ export default function CreateTemplatePage() {
       }, [block.id]);
       
       return (
-        <motion.div 
+        <div 
           key={block.id} 
-          layout
           className="group/row relative rounded-lg hover:bg-primary/5 p-2"
         >
           <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
@@ -1044,7 +1051,7 @@ export default function CreateTemplatePage() {
                className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize z-20"
             />
           </div>
-        </motion.div>
+        </div>
       );
     });
     WrapperComponent.displayName = 'WrapperComponent';
@@ -1055,9 +1062,8 @@ export default function CreateTemplatePage() {
     }
 
     return (
-        <motion.div 
+        <div 
             key={block.id} 
-            layout
             className="group/row relative rounded-lg hover:bg-primary/5 p-2"
         >
         <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
@@ -1104,7 +1110,7 @@ export default function CreateTemplatePage() {
               ))}
             </div>
         )}
-        </motion.div>
+        </div>
     );
   }
 
