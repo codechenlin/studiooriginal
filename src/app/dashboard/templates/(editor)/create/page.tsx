@@ -68,6 +68,8 @@ import {
   AlignCenter,
   AlignRight,
   RotateCw,
+  Move,
+  Scale,
 } from 'lucide-react';
 import { motion, useMotionValue, PanInfo } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -147,16 +149,10 @@ interface InteractiveEmojiBlock extends BaseBlock {
     type: 'emoji-interactive';
     payload: {
         emoji: string;
-        styles: {
-            position: 'absolute';
-            transform: {
-                x: number;
-                y: number;
-                width: number;
-                height: number;
-                rotate: number;
-            }
-        }
+        x: number;
+        y: number;
+        scale: number;
+        rotate: number;
     }
 }
 
@@ -420,100 +416,110 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
-const DraggableResizableRotatableEmoji = ({ block, containerRef, onUpdate, onSelect, isSelected }: {
-    block: InteractiveEmojiBlock;
-    containerRef: React.RefObject<HTMLDivElement>;
-    onUpdate: (blockId: string, newTransform: InteractiveEmojiBlock['payload']['styles']['transform']) => void;
-    onSelect: () => void;
-    isSelected: boolean;
+const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-    const nodeRef = useRef<HTMLDivElement>(null);
-    const { x, y, width, height, rotate } = block.payload.styles.transform;
+  const [joystickPosition, setJoystickPosition] = useState({ x: 50, y: 50 });
+  const joystickRef = useRef<HTMLDivElement>(null);
 
-    const handleUpdate = (newTransform: Partial<InteractiveEmojiBlock['payload']['styles']['transform']>) => {
-        onUpdate(block.id, {
-            ...block.payload.styles.transform,
-            ...newTransform
-        });
+  if (selectedElement?.type !== 'wrapper-primitive') return null;
+
+  const getElement = (): InteractiveEmojiBlock | null => {
+    const row = canvasContent.find(r => r.id === selectedElement.wrapperId);
+    if (row?.type !== 'wrapper') return null;
+    const block = row.payload.blocks.find(b => b.id === selectedElement.primitiveId);
+    return block?.type === 'emoji-interactive' ? block as InteractiveEmojiBlock : null;
+  }
+  const element = getElement();
+
+  useEffect(() => {
+    if (element) {
+      setJoystickPosition({ x: element.payload.x, y: element.payload.y });
     }
+  }, [element]);
 
-    const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        if (containerRef.current) {
-            const containerRect = containerRef.current.getBoundingClientRect();
-            const newX = info.point.x - containerRect.left;
-            const newY = info.point.y - containerRect.top;
-            handleUpdate({ x: newX, y: newY });
-        }
-    };
+  if (!element) return null;
 
-    const handleResize = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        handleUpdate({
-            width: Math.max(20, width + info.delta.x),
-            height: Math.max(20, height + info.delta.y),
+  const updatePayload = (key: keyof InteractiveEmojiBlock['payload'], value: any) => {
+    const newCanvasContent = canvasContent.map(row => {
+      if (row.id === (selectedElement as { wrapperId: string }).wrapperId && row.type === 'wrapper') {
+        const newBlocks = row.payload.blocks.map(block => {
+          if (block.id === selectedElement.primitiveId && block.type === 'emoji-interactive') {
+            return { ...block, payload: { ...block.payload, [key]: value } };
+          }
+          return block;
         });
-    };
-    
-    const handleRotate = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        if(nodeRef.current) {
-            const { top, left, width: elWidth, height: elHeight } = nodeRef.current.getBoundingClientRect();
-            const centerX = left + elWidth / 2;
-            const centerY = top + elHeight / 2;
-            const angle = Math.atan2(info.point.y - centerY, info.point.x - centerX);
-            const newRotate = (angle * 180) / Math.PI + 90;
-            handleUpdate({ rotate: newRotate });
-        }
-    };
+        return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+      }
+      return row;
+    });
+    setCanvasContent(newCanvasContent as CanvasBlock[]);
+  };
 
-    return (
-        <motion.div
-            ref={nodeRef}
-            drag
-            dragConstraints={containerRef}
-            dragMomentum={false}
-            onDragEnd={handleDragEnd}
-            onTapStart={(e) => { e.stopPropagation(); onSelect(); }}
-            className="absolute cursor-grab active:cursor-grabbing z-10"
-            style={{
-                width: `${width}px`,
-                height: `${height}px`,
-                left: `${x}px`,
-                top: `${y}px`,
-                rotate,
-                transformOrigin: 'center center',
+  const handleJoystickPan = (e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (!joystickRef.current) return;
+    const rect = joystickRef.current.getBoundingClientRect();
+    let newX = joystickPosition.x + (info.delta.x / rect.width) * 100;
+    let newY = joystickPosition.y + (info.delta.y / rect.height) * 100;
+    newX = Math.max(0, Math.min(100, newX));
+    newY = Math.max(0, Math.min(100, newY));
+    setJoystickPosition({ x: newX, y: newY });
+    updatePayload('x', newX);
+    updatePayload('y', newY);
+  };
+  
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Move />Posición</h3>
+        <div ref={joystickRef} className="relative w-full aspect-square bg-muted/30 rounded-lg border-2 border-dashed border-border overflow-hidden cursor-move">
+          <motion.div
+            className="absolute w-6 h-6 bg-primary rounded-full border-4 border-card shadow-lg"
+            style={{ 
+              top: `calc(${joystickPosition.y}% - 12px)`, 
+              left: `calc(${joystickPosition.x}% - 12px)`
             }}
-            initial={{ x, y, rotate, width, height }}
-            animate={{ x, y, rotate, width, height }}
-            transition={{ type: 'spring', stiffness: 700, damping: 30 }}
-        >
-            <div className={cn(
-                "w-full h-full relative flex items-center justify-center border-2 border-transparent",
-                isSelected && "border-dashed border-primary"
-            )}>
-                <span style={{ fontSize: `${height * 0.8}px`, lineHeight: 1 }} className="w-full h-full flex items-center justify-center select-none">
-                    {block.payload.emoji}
-                </span>
-                {isSelected && (
-                    <>
-                        <motion.div
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onPan={handleResize}
-                            className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-nwse-resize z-20"
-                        />
-                        <motion.div
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onPan={handleRotate}
-                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary border-2 border-card rounded-full cursor-alias z-20 flex items-center justify-center"
-                        >
-                            <RotateCw className="w-full h-full p-0.5 text-white"/>
-                        </motion.div>
-                    </>
-                )}
-            </div>
-        </motion.div>
-    );
-};
-
-
+            drag
+            dragConstraints={joystickRef}
+            dragElastic={0}
+            dragMomentum={false}
+            onPan={handleJoystickPan}
+          />
+        </div>
+      </div>
+      <Separator className="bg-border/20"/>
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><RotateCw />Rotación</h3>
+        <div className="flex items-center gap-2">
+          <Slider
+            value={[element.payload.rotate]}
+            min={-180}
+            max={180}
+            step={1}
+            onValueChange={(value) => updatePayload('rotate', value[0])}
+          />
+          <span className="text-xs text-muted-foreground w-16 text-right">{element.payload.rotate}°</span>
+        </div>
+      </div>
+       <Separator className="bg-border/20"/>
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Scale />Escala</h3>
+         <div className="flex items-center gap-2">
+            <Slider
+              value={[element.payload.scale]}
+              min={0.1}
+              max={5}
+              step={0.1}
+              onValueChange={(value) => updatePayload('scale', value[0])}
+            />
+            <span className="text-xs text-muted-foreground w-16 text-right">x{element.payload.scale.toFixed(1)}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -654,23 +660,21 @@ export default function CreateTemplatePage() {
 
   
   const handleSelectEmojiForWrapper = (emoji: string) => {
-    if (!activeContainer || !clickPosition) return;
+    if (!activeContainer || !clickPosition || !wrapperRefs.current[activeContainer.id]) return;
 
+    const containerRect = wrapperRefs.current[activeContainer.id]!.getBoundingClientRect();
+    const xPercent = (clickPosition.x / containerRect.width) * 100;
+    const yPercent = (clickPosition.y / containerRect.height) * 100;
+    
     const newBlock: InteractiveEmojiBlock = {
       id: `emoji_${Date.now()}`,
       type: 'emoji-interactive',
       payload: {
         emoji,
-        styles: {
-          position: 'absolute',
-          transform: {
-            x: clickPosition.x - 25, 
-            y: clickPosition.y - 25,
-            width: 50,
-            height: 50,
-            rotate: 0
-          }
-        }
+        x: xPercent, 
+        y: yPercent,
+        scale: 1,
+        rotate: 0,
       }
     };
 
@@ -896,33 +900,6 @@ export default function CreateTemplatePage() {
     };
   }, [isResizing, handleMouseMoveResize, handleMouseUpResize]);
 
-  const updateWrapperBlockTransform = (wrapperId: string, blockId: string, newTransform: InteractiveEmojiBlock['payload']['styles']['transform']) => {
-    setCanvasContent(prevContent => 
-        prevContent.map(row => {
-            if (row.id === wrapperId && row.type === 'wrapper') {
-                const newBlocks = row.payload.blocks.map(block => {
-                    if (block.id === blockId && block.type === 'emoji-interactive') {
-                        return {
-                            ...block,
-                            payload: {
-                                ...block.payload,
-                                styles: {
-                                    ...block.payload.styles,
-                                    transform: newTransform,
-                                }
-                            }
-                        };
-                    }
-                    return block;
-                });
-                return { ...row, payload: { ...row.payload, blocks: newBlocks } };
-            }
-            return row;
-        }) as CanvasBlock[]
-    );
-  };
-
-
   useEffect(() => {
     setTempTemplateName(templateName);
   }, [isEditNameModalOpen, templateName]);
@@ -991,10 +968,6 @@ export default function CreateTemplatePage() {
       useEffect(() => {
           wrapperRefs.current[block.id] = wrapperRef.current;
       }, [block.id]);
-  
-      const handleUpdate = useCallback((blockId: string, newTransform: InteractiveEmojiBlock['payload']['styles']['transform']) => {
-          updateWrapperBlockTransform(block.id, blockId, newTransform);
-      }, [block.id]);
       
       return (
         <div 
@@ -1020,10 +993,10 @@ export default function CreateTemplatePage() {
           <div
             id={block.id}
             ref={wrapperRef}
-            className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500 overflow-hidden" // overflow hidden is important
+            className="group/wrapper relative rounded-lg border-2 border-dashed border-purple-500 overflow-hidden" 
             style={{ height: `${block.payload.height}px` }}
             onClick={(e) => {
-              if((e.target as HTMLElement).closest('.cursor-grab')) return; // prevent opening modal when clicking emoji
+              if ((e.target as HTMLElement).closest('.interactive-emoji')) return;
               setSelectedElement({ type: 'wrapper', wrapperId: block.id }); 
               handleOpenBlockSelector(block.id, 'wrapper', e);
             }}
@@ -1033,14 +1006,23 @@ export default function CreateTemplatePage() {
                 if (b.type === 'emoji-interactive') {
                   const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === b.id;
                   return (
-                      <DraggableResizableRotatableEmoji
-                          key={b.id}
-                          block={b as InteractiveEmojiBlock}
-                          containerRef={wrapperRef}
-                          onUpdate={handleUpdate}
-                          onSelect={() => setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id })}
-                          isSelected={isSelected}
-                      />
+                      <div
+                        key={b.id}
+                        className={cn("interactive-emoji absolute text-4xl", isSelected && "ring-2 ring-accent")}
+                        style={{
+                           left: `${b.payload.x}%`,
+                           top: `${b.payload.y}%`,
+                           transform: `translate(-50%, -50%) scale(${b.payload.scale}) rotate(${b.payload.rotate}deg)`,
+                           fontSize: '48px',
+                           cursor: 'pointer'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id });
+                        }}
+                      >
+                       {b.payload.emoji}
+                      </div>
                   )
                 }
                 return null;
@@ -1249,6 +1231,9 @@ export default function CreateTemplatePage() {
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'button' && (
                   <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
+               { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType() === 'emoji-interactive' && (
+                  <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+              )}
               
               { !selectedElement && (
                  <div className="text-center text-muted-foreground p-4 text-sm">
@@ -1429,3 +1414,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
