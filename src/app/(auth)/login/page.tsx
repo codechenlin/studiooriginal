@@ -69,6 +69,13 @@ export default function LoginPage() {
         });
       }
     } else {
+      if (!isNewUser) {
+        toast({
+            title: "¡Qué bueno verte de nuevo!",
+            description: "Tu espacio de trabajo te estaba esperando.",
+            className: 'bg-[#00CB07] border-none text-white',
+        });
+      }
       const redirectPath = isNewUser ? "/dashboard?welcome=true" : "/dashboard";
       router.push(redirectPath);
       router.refresh();
