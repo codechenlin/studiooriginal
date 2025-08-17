@@ -89,6 +89,7 @@ export default {
           start: '#00C006',
           end: '#00F508',
         },
+        'success-login': '#00CB07',
       },
       borderRadius: {
         lg: 'var(--radius)',

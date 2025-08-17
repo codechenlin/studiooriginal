@@ -73,7 +73,7 @@ export default function LoginPage() {
         toast({
             title: "¡Qué bueno verte de nuevo!",
             description: "Tu espacio de trabajo te estaba esperando.",
-            className: 'bg-[#00CB07] border-none text-white',
+            className: 'bg-success-login border-none text-white',
         });
       }
       const redirectPath = isNewUser ? "/dashboard?welcome=true" : "/dashboard";
