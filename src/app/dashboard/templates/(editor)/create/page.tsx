@@ -1278,7 +1278,7 @@ export default function CreateTemplatePage() {
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
-      <aside className="w-80 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
+      <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
               <span className="text-base font-semibold truncate flex-1">{templateName}</span>
@@ -1288,15 +1288,15 @@ export default function CreateTemplatePage() {
               <ThemeToggle />
           </div>
         </header>
-        <div className="p-4 space-y-4">
+        <div className="p-2 space-y-2">
             {mainContentBlocks.map(block => (
                <Card 
                 key={block.id}
                 onClick={() => handleBlockClick(block.id as BlockType)}
-                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
               >
-                <block.icon className="size-10 text-[#00B0F0] transition-colors" />
-                <span className="text-md font-semibold text-center text-foreground/80 mt-2">{block.name}</span>
+                <block.icon className="size-8 text-[#00B0F0] transition-colors" />
+                <span className="text-sm font-semibold text-center text-foreground/80 mt-2">{block.name}</span>
                  {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
