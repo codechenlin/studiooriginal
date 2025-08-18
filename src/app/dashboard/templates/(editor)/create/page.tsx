@@ -574,11 +574,12 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
 
 function ThemeToggle() {
   const { toast } = useToast();
-  const [isDarkMode, setIsDarkMode] = React.useState(true);
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
+    // Move localStorage access inside useEffect to ensure it only runs on the client
     const storedTheme = localStorage.getItem("theme");
     setIsDarkMode(storedTheme === "dark");
   }, []);
