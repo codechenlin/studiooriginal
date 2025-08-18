@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,10 +30,10 @@ body {
     --input: 275 20% 90%;
     --ring: 283 100% 41%;
     --chart-1: 283 80% 61%;
-    --chart-2: 182 70% 59%;
-    --chart-3: 290 80% 70%;
+    --chart-2: 210 100% 56%;
+    --chart-3: 310 100% 56%;
     --chart-4: 270 80% 65%;
-    --chart-5: 190 80% 60%;
+    --chart-5: 130 100% 56%;
     --radius: 0.8rem;
     --sidebar-background: 275 100% 98%;
     --sidebar-foreground: 275 10% 20%;
@@ -45,6 +46,11 @@ body {
 
     --editor-dark-bg-start: 0 0% 0%;
     --editor-dark-bg-end: 240 50% 5%;
+    
+    --ai-track: 240 4% 15%;
+    --ai-glow-start: 180 100% 50%;
+    --ai-glow-mid: 210 100% 56%;
+    --ai-glow-end: 260 100% 65%;
   }
   .dark {
     --background: 232 50% 6%;
@@ -68,10 +74,10 @@ body {
     --input: 275 100% 25%;
     --ring: 283 100% 55%;
     --chart-1: 283 80% 61%;
-    --chart-2: 182 70% 59%;
-    --chart-3: 290 80% 70%;
+    --chart-2: 210 100% 66%;
+    --chart-3: 310 100% 66%;
     --chart-4: 270 80% 65%;
-    --chart-5: 190 80% 60%;
+    --chart-5: 130 100% 66%;
     --sidebar-background: 232 50% 6%;
     --sidebar-foreground: 275 20% 95%;
     --sidebar-primary: 283 100% 55%;
@@ -80,6 +86,11 @@ body {
     --sidebar-accent-foreground: 275 20% 98%;
     --sidebar-border: 275 100% 25%;
     --sidebar-ring: 283 100% 55%;
+
+    --ai-track: 240 4% 15%;
+    --ai-glow-start: 180 100% 50%;
+    --ai-glow-mid: 210 100% 56%;
+    --ai-glow-end: 260 100% 65%;
   }
 }
 
@@ -123,5 +134,3 @@ body {
     scrollbar-color: hsl(var(--primary)) hsl(var(--muted) / 0.2);
   }
 }
-
-    

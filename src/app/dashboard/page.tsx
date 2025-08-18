@@ -8,8 +8,8 @@ import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
 import { InsightsCard } from "@/components/dashboard/insights-card";
 import { Users, Mail, BarChart, CheckCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { DeliveryRateChart } from "@/components/dashboard/delivery-rate-chart";
-import { EngagementSourcesChart } from "@/components/dashboard/engagement-sources-chart";
+import { SentimentAnalysisChart } from "@/components/dashboard/sentiment-analysis-chart";
+import { DeviceDistributionChart } from "@/components/dashboard/device-distribution-chart";
 import { useToast } from '@/hooks/use-toast';
 import { OnboardingModal } from '@/components/dashboard/onboarding-modal';
 import { HelpButton } from '@/components/dashboard/help-button';
@@ -82,8 +82,8 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 md:gap-8">
         <AnalyticsChart />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-            <DeliveryRateChart />
-            <EngagementSourcesChart />
+            <SentimentAnalysisChart />
+            <DeviceDistributionChart />
         </div>
       </div>
 

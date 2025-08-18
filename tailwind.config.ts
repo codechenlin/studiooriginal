@@ -90,6 +90,10 @@ export default {
           end: '#00F508',
         },
         'success-login': '#00CB07',
+        'ai-track': 'hsl(var(--ai-track))',
+        'ai-glow-start': 'hsl(var(--ai-glow-start))',
+        'ai-glow-mid': 'hsl(var(--ai-glow-mid))',
+        'ai-glow-end': 'hsl(var(--ai-glow-end))',
       },
       borderRadius: {
         lg: 'var(--radius)',
