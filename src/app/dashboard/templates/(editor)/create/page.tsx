@@ -76,8 +76,9 @@ import {
   Edit,
   Expand,
   Upload,
+  View,
 } from 'lucide-react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 import { useToast } from '@/hooks/use-toast';
@@ -108,7 +109,7 @@ const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -118,6 +119,12 @@ const popularEmojis = Array.from(new Set([
     '📊', '💻', '📱'
   ]));
 
+const googleFonts = [
+  "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", "Source Sans Pro",
+  "Slabo 27px", "Raleway", "PT Sans", "Merriweather", "Noto Sans", "Poppins",
+  "Ubuntu", "Playfair Display", "Lora", "Fira Sans", "Nunito Sans",
+  "Quicksand", "Days One", "Russo One"
+];
 
 // --- STATE MANAGEMENT TYPES ---
 type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static' | 'html';
@@ -133,6 +140,19 @@ interface BaseBlock {
   id: string;
   type: StaticPrimitiveBlockType | InteractiveBlockType;
   payload: { [key: string]: any };
+}
+
+interface HeadingBlock extends BaseBlock {
+    type: 'heading';
+    payload: {
+        text: string;
+        styles: {
+            color: string;
+            fontFamily: string;
+            fontSize: number;
+            textAlign: TextAlign;
+        }
+    }
 }
 
 interface ButtonBlock extends BaseBlock {
@@ -164,7 +184,7 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
@@ -482,6 +502,93 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
+const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    if(selectedElement?.type !== 'primitive') return null;
+    
+    const getElement = () => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'heading' ? block as HeadingBlock : null;
+    }
+    const element = getElement();
+    if(!element) return null;
+
+    const updateStyle = (key: keyof HeadingBlock['payload']['styles'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+          if (row.type !== 'columns') return row;
+          const newColumns = row.payload.columns.map(col => {
+            if (col.id === (selectedElement as { columnId: string }).columnId) {
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id === selectedElement.primitiveId && block.type === 'heading') {
+                        return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
+                    }
+                    return block;
+                })
+                return {...col, blocks: newBlocks};
+            }
+            return col;
+          });
+          return { ...row, payload: { columns: newColumns } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    }
+    
+    return (
+        <div className="space-y-4">
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Tipografía</h3>
+                <Label>Color del Texto</Label>
+                <ColorPickerAdvanced color={element.payload.styles.color} setColor={(c) => updateStyle('color', c)} />
+            </div>
+
+            <div className="space-y-3">
+                <Label>Fuente</Label>
+                <Select value={element.payload.styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
+                    <SelectContent>
+                      {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+            
+            <Separator className="bg-border/20"/>
+            
+            <div className="space-y-4">
+                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
+                 <div className="grid grid-cols-3 gap-2">
+                    <Button variant={element.payload.styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
+                    <Button variant={element.payload.styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
+                    <Button variant={element.payload.styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
+                 </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente</h3>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                      value={[element.payload.styles.fontSize]}
+                      max={100}
+                      min={12}
+                      step={1} 
+                      onValueChange={(value) => updateStyle('fontSize', value[0])}
+                  />
+                  <span className="text-xs text-muted-foreground w-12 text-right">{element.payload.styles.fontSize}px</span>
+                </div>
+            </div>
+
+        </div>
+    )
+}
+
 const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
@@ -579,7 +686,6 @@ function ThemeToggle() {
 
   React.useEffect(() => {
     setMounted(true);
-    // Move localStorage access inside useEffect to ensure it only runs on the client
     const storedTheme = localStorage.getItem("theme");
     setIsDarkMode(storedTheme === "dark");
   }, []);
@@ -732,12 +838,25 @@ export default function CreateTemplatePage() {
             type: 'button',
             payload: { text: 'Botón', url: '#', textAlign: 'center', styles: { borderRadius: 8, background: { type: 'solid', color1: '#A020F0' } } },
         };
+    } else if (blockType === 'heading') {
+        newBlock = {
+            id: `heading_${Date.now()}`,
+            type: 'heading',
+            payload: { 
+                text: 'Título principal',
+                styles: {
+                    color: '#000000',
+                    fontFamily: 'Roboto',
+                    fontSize: 32,
+                    textAlign: 'left'
+                }
+            },
+        };
     } else {
         newBlock = {
             id: `${blockType}_${Date.now()}`,
             type: blockType,
             payload: {
-                ...(blockType === 'heading' && { text: 'Título principal' }),
                 ...(blockType === 'emoji-static' && { emoji: '😀' }),
             },
         };
@@ -901,6 +1020,18 @@ export default function CreateTemplatePage() {
     }
   }
 
+  const getHeadingStyle = (block: HeadingBlock): React.CSSProperties => {
+    const { color, fontFamily, fontSize, textAlign } = block.payload.styles;
+    return {
+        color: color || '#000000',
+        fontFamily: fontFamily || 'Arial, sans-serif',
+        fontSize: `${fontSize || 32}px`,
+        textAlign: textAlign || 'left',
+        width: '100%',
+        padding: '8px',
+    };
+  };
+
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
     return (
@@ -920,8 +1051,9 @@ export default function CreateTemplatePage() {
                   <h1 
                     contentEditable 
                     suppressContentEditableWarning 
+                    style={getHeadingStyle(block as HeadingBlock)}
                     onBlur={(e) => handleHeadingTextChange(block.id, e.currentTarget.textContent || '')}
-                    className="text-4xl font-bold w-full p-2 focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
+                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
                   >
                     {block.payload.text}
                   </h1>
@@ -1150,7 +1282,7 @@ export default function CreateTemplatePage() {
       return (
         <div 
           key={block.id} 
-          className="group/row relative rounded-lg hover:bg-primary/5 px-2"
+          className="group/row relative rounded-lg hover:bg-primary/5 p-2"
         >
           <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
               <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
@@ -1226,7 +1358,7 @@ export default function CreateTemplatePage() {
     return (
         <div 
             key={block.id} 
-            className="group/row relative rounded-lg hover:bg-primary/5 px-2"
+            className="group/row relative rounded-lg hover:bg-primary/5 p-2"
         >
         <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
             <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
@@ -1279,25 +1411,26 @@ export default function CreateTemplatePage() {
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
-      <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
-        <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
+      <aside className="w-80 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
+        <header className="flex items-center justify-between p-4 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
-              <span className="text-base font-semibold truncate flex-1">{templateName}</span>
+              <span className="text-lg font-semibold truncate flex-1">{templateName}</span>
               <Button variant="ghost" size="icon" className="size-8 rounded-full" onClick={() => setIsEditNameModalOpen(true)}>
                 <Pencil className="size-4" />
               </Button>
           </div>
+          <ThemeToggle />
         </header>
-        <div className="p-2 space-y-2">
+        <div className="p-4 space-y-4">
             {mainContentBlocks.map(block => (
                <Card 
                 key={block.id}
                 onClick={() => handleBlockClick(block.id as BlockType)}
-                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
               >
-                <block.icon className="size-8 text-[#00B0F0] transition-colors" />
-                <span className="text-sm font-semibold text-center text-foreground/80 mt-2">{block.name}</span>
-                 {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
+                <block.icon className="size-10 text-[#00B0F0] transition-colors" />
+                <span className="text-md font-semibold text-center text-foreground/80 mt-2">{block.name}</span>
+                 {block.id === 'columns' && <span className="text-sm font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
         </div>
@@ -1338,7 +1471,6 @@ export default function CreateTemplatePage() {
                   </Tooltip>
               </div>
             </TooltipProvider>
-            <ThemeToggle />
           </div>
           <div className="flex items-center gap-4">
               <div className="text-xs text-muted-foreground">
@@ -1417,6 +1549,9 @@ export default function CreateTemplatePage() {
               )}
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'button' && (
                   <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+              )}
+               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'heading' && (
+                  <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
                { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType() === 'emoji-interactive' && (
                   <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
