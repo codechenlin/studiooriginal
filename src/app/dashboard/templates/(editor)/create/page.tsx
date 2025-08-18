@@ -192,6 +192,7 @@ type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 interface Column {
   id: string;
   blocks: PrimitiveBlock[];
+  width: number;
   styles: {
     borderRadius?: number;
     background?: {
@@ -681,14 +682,20 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
 
 function ThemeToggle() {
   const { toast } = useToast();
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(true); // Default to dark
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
-    const storedTheme = localStorage.getItem("theme");
-    setIsDarkMode(storedTheme === "dark");
+    // Logic moved to second useEffect to avoid server-side execution
   }, []);
+
+  React.useEffect(() => {
+    if (mounted) {
+      const storedTheme = localStorage.getItem("theme");
+      setIsDarkMode(storedTheme === "dark");
+    }
+  }, [mounted]);
 
   React.useEffect(() => {
     if (mounted) {
@@ -764,6 +771,9 @@ export default function CreateTemplatePage() {
   const [isResizing, setIsResizing] = useState(false);
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
 
+  // Column resize state
+  const [resizingColumnInfo, setResizingColumnInfo] = useState<{ rowId: string; handleIndex: number; startX: number; initialWidths: number[] } | null>(null);
+
   const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleSave = () => {
@@ -799,6 +809,7 @@ export default function CreateTemplatePage() {
             id: `col_${Date.now()}_${i}`,
             blocks: [],
             styles: {},
+            width: 100 / selectedColumnLayout,
           })),
         },
       };
@@ -1127,6 +1138,88 @@ export default function CreateTemplatePage() {
     setResizingWrapperId(null);
   }, []);
   
+  // --- Column Resize Logic ---
+  const handleMouseDownColumnResize = (e: React.MouseEvent, rowId: string, handleIndex: number) => {
+    e.preventDefault();
+    const row = canvasContent.find(r => r.id === rowId) as ColumnsBlock | undefined;
+    if (!row) return;
+
+    setResizingColumnInfo({
+        rowId,
+        handleIndex,
+        startX: e.clientX,
+        initialWidths: row.payload.columns.map(c => c.width),
+    });
+  };
+
+  const handleMouseMoveColumnResize = useCallback((e: MouseEvent) => {
+      if (!resizingColumnInfo) return;
+
+      const { rowId, handleIndex, startX, initialWidths } = resizingColumnInfo;
+      const dx = e.clientX - startX;
+
+      const rowElement = document.getElementById(rowId);
+      if (!rowElement) return;
+
+      const totalWidth = rowElement.offsetWidth;
+      const dxPercent = (dx / totalWidth) * 100;
+
+      const newWidths = [...initialWidths];
+      let leftColWidth = newWidths[handleIndex];
+      let rightColWidth = newWidths[handleIndex + 1];
+
+      let newLeftWidth = leftColWidth + dxPercent;
+      let newRightWidth = rightColWidth - dxPercent;
+      
+      const minWidth = 10; // 10% minimum width
+
+      if (newLeftWidth < minWidth) {
+          const diff = minWidth - newLeftWidth;
+          newLeftWidth = minWidth;
+          newRightWidth -= diff;
+      }
+      if (newRightWidth < minWidth) {
+          const diff = minWidth - newRightWidth;
+          newRightWidth = minWidth;
+          newLeftWidth -= diff;
+      }
+      
+      newWidths[handleIndex] = newLeftWidth;
+      newWidths[handleIndex + 1] = newRightWidth;
+
+      setCanvasContent(prev => 
+          prev.map(row => {
+              if (row.id === rowId && row.type === 'columns') {
+                  const updatedColumns = row.payload.columns.map((col, i) => ({
+                      ...col,
+                      width: newWidths[i],
+                  }));
+                  return { ...row, payload: { ...row.payload, columns: updatedColumns } };
+              }
+              return row;
+          })
+      );
+
+  }, [resizingColumnInfo, setCanvasContent]);
+
+  const handleMouseUpColumnResize = useCallback(() => {
+      setResizingColumnInfo(null);
+  }, []);
+
+  useEffect(() => {
+    if (resizingColumnInfo) {
+      document.addEventListener('mousemove', handleMouseMoveColumnResize);
+      document.addEventListener('mouseup', handleMouseUpColumnResize);
+    } else {
+      document.removeEventListener('mousemove', handleMouseMoveColumnResize);
+      document.removeEventListener('mouseup', handleMouseUpColumnResize);
+    }
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMoveColumnResize);
+      document.removeEventListener('mouseup', handleMouseUpColumnResize);
+    };
+  }, [resizingColumnInfo, handleMouseMoveColumnResize, handleMouseUpColumnResize]);
+
   useEffect(() => {
     if (isResizing) {
       document.addEventListener('mousemove', handleMouseMoveResize);
@@ -1282,7 +1375,7 @@ export default function CreateTemplatePage() {
       return (
         <div 
           key={block.id} 
-          className="group/row relative rounded-lg hover:bg-primary/5 p-2"
+          className="group/row relative p-2"
         >
           <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
               <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
@@ -1354,11 +1447,14 @@ export default function CreateTemplatePage() {
     if (block.type === 'wrapper') {
         return <WrapperComponent key={block.id} block={block} index={index} />;
     }
+    
+    const blockId = block.id;
 
     return (
         <div 
             key={block.id} 
-            className="group/row relative rounded-lg hover:bg-primary/5 p-2"
+            id={block.id}
+            className="group/row relative px-2"
         >
         <div className="absolute top-1/2 -left-8 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity bg-card p-1.5 rounded-md border shadow-md z-10">
             <Button variant="ghost" size="icon" className="size-6" disabled={index === 0} onClick={() => handleMoveBlock(index, 'up')}>
@@ -1377,30 +1473,40 @@ export default function CreateTemplatePage() {
         </div>
         
         {block.type === 'columns' && (
-            <div className="flex overflow-x-auto">
-              {block.payload.columns.map((col) => (
-                <div 
-                    key={col.id}
-                    onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}}
-                    style={getElementStyle(col)}
-                    className={cn(
-                      "flex-1 p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px] group/column",
-                      selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
+            <div className="flex w-full overflow-x-auto relative">
+              {block.payload.columns.map((col, colIndex) => (
+                <React.Fragment key={col.id}>
+                    <div 
+                        style={{ ...getElementStyle(col), flexBasis: `${col.width}%` }}
+                        className={cn(
+                          "flex-grow p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px] group/column",
+                          selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
+                        )}
+                         onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}}
+                    >
+                       {col.blocks.length > 0 ? (
+                           <div className="flex flex-col gap-2 w-full">
+                               {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id))}
+                               <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, 'column', e); }}><PlusCircle className="mr-2"/>Añadir</Button>
+                           </div>
+                       ) : (
+                         <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, 'column', e); }}>
+                           <PlusCircle className="mb-1"/>
+                           <span className="text-xs font-medium -mb-0.5">Añadir</span>
+                           <span className="text-xs font-medium">Bloque</span>
+                         </Button>
+                       )}
+                    </div>
+                    {colIndex < block.payload.columns.length - 1 && (
+                      <div 
+                        onMouseDown={(e) => handleMouseDownColumnResize(e, blockId, colIndex)}
+                        className="w-1.5 h-auto bg-transparent hover:bg-primary/50 cursor-col-resize absolute top-0 bottom-0 z-20 group/resizer"
+                        style={{ left: `calc(${block.payload.columns.slice(0, colIndex + 1).reduce((acc, c) => acc + c.width, 0)}% - 3px)`}}
+                      >
+                         <div className="w-full h-full bg-primary opacity-0 group-hover/resizer:opacity-100 transition-opacity" />
+                      </div>
                     )}
-                >
-                   {col.blocks.length > 0 ? (
-                       <div className="flex flex-col gap-2 w-full">
-                           {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id))}
-                           <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, 'column', e); }}><PlusCircle className="mr-2"/>Añadir</Button>
-                       </div>
-                   ) : (
-                     <Button variant="outline" size="sm" className="h-auto py-2 px-4 flex flex-col" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, 'column', e); }}>
-                       <PlusCircle className="mb-1"/>
-                       <span className="text-xs font-medium -mb-0.5">Añadir</span>
-                       <span className="text-xs font-medium">Bloque</span>
-                     </Button>
-                   )}
-                </div>
+                </React.Fragment>
               ))}
             </div>
         )}
@@ -1411,7 +1517,7 @@ export default function CreateTemplatePage() {
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
-      <aside className="w-80 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
+      <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-4 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
               <span className="text-lg font-semibold truncate flex-1">{templateName}</span>
@@ -1419,18 +1525,17 @@ export default function CreateTemplatePage() {
                 <Pencil className="size-4" />
               </Button>
           </div>
-          <ThemeToggle />
         </header>
-        <div className="p-4 space-y-4">
+        <div className="p-2 space-y-2">
             {mainContentBlocks.map(block => (
                <Card 
                 key={block.id}
                 onClick={() => handleBlockClick(block.id as BlockType)}
-                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-4 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
               >
-                <block.icon className="size-10 text-[#00B0F0] transition-colors" />
-                <span className="text-md font-semibold text-center text-foreground/80 mt-2">{block.name}</span>
-                 {block.id === 'columns' && <span className="text-sm font-medium text-center text-muted-foreground">1 - 4</span>}
+                <block.icon className="size-8 text-[#00B0F0] transition-colors" />
+                <span className="text-sm font-semibold text-center text-foreground/80 mt-2">{block.name}</span>
+                 {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
         </div>
@@ -1471,6 +1576,7 @@ export default function CreateTemplatePage() {
                   </Tooltip>
               </div>
             </TooltipProvider>
+             <ThemeToggle />
           </div>
           <div className="flex items-center gap-4">
               <div className="text-xs text-muted-foreground">
@@ -1499,7 +1605,7 @@ export default function CreateTemplatePage() {
                      <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                    </div>
                  ) : (
-                  <div className="flex flex-col gap-y-0">
+                  <div className="flex flex-col">
                       {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </div>
                  )}
