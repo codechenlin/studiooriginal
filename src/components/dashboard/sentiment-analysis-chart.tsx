@@ -49,35 +49,37 @@ export function SentimentAnalysisChart() {
               </radialGradient>
             </defs>
             {chartData.map((entry, index) => (
-               <React.Fragment key={entry.sentiment}>
-                    <Pie
-                        data={[{ value: 100 }]}
-                        dataKey="value"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={radius[index] - 5}
-                        outerRadius={radius[index]}
-                        startAngle={90}
-                        endAngle={450}
-                        fill="hsl(var(--ai-track))"
-                        stroke="hsl(var(--border) / 0.2)"
-                        strokeWidth={1}
-                    />
-                    <Pie
-                        data={[entry]}
-                        dataKey="value"
-                        nameKey="sentiment"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={radius[index] - 5}
-                        outerRadius={radius[index]}
-                        startAngle={90}
-                        endAngle={90 + (entry.value / totalValue) * 360}
-                        cornerRadius={5}
-                        fill={entry.fill}
-                        style={{ filter: `drop-shadow(0 0 5px ${entry.color}` }}
-                    />
-               </React.Fragment>
+               <Pie
+                  key={`track-${entry.sentiment}`}
+                  data={[{ value: 100 }]}
+                  dataKey="value"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={radius[index] - 5}
+                  outerRadius={radius[index]}
+                  startAngle={90}
+                  endAngle={450}
+                  fill="hsl(var(--ai-track))"
+                  stroke="hsl(var(--border) / 0.2)"
+                  strokeWidth={1}
+                />
+            ))}
+             {chartData.map((entry, index) => (
+                <Pie
+                    key={`value-${entry.sentiment}`}
+                    data={[entry]}
+                    dataKey="value"
+                    nameKey="sentiment"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={radius[index] - 5}
+                    outerRadius={radius[index]}
+                    startAngle={90}
+                    endAngle={90 + (entry.value / totalValue) * 360}
+                    cornerRadius={5}
+                    fill={entry.fill}
+                    style={{ filter: `drop-shadow(0 0 5px ${entry.color})` }}
+                />
             ))}
           </PieChart>
         </ChartContainer>
