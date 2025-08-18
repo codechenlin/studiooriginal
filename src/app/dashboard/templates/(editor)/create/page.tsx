@@ -109,7 +109,6 @@ const columnOptions = [
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 5, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/5 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -1298,7 +1297,7 @@ export default function CreateTemplatePage() {
               >
                 <block.icon className="size-10 text-[#00B0F0] transition-colors" />
                 <span className="text-md font-semibold text-center text-foreground/80 mt-2">{block.name}</span>
-                 {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 5</span>}
+                 {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
         </div>
@@ -1725,4 +1724,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
