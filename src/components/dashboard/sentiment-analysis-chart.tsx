@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -30,7 +29,10 @@ export function SentimentAnalysisChart() {
         <CardDescription>Respuesta de la Audiencia</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col items-center justify-center pb-0">
-        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[320px]">
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[320px]"
+        >
           <PieChart>
              <defs>
               <radialGradient id="sentiment-positive" cx="50%" cy="50%" r="50%">
@@ -56,10 +58,9 @@ export function SentimentAnalysisChart() {
             <Pie data={[chartData[0]]} dataKey="value" nameKey="sentiment" cx="50%" cy="50%" innerRadius={80 - 5} outerRadius={80} startAngle={90} endAngle={90 + (chartData[0].value / totalValue) * 360} cornerRadius={5} fill={chartData[0].fill} style={{ filter: `drop-shadow(0 0 5px ${chartData[0].color})` }} />
             <Pie data={[chartData[1]]} dataKey="value" nameKey="sentiment" cx="50%" cy="50%" innerRadius={70 - 5} outerRadius={70} startAngle={90} endAngle={90 + (chartData[1].value / totalValue) * 360} cornerRadius={5} fill={chartData[1].fill} style={{ filter: `drop-shadow(0 0 5px ${chartData[1].color})` }} />
             <Pie data={[chartData[2]]} dataKey="value" nameKey="sentiment" cx="50%" cy="50%" innerRadius={60 - 5} outerRadius={60} startAngle={90} endAngle={90 + (chartData[2].value / totalValue) * 360} cornerRadius={5} fill={chartData[2].fill} style={{ filter: `drop-shadow(0 0 5px ${chartData[2].color})` }} />
-
           </PieChart>
+           <ChartLegend content={<ChartLegendContent nameKey="sentiment" />} className="flex-col items-start gap-2 text-sm" />
         </ChartContainer>
-         <ChartLegend content={<ChartLegendContent nameKey="sentiment" />} className="flex-col items-start gap-2 text-sm" />
       </CardContent>
     </Card>
   )
