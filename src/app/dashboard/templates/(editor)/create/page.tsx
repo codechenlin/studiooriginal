@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -987,14 +987,13 @@ const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }:
                     <PopoverContent className="w-80 max-h-60 overflow-y-auto custom-scrollbar">
                         <div className="grid grid-cols-6 gap-1">
                             {popularEmojis.map(emoji => (
-                                <PopoverClose key={emoji} asChild>
-                                    <button 
-                                        onClick={() => updatePayload('emoji', emoji)}
-                                        className="text-3xl p-1 rounded-lg hover:bg-accent transition-colors aspect-square flex items-center justify-center"
-                                    >
-                                        {emoji}
-                                    </button>
-                                </PopoverClose>
+                                <button 
+                                    key={emoji}
+                                    onClick={() => updatePayload('emoji', emoji)}
+                                    className="text-3xl p-1 rounded-lg hover:bg-accent transition-colors aspect-square flex items-center justify-center"
+                                >
+                                    {emoji}
+                                </button>
                             ))}
                         </div>
                     </PopoverContent>
@@ -2379,4 +2378,6 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+
 
