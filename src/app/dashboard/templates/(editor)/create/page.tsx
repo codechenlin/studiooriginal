@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -1996,7 +1997,7 @@ export default function CreateTemplatePage() {
                      <p>Haz clic en "Columns" o "Contenedor Flexible" de la izquierda para empezar.</p>
                    </div>
                  ) : (
-                  <div className="flex flex-col space-y-2">
+                  <div className="flex flex-col">
                       {canvasContent.map((block, index) => renderCanvasBlock(block, index))}
                   </div>
                  )}
@@ -2378,3 +2379,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
