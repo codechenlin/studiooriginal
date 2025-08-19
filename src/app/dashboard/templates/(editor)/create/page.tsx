@@ -117,7 +117,7 @@ const popularEmojis = Array.from(new Set([
     '😀', '😂', '😍', '🤔', '👍', '🎉', '🚀', '❤️', '🔥', '💰',
     '✅', '✉️', '🔗', '💡', '💯', '👋', '👇', '👉', '🎁', '📈',
     '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸',
-    '📊', '💻', '📱'
+    '📊', '💻', '📱', '🎯', '📣', '✍️'
   ]));
 
 const googleFonts = [
@@ -179,6 +179,17 @@ interface ButtonBlock extends BaseBlock {
     }
 }
 
+interface StaticEmojiBlock extends BaseBlock {
+    type: 'emoji-static';
+    payload: {
+        emoji: string;
+        styles: {
+            fontSize: number;
+            textAlign: TextAlign;
+        }
+    }
+}
+
 interface InteractiveEmojiBlock extends BaseBlock {
     type: 'emoji-interactive';
     payload: {
@@ -190,7 +201,7 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | StaticEmojiBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 
@@ -268,7 +279,6 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
     const { columns } = row.payload;
     const columnIndex = columns.findIndex(c => c.id === selectedElement.columnId);
     if(columnIndex === -1) return null;
-
 
     const handleTwoColumnChange = (value: number) => {
         const newColumns = [...columns];
@@ -375,6 +385,8 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
             r.id === selectedElement.rowId ? { ...r, payload: { ...r.payload, columns: newColumns } } : r
         ));
     };
+    
+    if(columns.length === 1) return null;
 
     if (columns.length === 2) {
         return (
@@ -670,7 +682,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             }
             return col;
           });
-          return { ...row, payload: { columns: newColumns } };
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
         setCanvasContent(newCanvasContent as CanvasBlock[]);
     }
@@ -692,7 +704,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 }
                 return col;
             });
-            return { ...row, payload: { columns: newColumns } };
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
         setCanvasContent(newCanvasContent as CanvasBlock[]);
     };
@@ -836,7 +848,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             }
             return col;
           });
-          return { ...row, payload: { columns: newColumns } };
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
         setCanvasContent(newCanvasContent as CanvasBlock[]);
     }
@@ -897,6 +909,123 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 </div>
             </div>
 
+        </div>
+    )
+}
+
+const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    if (selectedElement?.type !== 'primitive') return null;
+
+    const getElement = () => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'emoji-static' ? block as StaticEmojiBlock : null;
+    }
+    const element = getElement();
+    if (!element) return null;
+
+    const updatePayload = (key: keyof StaticEmojiBlock['payload'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+            if (row.id !== selectedElement.rowId) return row;
+            if (row.type !== 'columns') return row;
+            const newColumns = row.payload.columns.map(col => {
+                if (col.id === selectedElement.columnId) {
+                    const newBlocks = col.blocks.map(block => {
+                        if (block.id === selectedElement.primitiveId && block.type === 'emoji-static') {
+                            return { ...block, payload: { ...block.payload, [key]: value } };
+                        }
+                        return block;
+                    });
+                    return { ...col, blocks: newBlocks };
+                }
+                return col;
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    };
+
+    const updateStyle = (key: keyof StaticEmojiBlock['payload']['styles'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+            if (row.id !== selectedElement.rowId) return row;
+            if (row.type !== 'columns') return row;
+            const newColumns = row.payload.columns.map(col => {
+                if (col.id === selectedElement.columnId) {
+                    const newBlocks = col.blocks.map(block => {
+                        if (block.id === selectedElement.primitiveId && block.type === 'emoji-static') {
+                            const currentStyles = block.payload.styles || {};
+                            return { ...block, payload: { ...block.payload, styles: { ...currentStyles, [key]: value } } };
+                        }
+                        return block;
+                    });
+                    return { ...col, blocks: newBlocks };
+                }
+                return col;
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    };
+    
+    const { styles } = element.payload;
+
+    return (
+        <div className="space-y-4">
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Smile/>Emoji</h3>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full text-2xl h-14">{element.payload.emoji}</Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 max-h-60 overflow-y-auto custom-scrollbar">
+                        <div className="grid grid-cols-6 gap-1">
+                            {popularEmojis.map(emoji => (
+                                <PopoverClose key={emoji} asChild>
+                                    <button 
+                                        onClick={() => updatePayload('emoji', emoji)}
+                                        className="text-3xl p-1 rounded-lg hover:bg-accent transition-colors aspect-square flex items-center justify-center"
+                                    >
+                                        {emoji}
+                                    </button>
+                                </PopoverClose>
+                            ))}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            </div>
+            
+            <Separator className="bg-border/20"/>
+            
+            <div className="space-y-4">
+                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
+                 <div className="grid grid-cols-3 gap-2">
+                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
+                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
+                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
+                 </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Tamaño</h3>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                      value={[styles.fontSize]}
+                      max={128}
+                      min={16}
+                      step={1} 
+                      onValueChange={(value) => updateStyle('fontSize', value[0])}
+                  />
+                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
+                </div>
+            </div>
         </div>
     )
 }
@@ -1179,13 +1308,23 @@ export default function CreateTemplatePage() {
                 }
             },
         };
+    } else if (blockType === 'emoji-static') {
+        newBlock = {
+            id: `emoji-static_${Date.now()}`,
+            type: 'emoji-static',
+            payload: {
+                emoji: '😀',
+                styles: {
+                    fontSize: 48,
+                    textAlign: 'center',
+                }
+            }
+        };
     } else {
         newBlock = {
             id: `${blockType}_${Date.now()}`,
             type: blockType,
-            payload: {
-                ...(blockType === 'emoji-static' && { emoji: '😀' }),
-            },
+            payload: {},
         };
     }
 
@@ -1365,6 +1504,16 @@ export default function CreateTemplatePage() {
     };
   };
 
+  const getStaticEmojiStyle = (block: StaticEmojiBlock): React.CSSProperties => {
+    const { fontSize, textAlign } = block.payload.styles;
+    return {
+        fontSize: `${fontSize || 48}px`,
+        textAlign: textAlign || 'center',
+        width: '100%',
+        padding: '8px',
+    };
+  };
+
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
     return (
@@ -1394,7 +1543,7 @@ export default function CreateTemplatePage() {
               case 'text':
                 return <p className="p-2">{block.payload.text || 'Lorem ipsum dolor sit amet...'}</p>
               case 'emoji-static':
-                return <p className="text-center" style={{fontSize: '48px'}}>{(block as PrimitiveBlock & { payload: { emoji: string } }).payload.emoji}</p>
+                return <p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p>
               case 'button':
                   const buttonBlock = block as ButtonBlock;
                   const buttonElement = (
@@ -1887,16 +2036,14 @@ export default function CreateTemplatePage() {
                 </Button>
               )}
 
-              { (selectedElement?.type === 'column' || selectedElement?.type === 'wrapper') && (
+              { (selectedElement?.type === 'column') && (
+                <>
                  <BackgroundEditor 
                     selectedElement={selectedElement} 
                     canvasContent={canvasContent} 
                     setCanvasContent={setCanvasContent}
                     onOpenImageModal={handleOpenImageModal}
                  />
-              )}
-              { selectedElement?.type === 'column' && (
-                <>
                     <Separator className="bg-border/20" />
                     <ColumnDistributionEditor 
                         selectedElement={selectedElement}
@@ -1905,11 +2052,22 @@ export default function CreateTemplatePage() {
                     />
                 </>
               )}
+               { (selectedElement?.type === 'wrapper') && (
+                 <BackgroundEditor 
+                    selectedElement={selectedElement} 
+                    canvasContent={canvasContent} 
+                    setCanvasContent={setCanvasContent}
+                    onOpenImageModal={handleOpenImageModal}
+                 />
+              )}
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'button' && (
                   <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
                { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'heading' && (
                   <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+              )}
+              { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'emoji-static' && (
+                  <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
                { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType() === 'emoji-interactive' && (
                   <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
