@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import { Toggle } from '@/components/ui/toggle';
 import {
   Square,
   Type,
@@ -134,7 +135,7 @@ type BlockType = StaticPrimitiveBlockType | InteractiveBlockType | 'columns' | '
 type Viewport = 'desktop' | 'tablet' | 'mobile';
 type TextAlign = 'left' | 'center' | 'right';
 type BackgroundFit = 'cover' | 'contain' | 'auto';
-
+type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 
 interface BaseBlock {
   id: string;
@@ -151,6 +152,9 @@ interface HeadingBlock extends BaseBlock {
             fontFamily: string;
             fontSize: number;
             textAlign: TextAlign;
+            fontWeight: 'normal' | 'bold';
+            fontStyle: 'normal' | 'italic';
+            textDecoration: 'none' | 'underline';
         }
     }
 }
@@ -162,7 +166,9 @@ interface ButtonBlock extends BaseBlock {
         url: string;
         textAlign: TextAlign;
         styles: {
-            borderRadius?: number;
+            color: string;
+            backgroundColor: string;
+            borderRadius: number;
             background?: {
                 type: 'solid' | 'gradient';
                 color1: string;
@@ -187,7 +193,6 @@ interface InteractiveEmojiBlock extends BaseBlock {
 type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
-type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 
 interface Column {
   id: string;
@@ -433,7 +438,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         if (row?.type !== 'columns') return null;
         const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
         const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type === 'button' ? block : null;
+        return block?.type === 'button' ? block as ButtonBlock : null;
     }
     const element = getElement();
     if(!element) return null;
@@ -459,8 +464,52 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         setCanvasContent(newCanvasContent as CanvasBlock[]);
     }
     
+    const updateStyle = (key: keyof ButtonBlock['payload']['styles'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+            if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+            if (row.type !== 'columns') return row;
+            const newColumns = row.payload.columns.map(col => {
+                if (col.id === (selectedElement as { columnId: string }).columnId) {
+                    const newBlocks = col.blocks.map(block => {
+                        if (block.id === selectedElement.primitiveId && block.type === 'button') {
+                             const currentStyles = block.payload.styles || {};
+                            return { ...block, payload: { ...block.payload, styles: { ...currentStyles, [key]: value } } };
+                        }
+                        return block;
+                    });
+                    return { ...col, blocks: newBlocks };
+                }
+                return col;
+            });
+            return { ...row, payload: { columns: newColumns } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    };
+
     const setTextAlign = (align: TextAlign) => {
         updatePayload('textAlign', align);
+    };
+    
+    const { background } = element.payload.styles;
+    
+    const setBgType = (type: 'solid' | 'gradient') => {
+        updateStyle('background', {
+            type,
+            color1: background?.color1 || '#A020F0',
+            color2: background?.color2 || '#3357FF',
+            direction: background?.direction || 'vertical',
+        });
+    };
+
+    const setColor = (colorProp: 'color1' | 'color2', value: string) => {
+        const currentBg = background || { type: 'solid', color1: '#A020F0', direction: 'vertical' };
+        updateStyle('background', { ...currentBg, [colorProp]: value });
+    };
+
+    const setDirection = (direction: GradientDirection) => {
+        if (background) {
+            updateStyle('background', { ...background, direction });
+        }
     };
 
     return (
@@ -499,6 +548,46 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  </div>
             </div>
             <Separator className="bg-border/20"/>
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Paintbrush />Fondo del Botón</h3>
+                <Tabs value={background?.type || 'solid'} onValueChange={(value) => setBgType(value as any)} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="solid">Sólido</TabsTrigger>
+                        <TabsTrigger value="gradient">Degradado</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+                <div className="space-y-3">
+                    <Label>Color 1</Label>
+                    <ColorPickerAdvanced color={background?.color1 || '#A020F0'} setColor={(c) => setColor('color1', c)} />
+                </div>
+                {background?.type === 'gradient' && (
+                    <>
+                    <div className="space-y-3">
+                        <Label>Color 2</Label>
+                        <ColorPickerAdvanced color={background?.color2 || '#3357FF'} setColor={(c) => setColor('color2', c)} />
+                    </div>
+                    <div className="space-y-3">
+                        <Label>Dirección del Degradado</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={background?.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown /></Button></TooltipTrigger>
+                                    <TooltipContent><p>Vertical</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={background?.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight /></Button></TooltipTrigger>
+                                    <TooltipContent><p>Horizontal</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={background?.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4" /></Button></TooltipTrigger>
+                                    <TooltipContent><p>Radial</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
+                    </>
+                )}
+            </div>
         </>
     )
 }
@@ -541,17 +630,19 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         setCanvasContent(newCanvasContent as CanvasBlock[]);
     }
     
+    const { styles } = element.payload;
+
     return (
         <div className="space-y-4">
             <div className="space-y-3">
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Tipografía</h3>
                 <Label>Color del Texto</Label>
-                <ColorPickerAdvanced color={element.payload.styles.color} setColor={(c) => updateStyle('color', c)} />
+                <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
             </div>
 
             <div className="space-y-3">
                 <Label>Fuente</Label>
-                <Select value={element.payload.styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
+                <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
                     <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
                     <SelectContent>
                       {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
@@ -559,14 +650,23 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 </Select>
             </div>
             
+            <div className="space-y-3">
+                 <Label>Estilos</Label>
+                 <div className="grid grid-cols-3 gap-2">
+                    <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
+                    <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
+                 </div>
+            </div>
+
             <Separator className="bg-border/20"/>
             
             <div className="space-y-4">
                  <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
                  <div className="grid grid-cols-3 gap-2">
-                    <Button variant={element.payload.styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
-                    <Button variant={element.payload.styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
-                    <Button variant={element.payload.styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
+                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
+                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
+                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
                  </div>
             </div>
 
@@ -576,13 +676,13 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente</h3>
                 <div className="flex items-center gap-2">
                   <Slider 
-                      value={[element.payload.styles.fontSize]}
+                      value={[styles.fontSize]}
                       max={100}
                       min={12}
                       step={1} 
                       onValueChange={(value) => updateStyle('fontSize', value[0])}
                   />
-                  <span className="text-xs text-muted-foreground w-12 text-right">{element.payload.styles.fontSize}px</span>
+                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
                 </div>
             </div>
 
@@ -682,14 +782,13 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
 
 function ThemeToggle() {
   const { toast } = useToast();
-  const [isDarkMode, setIsDarkMode] = React.useState(true); // Default to dark
+  const [isDarkMode, setIsDarkMode] = React.useState(true);
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
-    // Logic moved to second useEffect to avoid server-side execution
   }, []);
-
+  
   React.useEffect(() => {
     if (mounted) {
       const storedTheme = localStorage.getItem("theme");
@@ -847,7 +946,17 @@ export default function CreateTemplatePage() {
         newBlock = {
             id: `button_${Date.now()}`,
             type: 'button',
-            payload: { text: 'Botón', url: '#', textAlign: 'center', styles: { borderRadius: 8, background: { type: 'solid', color1: '#A020F0' } } },
+            payload: { 
+              text: 'Botón', 
+              url: '#', 
+              textAlign: 'center', 
+              styles: { 
+                borderRadius: 8, 
+                color: '#FFFFFF', 
+                backgroundColor: '#A020F0',
+                background: { type: 'solid', color1: '#A020F0' } 
+              } 
+            },
         };
     } else if (blockType === 'heading') {
         newBlock = {
@@ -859,7 +968,10 @@ export default function CreateTemplatePage() {
                     color: '#000000',
                     fontFamily: 'Roboto',
                     fontSize: 32,
-                    textAlign: 'left'
+                    textAlign: 'left',
+                    fontWeight: 'normal',
+                    fontStyle: 'normal',
+                    textDecoration: 'none',
                 }
             },
         };
@@ -994,27 +1106,30 @@ export default function CreateTemplatePage() {
   const getButtonStyle = (block: ButtonBlock) => {
     const style: React.CSSProperties = {
         padding: '10px 20px',
-        color: '#ffffff', // Assuming white text for now
         border: 'none',
         cursor: 'pointer',
     };
-    const { background, borderRadius } = block.payload.styles;
+    const { styles } = block.payload;
 
-    if(borderRadius !== undefined) {
-        style.borderRadius = `${borderRadius}px`;
+    if(styles.borderRadius !== undefined) {
+        style.borderRadius = `${styles.borderRadius}px`;
     }
+    
+    style.color = styles.color;
 
-    if(background) {
-        if(background.type === 'solid') {
-            style.backgroundColor = background.color1;
-        } else if (background.type === 'gradient') {
-             if (background.direction === 'radial') {
-              style.backgroundImage = `radial-gradient(${background.color1}, ${background.color2})`;
+    if(styles.background) {
+        if(styles.background.type === 'solid') {
+            style.backgroundColor = styles.background.color1;
+        } else if (styles.background.type === 'gradient') {
+             if (styles.background.direction === 'radial') {
+              style.backgroundImage = `radial-gradient(${styles.background.color1}, ${styles.background.color2})`;
             } else {
-              const angle = background.direction === 'horizontal' ? 'to right' : 'to bottom';
-              style.backgroundImage = `linear-gradient(${angle}, ${background.color1}, ${background.color2})`;
+              const angle = styles.background.direction === 'horizontal' ? 'to right' : 'to bottom';
+              style.backgroundImage = `linear-gradient(${angle}, ${styles.background.color1}, ${styles.background.color2})`;
             }
         }
+    } else {
+      style.backgroundColor = styles.backgroundColor;
     }
     return style;
   }
@@ -1032,12 +1147,15 @@ export default function CreateTemplatePage() {
   }
 
   const getHeadingStyle = (block: HeadingBlock): React.CSSProperties => {
-    const { color, fontFamily, fontSize, textAlign } = block.payload.styles;
+    const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
     return {
         color: color || '#000000',
         fontFamily: fontFamily || 'Arial, sans-serif',
         fontSize: `${fontSize || 32}px`,
         textAlign: textAlign || 'left',
+        fontWeight: fontWeight || 'normal',
+        fontStyle: fontStyle || 'normal',
+        textDecoration: textDecoration || 'none',
         width: '100%',
         padding: '8px',
     };
@@ -1074,13 +1192,23 @@ export default function CreateTemplatePage() {
               case 'emoji-static':
                 return <p className="text-center" style={{fontSize: '48px'}}>{(block as PrimitiveBlock & { payload: { emoji: string } }).payload.emoji}</p>
               case 'button':
-                return (
-                    <div style={getButtonContainerStyle(block as ButtonBlock)}>
-                        <button style={getButtonStyle(block as ButtonBlock)}>
-                            {(block as ButtonBlock).payload.text}
-                        </button>
-                    </div>
-                )
+                  const buttonBlock = block as ButtonBlock;
+                  const buttonElement = (
+                    <button style={getButtonStyle(buttonBlock)}>
+                        {buttonBlock.payload.text}
+                    </button>
+                  );
+                  return (
+                      <div style={getButtonContainerStyle(buttonBlock)}>
+                        {buttonBlock.payload.url && buttonBlock.payload.url !== '#' ? (
+                           <a href={buttonBlock.payload.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                                {buttonElement}
+                           </a>
+                        ) : (
+                           buttonElement
+                        )}
+                      </div>
+                  );
               default:
                 return (
                   <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
@@ -1156,7 +1284,7 @@ export default function CreateTemplatePage() {
       if (!resizingColumnInfo) return;
 
       const { rowId, handleIndex, startX, initialWidths } = resizingColumnInfo;
-      const dx = e.clientX - startX;
+      let dx = e.clientX - startX;
 
       const rowElement = document.getElementById(rowId);
       if (!rowElement) return;
@@ -1175,11 +1303,13 @@ export default function CreateTemplatePage() {
 
       if (newLeftWidth < minWidth) {
           const diff = minWidth - newLeftWidth;
+          dx += (diff / 100) * totalWidth; // Adjust dx to stop at the limit
           newLeftWidth = minWidth;
           newRightWidth -= diff;
       }
       if (newRightWidth < minWidth) {
           const diff = minWidth - newRightWidth;
+          dx -= (diff / 100) * totalWidth; // Adjust dx to stop at the limit
           newRightWidth = minWidth;
           newLeftWidth -= diff;
       }
@@ -1500,10 +1630,10 @@ export default function CreateTemplatePage() {
                     {colIndex < block.payload.columns.length - 1 && (
                       <div 
                         onMouseDown={(e) => handleMouseDownColumnResize(e, blockId, colIndex)}
-                        className="w-1.5 h-auto bg-transparent hover:bg-primary/50 cursor-col-resize absolute top-0 bottom-0 z-20 group/resizer"
-                        style={{ left: `calc(${block.payload.columns.slice(0, colIndex + 1).reduce((acc, c) => acc + c.width, 0)}% - 3px)`}}
+                        className="w-2 h-auto bg-transparent hover:bg-primary/50 cursor-col-resize absolute top-0 bottom-0 z-20 group/resizer flex items-center justify-center"
+                        style={{ left: `calc(${block.payload.columns.slice(0, colIndex + 1).reduce((acc, c) => acc + c.width, 0)}% - 4px)`}}
                       >
-                         <div className="w-full h-full bg-primary opacity-0 group-hover/resizer:opacity-100 transition-opacity" />
+                         <div className="w-1.5 h-12 bg-gradient-to-b from-[#1700E6] to-[#009AFF] rounded-full opacity-50 group-hover/resizer:opacity-100 transition-opacity" />
                       </div>
                     )}
                 </React.Fragment>
@@ -1968,3 +2098,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
