@@ -1563,7 +1563,7 @@ export default function CreateTemplatePage() {
               case 'text':
                 return <p className="p-2">{block.payload.text || 'Lorem ipsum dolor sit amet...'}</p>
               case 'emoji-static':
-                return <p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p>
+                return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
               case 'button':
                   const buttonBlock = block as ButtonBlock;
                   const buttonElement = (
@@ -1893,7 +1893,7 @@ export default function CreateTemplatePage() {
         </div>
         
         {block.type === 'columns' && (
-            <div className="flex w-full overflow-x-auto relative">
+            <div className="flex w-full relative">
               {block.payload.columns.map((col) => (
                 <React.Fragment key={col.id}>
                     <div 
@@ -2398,6 +2398,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
