@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
@@ -80,7 +79,8 @@ import {
   Upload,
   View,
   Strikethrough,
-  Highlighter
+  Highlighter,
+  Link2Off
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -89,6 +89,7 @@ import { useToast } from '@/hooks/use-toast';
 import { HexColorPicker } from 'react-colorful';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 const mainContentBlocks = [
@@ -129,7 +130,8 @@ const popularEmojis = Array.from(new Set([
   
 const insertableSymbols = [
   '©', '®', '™', '€', '£', '¥', '$', '→', '←', '↑', '↓', '↔', '↵', '★', '☆',
-  '✔', '✘', '∞', '≈', '≠', '≤', '≥', '…', '“', '”', '‘', '’', '–', '—', '°'
+  '✔', '✘', '∞', '≈', '≠', '≤', '≥', '…', '“', '”', '‘', '’', '–', '—', '°',
+  '§', 'µ', '¶', '·', '•', '±', '‰', '¼', '½', '¾', '¹', '²', '³', 'æ', 'Æ'
 ];
 
 const googleFonts = [
@@ -981,6 +983,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
+    const { toast } = useToast();
     if(selectedElement?.type !== 'primitive') return null;
     
     const getElement = () => {
@@ -992,6 +995,12 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     }
     const element = getElement();
     if(!element) return null;
+    
+    const contentEditableRef = useRef<HTMLDivElement>(null);
+    const [linkColor, setLinkColor] = useState("#0000EE");
+    const [highlightColor, setHighlightColor] = useState("#FFFF00");
+    const [linkUrl, setLinkUrl] = useState("");
+    const [linkNewWindow, setLinkNewWindow] = useState(true);
 
     const updatePayload = (key: keyof TextBlock['payload'], value: any) => {
         const newCanvasContent = canvasContent.map(row => {
@@ -1013,6 +1022,10 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         });
         setCanvasContent(newCanvasContent as CanvasBlock[]);
     }
+    
+    const handleTextChange = (newText: string) => {
+        updatePayload('text', newText);
+    };
 
     const updateStyle = (key: keyof TextBlock['payload']['styles'], value: any) => {
         const newCanvasContent = canvasContent.map(row => {
@@ -1035,6 +1048,55 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         setCanvasContent(newCanvasContent as CanvasBlock[]);
     }
     
+    const handleExecCommand = (command: string, value?: string) => {
+        document.execCommand(command, false, value);
+        if(contentEditableRef.current) {
+            handleTextChange(contentEditableRef.current.innerHTML);
+        }
+    };
+    
+    const handleLink = () => {
+        const selection = window.getSelection();
+        if(!selection || selection.rangeCount === 0) return;
+        
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+
+        if (selectedText.length > 0 && linkUrl) {
+            const link = document.createElement('a');
+            link.href = linkUrl;
+            link.textContent = selectedText;
+            link.style.color = 'hsl(var(--primary))';
+            link.style.textDecoration = 'underline dotted';
+
+            if(linkNewWindow) {
+                link.target = "_blank";
+            }
+            range.deleteContents();
+            range.insertNode(link);
+            
+             if(contentEditableRef.current) {
+                handleTextChange(contentEditableRef.current.innerHTML);
+             }
+             toast({
+                title: "¡Enlace forjado!",
+                description: "Tu texto ahora tiene un nuevo destino.",
+                className: 'text-white border-none',
+                style: { backgroundColor: '#00CB07' }
+             });
+        }
+    };
+    
+    const copySymbol = (symbol: string) => {
+        navigator.clipboard.writeText(symbol);
+        toast({
+            title: "¡Símbolo copiado!",
+            description: "Listo para pegar.",
+            className: 'text-white border-none',
+            style: { backgroundColor: '#00CB07' }
+        });
+    };
+
     const { styles } = element.payload;
 
     return (
@@ -1042,17 +1104,75 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
              <div className="space-y-3">
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil/>Contenido del Párrafo</h3>
                 <Label>Añadir Texto</Label>
-                <Textarea
-                    value={element.payload.text}
-                    onChange={(e) => updatePayload('text', e.target.value)}
-                    placeholder="Escribe tu párrafo aquí..."
-                    className="bg-transparent border-border/50 min-h-[150px]"
+                <div
+                    ref={contentEditableRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onInput={(e) => handleTextChange(e.currentTarget.innerHTML)}
+                    dangerouslySetInnerHTML={{ __html: element.payload.text }}
+                    className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
                 />
             </div>
-            <div className="space-y-3">
-                <Label>Color del Texto</Label>
-                <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
+            
+            <Separator className="bg-border/20"/>
+
+             <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Palette/>Funciones Especiales</h3>
+                
+                <div className="space-y-2">
+                    <Label>Color de texto seleccionado</Label>
+                    <ColorPickerAdvanced color={linkColor} setColor={(color) => { setLinkColor(color); handleExecCommand('foreColor', color); }} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Resaltado de texto seleccionado</Label>
+                    <ColorPickerAdvanced color={highlightColor} setColor={(color) => { setHighlightColor(color); handleExecCommand('hiliteColor', color); }} />
+                </div>
+
+                <div className="space-y-2">
+                    <Label>Hipervínculo</Label>
+                     <div className="flex gap-2">
+                        <Input 
+                            value={linkUrl}
+                            onChange={(e) => setLinkUrl(e.target.value)}
+                            placeholder="https://ejemplo.com"
+                            className="bg-transparent border-border/50"
+                        />
+                        <Button onClick={handleLink}><LinkIcon /></Button>
+                    </div>
+                    <div className="flex items-center space-x-2 pt-1">
+                        <Checkbox id="new-window" checked={linkNewWindow} onCheckedChange={(checked) => setLinkNewWindow(Boolean(checked))} />
+                        <Label htmlFor="new-window" className="text-xs">Abrir en una nueva ventana</Label>
+                    </div>
+                </div>
             </div>
+
+            <Separator className="bg-border/20"/>
+            
+            <div className="space-y-3">
+                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Smile/>Símbolos para copiar</h3>
+                 <div className="grid grid-cols-8 gap-1 p-2 border rounded-md bg-background/50">
+                    {insertableSymbols.map(symbol => (
+                        <TooltipProvider key={symbol}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button 
+                                        onClick={() => copySymbol(symbol)}
+                                        className="text-lg p-1 rounded-md hover:bg-accent transition-colors aspect-square flex items-center justify-center"
+                                    >
+                                        {symbol}
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Copiar '{symbol}'</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ))}
+                 </div>
+            </div>
+
+
+            <Separator className="bg-border/20"/>
 
             <div className="space-y-3">
                 <Label>Fuente</Label>
@@ -1710,7 +1830,7 @@ export default function CreateTemplatePage() {
 
   const getTextStyle = (block: TextBlock): React.CSSProperties => {
     const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
-    return {
+    const style: React.CSSProperties = {
         color: color || '#333333',
         fontFamily: fontFamily || 'Arial, sans-serif',
         fontSize: `${fontSize || 16}px`,
@@ -1723,6 +1843,10 @@ export default function CreateTemplatePage() {
         width: '100%',
         padding: '8px',
     };
+     // This is a bit of a hack for email client compatibility
+    // `dangerouslySetInnerHTML` will be used to render the text with links and styles
+    // But we still apply base styles to the container div
+    return style;
   };
 
   const getStaticEmojiStyle = (block: StaticEmojiBlock): React.CSSProperties => {
@@ -1755,16 +1879,18 @@ export default function CreateTemplatePage() {
               case 'heading':
                 const headingBlock = block as HeadingBlock;
                 return (
-                  <h1 style={getHeadingStyle(headingBlock)}>
+                  <div style={getHeadingStyle(headingBlock)}>
                     {headingBlock.payload.text}
-                  </h1>
+                  </div>
                 );
               case 'text':
                 const textBlock = block as TextBlock;
                 return (
-                    <p style={getTextStyle(textBlock)}>
-                        {textBlock.payload.text}
-                    </p>
+                    <div 
+                        style={getTextStyle(textBlock)}
+                        dangerouslySetInnerHTML={{ __html: textBlock.payload.text }}
+                    >
+                    </div>
                 );
               case 'emoji-static':
                 return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
@@ -1895,7 +2021,7 @@ export default function CreateTemplatePage() {
     if (backgroundImage) {
         style.backgroundImage = `url(${backgroundImage.url})`;
         style.backgroundSize = backgroundImage.fit === 'auto' ? `${backgroundImage.zoom}%` : backgroundImage.fit;
-        style.backgroundPosition = `${backgroundImage.positionX}% ${backgroundImage.positionY}%`;
+        style.backgroundPosition = `${backgroundImage.positionX}% ${backgroundImage.positionY}%`,
         style.backgroundRepeat = 'no-repeat';
     }
     
@@ -2132,6 +2258,13 @@ export default function CreateTemplatePage() {
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
+      <style jsx global>{`
+        [contenteditable] a {
+          color: hsl(var(--primary));
+          text-decoration: underline;
+          text-decoration-style: dotted;
+        }
+      `}</style>
       <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-4 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -2605,11 +2738,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
