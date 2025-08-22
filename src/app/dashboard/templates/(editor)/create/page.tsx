@@ -112,7 +112,7 @@ const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -121,6 +121,8 @@ const popularEmojis = Array.from(new Set([
     '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸',
     '📊', '💻', '📱', '🎯', '📣', '✍️'
   ]));
+  
+const insertableSymbols = ['©', '®', '™', '€', '£', '¥', '$', '→', '←', '↑', '↓', '↔', '↵', '★', '✔', '✘'];
 
 const googleFonts = [
   "Roboto", "Open Sans", "Lato", "Montserrat", "Oswald", "Source Sans Pro",
@@ -146,6 +148,22 @@ interface BaseBlock {
   id: string;
   type: StaticPrimitiveBlockType | InteractiveBlockType;
   payload: { [key: string]: any };
+}
+
+interface TextBlock extends BaseBlock {
+    type: 'text';
+    payload: {
+        text: string;
+        styles: {
+            color: string;
+            fontFamily: string;
+            fontSize: number;
+            textAlign: TextAlign;
+            fontWeight: 'normal' | 'bold';
+            fontStyle: 'normal' | 'italic';
+            textDecoration: 'none' | 'underline' | 'line-through';
+        }
+    }
 }
 
 interface HeadingBlock extends BaseBlock {
@@ -207,7 +225,7 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | StaticEmojiBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | StaticEmojiBlock | TextBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 
@@ -1052,6 +1070,149 @@ const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }:
     )
 }
 
+const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    const textElementRef = useRef<HTMLDivElement | null>(null);
+    if(selectedElement?.type !== 'primitive') return null;
+    
+    const getElement = () => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'text' ? block as TextBlock : null;
+    }
+    const element = getElement();
+    if(!element) return null;
+
+    const updateStyle = (key: keyof TextBlock['payload']['styles'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
+          if (row.type !== 'columns') return row;
+          const newColumns = row.payload.columns.map(col => {
+            if (col.id === (selectedElement as { columnId: string }).columnId) {
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id === selectedElement.primitiveId && block.type === 'text') {
+                        return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
+                    }
+                    return block;
+                })
+                return {...col, blocks: newBlocks};
+            }
+            return col;
+          });
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    }
+    
+    const { styles } = element.payload;
+
+    const handleTextChange = (blockId: string, newText: string) => {
+        const newCanvasContent = canvasContent.map(row => {
+            if (row.type !== 'columns' || row.id !== selectedElement.rowId) return row;
+            return {
+              ...row,
+              payload: {
+                ...row.payload,
+                columns: row.payload.columns.map(col => {
+                    if(col.id !== selectedElement.columnId) return col;
+                  return {
+                    ...col,
+                    blocks: col.blocks.map(block => {
+                      if (block.id === blockId) {
+                        return { ...block, payload: { ...block.payload, text: newText } };
+                      }
+                      return block;
+                    })
+                  }
+                })
+              }
+            }
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+      };
+      
+    const handleInsertSymbol = (symbol: string) => {
+        if(textElementRef.current) {
+            textElementRef.current.focus();
+            document.execCommand('insertText', false, symbol);
+            handleTextChange(element.id, textElementRef.current.innerHTML);
+        }
+    };
+    
+    return (
+        <div className="space-y-4">
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Type/>Tipografía</h3>
+                <Label>Color del Texto</Label>
+                <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
+            </div>
+
+            <div className="space-y-3">
+                <Label>Fuente</Label>
+                <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
+                    <SelectContent>
+                      {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+            
+            <div className="space-y-3">
+                 <Label>Estilos</Label>
+                 <div className="grid grid-cols-4 gap-2">
+                    <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
+                    <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
+                 </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+            
+            <div className="space-y-4">
+                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
+                 <div className="grid grid-cols-3 gap-2">
+                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
+                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
+                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
+                 </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente</h3>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                      value={[styles.fontSize]}
+                      max={100}
+                      min={12}
+                      step={1} 
+                      onValueChange={(value) => updateStyle('fontSize', value[0])}
+                  />
+                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
+                </div>
+            </div>
+             <Separator className="bg-border/20"/>
+             <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Insertar Símbolo</h3>
+                <div className="grid grid-cols-6 gap-2">
+                    {insertableSymbols.map(symbol => (
+                        <Button key={symbol} variant="outline" size="icon" onClick={() => handleInsertSymbol(symbol)}>
+                            {symbol}
+                        </Button>
+                    ))}
+                </div>
+             </div>
+        </div>
+    )
+}
+
 const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
@@ -1330,6 +1491,23 @@ export default function CreateTemplatePage() {
                 }
             },
         };
+    } else if (blockType === 'text') {
+        newBlock = {
+            id: `text_${Date.now()}`,
+            type: 'text',
+            payload: { 
+                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                styles: {
+                    color: '#000000',
+                    fontFamily: 'Roboto',
+                    fontSize: 16,
+                    textAlign: 'left',
+                    fontWeight: 'normal',
+                    fontStyle: 'normal',
+                    textDecoration: 'none',
+                }
+            },
+        };
     } else if (blockType === 'emoji-static') {
         newBlock = {
             id: `emoji-static_${Date.now()}`,
@@ -1512,6 +1690,21 @@ export default function CreateTemplatePage() {
     }
   }
 
+  const getTextStyle = (block: TextBlock): React.CSSProperties => {
+    const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
+    return {
+        color: color || '#000000',
+        fontFamily: fontFamily || 'Arial, sans-serif',
+        fontSize: `${fontSize || 16}px`,
+        textAlign: textAlign || 'left',
+        fontWeight: fontWeight || 'normal',
+        fontStyle: fontStyle || 'normal',
+        textDecoration: textDecoration || 'none',
+        width: '100%',
+        padding: '8px',
+    };
+  };
+
   const getHeadingStyle = (block: HeadingBlock): React.CSSProperties => {
     const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
     return {
@@ -1566,7 +1759,15 @@ export default function CreateTemplatePage() {
                   </h1>
                 );
               case 'text':
-                return <p className="p-2">{block.payload.text || 'Lorem ipsum dolor sit amet...'}</p>
+                const textBlock = block as TextBlock;
+                return <div 
+                    contentEditable 
+                    suppressContentEditableWarning
+                    style={getTextStyle(textBlock)}
+                    onBlur={(e) => handleHeadingTextChange(block.id, e.currentTarget.innerHTML)}
+                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
+                    dangerouslySetInnerHTML={{ __html: textBlock.payload.text }}
+                />
               case 'emoji-static':
                 return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
               case 'button':
@@ -1898,7 +2099,7 @@ export default function CreateTemplatePage() {
         </div>
         
         {block.type === 'columns' && (
-            <div className="flex w-full relative">
+            <div className="flex w-full relative px-2">
               {block.payload.columns.map((col) => (
                 <React.Fragment key={col.id}>
                     <div 
@@ -2090,6 +2291,9 @@ export default function CreateTemplatePage() {
               )}
                { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'heading' && (
                   <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+              )}
+               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'text' && (
+                  <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'emoji-static' && (
                   <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
@@ -2403,6 +2607,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
