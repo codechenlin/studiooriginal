@@ -892,7 +892,8 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     return (
         <div className="space-y-4">
-            <div className="space-y-3">
+             <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil/>Contenido de Texto</h3>
                 <Label>Añadir Texto</Label>
                 <Input
                     value={element.payload.text}
@@ -921,7 +922,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  <div className="grid grid-cols-4 gap-2">
                     <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
                     <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'normal')}><Underline/></Toggle>
                     <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
                  </div>
             </div>
@@ -2412,6 +2413,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
