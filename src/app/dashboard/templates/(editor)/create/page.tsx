@@ -85,6 +85,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { ColorPickerAdvanced } from '@/components/dashboard/color-picker-advanced';
 import { useToast } from '@/hooks/use-toast';
+import { HexColorPicker } from 'react-colorful';
 
 const mainContentBlocks = [
   { name: "Columns", icon: Columns, id: 'columns' },
@@ -1075,7 +1076,6 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-    const textElementRef = useRef<HTMLDivElement | null>(null);
     if(selectedElement?.type !== 'primitive') return null;
     
     const getElement = () => {
@@ -1111,37 +1111,14 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     
     const { styles } = element.payload;
 
-    const handleTextChange = (blockId: string, newText: string) => {
-        const newCanvasContent = canvasContent.map(row => {
-            if (row.type !== 'columns' || row.id !== selectedElement.rowId) return row;
-            return {
-              ...row,
-              payload: {
-                ...row.payload,
-                columns: row.payload.columns.map(col => {
-                    if(col.id !== selectedElement.columnId) return col;
-                  return {
-                    ...col,
-                    blocks: col.blocks.map(block => {
-                      if (block.id === blockId) {
-                        return { ...block, payload: { ...block.payload, text: newText } };
-                      }
-                      return block;
-                    })
-                  }
-                })
-              }
-            }
-        });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
-      };
-      
     const handleInsertSymbol = (symbol: string) => {
-        if(textElementRef.current) {
-            textElementRef.current.focus();
-            document.execCommand('insertText', false, symbol);
-            handleTextChange(element.id, textElementRef.current.innerHTML);
-        }
+      const activeElement = document.activeElement;
+      if (activeElement && activeElement.getAttribute('contenteditable') === 'true') {
+        document.execCommand('insertText', false, symbol);
+        // We need to manually trigger the onInput event for the change to be saved
+        const event = new Event('input', { bubbles: true });
+        activeElement.dispatchEvent(event);
+      }
     };
     
     return (
@@ -1389,6 +1366,7 @@ export default function CreateTemplatePage() {
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
 
   const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const contentEditableRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleSave = () => {
     setLastSaved(new Date());
@@ -1588,26 +1566,27 @@ export default function CreateTemplatePage() {
     setClickPosition(null);
   }
   
-  const handleHeadingTextChange = (blockId: string, newText: string) => {
-    const newCanvasContent = canvasContent.map(row => {
-        if (row.type !== 'columns') return row;
-        return {
-          ...row,
-          payload: {
-            ...row.payload,
-            columns: row.payload.columns.map(col => ({
-              ...col,
-              blocks: col.blocks.map(block => {
-                if (block.id === blockId) {
-                  return { ...block, payload: { ...block.payload, text: newText } };
-                }
-                return block;
-              })
-            }))
-          }
-        }
-    });
-    setCanvasContent(newCanvasContent as CanvasBlock[]);
+  const handleTextChange = (blockId: string, newText: string) => {
+      setCanvasContent(prevCanvas => 
+          prevCanvas.map(row => {
+              if (row.type !== 'columns') return row;
+              
+              const newColumns = row.payload.columns.map(col => {
+                  const newBlocks = col.blocks.map(block => {
+                      if (block.id === blockId && block.type === 'text') {
+                          // Only update if the content has actually changed.
+                          if(block.payload.text !== newText) {
+                            return { ...block, payload: { ...block.payload, text: newText } };
+                          }
+                      }
+                      return block;
+                  });
+                  return {...col, blocks: newBlocks};
+              });
+
+              return { ...row, payload: { ...row.payload, columns: newColumns }};
+          }) as CanvasBlock[]
+      );
   };
   
   const promptDeleteItem = (rowId: string, colId?: string, primId?: string) => {
@@ -1734,6 +1713,7 @@ export default function CreateTemplatePage() {
 
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
+     const editableRef = useRef<HTMLDivElement>(null);
     return (
        <div 
         key={block.id}
@@ -1747,27 +1727,27 @@ export default function CreateTemplatePage() {
           (() => {
              switch(block.type) {
               case 'heading':
-                return (
-                  <h1 
+              case 'text':
+                const textBlock = block as TextBlock | HeadingBlock;
+                const isHeading = block.type === 'heading';
+                const Comp = isHeading ? 'h1' : 'div';
+                const style = isHeading ? getHeadingStyle(textBlock as HeadingBlock) : getTextStyle(textBlock as TextBlock);
+                 return (
+                  <Comp 
+                    ref={editableRef}
                     contentEditable 
                     suppressContentEditableWarning 
-                    style={getHeadingStyle(block as HeadingBlock)}
-                    onBlur={(e) => handleHeadingTextChange(block.id, e.currentTarget.textContent || '')}
-                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
-                  >
-                    {block.payload.text}
-                  </h1>
-                );
-              case 'text':
-                const textBlock = block as TextBlock;
-                return <div 
-                    contentEditable 
-                    suppressContentEditableWarning
-                    style={getTextStyle(textBlock)}
-                    onBlur={(e) => handleHeadingTextChange(block.id, e.currentTarget.innerHTML)}
-                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
+                    style={style}
+                    onInput={(e) => {
+                      // Only update state if the content actually changed to avoid cursor jumps
+                      if (e.currentTarget.innerHTML !== textBlock.payload.text) {
+                        handleTextChange(block.id, e.currentTarget.innerHTML);
+                      }
+                    }}
                     dangerouslySetInnerHTML={{ __html: textBlock.payload.text }}
-                />
+                    className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
+                  />
+                );
               case 'emoji-static':
                 return <div style={{textAlign: (block as StaticEmojiBlock).payload.styles.textAlign}}><p style={getStaticEmojiStyle(block as StaticEmojiBlock)}>{(block as StaticEmojiBlock).payload.emoji}</p></div>
               case 'button':
@@ -2099,7 +2079,7 @@ export default function CreateTemplatePage() {
         </div>
         
         {block.type === 'columns' && (
-            <div className="flex w-full relative px-2">
+            <div className="flex w-full relative">
               {block.payload.columns.map((col) => (
                 <React.Fragment key={col.id}>
                     <div 
@@ -2607,6 +2587,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
