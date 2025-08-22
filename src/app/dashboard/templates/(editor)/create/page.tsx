@@ -940,7 +940,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  <div className="grid grid-cols-4 gap-2">
                     <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
                     <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'normal')}><Underline/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
                     <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
                  </div>
             </div>
@@ -1069,7 +1069,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  <div className="grid grid-cols-4 gap-2">
                     <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
                     <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'normal')}><Underline/></Toggle>
+                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
                     <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
                  </div>
             </div>
@@ -1704,6 +1704,7 @@ export default function CreateTemplatePage() {
         textDecoration: textDecoration || 'none',
         width: '100%',
         padding: '8px',
+        wordBreak: 'break-word',
     };
   };
 
@@ -2289,7 +2290,7 @@ export default function CreateTemplatePage() {
                { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'heading' && (
                   <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
-              { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'text' && (
+               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'text' && (
                   <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
               { selectedElement?.type === 'primitive' && getSelectedBlockType() === 'emoji-static' && (
@@ -2604,6 +2605,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
