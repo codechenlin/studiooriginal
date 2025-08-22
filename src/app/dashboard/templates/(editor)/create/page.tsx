@@ -127,8 +127,8 @@ const popularEmojis = Array.from(new Set([
   ]));
   
 const insertableSymbols = [
-  '©', '®', '™', '€', '£', '¥', '$', '→', '←', '↑', '↓', '↔', '↵', '★', 
-  '✔', '✘', '∞', '≈', '≠', '≤', '≥', '…', '“', '”', '‘', '’', '–', '—', '°', '·'
+  '©', '®', '™', '€', '£', '¥', '$', '→', '←', '↑', '↓', '↔', '↵', '★', '☆',
+  '✔', '✘', '∞', '≈', '≠', '≤', '≥', '…', '“', '”', '‘', '’', '–', '—', '°'
 ];
 
 const googleFonts = [
@@ -1039,35 +1039,6 @@ const TextoEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                   <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
                 </div>
             </div>
-
-            <Separator className="bg-border/20"/>
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-foreground/80">Insertar Símbolo</h3>
-               <ScrollArea className="h-24 w-full rounded-md border p-2">
-                  <div className="grid grid-cols-6 gap-2">
-                      {insertableSymbols.map(symbol => (
-                          <TooltipProvider key={symbol}>
-                          <Tooltip>
-                              <TooltipTrigger asChild>
-                                  <Button 
-                                      variant="outline" 
-                                      size="icon" 
-                                      className="text-lg"
-                                      onClick={() => handleCopySymbol(symbol)}
-                                  >
-                                      {symbol}
-                                  </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                  <p>Copiar "{symbol}"</p>
-                              </TooltipContent>
-                          </Tooltip>
-                          </TooltipProvider>
-                      ))}
-                  </div>
-               </ScrollArea>
-            </div>
         </div>
     )
 }
@@ -1366,9 +1337,10 @@ const EditableBlock = React.memo(({ as: Comp, content, onInput, ...props }: {
             onInput={onInput}
             contentEditable
             suppressContentEditableWarning
-            dangerouslySetInnerHTML={{ __html: content }}
             {...props}
-        />
+        >
+            {/* The content is now managed by the useEffect hook to prevent re-render issues */}
+        </Comp>
     );
 });
 EditableBlock.displayName = "EditableBlock";
@@ -1446,7 +1418,7 @@ export default function CreateTemplatePage() {
     setIsSpecialFunctionsModalOpen(true);
   };
   
-  const applyStyleToSelection = (style: 'color' | 'backgroundColor' | 'link', value: any) => {
+  const applyStyleToSelection = (style: 'color' | 'backgroundColor' | 'link' | 'bold' | 'italic' | 'underline' | 'strikeThrough', value: any) => {
     if (savedSelection) {
         const selection = window.getSelection();
         if (selection) {
@@ -1460,28 +1432,50 @@ export default function CreateTemplatePage() {
             document.execCommand('hiliteColor', false, value);
         } else if (style === 'link') {
             const { url, newWindow } = value;
+            
+            // For robust link creation, we wrap the content in an <a> tag
             const linkElement = document.createElement('a');
             linkElement.href = url;
-            linkElement.style.color = 'blue';
+            linkElement.style.color = '#0000EE'; // Standard link blue
             linkElement.style.textDecoration = 'underline';
             if (newWindow) {
                 linkElement.target = '_blank';
+                linkElement.rel = 'noopener noreferrer';
             }
+            
             try {
+                // This is the cleanest way to wrap the selected content
                 savedSelection.surroundContents(linkElement);
             } catch (e) {
-                console.error("Could not surround contents", e);
-                // Fallback for complex selections
+                // Fallback for complex selections that can't be surrounded
                 document.execCommand('createLink', false, url);
-                const links = document.querySelectorAll('a[href="' + url + '"]');
-                links.forEach(link => {
-                    if(newWindow) (link as HTMLAnchorElement).target = '_blank';
-                });
+                
+                const editorDiv = savedSelection.startContainer.parentElement?.closest('[contenteditable="true"]');
+                if (editorDiv) {
+                    const links = editorDiv.querySelectorAll('a[href="' + url + '"]');
+                    links.forEach(link => {
+                        const anchor = link as HTMLAnchorElement;
+                        if (!anchor.target) { // only apply if not already set by surroundContents
+                             if(newWindow) {
+                                anchor.target = '_blank';
+                                anchor.rel = 'noopener noreferrer';
+                             }
+                             anchor.style.color = '#0000EE';
+                             anchor.style.textDecoration = 'underline';
+                        }
+                    });
+                }
             }
+
+        } else if (['bold', 'italic', 'underline', 'strikeThrough'].includes(style)) {
+            document.execCommand(style, false);
         }
 
         // After applying style, trigger an input event to update the state
-        savedSelection.startContainer.parentElement?.dispatchEvent(new Event('input', { bubbles: true }));
+        const editorElement = savedSelection.startContainer.parentElement?.closest('[contenteditable="true"]');
+        if (editorElement) {
+             editorElement.dispatchEvent(new Event('input', { bubbles: true }));
+        }
     }
   };
 
@@ -1616,7 +1610,7 @@ export default function CreateTemplatePage() {
             id: `text_${Date.now()}`,
             type: 'text',
             payload: { 
-                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                text: 'Este es un bloque de texto. Haz clic para editarlo.',
                 styles: {
                     color: '#000000',
                     fontFamily: 'Roboto',
@@ -2665,6 +2659,15 @@ export default function CreateTemplatePage() {
             </DialogHeader>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                 <div className="space-y-4">
+                     <div className="space-y-2">
+                        <Label>Estilos Rápidos</Label>
+                        <div className="grid grid-cols-4 gap-2">
+                            <Button variant="outline" onClick={() => applyStyleToSelection('bold', null)}><Bold/></Button>
+                            <Button variant="outline" onClick={() => applyStyleToSelection('italic', null)}><Italic/></Button>
+                            <Button variant="outline" onClick={() => applyStyleToSelection('underline', null)}><Underline/></Button>
+                            <Button variant="outline" onClick={() => applyStyleToSelection('strikeThrough', null)}><Strikethrough/></Button>
+                        </div>
+                    </div>
                     <div className="space-y-2">
                         <Label className="flex items-center gap-2"><Palette className="size-4 text-primary"/>Color del Texto</Label>
                         <ColorPickerAdvanced 
@@ -2807,7 +2810,7 @@ export default function CreateTemplatePage() {
                 {imageModalState.url ? (
                     <div className="w-full h-full" style={{
                         backgroundImage: `url(${imageModalState.url})`,
-                        backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
+                        backgroundSize: imageModalState.fit === 'auto' ? `${imageModal-state.zoom}%` : imageModalState.fit,
                         backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
                         backgroundRepeat: 'no-repeat',
                     }} />
@@ -2832,5 +2835,6 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
