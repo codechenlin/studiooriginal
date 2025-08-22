@@ -1366,7 +1366,7 @@ export default function CreateTemplatePage() {
   const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
 
   const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const contentEditableRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const contentEditableRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const handleSave = () => {
     setLastSaved(new Date());
@@ -1566,28 +1566,30 @@ export default function CreateTemplatePage() {
     setClickPosition(null);
   }
   
-  const handleTextChange = (blockId: string, newText: string) => {
-      setCanvasContent(prevCanvas => 
-          prevCanvas.map(row => {
-              if (row.type !== 'columns') return row;
-              
-              const newColumns = row.payload.columns.map(col => {
-                  const newBlocks = col.blocks.map(block => {
-                      if (block.id === blockId && block.type === 'text') {
-                          // Only update if the content has actually changed.
-                          if(block.payload.text !== newText) {
-                            return { ...block, payload: { ...block.payload, text: newText } };
-                          }
-                      }
-                      return block;
-                  });
-                  return {...col, blocks: newBlocks};
-              });
-
-              return { ...row, payload: { ...row.payload, columns: newColumns }};
-          }) as CanvasBlock[]
-      );
-  };
+  const handleTextChange = (blockId: string, newHtml: string) => {
+    const currentBlockRef = contentEditableRefs.current[blockId];
+    if (currentBlockRef && newHtml === currentBlockRef.innerHTML) {
+      return; // No change, no need to update state
+    }
+  
+    setCanvasContent(prevCanvas => {
+        const newCanvas = prevCanvas.map(row => {
+            if (row.type !== 'columns') return row;
+            
+            const newColumns = row.payload.columns.map(col => {
+                const newBlocks = col.blocks.map(block => {
+                    if (block.id === blockId && (block.type === 'text' || block.type === 'heading')) {
+                      return { ...block, payload: { ...block.payload, text: newHtml } };
+                    }
+                    return block;
+                });
+                return { ...col, blocks: newBlocks };
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+        });
+        return newCanvas as CanvasBlock[];
+    });
+};
   
   const promptDeleteItem = (rowId: string, colId?: string, primId?: string) => {
     setItemToDelete({ rowId, colId, primId });
@@ -1713,7 +1715,7 @@ export default function CreateTemplatePage() {
 
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
-     const editableRef = useRef<HTMLDivElement>(null);
+
     return (
        <div 
         key={block.id}
@@ -1734,16 +1736,11 @@ export default function CreateTemplatePage() {
                 const style = isHeading ? getHeadingStyle(textBlock as HeadingBlock) : getTextStyle(textBlock as TextBlock);
                  return (
                   <Comp 
-                    ref={editableRef}
+                    ref={(el) => { contentEditableRefs.current[block.id] = el; }}
                     contentEditable 
                     suppressContentEditableWarning 
                     style={style}
-                    onInput={(e) => {
-                      // Only update state if the content actually changed to avoid cursor jumps
-                      if (e.currentTarget.innerHTML !== textBlock.payload.text) {
-                        handleTextChange(block.id, e.currentTarget.innerHTML);
-                      }
-                    }}
+                    onInput={(e) => handleTextChange(block.id, e.currentTarget.innerHTML)}
                     dangerouslySetInnerHTML={{ __html: textBlock.payload.text }}
                     className="focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
                   />
@@ -2587,6 +2584,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
