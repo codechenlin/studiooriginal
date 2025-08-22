@@ -1366,10 +1366,9 @@ const EditableBlock = React.memo(({ as: Comp, content, onInput, ...props }: {
             onInput={onInput}
             contentEditable
             suppressContentEditableWarning
+            dangerouslySetInnerHTML={{ __html: content }}
             {...props}
-        >
-          {/* We render the content as a child to give React control over it, preventing issues with dangerouslySetInnerHTML */}
-        </Comp>
+        />
     );
 });
 EditableBlock.displayName = "EditableBlock";
@@ -1856,6 +1855,7 @@ export default function CreateTemplatePage() {
 
     return (
        <div 
+        key={block.id}
         className={cn(
             "group/primitive relative w-full",
             isSelected && "ring-2 ring-accent ring-offset-2 ring-offset-card rounded-md"
@@ -2832,4 +2832,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
