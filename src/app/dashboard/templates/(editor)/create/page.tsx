@@ -179,7 +179,7 @@ interface HeadingBlock extends BaseBlock {
 interface TextBlock extends BaseBlock {
     type: 'text';
     payload: {
-        text: string;
+        html: string;
         styles: {
             color: string;
             fontFamily: string;
@@ -912,7 +912,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     return (
         <div className="space-y-4">
-             <div className="space-y-3">
+            <div className="space-y-3">
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido de Texto</h3>
                 <Label>Añadir Texto</Label>
                 <Input
@@ -997,16 +997,28 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     const [localTextColor, setLocalTextColor] = useState("#0000EE");
     const [localHighlightColor, setLocalHighlightColor] = useState("#FFFF00");
-    const [isTextColorPickerOpen, setIsTextColorPickerOpen] = useState(false);
-    const [isHighlightColorPickerOpen, setIsHighlightColorPickerOpen] = useState(false);
-
     const [linkUrl, setLinkUrl] = useState("");
     const [linkNewWindow, setLinkNewWindow] = useState(true);
     const contentEditableRef = useRef<HTMLDivElement>(null);
+    const selectionRef = useRef<Range | null>(null);
+
+    const saveSelection = () => {
+      if (window.getSelection && window.getSelection()!.rangeCount > 0) {
+        selectionRef.current = window.getSelection()!.getRangeAt(0);
+      }
+    };
+    
+    const restoreSelection = () => {
+      if (selectionRef.current && window.getSelection) {
+        const selection = window.getSelection();
+        selection!.removeAllRanges();
+        selection!.addRange(selectionRef.current);
+      }
+    };
     
     if(!element) return null;
 
-    const handleTextChange = (newText: string) => {
+    const handleTextChange = (newHtml: string) => {
         const newCanvasContent = canvasContent.map(row => {
           if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
           if (row.type !== 'columns') return row;
@@ -1014,7 +1026,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             if (col.id === (selectedElement as { columnId: string }).columnId) {
                 const newBlocks = col.blocks.map(block => {
                     if (block.id === selectedElement.primitiveId && block.type === 'text') {
-                        return { ...block, payload: { ...block.payload, text: newText }};
+                        return { ...block, payload: { ...block.payload, html: newHtml }};
                     }
                     return block;
                 })
@@ -1049,41 +1061,42 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     }
 
     const handleExecCommand = (command: string, value?: string) => {
-        document.execCommand(command, false, value);
-        // We don't update the state here immediately to prevent re-renders
-        // The final state will be saved when the popover closes or contenteditable blurs.
+        restoreSelection();
+        if(contentEditableRef.current) {
+          contentEditableRef.current.focus();
+          document.execCommand(command, false, value);
+          handleTextChange(contentEditableRef.current.innerHTML);
+          saveSelection();
+        }
     };
     
     const handleLink = () => {
-        const selection = window.getSelection();
-        if(!selection || selection.rangeCount === 0) return;
-        
-        const range = selection.getRangeAt(0);
-        const selectedText = range.toString();
+        restoreSelection();
+        if(!selectionRef.current || !linkUrl) return;
 
-        if (selectedText.length > 0 && linkUrl) {
-            const link = document.createElement('a');
-            link.href = linkUrl;
-            link.textContent = selectedText;
-            link.style.color = 'hsl(var(--primary))';
-            link.style.textDecoration = 'underline dotted';
+        const range = selectionRef.current;
+        if (range.toString().length === 0) return;
 
-            if(linkNewWindow) {
-                link.target = "_blank";
-            }
-            range.deleteContents();
-            range.insertNode(link);
-            
-             if(contentEditableRef.current) {
-                handleTextChange(contentEditableRef.current.innerHTML);
-             }
-             toast({
-                title: "¡Enlace forjado!",
-                description: "Tu texto ahora tiene un nuevo destino.",
-                className: 'text-white border-none',
-                style: { backgroundColor: '#00CB07' }
-             });
+        const link = document.createElement('a');
+        link.href = linkUrl;
+        link.style.color = 'hsl(var(--primary))';
+        link.style.textDecoration = 'underline';
+        link.style.textDecorationStyle = 'dotted';
+        if(linkNewWindow) {
+            link.target = "_blank";
         }
+        
+        range.surroundContents(link);
+
+         if(contentEditableRef.current) {
+            handleTextChange(contentEditableRef.current.innerHTML);
+         }
+         toast({
+            title: "¡Enlace forjado!",
+            description: "Tu texto ahora tiene un nuevo destino.",
+            className: 'text-white border-none',
+            style: { backgroundColor: '#00CB07' }
+         });
     };
     
     const copySymbol = (symbol: string) => {
@@ -1096,25 +1109,20 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         });
     };
 
-    const handleColorChangeComplete = () => {
-        if(contentEditableRef.current) {
-            handleTextChange(contentEditableRef.current.innerHTML);
-        }
-    };
-
     const { styles } = element.payload;
 
     return (
         <div className="space-y-4">
              <div className="space-y-3">
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil/>Contenido del Párrafo</h3>
-                <Label>Añadir Texto</Label>
                 <div
                     ref={contentEditableRef}
                     contentEditable
                     suppressContentEditableWarning
                     onInput={(e) => handleTextChange(e.currentTarget.innerHTML)}
-                    dangerouslySetInnerHTML={{ __html: element.payload.text }}
+                    onMouseUp={saveSelection}
+                    onKeyUp={saveSelection}
+                    dangerouslySetInnerHTML={{ __html: element.payload.html }}
                     className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
                     style={{
                         color: styles.color,
@@ -1135,10 +1143,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 
                 <div className="space-y-2">
                     <Label>Color de texto seleccionado</Label>
-                    <Popover open={isTextColorPickerOpen} onOpenChange={(isOpen) => {
-                        setIsTextColorPickerOpen(isOpen);
-                        if (!isOpen) handleColorChangeComplete();
-                    }}>
+                    <Popover onOpenChange={(isOpen) => { if (isOpen) saveSelection(); }}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="w-full justify-start text-left font-normal">
                                 <div className="flex items-center gap-2">
@@ -1159,12 +1164,9 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 </div>
                 <div className="space-y-2">
                     <Label>Resaltado de texto seleccionado</Label>
-                    <Popover open={isHighlightColorPickerOpen} onOpenChange={(isOpen) => {
-                        setIsHighlightColorPickerOpen(isOpen);
-                        if (!isOpen) handleColorChangeComplete();
-                    }}>
+                    <Popover onOpenChange={(isOpen) => { if (isOpen) saveSelection(); }}>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                             <Button variant="outline" className="w-full justify-start text-left font-normal">
                                 <div className="flex items-center gap-2">
                                     <div className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: localHighlightColor }} />
                                     <div className="flex-1 truncate">{localHighlightColor}</div>
@@ -1694,7 +1696,7 @@ export default function CreateTemplatePage() {
             id: `text_${Date.now()}`,
             type: 'text',
             payload: { 
-                text: 'Este es un párrafo de texto. Puedes editarlo en el panel de la derecha para añadir tu propio contenido y darle estilo como quieras.',
+                html: 'Este es un párrafo de texto. Puedes editarlo en el panel de la derecha para añadir tu propio contenido y darle estilo como quieras.',
                 styles: {
                     color: '#333333',
                     fontFamily: 'Roboto',
@@ -1897,6 +1899,8 @@ export default function CreateTemplatePage() {
         width: '100%',
         padding: '8px',
     };
+    // This is a special property for contentEditable divs
+    (style as any)['-webkit-user-modify'] = 'read-write-plaintext-only';
     return style;
   };
 
@@ -1939,7 +1943,7 @@ export default function CreateTemplatePage() {
                 return (
                     <div 
                         style={getTextStyle(textBlock)}
-                        dangerouslySetInnerHTML={{ __html: textBlock.payload.text }}
+                        dangerouslySetInnerHTML={{ __html: textBlock.payload.html }}
                     >
                     </div>
                 );
