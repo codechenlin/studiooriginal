@@ -998,8 +998,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const { toast } = useToast();
     const contentEditableRef = useRef<HTMLDivElement>(null);
     const selectionRef = useRef<Range | null>(null);
+    const toolbarRef = useRef<HTMLDivElement>(null);
 
-    const [isToolbarActive, setIsToolbarActive] = useState(false);
     const [localTextColor, setLocalTextColor] = useState("#000000");
     const [localHighlightColor, setLocalHighlightColor] = useState("#FFFF00");
     
@@ -1045,14 +1045,19 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             updateBlockHtml(contentEditableRef.current.innerHTML);
         }
     };
-
+    
     const saveSelection = () => {
+      try {
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
             selectionRef.current = selection.getRangeAt(0).cloneRange();
         } else {
             selectionRef.current = null;
         }
+      } catch (error) {
+        console.warn("Could not save selection.", error);
+        selectionRef.current = null;
+      }
     };
 
     const restoreSelection = () => {
@@ -1096,16 +1101,24 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     }
     
     const handleMouseUp = () => {
-        setTimeout(() => {
-            const selection = window.getSelection();
+        saveSelection();
+        const selection = window.getSelection();
+        if (toolbarRef.current) {
+            const buttons = toolbarRef.current.querySelectorAll('button');
             if (selection && !selection.isCollapsed) {
-                setIsToolbarActive(true);
-                saveSelection();
+                buttons.forEach(button => button.removeAttribute('disabled'));
             } else {
-                setIsToolbarActive(false);
+                buttons.forEach(button => button.setAttribute('disabled', 'true'));
             }
-        }, 10);
+        }
     };
+
+    useEffect(() => {
+        if (toolbarRef.current) {
+            const buttons = toolbarRef.current.querySelectorAll('button');
+            buttons.forEach(button => button.setAttribute('disabled', 'true'));
+        }
+    }, []);
 
     const copySymbol = (symbol: string) => {
         navigator.clipboard.writeText(symbol);
@@ -1152,7 +1165,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     suppressContentEditableWarning
                     onBlur={handleTextChange}
                     onMouseUp={handleMouseUp}
-                    onKeyUp={handleMouseUp} // Also check on key up for keyboard selections
+                    onKeyUp={handleMouseUp}
                     dangerouslySetInnerHTML={{ __html: element.payload.html }}
                     className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
                     style={{
@@ -1169,11 +1182,11 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
               <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Sparkles/>Funciones Especiales</h3>
               <p className="text-xs text-muted-foreground -mt-2">Selecciona texto en el editor de arriba para activar estas opciones.</p>
 
-              <div className="p-3 border rounded-md space-y-4 bg-background/50">
+              <div ref={toolbarRef} className="p-3 border rounded-md space-y-4 bg-background/50">
                   <div className="flex items-center gap-2">
                        <Popover onOpenChange={(open) => { if(open) saveSelection(); }}>
                             <PopoverTrigger asChild>
-                               <Button size="icon" variant="outline" disabled={!isToolbarActive}><PaletteIcon/></Button>
+                               <Button size="icon" variant="outline"><PaletteIcon/></Button>
                             </PopoverTrigger>
                             <PopoverContent onMouseDown={(e) => e.preventDefault()} className="w-auto">
                                 <Label>Color de Texto</Label>
@@ -1183,7 +1196,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                        </Popover>
                         <Popover onOpenChange={(open) => { if(open) saveSelection(); }}>
                             <PopoverTrigger asChild>
-                                <Button size="icon" variant="outline" disabled={!isToolbarActive}><Highlighter/></Button>
+                                <Button size="icon" variant="outline"><Highlighter/></Button>
                             </PopoverTrigger>
                              <PopoverContent onMouseDown={(e) => e.preventDefault()} className="w-auto">
                                 <Label>Color de Resaltado</Label>
@@ -1193,7 +1206,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         </Popover>
                         <Popover onOpenChange={(open) => { if(open) saveSelection(); }}>
                              <PopoverTrigger asChild>
-                                <Button size="icon" variant="outline" disabled={!isToolbarActive}><LinkIcon/></Button>
+                                <Button size="icon" variant="outline"><LinkIcon/></Button>
                             </PopoverTrigger>
                             <PopoverContent className="space-y-2" onMouseDown={(e) => e.preventDefault()}>
                                 <Label>URL del Hipervínculo</Label>
@@ -2298,6 +2311,12 @@ export default function CreateTemplatePage() {
           text-decoration: underline;
           text-decoration-style: dotted;
         }
+        
+        [disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
       `}</style>
       <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-4 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
@@ -2772,3 +2791,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+    
