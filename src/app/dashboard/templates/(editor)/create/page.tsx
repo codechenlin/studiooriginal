@@ -80,7 +80,8 @@ import {
   View,
   Strikethrough,
   Highlighter,
-  Link2Off
+  Link2Off,
+  Palette as PaletteIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -118,7 +119,7 @@ const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -185,9 +186,6 @@ interface TextBlock extends BaseBlock {
             fontFamily: string;
             fontSize: number;
             textAlign: TextAlign;
-            fontWeight: 'normal' | 'bold';
-            fontStyle: 'normal' | 'italic';
-            textDecoration: 'none' | 'underline' | 'line-through';
         }
     }
 }
@@ -913,7 +911,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     return (
         <div className="space-y-4">
             <div className="space-y-3">
-                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido de Texto</h3>
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil />Contenido de Texto</h3>
                 <Label>Añadir Texto</Label>
                 <Input
                     value={element.payload.text}
@@ -927,329 +925,6 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
             </div>
 
-            <div className="space-y-3">
-                <Label>Fuente</Label>
-                <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
-                    <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
-                    <SelectContent>
-                      {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-            </div>
-            
-            <div className="space-y-3">
-                 <Label>Estilos</Label>
-                 <div className="grid grid-cols-4 gap-2">
-                    <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
-                    <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
-                    <Toggle 
-                      pressed={styles.textDecoration === 'underline'} 
-                      onPressedChange={(p) => {
-                          const newValue = p ? 'underline' : 'none';
-                          if (styles.textDecoration === 'line-through' && p) {
-                            // Can't have both, so we prioritize underline
-                          }
-                          updateStyle('textDecoration', newValue);
-                      }}
-                    >
-                      <Underline/>
-                    </Toggle>
-                    <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
-                 </div>
-            </div>
-
-            <Separator className="bg-border/20"/>
-            
-            <div className="space-y-4">
-                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
-                 <div className="grid grid-cols-3 gap-2">
-                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
-                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
-                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
-                 </div>
-            </div>
-
-            <Separator className="bg-border/20"/>
-
-            <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente</h3>
-                <div className="flex items-center gap-2">
-                  <Slider 
-                      value={[styles.fontSize]}
-                      max={100}
-                      min={12}
-                      step={1} 
-                      onValueChange={(value) => updateStyle('fontSize', value[0])}
-                  />
-                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
-                </div>
-            </div>
-
-        </div>
-    )
-}
-
-const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
-  selectedElement: SelectedElement;
-  canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
-}) => {
-    const { toast } = useToast();
-    if(selectedElement?.type !== 'primitive') return null;
-    
-    const getElement = () => {
-        const row = canvasContent.find(r => r.id === selectedElement.rowId);
-        if (row?.type !== 'columns') return null;
-        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
-        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type === 'text' ? block as TextBlock : null;
-    }
-    const element = getElement();
-
-    const [localTextColor, setLocalTextColor] = useState("#000000");
-    const [localHighlightColor, setLocalHighlightColor] = useState("#FFFF00");
-    const [linkUrl, setLinkUrl] = useState("");
-    const [linkNewWindow, setLinkNewWindow] = useState(true);
-    const contentEditableRef = useRef<HTMLDivElement>(null);
-    const selectionRef = useRef<Range | null>(null);
-
-    const saveSelection = () => {
-      if (window.getSelection && window.getSelection()!.rangeCount > 0) {
-        const selection = window.getSelection();
-        if (contentEditableRef.current?.contains(selection!.anchorNode)) {
-            selectionRef.current = selection!.getRangeAt(0);
-        }
-      }
-    };
-    
-    const restoreSelection = () => {
-      if (selectionRef.current && window.getSelection) {
-        const selection = window.getSelection();
-        selection!.removeAllRanges();
-        selection!.addRange(selectionRef.current);
-      }
-    };
-    
-    if(!element) return null;
-
-    const handleTextChange = (newHtml: string) => {
-        const newCanvasContent = canvasContent.map(row => {
-          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
-          if (row.type !== 'columns') return row;
-          const newColumns = row.payload.columns.map(col => {
-            if (col.id === (selectedElement as { columnId: string }).columnId) {
-                const newBlocks = col.blocks.map(block => {
-                    if (block.id === selectedElement.primitiveId && block.type === 'text') {
-                        return { ...block, payload: { ...block.payload, html: newHtml }};
-                    }
-                    return block;
-                })
-                return {...col, blocks: newBlocks};
-            }
-            return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
-        });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
-    };
-    
-    const updateStyle = (key: keyof TextBlock['payload']['styles'], value: any) => {
-        const newCanvasContent = canvasContent.map(row => {
-          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
-          if (row.type !== 'columns') return row;
-          const newColumns = row.payload.columns.map(col => {
-            if (col.id === (selectedElement as { columnId: string }).columnId) {
-                const newBlocks = col.blocks.map(block => {
-                    if (block.id === selectedElement.primitiveId && block.type === 'text') {
-                        return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
-                    }
-                    return block;
-                })
-                return {...col, blocks: newBlocks};
-            }
-            return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
-        });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
-    }
-
-    const handleExecCommand = (command: string, value?: string) => {
-        restoreSelection();
-        if(contentEditableRef.current) {
-          contentEditableRef.current.focus();
-          document.execCommand(command, false, value);
-          handleTextChange(contentEditableRef.current.innerHTML);
-          saveSelection();
-        }
-    };
-    
-    const handleLink = () => {
-        restoreSelection();
-        if(!selectionRef.current || !linkUrl) return;
-
-        const range = selectionRef.current;
-        if (range.toString().length === 0) return;
-
-        const link = document.createElement('a');
-        link.href = linkUrl;
-        link.style.color = 'hsl(var(--primary))';
-        link.style.textDecoration = 'underline';
-        link.style.textDecorationStyle = 'dotted';
-        if(linkNewWindow) {
-            link.target = "_blank";
-        }
-        
-        range.surroundContents(link);
-
-         if(contentEditableRef.current) {
-            handleTextChange(contentEditableRef.current.innerHTML);
-         }
-         toast({
-            title: "¡Enlace forjado!",
-            description: "Tu texto ahora tiene un nuevo destino.",
-            className: 'text-white border-none',
-            style: { backgroundColor: '#00CB07' }
-         });
-    };
-    
-    const copySymbol = (symbol: string) => {
-        navigator.clipboard.writeText(symbol);
-        toast({
-            title: "¡Símbolo copiado!",
-            description: "Listo para pegar.",
-            className: 'text-white border-none',
-            style: { backgroundColor: '#00CB07' }
-        });
-    };
-
-    const { styles } = element.payload;
-
-    return (
-        <div className="space-y-4">
-             <div className="space-y-3">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil/>Contenido del Párrafo</h3>
-                <div
-                    ref={contentEditableRef}
-                    contentEditable
-                    suppressContentEditableWarning
-                    onInput={(e) => handleTextChange(e.currentTarget.innerHTML)}
-                    onBlur={() => { selectionRef.current = null; }}
-                    dangerouslySetInnerHTML={{ __html: element.payload.html }}
-                    className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
-                    style={{
-                        color: styles.color,
-                        fontFamily: styles.fontFamily,
-                        fontSize: `${styles.fontSize}px`,
-                        textAlign: styles.textAlign,
-                        fontWeight: styles.fontWeight,
-                        fontStyle: styles.fontStyle,
-                        textDecoration: styles.textDecoration,
-                        wordBreak: 'break-word',
-                    }}
-                />
-            </div>
-            
-            <Separator className="bg-border/20"/>
-
-             <div className="space-y-3">
-                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Palette/>Funciones Especiales</h3>
-                
-                <div className="space-y-2">
-                    <Label>Color de texto seleccionado</Label>
-                    <Popover onOpenChange={(isOpen) => { if (isOpen) saveSelection(); }}>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: localTextColor }} />
-                                    <div className="flex-1 truncate">{localTextColor}</div>
-                                </div>
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent 
-                           onMouseDown={(e) => e.preventDefault()}
-                           className="w-auto p-0 border-none"
-                        >
-                            <div className="p-4 bg-card rounded-md shadow-lg">
-                                <HexColorPicker color={localTextColor} onChange={setLocalTextColor} />
-                                <Button className="w-full mt-4" onClick={() => handleExecCommand('foreColor', localTextColor)}>
-                                    Aceptar
-                                </Button>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-                <div className="space-y-2">
-                    <Label>Resaltado de texto seleccionado</Label>
-                    <Popover onOpenChange={(isOpen) => { if (isOpen) saveSelection(); }}>
-                        <PopoverTrigger asChild>
-                             <Button variant="outline" className="w-full justify-start text-left font-normal">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: localHighlightColor }} />
-                                    <div className="flex-1 truncate">{localHighlightColor}</div>
-                                </div>
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent 
-                           onMouseDown={(e) => e.preventDefault()}
-                           className="w-auto p-0 border-none"
-                        >
-                            <div className="p-4 bg-card rounded-md shadow-lg">
-                                <HexColorPicker color={localHighlightColor} onChange={setLocalHighlightColor} />
-                                 <Button className="w-full mt-4" onClick={() => handleExecCommand('hiliteColor', localHighlightColor)}>
-                                    Aceptar
-                                </Button>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-
-                <div className="space-y-2">
-                    <Label>Hipervínculo</Label>
-                     <div className="flex gap-2">
-                        <Input 
-                            value={linkUrl}
-                            onChange={(e) => setLinkUrl(e.target.value)}
-                            placeholder="https://ejemplo.com"
-                            className="bg-transparent border-border/50"
-                        />
-                        <Button onClick={handleLink}><LinkIcon /></Button>
-                    </div>
-                    <div className="flex items-center space-x-2 pt-1">
-                        <Checkbox id="new-window" checked={linkNewWindow} onCheckedChange={(checked) => setLinkNewWindow(Boolean(checked))} />
-                        <Label htmlFor="new-window" className="text-xs">Abrir en una nueva ventana</Label>
-                    </div>
-                </div>
-            </div>
-
-            <Separator className="bg-border/20"/>
-            
-            <div className="space-y-3">
-                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Smile/>Símbolos para copiar</h3>
-                 <div className="grid grid-cols-8 gap-1 p-2 border rounded-md bg-background/50">
-                    {insertableSymbols.map(symbol => (
-                        <TooltipProvider key={symbol}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button 
-                                        onClick={() => copySymbol(symbol)}
-                                        className="text-lg p-1 rounded-md hover:bg-accent transition-colors aspect-square flex items-center justify-center"
-                                    >
-                                        {symbol}
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Copiar '{symbol}'</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    ))}
-                 </div>
-            </div>
-
-
-            <Separator className="bg-border/20"/>
-            
             <div className="space-y-3">
                 <Label>Fuente</Label>
                 <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
@@ -1293,6 +968,310 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <div className="flex items-center gap-2">
                   <Slider 
                       value={[styles.fontSize]}
+                      max={100}
+                      min={12}
+                      step={1} 
+                      onValueChange={(value) => updateStyle('fontSize', value[0])}
+                  />
+                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
+                </div>
+            </div>
+
+        </div>
+    )
+}
+
+const TextBlockToolbar = ({ toolbarPosition, onAction, contentEditableRef }: {
+    toolbarPosition: { top: number, left: number } | null;
+    onAction: (command: string, value?: string) => void;
+    contentEditableRef: React.RefObject<HTMLDivElement>;
+}) => {
+    if (!toolbarPosition) return null;
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+      e.preventDefault();
+    };
+
+    return (
+        <div
+            style={{ top: toolbarPosition.top, left: toolbarPosition.left }}
+            className="absolute z-50"
+            onMouseDown={handleMouseDown} // Prevent focus shift from editor
+        >
+            <div className="flex items-center gap-1 p-1 bg-background border border-border rounded-md shadow-lg">
+                <TooltipProvider>
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="size-8" onClick={() => onAction('bold')}><Bold /></Button></TooltipTrigger><TooltipContent><p>Negrita</p></TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="size-8" onClick={() => onAction('italic')}><Italic /></Button></TooltipTrigger><TooltipContent><p>Cursiva</p></TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="size-8" onClick={() => onAction('underline')}><Underline /></Button></TooltipTrigger><TooltipContent><p>Subrayado</p></TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="size-8" onClick={() => onAction('strikeThrough')}><Strikethrough /></Button></TooltipTrigger><TooltipContent><p>Tachado</p></TooltipContent></Tooltip>
+                    
+                    <Separator orientation="vertical" className="h-6" />
+
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8"><PaletteIcon /></Button>
+                        </PopoverTrigger>
+                        <PopoverContent onMouseDown={handleMouseDown} className="w-auto p-0 border-none">
+                            <HexColorPicker onChange={(color) => onAction('foreColor', color)} />
+                        </PopoverContent>
+                    </Popover>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8"><Highlighter /></Button>
+                        </PopoverTrigger>
+                        <PopoverContent onMouseDown={handleMouseDown} className="w-auto p-0 border-none">
+                            <HexColorPicker onChange={(color) => onAction('hiliteColor', color)} />
+                        </PopoverContent>
+                    </Popover>
+
+                    <Separator orientation="vertical" className="h-6" />
+                    
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8"><LinkIcon /></Button>
+                        </PopoverTrigger>
+                        <PopoverContent onMouseDown={handleMouseDown} className="p-2 space-y-2">
+                           <Input
+                             id="link-url-input"
+                             placeholder="https://example.com"
+                             onKeyDown={(e) => {
+                               if (e.key === 'Enter') {
+                                 e.preventDefault();
+                                 const url = (e.target as HTMLInputElement).value;
+                                 if(url) onAction('createLink', url);
+                                 // Would need logic to close popover here
+                               }
+                             }}
+                           />
+                           <Button 
+                             size="sm" 
+                             className="w-full"
+                             onClick={() => {
+                               const url = document.getElementById('link-url-input') as HTMLInputElement | null;
+                               if(url?.value) onAction('createLink', url.value);
+                             }}
+                           >Aplicar Enlace</Button>
+                        </PopoverContent>
+                    </Popover>
+
+
+                </TooltipProvider>
+            </div>
+        </div>
+    );
+};
+
+
+const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    const { toast } = useToast();
+    if(selectedElement?.type !== 'primitive') return null;
+    
+    const getElement = () => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'text' ? block as TextBlock : null;
+    }
+    const element = getElement();
+    const contentEditableRef = useRef<HTMLDivElement>(null);
+    const [toolbarPosition, setToolbarPosition] = useState<{ top: number; left: number } | null>(null);
+
+    const updateBlockHtml = (newHtml: string) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id === selectedElement.rowId && row.type === 'columns') {
+            const newColumns = row.payload.columns.map(col => {
+              if (col.id === selectedElement.columnId) {
+                  const newBlocks = col.blocks.map(block => {
+                      if (block.id === selectedElement.primitiveId) {
+                          return { ...block, payload: { ...block.payload, html: newHtml }};
+                      }
+                      return block;
+                  });
+                  return {...col, blocks: newBlocks};
+              }
+              return col;
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+          }
+          return row;
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    };
+
+    const handleTextChange = () => {
+        if (contentEditableRef.current) {
+            updateBlockHtml(contentEditableRef.current.innerHTML);
+        }
+    };
+    
+    const updateStyle = (key: keyof TextBlock['payload']['styles'], value: any) => {
+        const newCanvasContent = canvasContent.map(row => {
+          if (row.id === selectedElement.rowId && row.type === 'columns') {
+            const newColumns = row.payload.columns.map(col => {
+              if (col.id === selectedElement.columnId) {
+                  const newBlocks = col.blocks.map(block => {
+                      if (block.id === selectedElement.primitiveId && block.type === 'text') {
+                          return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
+                      }
+                      return block;
+                  });
+                  return {...col, blocks: newBlocks};
+              }
+              return col;
+            });
+            return { ...row, payload: { ...row.payload, columns: newColumns } };
+          }
+          return row;
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[]);
+    }
+    
+    const handleMouseUp = () => {
+        setTimeout(() => {
+            const selection = window.getSelection();
+            if (selection && !selection.isCollapsed) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                const editorRect = document.getElementById('editor-canvas')?.getBoundingClientRect();
+                if (editorRect) {
+                    setToolbarPosition({
+                        top: rect.top - editorRect.top - 50,
+                        left: rect.left - editorRect.left + rect.width / 2,
+                    });
+                }
+            } else {
+                setToolbarPosition(null);
+            }
+        }, 10);
+    };
+
+    const handleToolbarAction = (command: string, value?: string) => {
+        if (contentEditableRef.current) {
+            contentEditableRef.current.focus();
+            document.execCommand(command, false, value);
+            handleTextChange();
+        }
+    };
+
+    const copySymbol = (symbol: string) => {
+        navigator.clipboard.writeText(symbol);
+        toast({
+            title: "¡Símbolo copiado!",
+            description: "Listo para pegar.",
+            className: 'text-white border-none',
+            style: { backgroundColor: '#00CB07' }
+        });
+    };
+
+    useEffect(() => {
+      if (contentEditableRef.current) {
+          const editor = contentEditableRef.current;
+          editor.addEventListener('mouseup', handleMouseUp);
+          document.addEventListener('selectionchange', handleMouseUp);
+          return () => {
+              editor.removeEventListener('mouseup', handleMouseUp);
+              document.removeEventListener('selectionchange', handleMouseUp);
+          };
+      }
+    }, [contentEditableRef]);
+    
+    useEffect(() => {
+        if (contentEditableRef.current && element) {
+            contentEditableRef.current.innerHTML = element.payload.html;
+        }
+    }, [selectedElement]);
+
+
+    if(!element) return null;
+    const { styles } = element.payload;
+
+    return (
+        <div className="space-y-4">
+             <TextBlockToolbar 
+                toolbarPosition={toolbarPosition} 
+                onAction={handleToolbarAction}
+                contentEditableRef={contentEditableRef} 
+             />
+             <div className="space-y-3">
+                <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pencil/>Contenido del Párrafo</h3>
+                <div
+                    ref={contentEditableRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={handleTextChange}
+                    onMouseUp={handleMouseUp}
+                    dangerouslySetInnerHTML={{ __html: element.payload.html }}
+                    className="bg-transparent border border-border/50 rounded-md p-2 min-h-[250px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    style={{
+                        color: styles.color,
+                        fontFamily: styles.fontFamily,
+                        fontSize: `${styles.fontSize}px`,
+                        textAlign: styles.textAlign,
+                        wordBreak: 'break-word',
+                    }}
+                />
+            </div>
+            
+            <Separator className="bg-border/20"/>
+            
+            <div className="space-y-3">
+                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Smile/>Símbolos para copiar</h3>
+                 <div className="grid grid-cols-8 gap-1 p-2 border rounded-md bg-background/50">
+                    {insertableSymbols.map(symbol => (
+                        <TooltipProvider key={symbol}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button 
+                                        onClick={() => copySymbol(symbol)}
+                                        className="text-lg p-1 rounded-md hover:bg-accent transition-colors aspect-square flex items-center justify-center"
+                                    >
+                                        {symbol}
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Copiar '{symbol}'</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ))}
+                 </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+            
+            <div className="space-y-3">
+                <Label>Fuente</Label>
+                <Select value={styles.fontFamily} onValueChange={(f) => updateStyle('fontFamily', f)}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar fuente..." /></SelectTrigger>
+                    <SelectContent>
+                      {googleFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <Separator className="bg-border/20"/>
+            
+            <div className="space-y-4">
+                 <h3 className="text-sm font-medium text-foreground/80">Alineación General</h3>
+                 <div className="grid grid-cols-3 gap-2">
+                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
+                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
+                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
+                 </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente General</h3>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                      value={[styles.fontSize]}
                       max={48}
                       min={10}
                       step={1} 
@@ -1300,6 +1279,11 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                   />
                   <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
                 </div>
+            </div>
+             <Separator className="bg-border/20"/>
+            <div className="space-y-4">
+                <h3 className="text-sm font-medium text-foreground/80">Color de Texto General</h3>
+                 <ColorPickerAdvanced color={styles.color} setColor={(c) => updateStyle('color', c)} />
             </div>
         </div>
     )
@@ -1721,15 +1705,12 @@ export default function CreateTemplatePage() {
             id: `text_${Date.now()}`,
             type: 'text',
             payload: { 
-                html: '<p>Este es un párrafo de texto. Puedes editarlo en el panel de la derecha para añadir tu propio contenido y darle estilo como quieras.</p>',
+                html: '<p>Este es un párrafo de texto. Puedes editarlo aquí o en el panel de la derecha. Selecciona texto para ver las opciones de estilo.</p>',
                 styles: {
                     color: '#333333',
                     fontFamily: 'Roboto',
                     fontSize: 16,
                     textAlign: 'left',
-                    fontWeight: 'normal',
-                    fontStyle: 'normal',
-                    textDecoration: 'none',
                 }
             },
         };
@@ -1910,15 +1891,12 @@ export default function CreateTemplatePage() {
   };
 
   const getTextStyle = (block: TextBlock): React.CSSProperties => {
-    const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration } = block.payload.styles;
+    const { color, fontFamily, fontSize, textAlign } = block.payload.styles;
     const style: React.CSSProperties = {
         color: color || '#333333',
         fontFamily: fontFamily || 'Arial, sans-serif',
         fontSize: `${fontSize || 16}px`,
         textAlign: textAlign || 'left',
-        fontWeight: fontWeight || 'normal',
-        fontStyle: fontStyle || 'normal',
-        textDecoration: textDecoration || 'none',
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
         width: '100%',
