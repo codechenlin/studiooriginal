@@ -859,7 +859,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const getElement = () => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
         if (row?.type !== 'columns') return null;
-        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
         const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
         return block?.type === 'heading' ? block as HeadingBlock : null;
     }
@@ -944,7 +944,13 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
                     <Toggle 
                       pressed={styles.textDecoration === 'underline'} 
-                      onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}
+                      onPressedChange={(p) => {
+                          const newValue = p ? 'underline' : 'none';
+                          if (styles.textDecoration === 'line-through' && p) {
+                            // Can't have both, so we prioritize underline
+                          }
+                          updateStyle('textDecoration', newValue);
+                      }}
                     >
                       <Underline/>
                     </Toggle>
@@ -994,7 +1000,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const getElement = () => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
         if (row?.type !== 'columns') return null;
-        const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
         const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
         return block?.type === 'text' ? block as TextBlock : null;
     }
