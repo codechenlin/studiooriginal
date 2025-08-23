@@ -942,7 +942,12 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  <div className="grid grid-cols-4 gap-2">
                     <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
                     <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
+                    <Toggle 
+                      pressed={styles.textDecoration === 'underline'} 
+                      onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}
+                    >
+                      <Underline/>
+                    </Toggle>
                     <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
                  </div>
             </div>
@@ -1123,9 +1128,6 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     contentEditable
                     suppressContentEditableWarning
                     onInput={(e) => handleTextChange(e.currentTarget.innerHTML)}
-                    onMouseUp={saveSelection}
-                    onKeyUp={saveSelection}
-                    onFocus={saveSelection}
                     onBlur={() => { selectionRef.current = null; }}
                     dangerouslySetInnerHTML={{ __html: element.payload.html }}
                     className="bg-transparent border border-border/50 rounded-md p-2 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-ring"
@@ -1137,6 +1139,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         fontWeight: styles.fontWeight,
                         fontStyle: styles.fontStyle,
                         textDecoration: styles.textDecoration,
+                        wordBreak: 'break-word',
                     }}
                 />
             </div>
@@ -1250,7 +1253,12 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  <div className="grid grid-cols-4 gap-2">
                     <Toggle pressed={styles.fontWeight === 'bold'} onPressedChange={(p) => updateStyle('fontWeight', p ? 'bold' : 'normal')}><Bold/></Toggle>
                     <Toggle pressed={styles.fontStyle === 'italic'} onPressedChange={(p) => updateStyle('fontStyle', p ? 'italic' : 'normal')}><Italic/></Toggle>
-                    <Toggle pressed={styles.textDecoration === 'underline'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}><Underline/></Toggle>
+                    <Toggle 
+                      pressed={styles.textDecoration === 'underline'} 
+                      onPressedChange={(p) => updateStyle('textDecoration', p ? 'underline' : 'none')}
+                    >
+                      <Underline/>
+                    </Toggle>
                     <Toggle pressed={styles.textDecoration === 'line-through'} onPressedChange={(p) => updateStyle('textDecoration', p ? 'line-through' : 'none')}><Strikethrough/></Toggle>
                  </div>
             </div>
@@ -1946,7 +1954,7 @@ export default function CreateTemplatePage() {
                 return (
                     <div 
                         style={getTextStyle(textBlock)}
-                        dangerouslySetInnerHTML={{ __html: textBlock.payload.html.replace(/\n/g, '<br />') }}
+                        dangerouslySetInnerHTML={{ __html: textBlock.payload.html }}
                     >
                     </div>
                 );
@@ -2796,4 +2804,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
