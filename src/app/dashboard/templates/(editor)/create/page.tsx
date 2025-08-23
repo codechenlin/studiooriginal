@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Toggle } from '@/components/ui/toggle';
 import {
@@ -122,7 +123,7 @@ const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -2544,35 +2545,38 @@ export default function CreateTemplatePage() {
       </aside>
 
        <Dialog open={isColumnModalOpen} onOpenChange={setIsColumnModalOpen}>
-        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+        <DialogContent className="sm:max-w-xl bg-card/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><LayoutGrid className="text-primary"/>Seleccionar Estructura de Columnas</DialogTitle>
             <DialogDescription>
               Elige cuántas secciones de columnas quieres añadir a tu plantilla. Podrás arrastrar contenido a cada sección.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-4 py-4">
             {columnOptions.map(option => (
               <button
                 key={option.num}
                 onClick={() => setSelectedColumnLayout(option.num)}
                 className={cn(
-                  "w-full p-2 border-2 rounded-lg transition-all flex items-center gap-4",
+                  "w-full p-2 border-2 rounded-lg transition-all flex items-center gap-4 relative",
+                  "bg-card/50 hover:bg-primary/10 hover:border-primary/50",
                   selectedColumnLayout === option.num
                     ? 'border-primary shadow-lg'
-                    : 'border-border hover:border-primary/50'
+                    : 'border-border/20'
                 )}
               >
-                <div className="flex items-center justify-center p-2 bg-muted rounded-md w-12 h-12">
-                   <Box className="text-primary" />
+                 {selectedColumnLayout === option.num && (
+                  <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#00EF10]" style={{boxShadow: '0 0 10px #00EF10'}}/>
+                 )}
+                <div className="flex items-center justify-center p-3 bg-muted rounded-md">
+                   <Box className="text-primary size-7" />
                 </div>
                  <div className="flex-1 text-left">
                   <p className="font-semibold">{option.num} {option.num > 1 ? 'Columnas' : 'Columna'}</p>
-                  <div className="mt-1">
+                  <div className="mt-2">
                     <option.icon />
                   </div>
                 </div>
-                 {selectedColumnLayout === option.num && <div className="w-5 h-5 rounded-full bg-primary" />}
               </button>
             ))}
           </div>
