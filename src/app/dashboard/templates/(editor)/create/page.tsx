@@ -2343,20 +2343,25 @@ export default function CreateTemplatePage() {
                         <div style={{ height: `${payload.height}px`, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 0' }}>
                             {payload.style === 'line' && (
                                 <div style={{
-                                    height: `${payload.line.thickness}px`,
+                                    height: '100%',
                                     width: '100%',
-                                    backgroundColor: payload.line.color,
-                                    border: `${payload.line.style === 'solid' ? 0 : payload.line.thickness}px ${payload.line.style} ${payload.line.color}`,
+                                    borderTop: `${payload.line.thickness}px ${payload.line.style} ${payload.line.color}`,
                                     borderRadius: `${payload.line.borderRadius}px`
                                 }} />
                             )}
                             {payload.style === 'waves' && (
-                                <div className="w-full h-full" style={{
-                                    background: getWavesBackground(payload.waves.background),
-                                    WebkitMask: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3e%3cpath fill='black' fill-opacity='1' d='M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,138.7C960,117,1056,107,1152,117.3C1248,128,1344,160,1392,176L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3e%3c/path%3e%3c/svg%3e")`,
-                                    WebkitMaskSize: 'cover',
-                                    maskSize: 'cover',
-                                }}></div>
+                                <svg width="100%" height="100%" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{overflow: 'visible'}}>
+                                  <defs>
+                                    <linearGradient id={`wave-gradient-${block.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                                      <stop offset="0%" stopColor={payload.waves.background.type === 'gradient' ? payload.waves.background.color1 : payload.waves.background.color1} />
+                                      <stop offset="100%" stopColor={payload.waves.background.type === 'gradient' ? payload.waves.background.color2 : payload.waves.background.color1} />
+                                    </linearGradient>
+                                  </defs>
+                                  <path 
+                                      fill={`url(#wave-gradient-${block.id})`}
+                                      d='M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,138.7C960,117,1056,107,1152,117.3C1248,128,1344,160,1392,176L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'
+                                  />
+                                </svg>
                             )}
                             {payload.style === 'dots' && (
                                 <div className="flex justify-around items-center w-full">
