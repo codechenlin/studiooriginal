@@ -251,7 +251,8 @@ interface SeparatorBlock extends BaseBlock {
               color1: string;
               color2?: string;
               direction?: GradientDirection;
-            }
+            };
+            waveCount: number;
         };
         dots: {
             size: number;
@@ -1742,6 +1743,10 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
             {payload.style === 'waves' && (
                 <div className="space-y-4 p-3 border rounded-md bg-background/30">
+                     <div className="space-y-2">
+                        <Label>Frecuencia de las Olas</Label>
+                        <Slider value={[payload.waves.waveCount]} min={1} max={10} step={1} onValueChange={v => updateSubPayload('waves', 'waveCount', v[0])}/>
+                    </div>
                      <Tabs value={payload.waves.background.type} onValueChange={(v) => updateWavesBackground('type', v)} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="solid">Sólido</TabsTrigger>
@@ -2048,7 +2053,8 @@ export default function CreateTemplatePage() {
                         color1: '#A020F0',
                         color2: '#3357FF',
                         direction: 'vertical'
-                    }
+                    },
+                    waveCount: 3,
                 },
                 dots: {
                     size: 4,
@@ -2258,18 +2264,68 @@ export default function CreateTemplatePage() {
         display: 'inline-block',
     };
   };
-  
-  const getWavesBackground = (bg: SeparatorBlock['payload']['waves']['background']) => {
-    if (bg.type === 'gradient') {
-      if (bg.direction === 'radial') {
-          return `radial-gradient(${bg.color1}, ${bg.color2})`;
-      } else {
-          const angle = bg.direction === 'horizontal' ? 'to right' : 'to bottom';
-          return `linear-gradient(${angle}, ${bg.color1}, ${bg.color2})`;
-      }
+
+  const generateWavePath = (waveCount: number, width: number, height: number): string => {
+    if (width === 0) return '';
+    const amplitude = 20;
+    const frequency = waveCount;
+    const segments = 50; 
+    const segmentWidth = width / segments;
+    
+    let path = `M0,${height / 2}`;
+    
+    for (let i = 0; i <= segments; i++) {
+        const x = i * segmentWidth;
+        const y = height / 2 + amplitude * Math.sin((i / segments) * frequency * Math.PI);
+        path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
     }
-    return bg.color1;
-  };
+    
+    path += ` L${width},${height} L0,${height} Z`;
+    return path;
+  }
+  
+  const WavesSeparator = ({ block }: { block: SeparatorBlock }) => {
+    const ref = useRef<SVGSVGElement>(null);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+    const { background, waveCount } = block.payload.waves;
+
+    useEffect(() => {
+        if (ref.current) {
+            const { width, height } = ref.current.getBoundingClientRect();
+            setDimensions({ width, height });
+        }
+    }, [ref, block.payload.height]); // Re-calculate on height change
+
+    const pathData = generateWavePath(waveCount, dimensions.width, dimensions.height);
+
+    const getFill = () => {
+        if (background.type === 'solid') {
+            return background.color1;
+        }
+        if (background.type === 'gradient') {
+            return `url(#wave-gradient-${block.id})`;
+        }
+        return 'none';
+    };
+
+    return (
+        <svg ref={ref} width="100%" height="100%" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+            {background.type === 'gradient' && (
+                <defs>
+                    <linearGradient id={`wave-gradient-${block.id}`} x1="0%" y1="0%" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
+                        <stop offset="0%" stopColor={background.color1} />
+                        <stop offset="100%" stopColor={background.color2} />
+                    </linearGradient>
+                    <radialGradient id={`wave-gradient-${block.id}-radial`}>
+                        <stop offset="0%" stopColor={background.color1} />
+                        <stop offset="100%" stopColor={background.color2} />
+                    </radialGradient>
+                </defs>
+            )}
+            <path d={pathData} fill={getFill()} />
+        </svg>
+    );
+  }
 
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
@@ -2345,23 +2401,14 @@ export default function CreateTemplatePage() {
                                 <div style={{
                                     height: '100%',
                                     width: '100%',
-                                    borderTop: `${payload.line.thickness}px ${payload.line.style} ${payload.line.color}`,
+                                    borderTopStyle: payload.line.style,
+                                    borderTopWidth: `${payload.line.thickness}px`,
+                                    borderTopColor: payload.line.color,
                                     borderRadius: `${payload.line.borderRadius}px`
                                 }} />
                             )}
                             {payload.style === 'waves' && (
-                                <svg width="100%" height="100%" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{overflow: 'visible'}}>
-                                  <defs>
-                                    <linearGradient id={`wave-gradient-${block.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                                      <stop offset="0%" stopColor={payload.waves.background.type === 'gradient' ? payload.waves.background.color1 : payload.waves.background.color1} />
-                                      <stop offset="100%" stopColor={payload.waves.background.type === 'gradient' ? payload.waves.background.color2 : payload.waves.background.color1} />
-                                    </linearGradient>
-                                  </defs>
-                                  <path 
-                                      fill={`url(#wave-gradient-${block.id})`}
-                                      d='M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,138.7C960,117,1056,107,1152,117.3C1248,128,1344,160,1392,176L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'
-                                  />
-                                </svg>
+                               <WavesSeparator block={separatorBlock} />
                             )}
                             {payload.style === 'dots' && (
                                 <div className="flex justify-around items-center w-full">
