@@ -21,7 +21,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Toggle } from '@/components/ui/toggle';
 import {
@@ -86,6 +85,8 @@ import {
   Sparkles,
   CaseSensitive,
   Eraser,
+  Waves,
+  Dot,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -107,7 +108,7 @@ const columnContentBlocks = [
   { name: "Texto", icon: Type, id: 'text' },
   { name: "Image", icon: ImageIcon, id: 'image' },
   { name: "Botón", icon: Square, id: 'button' },
-  { name: "Separator", icon: Minus, id: 'separator' },
+  { name: "Separador", icon: Minus, id: 'separator' },
   { name: "Video Youtube", icon: Youtube, id: 'youtube' },
   { name: "Contador", icon: Timer, id: 'timer' },
   { name: "Emoji", icon: Smile, id: 'emoji-static' },
@@ -154,6 +155,7 @@ type Viewport = 'desktop' | 'tablet' | 'mobile';
 type TextAlign = 'left' | 'center' | 'right';
 type BackgroundFit = 'cover' | 'contain' | 'auto';
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
+type SeparatorLineStyle = 'solid' | 'dotted' | 'dashed';
 
 interface BaseBlock {
   id: string;
@@ -231,6 +233,33 @@ interface ButtonBlock extends BaseBlock {
     }
 }
 
+interface SeparatorBlock extends BaseBlock {
+    type: 'separator';
+    payload: {
+        height: number;
+        style: 'invisible' | 'line' | 'waves' | 'dots';
+        line: {
+            thickness: number;
+            color: string;
+            style: SeparatorLineStyle;
+            borderRadius: number;
+        };
+        waves: {
+            background: {
+              type: 'solid' | 'gradient';
+              color1: string;
+              color2?: string;
+              direction?: GradientDirection;
+            }
+        };
+        dots: {
+            size: number;
+            count: number;
+            color: string;
+        }
+    }
+}
+
 interface StaticEmojiBlock extends BaseBlock {
     type: 'emoji-static';
     payload: {
@@ -254,7 +283,7 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 
@@ -1573,6 +1602,198 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
   )
 }
 
+const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    if (selectedElement?.type !== 'primitive') return null;
+
+    const getElement = (): SeparatorBlock | null => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'separator' ? block as SeparatorBlock : null;
+    }
+    const element = getElement();
+    if (!element) return null;
+    
+    const updatePayload = (key: keyof SeparatorBlock['payload'], value: any) => {
+      setCanvasContent(prev => prev.map(row => {
+          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+          return {
+              ...row,
+              payload: {
+                  ...row.payload,
+                  columns: row.payload.columns.map(col => {
+                      if (col.id !== selectedElement.columnId) return col;
+                      return {
+                          ...col,
+                          blocks: col.blocks.map(block => {
+                              if (block.id !== selectedElement.primitiveId || block.type !== 'separator') return block;
+                              return { ...block, payload: { ...block.payload, [key]: value } };
+                          })
+                      };
+                  })
+              }
+          };
+      }));
+    };
+    
+    const updateSubPayload = (mainKey: 'line' | 'waves' | 'dots', subKey: string, value: any) => {
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+            return {
+                ...row,
+                payload: {
+                    ...row.payload,
+                    columns: row.payload.columns.map(col => {
+                        if (col.id !== selectedElement.columnId) return col;
+                        return {
+                            ...col,
+                            blocks: col.blocks.map(block => {
+                                if (block.id !== selectedElement.primitiveId || block.type !== 'separator') return block;
+                                return {
+                                    ...block,
+                                    payload: {
+                                        ...block.payload,
+                                        [mainKey]: { ...block.payload[mainKey], [subKey]: value }
+                                    }
+                                };
+                            })
+                        };
+                    })
+                }
+            };
+        }));
+    };
+
+    const updateWavesBackground = (key: string, value: any) => {
+        const currentBg = element.payload.waves.background;
+        updateSubPayload('waves', 'background', { ...currentBg, [key]: value });
+    }
+
+    const { payload } = element;
+
+    return (
+        <div className="space-y-4">
+            <div>
+                <h3 className="text-sm font-medium text-foreground/80">Espaciado Vertical</h3>
+                <div className="flex items-center gap-2 mt-2">
+                    <Slider
+                        value={[payload.height]}
+                        min={0}
+                        max={200}
+                        step={1}
+                        onValueChange={(v) => updatePayload('height', v[0])}
+                    />
+                    <Input
+                        type="number"
+                        className="w-20 h-8"
+                        value={payload.height}
+                        onChange={(e) => updatePayload('height', parseInt(e.target.value) || 0)}
+                    />
+                </div>
+            </div>
+
+            <Separator className="bg-border/20"/>
+            
+            <div>
+                 <h3 className="text-sm font-medium text-foreground/80">Estilo del Separador</h3>
+                 <Tabs value={payload.style} onValueChange={(v) => updatePayload('style', v as any)} className="w-full mt-2">
+                    <TabsList className="grid grid-cols-4 h-auto">
+                        <TabsTrigger value="invisible" className="text-xs">Invisible</TabsTrigger>
+                        <TabsTrigger value="line" className="text-xs">Línea</TabsTrigger>
+                        <TabsTrigger value="waves" className="text-xs">Olas</TabsTrigger>
+                        <TabsTrigger value="dots" className="text-xs">Puntos</TabsTrigger>
+                    </TabsList>
+                 </Tabs>
+            </div>
+            
+            {payload.style === 'line' && (
+                <div className="space-y-4 p-3 border rounded-md bg-background/30">
+                    <div className="space-y-2">
+                        <Label>Grosor</Label>
+                        <Slider value={[payload.line.thickness]} min={1} max={20} onValueChange={(v) => updateSubPayload('line', 'thickness', v[0])} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Estilo de Línea</Label>
+                        <Select value={payload.line.style} onValueChange={(v) => updateSubPayload('line', 'style', v)}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="solid">Sólida</SelectItem>
+                                <SelectItem value="dotted">Punteada</SelectItem>
+                                <SelectItem value="dashed">Discontinua</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Radio del Borde</Label>
+                        <Slider value={[payload.line.borderRadius]} min={0} max={10} onValueChange={(v) => updateSubPayload('line', 'borderRadius', v[0])} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Color</Label>
+                        <ColorPickerAdvanced color={payload.line.color} setColor={(c) => updateSubPayload('line', 'color', c)} />
+                    </div>
+                </div>
+            )}
+
+            {payload.style === 'waves' && (
+                <div className="space-y-4 p-3 border rounded-md bg-background/30">
+                     <Tabs value={payload.waves.background.type} onValueChange={(v) => updateWavesBackground('type', v)} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="solid">Sólido</TabsTrigger>
+                            <TabsTrigger value="gradient">Degradado</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                    <div className="space-y-3">
+                        <Label>Color 1</Label>
+                        <ColorPickerAdvanced color={payload.waves.background.color1} setColor={(c) => updateWavesBackground('color1', c)} />
+                    </div>
+                    {payload.waves.background.type === 'gradient' && (
+                        <>
+                            <div className="space-y-3">
+                                <Label>Color 2</Label>
+                                <ColorPickerAdvanced color={payload.waves.background.color2 || '#3357FF'} setColor={(c) => updateWavesBackground('color2', c)} />
+                            </div>
+                            <div className="space-y-3">
+                                <Label>Dirección</Label>
+                                <Select value={payload.waves.background.direction} onValueChange={v => updateWavesBackground('direction', v)}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="vertical">Vertical</SelectItem>
+                                        <SelectItem value="horizontal">Horizontal</SelectItem>
+                                        <SelectItem value="radial">Radial</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+            
+            {payload.style === 'dots' && (
+                <div className="space-y-4 p-3 border rounded-md bg-background/30">
+                     <div className="space-y-2">
+                        <Label>Tamaño de los Puntos</Label>
+                        <Slider value={[payload.dots.size]} min={1} max={10} onValueChange={v => updateSubPayload('dots', 'size', v[0])}/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Cantidad de Puntos</Label>
+                        <Slider value={[payload.dots.count]} min={3} max={20} onValueChange={v => updateSubPayload('dots', 'count', v[0])}/>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Color de los Puntos</Label>
+                        <ColorPickerAdvanced color={payload.dots.color} setColor={c => updateSubPayload('dots', 'color', c)} />
+                    </div>
+                </div>
+            )}
+
+        </div>
+    )
+}
+
 function ThemeToggle() {
   const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = React.useState(true);
@@ -1656,7 +1877,6 @@ export default function CreateTemplatePage() {
   
   // Modals State
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
-  const [selectedColumnLayout, setSelectedColumnLayout] = useState<number | null>(null);
   const [isColumnBlockSelectorOpen, setIsColumnBlockSelectorOpen] = useState(false);
   const [isWrapperBlockSelectorOpen, setIsWrapperBlockSelectorOpen] = useState(false);
   const [isEmojiSelectorOpen, setIsEmojiSelectorOpen] = useState(false);
@@ -1692,7 +1912,6 @@ export default function CreateTemplatePage() {
   
   const handleBlockClick = (blockId: BlockType) => {
     if (blockId === 'columns') {
-      setSelectedColumnLayout(null);
       setIsColumnModalOpen(true);
     }
     if (blockId === 'wrapper') {
@@ -1709,17 +1928,17 @@ export default function CreateTemplatePage() {
     }
   };
 
-  const handleAddColumns = () => {
-    if (selectedColumnLayout) {
+  const handleAddColumns = (numColumns: number) => {
+    if (numColumns) {
       const newBlock: ColumnsBlock = {
         id: `block_${Date.now()}`,
         type: 'columns',
         payload: {
-          columns: Array.from({ length: selectedColumnLayout }).map((_, i) => ({
+          columns: Array.from({ length: numColumns }).map((_, i) => ({
             id: `col_${Date.now()}_${i}`,
             blocks: [],
             styles: {},
-            width: 100 / selectedColumnLayout,
+            width: 100 / numColumns,
           })),
           alignment: 50,
         },
@@ -1808,6 +2027,34 @@ export default function CreateTemplatePage() {
                     rotate: 0,
                 }
             }
+        };
+    } else if (blockType === 'separator') {
+        newBlock = {
+            id: `separator_${Date.now()}`,
+            type: 'separator',
+            payload: {
+                height: 20,
+                style: 'line',
+                line: {
+                    thickness: 2,
+                    color: '#cccccc',
+                    style: 'solid',
+                    borderRadius: 0,
+                },
+                waves: {
+                    background: {
+                        type: 'solid',
+                        color1: '#A020F0',
+                        color2: '#3357FF',
+                        direction: 'vertical'
+                    }
+                },
+                dots: {
+                    size: 4,
+                    count: 10,
+                    color: '#cccccc',
+                }
+            },
         };
     } else {
         newBlock = {
@@ -1968,15 +2215,17 @@ export default function CreateTemplatePage() {
         padding: '8px',
         wordBreak: 'break-word',
     };
+    
+    if(highlight) {
+      style.backgroundColor = highlight;
+      style.display = 'inline';
+      style.lineHeight = 'normal'; 
+    }
+
     const containerStyle: React.CSSProperties = {
       textAlign: textAlign || 'left',
       width: '100%',
     };
-
-    if(highlight) {
-      style.backgroundColor = highlight;
-      style.display = 'inline'; // This makes the background only wrap the text
-    }
 
     return { ...style, ...containerStyle };
   };
@@ -2007,6 +2256,18 @@ export default function CreateTemplatePage() {
         transform: `rotate(${rotate || 0}deg)`,
         display: 'inline-block',
     };
+  };
+  
+  const getWavesBackground = (bg: SeparatorBlock['payload']['waves']['background']) => {
+    if (bg.type === 'gradient') {
+      if (bg.direction === 'radial') {
+          return `radial-gradient(${bg.color1}, ${bg.color2})`;
+      } else {
+          const angle = bg.direction === 'horizontal' ? 'to right' : 'to bottom';
+          return `linear-gradient(${angle}, ${bg.color1}, ${bg.color2})`;
+      }
+    }
+    return bg.color1;
   };
 
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
@@ -2074,6 +2335,43 @@ export default function CreateTemplatePage() {
                         )}
                       </div>
                   );
+                case 'separator':
+                    const separatorBlock = block as SeparatorBlock;
+                    const { payload } = separatorBlock;
+                    return (
+                        <div style={{ height: `${payload.height}px`, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 0' }}>
+                            {payload.style === 'line' && (
+                                <div style={{
+                                    height: `${payload.line.thickness}px`,
+                                    width: '100%',
+                                    backgroundColor: payload.line.color,
+                                    border: `${payload.line.style === 'solid' ? 0 : payload.line.thickness}px ${payload.line.style} ${payload.line.color}`,
+                                    borderRadius: `${payload.line.borderRadius}px`
+                                }} />
+                            )}
+                            {payload.style === 'waves' && (
+                                <div className="w-full h-full" style={{
+                                    background: getWavesBackground(payload.waves.background),
+                                    WebkitMask: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3e%3cpath fill='black' fill-opacity='1' d='M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,138.7C960,117,1056,107,1152,117.3C1248,128,1344,160,1392,176L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3e%3c/path%3e%3c/svg%3e")`,
+                                    WebkitMaskSize: 'cover',
+                                    maskSize: 'cover',
+                                }}></div>
+                            )}
+                            {payload.style === 'dots' && (
+                                <div className="flex justify-around items-center w-full">
+                                    {Array.from({ length: payload.dots.count }).map((_, i) => (
+                                        <div key={i} style={{
+                                            width: `${payload.dots.size}px`,
+                                            height: `${payload.dots.size}px`,
+                                            borderRadius: '50%',
+                                            backgroundColor: payload.dots.color,
+                                            boxShadow: `0 0 8px ${payload.dots.color}`
+                                        }} />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
               default:
                 return (
                   <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
@@ -2395,7 +2693,48 @@ export default function CreateTemplatePage() {
           </div>
         </header>
         <div className="p-2 space-y-2">
-            {mainContentBlocks.map(block => (
+            <Dialog open={isColumnModalOpen} onOpenChange={setIsColumnModalOpen}>
+              <DialogTrigger asChild>
+                 <Card 
+                  className="group bg-card/5 border-black/20 dark:border-border/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all hover:bg-primary/10 hover:border-black/50 dark:hover:border-primary/50 hover:shadow-lg"
+                 >
+                  <Columns className="size-8 text-[#00B0F0] transition-colors" />
+                  <span className="text-sm font-semibold text-center text-foreground/80 mt-2">Columns</span>
+                  <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>
+                </Card>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-xl bg-card/80 backdrop-blur-sm">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2"><LayoutGrid className="text-primary"/>Seleccionar Estructura de Columnas</DialogTitle>
+                    <DialogDescription>
+                      Elige cuántas secciones de columnas quieres añadir a tu plantilla. Podrás arrastrar contenido a cada sección.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid grid-cols-2 gap-4 py-4">
+                    {columnOptions.map(option => (
+                      <button
+                        key={option.num}
+                        onClick={() => handleAddColumns(option.num)}
+                        className={cn(
+                          "w-full p-2 border-2 rounded-lg transition-all flex items-center gap-4 relative",
+                          "bg-card/50 hover:bg-primary/10 hover:border-primary/50"
+                        )}
+                      >
+                         <div className="flex items-center justify-center p-3 bg-muted rounded-md">
+                           <Box className="text-primary size-7" />
+                        </div>
+                         <div className="flex-1 text-left">
+                          <p className="font-semibold">{option.num} {option.num > 1 ? 'Columnas' : 'Columna'}</p>
+                          <div className="mt-2">
+                            <option.icon />
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+              </DialogContent>
+            </Dialog>
+            {mainContentBlocks.slice(1).map(block => (
                <Card 
                 key={block.id}
                 onClick={() => handleBlockClick(block.id as BlockType)}
@@ -2534,6 +2873,9 @@ export default function CreateTemplatePage() {
                { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
                   <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
               )}
+               { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'separator' && (
+                  <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+              )}
               
               { !selectedElement && (
                  <div className="text-center text-muted-foreground p-4 text-sm">
@@ -2544,55 +2886,6 @@ export default function CreateTemplatePage() {
          </ScrollArea>
       </aside>
 
-       <Dialog open={isColumnModalOpen} onOpenChange={setIsColumnModalOpen}>
-        <DialogContent className="sm:max-w-xl bg-card/80 backdrop-blur-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><LayoutGrid className="text-primary"/>Seleccionar Estructura de Columnas</DialogTitle>
-            <DialogDescription>
-              Elige cuántas secciones de columnas quieres añadir a tu plantilla. Podrás arrastrar contenido a cada sección.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
-            {columnOptions.map(option => (
-              <button
-                key={option.num}
-                onClick={() => setSelectedColumnLayout(option.num)}
-                className={cn(
-                  "w-full p-2 border-2 rounded-lg transition-all flex items-center gap-4 relative",
-                  "bg-card/50 hover:bg-primary/10 hover:border-primary/50",
-                  selectedColumnLayout === option.num
-                    ? 'border-primary shadow-lg'
-                    : 'border-border/20'
-                )}
-              >
-                 {selectedColumnLayout === option.num && (
-                  <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#00EF10]" style={{boxShadow: '0 0 10px #00EF10'}}/>
-                 )}
-                <div className="flex items-center justify-center p-3 bg-muted rounded-md">
-                   <Box className="text-primary size-7" />
-                </div>
-                 <div className="flex-1 text-left">
-                  <p className="font-semibold">{option.num} {option.num > 1 ? 'Columnas' : 'Columna'}</p>
-                  <div className="mt-2">
-                    <option.icon />
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancelar
-              </Button>
-            </DialogClose>
-            <Button type="button" onClick={handleAddColumns} disabled={!selectedColumnLayout}>
-              Aceptar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
        <Dialog open={isColumnBlockSelectorOpen} onOpenChange={setIsColumnBlockSelectorOpen}>
         <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
           <DialogHeader>
