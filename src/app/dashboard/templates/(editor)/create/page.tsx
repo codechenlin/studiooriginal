@@ -2594,7 +2594,7 @@ export default function CreateTemplatePage() {
     let path = "";
   
     switch (type) {
-       case 'waves': {
+      case 'waves': {
         const amplitude = height / 2;
         path = `M0,${amplitude}`;
         for (let i = 0; i <= frequency * 2; i++) {
@@ -2870,12 +2870,15 @@ export default function CreateTemplatePage() {
 
                     const formatDuration = () => {
                         const { hours, minutes, seconds } = duration;
-                        if (!minutes) return null; // Minutes are required
+                        if (!minutes && !hours && !seconds) return null;
 
                         const parts = [];
                         if (hours && hours !== '00') parts.push(hours);
-                        parts.push(minutes.padStart(2, '0'));
-                        if (seconds && seconds !== '00') parts.push(seconds.padStart(2, '0'));
+                        parts.push(minutes ? minutes.padStart(2, '0') : '00');
+                        if (seconds) parts.push(seconds.padStart(2, '0'));
+
+                        if (parts.length === 0) return null;
+                        if (parts.length === 1) return `0:${parts[0]}`; // Handle only minutes case
 
                         return parts.join(':');
                     };
