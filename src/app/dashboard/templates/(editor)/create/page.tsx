@@ -2854,12 +2854,15 @@ export default function CreateTemplatePage() {
 
                     const encodedSvg = btoa(playButtonSvg[styles.playButtonType]);
                     
-                    const WrapperComponent = link.url && videoId ? 'a' : 'div';
-                    const wrapperProps = (link.url && videoId) ? {
+                    const PlayButtonLink = link.url && videoId ? 'a' : 'div';
+                    const linkProps = (link.url && videoId) ? {
                         href: link.url,
                         target: link.openInNewTab ? '_blank' : '_self',
-                        rel: "noopener noreferrer"
-                    } : {};
+                        rel: "noopener noreferrer",
+                        className: "absolute inset-0 flex items-center justify-center bg-transparent z-10",
+                    } : {
+                        className: "absolute inset-0 flex items-center justify-center bg-transparent z-10 pointer-events-none",
+                    };
 
                     const { border } = styles;
                     let borderStyle: React.CSSProperties = {};
@@ -2912,36 +2915,38 @@ export default function CreateTemplatePage() {
                             }}
                             className="w-full h-full"
                            >
-                            <WrapperComponent
-                                {...wrapperProps}
+                            <div
                                 className="block w-full h-full relative aspect-video"
                                 style={{
                                   borderRadius: `${styles.borderRadius - styles.borderWidth}px`,
                                   overflow: 'hidden',
-                                  cursor: (link.url && videoId) ? 'pointer' : 'default',
                                 }}
                             >
                                 <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
-                                <div 
-                                    className="absolute inset-0 flex items-center justify-center bg-black/20"
-                                    style={{
-                                        backgroundImage: `url(data:image/svg+xml;base64,${encodedSvg})`,
-                                        backgroundPosition: 'center',
-                                        backgroundRepeat: 'no-repeat',
-                                        backgroundSize: '20%',
-                                    }}
-                                />
+                                
+                                <PlayButtonLink {...linkProps}>
+                                    <div 
+                                        className="w-full h-full"
+                                        style={{
+                                            backgroundImage: `url(data:image/svg+xml;base64,${encodedSvg})`,
+                                            backgroundPosition: 'center',
+                                            backgroundRepeat: 'no-repeat',
+                                            backgroundSize: '20%',
+                                        }}
+                                    />
+                                </PlayButtonLink>
+
                                 {showTitle && title && (
-                                    <div className="absolute top-0 left-0 w-full p-4 text-white bg-gradient-to-b from-black/80 to-transparent">
+                                    <div className="absolute top-0 left-0 w-full p-4 text-white bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
                                         <p className="text-sm font-semibold truncate">{title}</p>
                                     </div>
                                 )}
                                 {displayDuration && (
-                                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-xs font-mono rounded-md">
+                                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-xs font-mono rounded-md pointer-events-none">
                                         {displayDuration}
                                     </div>
                                 )}
-                            </WrapperComponent>
+                            </div>
                            </div>
                         </div>
                     );
