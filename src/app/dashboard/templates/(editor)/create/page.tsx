@@ -92,6 +92,7 @@ import {
   Leaf,
   Droplet,
   Layers,
+  PlayCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -280,6 +281,20 @@ interface StaticEmojiBlock extends BaseBlock {
     }
 }
 
+interface YouTubeBlock extends BaseBlock {
+    type: 'youtube';
+    payload: {
+        url: string;
+        videoId: string | null;
+        styles: {
+            playButtonType: 'default' | 'minimal' | 'brand';
+            borderRadius: number;
+            borderColor: string;
+            borderWidth: number;
+        }
+    }
+}
+
 interface InteractiveEmojiBlock extends BaseBlock {
     type: 'emoji-interactive';
     payload: {
@@ -291,7 +306,7 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 
@@ -1748,7 +1763,7 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             )}
 
             {payload.style === 'shapes' && (
-                <div className="space-y-4 p-3 border rounded-md bg-background/30">
+                 <div className="space-y-4 p-3 border rounded-md bg-background/30">
                     <div className="space-y-2">
                         <Label>Tipo de Forma</Label>
                         <Select value={payload.shapes.type} onValueChange={v => updateSubPayload('shapes', 'type', v)}>
@@ -1763,7 +1778,7 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         </Select>
                     </div>
                      <div className="space-y-2">
-                        <Label>Frecuencia de las Olas</Label>
+                        <Label>Frecuencia</Label>
                         <Slider value={[payload.shapes.frequency]} min={1} max={50} step={1} onValueChange={v => updateSubPayload('shapes', 'frequency', v[0])}/>
                     </div>
                      <Tabs value={payload.shapes.background.type} onValueChange={(v) => updateShapesBackground('type', v)} className="w-full">
@@ -1818,6 +1833,128 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         </div>
     )
 }
+
+const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[]) => void;
+}) => {
+    if (selectedElement?.type !== 'primitive') return null;
+
+    const getElement = (): YouTubeBlock | null => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'youtube' ? block as YouTubeBlock : null;
+    }
+    const element = getElement();
+    if (!element) return null;
+
+    const updatePayload = (key: keyof YouTubeBlock['payload'], value: any) => {
+      setCanvasContent(prev => prev.map(row => {
+          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+          return {
+              ...row,
+              payload: {
+                  ...row.payload,
+                  columns: row.payload.columns.map(col => {
+                      if (col.id !== selectedElement.columnId) return col;
+                      return {
+                          ...col,
+                          blocks: col.blocks.map(block => {
+                              if (block.id !== selectedElement.primitiveId || block.type !== 'youtube') return block;
+                              return { ...block, payload: { ...block.payload, [key]: value } };
+                          })
+                      };
+                  })
+              }
+          };
+      }));
+    };
+
+    const updateStyle = (key: keyof YouTubeBlock['payload']['styles'], value: any) => {
+        updatePayload('styles', { ...element.payload.styles, [key]: value });
+    }
+
+    const handleUrlChange = (newUrl: string) => {
+        let videoId: string | null = null;
+        try {
+            const url = new URL(newUrl);
+            if (url.hostname === "youtu.be") {
+                videoId = url.pathname.slice(1);
+            } else if (url.hostname === "www.youtube.com" || url.hostname === "youtube.com") {
+                videoId = url.searchParams.get("v");
+            }
+        } catch (error) {
+            // Invalid URL format
+        }
+        updatePayload('url', newUrl);
+        updatePayload('videoId', videoId);
+    };
+    
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Youtube />Video de YouTube</h3>
+            <Label>URL del Video</Label>
+            <Input 
+                value={element.payload.url}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="bg-transparent border-border/50"
+            />
+            {element.payload.url && !element.payload.videoId && (
+                <p className="text-xs text-destructive">URL de YouTube no válida.</p>
+            )}
+        </div>
+
+        <Separator className="bg-border/20"/>
+        
+        <div className="space-y-2">
+            <Label>Estilo del Botón de Play</Label>
+            <Select value={element.payload.styles.playButtonType} onValueChange={(v) => updateStyle('playButtonType', v)}>
+                <SelectTrigger><SelectValue/></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="default">Por Defecto</SelectItem>
+                    <SelectItem value="minimal">Minimalista</SelectItem>
+                    <SelectItem value="brand">Marca YouTube</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+
+        <Separator className="bg-border/20"/>
+
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-foreground/80">Estilo del Borde</h3>
+            <div className="space-y-2">
+              <Label>Ancho del Borde</Label>
+               <Slider
+                  value={[element.payload.styles.borderWidth]}
+                  min={0}
+                  max={20}
+                  step={1}
+                  onValueChange={(v) => updateStyle('borderWidth', v[0])}
+                />
+            </div>
+             <div className="space-y-2">
+                <Label>Color del Borde</Label>
+                <ColorPickerAdvanced color={element.payload.styles.borderColor} setColor={(c) => updateStyle('borderColor', c)} />
+            </div>
+             <div className="space-y-2">
+                <Label>Radio del Borde</Label>
+                 <Slider
+                  value={[element.payload.styles.borderRadius]}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onValueChange={(v) => updateStyle('borderRadius', v[0])}
+                />
+            </div>
+        </div>
+      </div>
+    );
+};
 
 function ThemeToggle() {
   const { toast } = useToast();
@@ -2083,6 +2220,21 @@ export default function CreateTemplatePage() {
                 }
             },
         };
+    } else if (blockType === 'youtube') {
+        newBlock = {
+            id: `youtube_${Date.now()}`,
+            type: 'youtube',
+            payload: {
+                url: '',
+                videoId: null,
+                styles: {
+                    playButtonType: 'default',
+                    borderRadius: 12,
+                    borderColor: '#000000',
+                    borderWidth: 0,
+                }
+            }
+        };
     } else {
         newBlock = {
             id: `${blockType}_${Date.now()}`,
@@ -2291,9 +2443,8 @@ export default function CreateTemplatePage() {
     width: number,
     height: number
   ): string => {
-    if (width === 0 || height <= 0) return "";
-    let path = `M0,${height}`;
-    const segmentWidth = width / frequency;
+    if (width <= 0 || height <= 0) return "";
+    let path = "";
   
     switch (type) {
       case 'waves': {
@@ -2308,8 +2459,9 @@ export default function CreateTemplatePage() {
       }
       case 'drops': {
         path = `M0,0`;
+        const segmentWidth = width / frequency;
         const dropHeight = height * 0.9;
-        const dropWidth = segmentWidth * 0.6;
+        const dropWidth = Math.min(segmentWidth * 0.6, height * 0.5); 
         for (let i = 0; i < frequency; i++) {
             const startX = i * segmentWidth + (segmentWidth - dropWidth) / 2;
             const midX = startX + dropWidth / 2;
@@ -2319,19 +2471,19 @@ export default function CreateTemplatePage() {
         break;
       }
       case 'zigzag': {
-        path = `M0,${height / 2}`;
-        for (let i = 0; i < frequency * 2; i++) {
-            const x = ((i + 0.5) / (frequency * 2)) * width;
+        path = `M0,${height/2}`;
+        for (let i = 0; i <= frequency * 2; i++) {
+            const x = (i / (frequency * 2)) * width;
             const y = i % 2 === 0 ? 0 : height;
             path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
         }
-        path += ` L${width},${height/2}`;
         break;
       }
       case 'leaves': {
          path = '';
+         const segmentWidth = width / frequency;
          const leafHeight = height * 0.8;
-         const leafWidth = segmentWidth * 0.8;
+         const leafWidth = Math.min(segmentWidth * 0.8, height * 1.5);
         for (let i = 0; i < frequency; i++) {
           const startX = i * segmentWidth + (segmentWidth - leafWidth) / 2;
           const midX = startX + leafWidth / 2;
@@ -2341,15 +2493,16 @@ export default function CreateTemplatePage() {
         }
         break;
       }
-      case 'scallops': {
-        path = `M0,${height}`;
+       case 'scallops': {
+        path = `M-1,${height}`;
+        const segmentWidth = width / frequency;
+        const r = Math.min(segmentWidth / 2, height);
         for (let i = 0; i < frequency; i++) {
-          const startX = i * segmentWidth;
-          const endX = startX + segmentWidth;
-          const midX = startX + segmentWidth / 2;
-          path += ` L${startX},${height} Q${midX},0 ${endX},${height}`;
+          const x1 = i * segmentWidth;
+          const x2 = x1 + segmentWidth;
+          path += ` A ${r} ${r} 0 0 1 ${x2} ${height}`;
         }
-        path += ' Z';
+        path += ` L${width + 1},${height} L${width+1},0 L-1,0 Z`;
         break;
       }
     }
@@ -2418,38 +2571,26 @@ export default function CreateTemplatePage() {
    const LineSeparator = ({ block }: { block: SeparatorBlock }) => {
     const { thickness, borderRadius, color, style } = block.payload.line;
     
-    const lineStyle: React.CSSProperties = {
+     const lineStyle: React.CSSProperties = {
         height: `${thickness}px`,
         borderRadius: `${borderRadius}px`,
         width: '100%',
         backgroundColor: style === 'solid' ? color : 'transparent',
-        backgroundImage: style !== 'solid' ? `linear-gradient(to right, ${color} ${style === 'dashed' ? '60%' : '100%'}, transparent ${style === 'dashed' ? '40%' : '0%'})` : undefined,
-        backgroundSize: style === 'dotted' ? `${thickness * 2}px ${thickness}px` : (style === 'dashed' ? `${thickness * 3}px ${thickness}px` : undefined),
-        backgroundRepeat: 'repeat-x',
     };
+    
+    if (style !== 'solid') {
+        const lineSegment = style === 'dashed' ? '10px' : `${thickness}px`;
+        const gap = style === 'dashed' ? '5px' : `${thickness}px`;
+        lineStyle.backgroundImage = `repeating-linear-gradient(to right, ${color} 0, ${color} ${lineSegment}, transparent ${lineSegment}, transparent calc(${lineSegment} + ${gap}))`;
+    }
 
     const containerStyle: React.CSSProperties = {
         height: `${block.payload.height}px`,
         display: 'flex',
         alignItems: 'center',
         width: '100%',
-        padding: `0 ${borderRadius}px`
+        padding: `0 1px`
     };
-
-    if (style === 'dotted') {
-        const dotStyle = {
-            width: `${thickness}px`,
-            height: `${thickness}px`,
-            backgroundColor: color,
-            borderRadius: '50%',
-        };
-        const dotCount = Math.floor(100 / (thickness/5)); // Approximation
-        return (
-            <div style={{...containerStyle, justifyContent: 'space-between', padding: `0 ${thickness/2}px` }}>
-                {Array.from({length: dotCount}).map((_, i) => <div key={i} style={dotStyle}/>)}
-            </div>
-        )
-    }
 
     return (
         <div style={containerStyle}>
@@ -2548,6 +2689,46 @@ export default function CreateTemplatePage() {
                             )}
                         </div>
                     );
+                case 'youtube': {
+                    const youtubeBlock = block as YouTubeBlock;
+                    const { videoId, styles } = youtubeBlock.payload;
+                    const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
+
+                    const playButtonSvg = {
+                        default: `<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55C3.97,2.33,2.27,4.81,1.48,7.74,0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
+                        minimal: `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="rgba(0,0,0,0.5)" stroke="#fff" stroke-width="2"></circle><path d="M 40,30 65,50 40,70 Z" fill="#fff"></path></svg>`,
+                        brand: `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="64" viewBox="0 0 90 64"><rect width="90" height="64" rx="18" fill="#FF0000"></rect><path d="M 60,32 36,19 36,45 Z" fill="#FFFFFF"></path></svg>`,
+                    };
+
+                    const encodedSvg = btoa(playButtonSvg[styles.playButtonType]);
+
+                    return (
+                        <div className="relative w-full aspect-video p-2">
+                             <a
+                                href={youtubeBlock.payload.url || '#'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-full h-full relative"
+                                style={{
+                                  borderRadius: `${styles.borderRadius}px`,
+                                  boxShadow: `0 0 0 ${styles.borderWidth}px ${styles.borderColor}`,
+                                  overflow: 'hidden',
+                                }}
+                            >
+                                <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
+                                <div 
+                                    className="absolute inset-0 flex items-center justify-center bg-black/20"
+                                    style={{
+                                        backgroundImage: `url(data:image/svg+xml;base64,${encodedSvg})`,
+                                        backgroundPosition: 'center',
+                                        backgroundRepeat: 'no-repeat',
+                                        backgroundSize: '20%',
+                                    }}
+                                />
+                            </a>
+                        </div>
+                    );
+                }
               default:
                 return (
                   <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
@@ -2737,11 +2918,14 @@ export default function CreateTemplatePage() {
               </Button>
           </div>
     
-          <div className="absolute top-2 -right-8 flex items-center opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
-              <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
-                  <Trash2 className="size-4" />
-              </Button>
-          </div>
+           <Button
+              variant="destructive"
+              size="icon"
+              className="absolute top-2 -right-8 size-7 opacity-0 group-hover/row:opacity-100 transition-opacity z-10"
+              onClick={() => promptDeleteItem(block.id)}
+            >
+              <Trash2 className="size-4" />
+            </Button>
     
           <div
             id={block.id}
@@ -2817,11 +3001,14 @@ export default function CreateTemplatePage() {
             </Button>
         </div>
 
-        <div className="absolute top-2 -right-8 flex items-center opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
-            <Button variant="destructive" size="icon" className="size-7" onClick={() => promptDeleteItem(block.id)}>
-                <Trash2 className="size-4" />
-            </Button>
-        </div>
+        <Button
+          variant="destructive"
+          size="icon"
+          className="absolute top-2 -right-8 size-7 opacity-0 group-hover/row:opacity-100 transition-opacity z-10"
+          onClick={() => promptDeleteItem(block.id)}
+        >
+          <Trash2 className="size-4" />
+        </Button>
         
         {block.type === 'columns' && (
             <div className="flex w-full relative">
@@ -2896,16 +3083,16 @@ export default function CreateTemplatePage() {
     if (!blockName) return null;
 
     return (
-        <div className="mb-4">
-             <Button 
-                variant="outline" 
-                onClick={handleDelete}
-                className="w-full justify-between text-[#F00000] border-[#F00000] hover:bg-[#F00000] hover:text-white"
-            >
-                <span className="capitalize">{blockName}</span>
-                <Trash2 className="size-4" />
-            </Button>
-        </div>
+       <div className="mb-4">
+        <Button
+          variant="outline"
+          onClick={handleDelete}
+          className="w-full justify-between text-[#F00000] border-[#F00000] hover:bg-[#F00000] hover:text-white dark:text-white dark:hover:bg-[#F00000] dark:border-[#F00000]"
+        >
+          <span className="capitalize">{blockName}</span>
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
     );
 };
 
@@ -3051,7 +3238,7 @@ export default function CreateTemplatePage() {
       </main>
 
       <aside className="w-80 border-l border-l-black/10 dark:border-border/20 flex flex-col bg-card/5">
-        <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-2 flex items-center">
+         <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-2 flex items-center">
             <Tabs defaultValue="style" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="style"><PaletteIcon className="mr-2"/>Estilo</TabsTrigger>
@@ -3060,57 +3247,67 @@ export default function CreateTemplatePage() {
             </Tabs>
         </header>
          <ScrollArea className="flex-1 custom-scrollbar">
-            <div className="p-4 space-y-6">
-              <StyleEditorHeader />
-              { (selectedElement?.type === 'column') && (
-                <>
-                 <BackgroundEditor 
-                    selectedElement={selectedElement} 
-                    canvasContent={canvasContent} 
-                    setCanvasContent={setCanvasContent}
-                    onOpenImageModal={handleOpenImageModal}
-                 />
-                    <Separator className="bg-border/20" />
-                    <ColumnDistributionEditor 
-                        selectedElement={selectedElement}
-                        canvasContent={canvasContent}
+           <Tabs defaultValue="style" className="w-full">
+              <TabsContent value="style">
+                 <div className="p-4 space-y-6">
+                  <StyleEditorHeader />
+                  { (selectedElement?.type === 'column') && (
+                    <>
+                     <BackgroundEditor 
+                        selectedElement={selectedElement} 
+                        canvasContent={canvasContent} 
                         setCanvasContent={setCanvasContent}
-                    />
-                </>
-              )}
-               { (selectedElement?.type === 'wrapper') && (
-                 <BackgroundEditor 
-                    selectedElement={selectedElement} 
-                    canvasContent={canvasContent} 
-                    setCanvasContent={setCanvasContent}
-                    onOpenImageModal={handleOpenImageModal}
-                 />
-              )}
-              { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'button' && (
-                  <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-              )}
-               { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading' && (
-                  <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-              )}
-               { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'text' && (
-                  <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-              )}
-              { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-static' && (
-                  <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-              )}
-               { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
-                  <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-              )}
-               { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'separator' && (
-                  <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-              )}
-              
-              { !selectedElement && (
-                 <div className="text-center text-muted-foreground p-4 text-sm">
-                    Selecciona un elemento en el lienzo para ver sus opciones de estilo.
-                 </div>
-              )}
-          </div>
+                        onOpenImageModal={handleOpenImageModal}
+                     />
+                        <Separator className="bg-border/20" />
+                        <ColumnDistributionEditor 
+                            selectedElement={selectedElement}
+                            canvasContent={canvasContent}
+                            setCanvasContent={setCanvasContent}
+                        />
+                    </>
+                  )}
+                   { (selectedElement?.type === 'wrapper') && (
+                     <BackgroundEditor 
+                        selectedElement={selectedElement} 
+                        canvasContent={canvasContent} 
+                        setCanvasContent={setCanvasContent}
+                        onOpenImageModal={handleOpenImageModal}
+                     />
+                  )}
+                  { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'button' && (
+                      <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  )}
+                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading' && (
+                      <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  )}
+                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'text' && (
+                      <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  )}
+                  { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-static' && (
+                      <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  )}
+                   { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
+                      <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  )}
+                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'separator' && (
+                      <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  )}
+                  { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'youtube' && (
+                      <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                  )}
+                  
+                  { !selectedElement && (
+                     <div className="text-center text-muted-foreground p-4 text-sm">
+                        Selecciona un elemento en el lienzo para ver sus opciones de estilo.
+                     </div>
+                  )}
+              </div>
+              </TabsContent>
+              <TabsContent value="layers">
+                  {/* Layers content will go here */}
+              </TabsContent>
+           </Tabs>
          </ScrollArea>
       </aside>
 
@@ -3364,6 +3561,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
