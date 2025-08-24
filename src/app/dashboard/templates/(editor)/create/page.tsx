@@ -2851,8 +2851,8 @@ export default function CreateTemplatePage() {
                     };
                     
                     const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : 'sm';
-                    const playButtonSize = { lg: 'w-32 h-24', md: 'w-14 h-10', sm: 'w-12 h-9' };
-                    const titleSize = { lg: 'text-2xl', md: 'text-lg', sm: 'text-xs' };
+                    const playButtonSize = { lg: 'w-16 h-12', md: 'w-14 h-10', sm: 'w-12 h-9' };
+                    const titleSize = { lg: 'text-2xl p-4', md: 'text-lg p-3', sm: 'text-xs px-2 pt-1 pb-0' };
                     const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs' };
 
                     const formatDuration = () => {
@@ -2904,14 +2904,20 @@ export default function CreateTemplatePage() {
                             className="w-full h-full"
                            >
                             <div
-                                className="block w-full h-full relative aspect-video"
+                                className="w-full h-full relative aspect-video"
                                 style={{
                                   borderRadius: `${styles.borderRadius > 0 ? styles.borderRadius - styles.borderWidth : 0}px`,
                                   overflow: 'hidden',
                                 }}
                             >
-                                <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
+                                <img src={thumbnailUrl} alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover" />
                                 
+                                {showTitle && title && (
+                                    <div className={cn("absolute top-0 left-0 w-full text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none", titleSize[sizeVariant])}>
+                                        <p className="font-semibold truncate">{title}</p>
+                                    </div>
+                                )}
+
                                 <div className="absolute inset-0 flex items-center justify-center z-10">
                                      <a 
                                         href={link.url && videoId ? link.url : undefined} 
@@ -2930,11 +2936,6 @@ export default function CreateTemplatePage() {
                                          <span className="sr-only">Play Video</span>
                                      </a>
                                 </div>
-                                {showTitle && title && (
-                                    <div className={cn("absolute top-0 left-0 w-full p-4 text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none", titleSize[sizeVariant])}>
-                                        <p className="font-semibold truncate">{title}</p>
-                                    </div>
-                                )}
                                 {displayDuration && (
                                     <div className={cn("absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white font-mono rounded-md pointer-events-none", durationSize[sizeVariant])}>
                                         {displayDuration}
