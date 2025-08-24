@@ -300,7 +300,7 @@ interface YouTubeBlock extends BaseBlock {
             openInNewTab: boolean;
         };
         styles: {
-            playButtonType: 'default' | 'brand';
+            playButtonType: 'default' | 'classic';
             borderRadius: number;
             border: {
                 type: 'solid' | 'gradient';
@@ -2018,7 +2018,7 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <SelectTrigger><SelectValue/></SelectTrigger>
                 <SelectContent>
                     <SelectItem value="default">Por Defecto</SelectItem>
-                    <SelectItem value="brand">Marca YouTube</SelectItem>
+                    <SelectItem value="classic">Clásico</SelectItem>
                 </SelectContent>
             </Select>
         </div>
@@ -2752,7 +2752,7 @@ export default function CreateTemplatePage() {
     );
 };
   
-  const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string) => {
+  const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string, colCount: number) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
 
     return (
@@ -2848,11 +2848,14 @@ export default function CreateTemplatePage() {
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
 
                     const playButtonSvg = {
-                        default: `<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55C3.97,2.33,2.27,4.81,1.48,7.74,0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
-                        brand: `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="64" viewBox="0 0 90 64"><rect width="90" height="64" rx="18" fill="#FF0000"></rect><path d="M 60,32 36,19 36,45 Z" fill="#FFFFFF"></path></svg>`,
+                        default: `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="64" viewBox="0 0 90 64"><rect width="90" height="64" rx="18" fill="#FF0000" fill-opacity="0.9"></rect><path d="M 60,32 36,19 36,45 Z" fill="#FFFFFF"></path></svg>`,
+                        classic: `<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55C3.97,2.33,2.27,4.81,1.48,7.74,0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
                     };
-
-                    const encodedSvg = btoa(playButtonSvg[styles.playButtonType]);
+                    
+                    const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : 'sm';
+                    const playButtonSize = { lg: 'w-16 h-12', md: 'w-14 h-10', sm: 'w-12 h-9' };
+                    const titleSize = { lg: 'text-lg', md: 'text-sm', sm: 'text-xs' };
+                    const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs' };
 
                     const linkProps = (link.url && videoId) ? {
                         href: link.url,
@@ -2875,7 +2878,6 @@ export default function CreateTemplatePage() {
 
                     const formatDuration = () => {
                         const { hours, minutes, seconds } = duration;
-                        
                         const h = parseInt(hours || '0', 10);
                         const m = parseInt(minutes || '0', 10);
                         const s = parseInt(seconds || '0', 10);
@@ -2884,25 +2886,23 @@ export default function CreateTemplatePage() {
 
                         const parts = [];
                         if (h > 0) parts.push(h.toString());
-                        
                         if(h > 0 || m > 0) {
                            parts.push(m.toString().padStart(h > 0 ? 2 : 1, '0'));
                         }
-                        
                         if (s > 0 || m > 0 || h > 0) {
                              parts.push(s.toString().padStart(2, '0'));
                         }
 
                         if (parts.length === 0) return null;
-                        if(parts.length === 1) return `0:${parts[0].padStart(2,'0')}`;
+                        if(parts.length === 1 && m > 0) return `0:${parts[0].padStart(2,'0')}`;
+                        if(parts.length === 1) return `0:0${parts[0]}`;
                         
                         return parts.join(':');
                     };
-
                     const displayDuration = showDuration ? formatDuration() : null;
 
                     return (
-                        <div className="p-2">
+                        <div className="p-2 w-full h-full">
                            <div 
                             style={{
                                 ...borderStyle,
@@ -2914,33 +2914,29 @@ export default function CreateTemplatePage() {
                             <div
                                 className="block w-full h-full relative aspect-video"
                                 style={{
-                                  borderRadius: `${styles.borderRadius - styles.borderWidth}px`,
+                                  borderRadius: `${styles.borderRadius > 0 ? styles.borderRadius - styles.borderWidth : 0}px`,
                                   overflow: 'hidden',
                                 }}
                             >
                                 <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
                                 
                                 <div className="absolute inset-0 flex items-center justify-center z-10">
-                                    <a {...linkProps}>
+                                     <a {...linkProps} className="block">
                                         <div
-                                            className="w-[68px] h-[48px]" // Explicit size for the clickable area
+                                            className={cn("bg-center bg-no-repeat bg-contain", playButtonSize[sizeVariant])}
                                             style={{
-                                                backgroundImage: `url(data:image/svg+xml;base64,${encodedSvg})`,
-                                                backgroundPosition: 'center',
-                                                backgroundRepeat: 'no-repeat',
-                                                backgroundSize: 'contain',
+                                                backgroundImage: `url('data:image/svg+xml;base64,${btoa(playButtonSvg[styles.playButtonType])}')`
                                             }}
                                         />
                                     </a>
                                 </div>
-
                                 {showTitle && title && (
-                                    <div className="absolute top-0 left-0 w-full p-4 text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
-                                        <p className="text-sm font-semibold truncate">{title}</p>
+                                    <div className={cn("absolute top-0 left-0 w-full p-4 text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none", titleSize[sizeVariant])}>
+                                        <p className="font-semibold truncate">{title}</p>
                                     </div>
                                 )}
                                 {displayDuration && (
-                                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white text-xs font-mono rounded-md pointer-events-none">
+                                    <div className={cn("absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 text-white font-mono rounded-md pointer-events-none", durationSize[sizeVariant])}>
                                         {displayDuration}
                                     </div>
                                 )}
@@ -3244,7 +3240,7 @@ export default function CreateTemplatePage() {
                     >
                        {col.blocks.length > 0 ? (
                            <div className="flex flex-col gap-2 w-full">
-                               {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id))}
+                               {col.blocks.map(b => renderPrimitiveBlock(b, block.id, col.id, columns.length))}
                                <Button variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); handleOpenBlockSelector(col.id, 'column', e); }}><PlusCircle className="mr-2"/>Añadir</Button>
                            </div>
                        ) : (
