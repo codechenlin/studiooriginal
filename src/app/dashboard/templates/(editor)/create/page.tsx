@@ -130,7 +130,7 @@ const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -286,8 +286,11 @@ interface YouTubeBlock extends BaseBlock {
     payload: {
         url: string;
         videoId: string | null;
+        link: {
+            openInNewTab: boolean;
+        };
         styles: {
-            playButtonType: 'default' | 'minimal' | 'brand';
+            playButtonType: 'default' | 'brand';
             borderRadius: number;
             borderColor: string;
             borderWidth: number;
@@ -1876,6 +1879,10 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const updateStyle = (key: keyof YouTubeBlock['payload']['styles'], value: any) => {
         updatePayload('styles', { ...element.payload.styles, [key]: value });
     }
+    
+    const updateLink = (key: keyof YouTubeBlock['payload']['link'], value: any) => {
+        updatePayload('link', { ...element.payload.link, [key]: value });
+    }
 
     const handleUrlChange = (newUrl: string) => {
         let videoId: string | null = null;
@@ -1909,6 +1916,20 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             )}
         </div>
 
+        <div className="flex items-center space-x-2">
+            <Checkbox
+                id={`yt-new-tab-${element.id}`}
+                checked={element.payload.link.openInNewTab}
+                onCheckedChange={(checked) => updateLink('openInNewTab', !!checked)}
+            />
+            <label
+                htmlFor={`yt-new-tab-${element.id}`}
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+                Abrir en una nueva pestaña
+            </label>
+        </div>
+
         <Separator className="bg-border/20"/>
         
         <div className="space-y-2">
@@ -1917,7 +1938,6 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <SelectTrigger><SelectValue/></SelectTrigger>
                 <SelectContent>
                     <SelectItem value="default">Por Defecto</SelectItem>
-                    <SelectItem value="minimal">Minimalista</SelectItem>
                     <SelectItem value="brand">Marca YouTube</SelectItem>
                 </SelectContent>
             </Select>
@@ -2227,6 +2247,9 @@ export default function CreateTemplatePage() {
             payload: {
                 url: '',
                 videoId: null,
+                link: {
+                  openInNewTab: false
+                },
                 styles: {
                     playButtonType: 'default',
                     borderRadius: 12,
@@ -2691,28 +2714,33 @@ export default function CreateTemplatePage() {
                     );
                 case 'youtube': {
                     const youtubeBlock = block as YouTubeBlock;
-                    const { videoId, styles } = youtubeBlock.payload;
+                    const { videoId, styles, url, link } = youtubeBlock.payload;
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
 
                     const playButtonSvg = {
                         default: `<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55C3.97,2.33,2.27,4.81,1.48,7.74,0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
-                        minimal: `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="rgba(0,0,0,0.5)" stroke="#fff" stroke-width="2"></circle><path d="M 40,30 65,50 40,70 Z" fill="#fff"></path></svg>`,
                         brand: `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="64" viewBox="0 0 90 64"><rect width="90" height="64" rx="18" fill="#FF0000"></rect><path d="M 60,32 36,19 36,45 Z" fill="#FFFFFF"></path></svg>`,
                     };
 
                     const encodedSvg = btoa(playButtonSvg[styles.playButtonType]);
+                    
+                    const WrapperComponent = url && videoId ? 'a' : 'div';
+                    const wrapperProps = url && videoId ? {
+                        href: url,
+                        target: link.openInNewTab ? '_blank' : '_self',
+                        rel: "noopener noreferrer"
+                    } : {};
 
                     return (
                         <div className="relative w-full aspect-video p-2">
-                             <a
-                                href={youtubeBlock.payload.url || '#'}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                             <WrapperComponent
+                                {...wrapperProps}
                                 className="block w-full h-full relative"
                                 style={{
                                   borderRadius: `${styles.borderRadius}px`,
                                   boxShadow: `0 0 0 ${styles.borderWidth}px ${styles.borderColor}`,
                                   overflow: 'hidden',
+                                  cursor: (url && videoId) ? 'pointer' : 'default',
                                 }}
                             >
                                 <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
@@ -2725,7 +2753,7 @@ export default function CreateTemplatePage() {
                                         backgroundSize: '20%',
                                     }}
                                 />
-                            </a>
+                            </WrapperComponent>
                         </div>
                     );
                 }
@@ -3561,6 +3589,7 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
 
