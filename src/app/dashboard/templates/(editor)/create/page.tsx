@@ -1921,13 +1921,11 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             // Invalid URL format
         }
 
-        if(videoId) {
-            updatePayload('url', newUrl);
-            updatePayload('videoId', videoId);
+        updatePayload('url', newUrl);
+        updatePayload('videoId', videoId);
+        if (videoId) {
             updatePayload('link', { ...element.payload.link, url: newUrl });
         } else {
-            updatePayload('url', newUrl);
-            updatePayload('videoId', null);
             updatePayload('link', { ...element.payload.link, url: '' });
         }
     };
@@ -2848,33 +2846,14 @@ export default function CreateTemplatePage() {
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
 
                     const playButtonSvg = {
-                        default: `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="64" viewBox="0 0 90 64"><rect width="90" height="64" rx="18" fill="#FF0000" fill-opacity="0.9"></rect><path d="M 60,32 36,19 36,45 Z" fill="#FFFFFF"></path></svg>`,
-                        classic: `<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55C3.97,2.33,2.27,4.81,1.48,7.74,0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
+                        default: `<svg xmlns="http://www.w3.org/2000/svg" height="100%" version="1.1" viewBox="0 0 68 48" width="100%"><path class="ytp-large-play-button-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
+                        classic: `<svg xmlns="http://www.w3.org/2000/svg" width="90" height="64" viewBox="0 0 90 64" fill="none"><rect width="90" height="64" rx="18" fill="red" fill-opacity="0.9"/><path d="M60 32L36 45.8564L36 18.1436L60 32Z" fill="white"/></svg>`,
                     };
                     
                     const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : 'sm';
-                    const playButtonSize = { lg: 'w-16 h-12', md: 'w-14 h-10', sm: 'w-12 h-9' };
-                    const titleSize = { lg: 'text-lg', md: 'text-sm', sm: 'text-xs' };
+                    const playButtonSize = { lg: 'w-32 h-24', md: 'w-14 h-10', sm: 'w-12 h-9' };
+                    const titleSize = { lg: 'text-2xl', md: 'text-lg', sm: 'text-xs' };
                     const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs' };
-
-                    const linkProps = (link.url && videoId) ? {
-                        href: link.url,
-                        target: link.openInNewTab ? '_blank' : '_self',
-                        rel: "noopener noreferrer",
-                    } : {};
-
-                    const { border } = styles;
-                    let borderStyle: React.CSSProperties = {};
-                    if(border.type === 'solid') {
-                        borderStyle.background = border.color1;
-                    } else if (border.type === 'gradient') {
-                         if (border.direction === 'radial') {
-                          borderStyle.background = `radial-gradient(${border.color1}, ${border.color2})`;
-                        } else {
-                          const angle = border.direction === 'horizontal' ? 'to right' : 'to bottom';
-                          borderStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
-                        }
-                    }
 
                     const formatDuration = () => {
                         const { hours, minutes, seconds } = duration;
@@ -2900,6 +2879,19 @@ export default function CreateTemplatePage() {
                         return parts.join(':');
                     };
                     const displayDuration = showDuration ? formatDuration() : null;
+                    
+                    const { border } = styles;
+                    let borderStyle: React.CSSProperties = {};
+                    if(border.type === 'solid') {
+                        borderStyle.background = border.color1;
+                    } else if (border.type === 'gradient') {
+                         if (border.direction === 'radial') {
+                          borderStyle.background = `radial-gradient(${border.color1}, ${border.color2})`;
+                        } else {
+                          const angle = border.direction === 'horizontal' ? 'to right' : 'to bottom';
+                          borderStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
+                        }
+                    }
 
                     return (
                         <div className="p-2 w-full h-full">
@@ -2921,14 +2913,22 @@ export default function CreateTemplatePage() {
                                 <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
                                 
                                 <div className="absolute inset-0 flex items-center justify-center z-10">
-                                     <a {...linkProps} className="block">
-                                        <div
-                                            className={cn("bg-center bg-no-repeat bg-contain", playButtonSize[sizeVariant])}
-                                            style={{
-                                                backgroundImage: `url('data:image/svg+xml;base64,${btoa(playButtonSvg[styles.playButtonType])}')`
-                                            }}
-                                        />
-                                    </a>
+                                     <a 
+                                        href={link.url && videoId ? link.url : undefined} 
+                                        target={link.url && videoId ? (link.openInNewTab ? '_blank' : '_self') : undefined} 
+                                        rel="noopener noreferrer"
+                                        className={cn(
+                                          "block bg-center bg-no-repeat bg-contain", 
+                                          playButtonSize[sizeVariant],
+                                          link.url && videoId ? "cursor-pointer" : "cursor-default"
+                                        )}
+                                        style={{ backgroundImage: `url('data:image/svg+xml;base64,${btoa(playButtonSvg[styles.playButtonType])}')` }}
+                                        onClick={(e) => {
+                                            if (!link.url || !videoId) e.preventDefault();
+                                        }}
+                                     >
+                                         <span className="sr-only">Play Video</span>
+                                     </a>
                                 </div>
                                 {showTitle && title && (
                                     <div className={cn("absolute top-0 left-0 w-full p-4 text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none", titleSize[sizeVariant])}>
