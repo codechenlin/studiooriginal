@@ -88,6 +88,9 @@ import {
   Eraser,
   Waves,
   Dot,
+  Cloud,
+  Leaf,
+  Droplet,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -157,6 +160,7 @@ type TextAlign = 'left' | 'center' | 'right';
 type BackgroundFit = 'cover' | 'contain' | 'auto';
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 type SeparatorLineStyle = 'solid' | 'dotted' | 'dashed';
+type SeparatorShapeType = 'waves' | 'drops' | 'zigzag' | 'leaves' | 'clouds';
 
 interface BaseBlock {
   id: string;
@@ -238,21 +242,22 @@ interface SeparatorBlock extends BaseBlock {
     type: 'separator';
     payload: {
         height: number;
-        style: 'invisible' | 'line' | 'waves' | 'dots';
+        style: 'invisible' | 'line' | 'shapes' | 'dots';
         line: {
             thickness: number;
             color: string;
             style: SeparatorLineStyle;
             borderRadius: number;
         };
-        waves: {
+        shapes: {
+            type: SeparatorShapeType;
             background: {
               type: 'solid' | 'gradient';
               color1: string;
               color2?: string;
               direction?: GradientDirection;
             };
-            waveCount: number;
+            frequency: number;
         };
         dots: {
             size: number;
@@ -1643,7 +1648,7 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
       }));
     };
     
-    const updateSubPayload = (mainKey: 'line' | 'waves' | 'dots', subKey: string, value: any) => {
+    const updateSubPayload = (mainKey: 'line' | 'shapes' | 'dots', subKey: string, value: any) => {
         setCanvasContent(prev => prev.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             return {
@@ -1671,9 +1676,9 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }));
     };
 
-    const updateWavesBackground = (key: string, value: any) => {
-        const currentBg = element.payload.waves.background;
-        updateSubPayload('waves', 'background', { ...currentBg, [key]: value });
+    const updateShapesBackground = (key: string, value: any) => {
+        const currentBg = element.payload.shapes.background;
+        updateSubPayload('shapes', 'background', { ...currentBg, [key]: value });
     }
 
     const { payload } = element;
@@ -1707,7 +1712,7 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     <TabsList className="grid grid-cols-4 h-auto">
                         <TabsTrigger value="invisible" className="text-xs">Invisible</TabsTrigger>
                         <TabsTrigger value="line" className="text-xs">Línea</TabsTrigger>
-                        <TabsTrigger value="waves" className="text-xs">Olas</TabsTrigger>
+                        <TabsTrigger value="shapes" className="text-xs">Formas</TabsTrigger>
                         <TabsTrigger value="dots" className="text-xs">Puntos</TabsTrigger>
                     </TabsList>
                  </Tabs>
@@ -1741,13 +1746,26 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 </div>
             )}
 
-            {payload.style === 'waves' && (
+            {payload.style === 'shapes' && (
                 <div className="space-y-4 p-3 border rounded-md bg-background/30">
-                     <div className="space-y-2">
-                        <Label>Frecuencia de las Olas</Label>
-                        <Slider value={[payload.waves.waveCount]} min={1} max={10} step={1} onValueChange={v => updateSubPayload('waves', 'waveCount', v[0])}/>
+                    <div className="space-y-2">
+                        <Label>Tipo de Forma</Label>
+                        <Select value={payload.shapes.type} onValueChange={v => updateSubPayload('shapes', 'type', v)}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="waves"><Waves className="inline-block mr-2" />Olas</SelectItem>
+                                <SelectItem value="drops"><Droplet className="inline-block mr-2" />Gotas</SelectItem>
+                                <SelectItem value="zigzag"><Minus className="inline-block mr-2" />Zigzag</SelectItem>
+                                <SelectItem value="leaves"><Leaf className="inline-block mr-2" />Hojas</SelectItem>
+                                <SelectItem value="clouds"><Cloud className="inline-block mr-2" />Nubes</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                     <Tabs value={payload.waves.background.type} onValueChange={(v) => updateWavesBackground('type', v)} className="w-full">
+                     <div className="space-y-2">
+                        <Label>Frecuencia</Label>
+                        <Slider value={[payload.shapes.frequency]} min={1} max={20} step={1} onValueChange={v => updateSubPayload('shapes', 'frequency', v[0])}/>
+                    </div>
+                     <Tabs value={payload.shapes.background.type} onValueChange={(v) => updateShapesBackground('type', v)} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="solid">Sólido</TabsTrigger>
                             <TabsTrigger value="gradient">Degradado</TabsTrigger>
@@ -1755,17 +1773,17 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     </Tabs>
                     <div className="space-y-3">
                         <Label>Color 1</Label>
-                        <ColorPickerAdvanced color={payload.waves.background.color1} setColor={(c) => updateWavesBackground('color1', c)} />
+                        <ColorPickerAdvanced color={payload.shapes.background.color1} setColor={(c) => updateShapesBackground('color1', c)} />
                     </div>
-                    {payload.waves.background.type === 'gradient' && (
+                    {payload.shapes.background.type === 'gradient' && (
                         <>
                             <div className="space-y-3">
                                 <Label>Color 2</Label>
-                                <ColorPickerAdvanced color={payload.waves.background.color2 || '#3357FF'} setColor={(c) => updateWavesBackground('color2', c)} />
+                                <ColorPickerAdvanced color={payload.shapes.background.color2 || '#3357FF'} setColor={(c) => updateShapesBackground('color2', c)} />
                             </div>
                             <div className="space-y-3">
                                 <Label>Dirección</Label>
-                                <Select value={payload.waves.background.direction} onValueChange={v => updateWavesBackground('direction', v)}>
+                                <Select value={payload.shapes.background.direction} onValueChange={v => updateShapesBackground('direction', v)}>
                                     <SelectTrigger><SelectValue/></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="vertical">Vertical</SelectItem>
@@ -2047,14 +2065,15 @@ export default function CreateTemplatePage() {
                     style: 'solid',
                     borderRadius: 0,
                 },
-                waves: {
+                shapes: {
+                    type: 'waves',
                     background: {
                         type: 'solid',
                         color1: '#A020F0',
                         color2: '#3357FF',
                         direction: 'vertical'
                     },
-                    waveCount: 3,
+                    frequency: 3,
                 },
                 dots: {
                     size: 4,
@@ -2265,35 +2284,78 @@ export default function CreateTemplatePage() {
     };
   };
 
-  const generateWavePath = (waveCount: number, width: number, height: number): string => {
-    if (width === 0 || height === 0) return '';
-    const amplitude = height / 2;
-    const frequency = waveCount;
-    const segments = 50; 
-    const segmentWidth = width / segments;
-    
-    let path = `M0,${amplitude}`;
-    
-    for (let i = 0; i <= segments; i++) {
-        const x = i * segmentWidth;
-        const y = amplitude + (amplitude * 0.8) * Math.sin((i / segments) * frequency * Math.PI);
-        path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
+  const generateShapePath = (
+    type: SeparatorShapeType,
+    frequency: number,
+    width: number,
+    height: number
+  ): string => {
+    if (width === 0 || height === 0) return "";
+    let path = "";
+    const segmentWidth = width / frequency;
+
+    switch (type) {
+        case 'waves':
+            const amplitude = height / 2;
+            path = `M0,${amplitude}`;
+            for (let i = 0; i <= frequency * 2; i++) {
+                const x = (i / (frequency * 2)) * width;
+                const y = amplitude + (amplitude * 0.8) * Math.sin((i / frequency) * Math.PI);
+                path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
+            }
+            break;
+        case 'drops':
+            for (let i = 0; i < frequency; i++) {
+                const startX = i * segmentWidth;
+                const midX = startX + segmentWidth / 2;
+                const endX = startX + segmentWidth;
+                path += ` M${midX},${height * 0.1} Q${startX},${height * 0.5} ${midX},${height * 0.9} Q${endX},${height * 0.5} ${midX},${height * 0.1} Z`;
+            }
+            break;
+        case 'zigzag':
+            path = `M0,${height/2}`;
+            for (let i = 0; i < frequency * 2; i++) {
+                const x = ((i + 1) / (frequency * 2)) * width;
+                const y = i % 2 === 0 ? height * 0.1 : height * 0.9;
+                path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
+            }
+            break;
+        case 'leaves':
+             for (let i = 0; i < frequency; i++) {
+                const startX = i * segmentWidth;
+                const midX = startX + segmentWidth / 2;
+                const endX = startX + segmentWidth;
+                const midY = height / 2;
+                path += ` M${startX},${midY} Q${midX},${height * 0.1} ${endX},${midY} Q${midX},${height * 0.9} ${startX},${midY} Z`;
+            }
+            break;
+        case 'clouds':
+            const cloudWidth = segmentWidth * 0.8;
+            for (let i = 0; i < frequency; i++) {
+                const startX = i * segmentWidth + segmentWidth * 0.1;
+                const y = height * 0.6;
+                const r = cloudWidth * 0.2;
+                path += ` M${startX},${y}
+                          A${r},${r} 0 0,1 ${startX + r},${y-r}
+                          A${r*1.5},${r*1.5} 0 0,1 ${startX + cloudWidth - r},${y-r}
+                          A${r},${r} 0 0,1 ${startX + cloudWidth},${y} Z`;
+            }
+            break;
     }
-    
-    path += ` L${width},${height} L0,${height} Z`;
     return path;
-  }
+  };
+
   
-  const WavesSeparator = ({ block }: { block: SeparatorBlock }) => {
+  const ShapesSeparator = ({ block }: { block: SeparatorBlock }) => {
     const ref = useRef<SVGSVGElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: block.payload.height });
-    const { background, waveCount } = block.payload.waves;
+    const { type, background, frequency } = block.payload.shapes;
 
     useEffect(() => {
         const observer = new ResizeObserver(entries => {
             if (entries[0]) {
-                const { width, height } = entries[0].contentRect;
-                setDimensions({ width, height });
+                const { width } = entries[0].contentRect;
+                setDimensions({ width, height: block.payload.height });
             }
         });
         if (ref.current) {
@@ -2304,36 +2366,40 @@ export default function CreateTemplatePage() {
                 observer.unobserve(ref.current);
             }
         };
-    }, []);
+    }, [block.payload.height]);
+    
+    useEffect(() => {
+        setDimensions(prev => ({ ...prev, height: block.payload.height }));
+    }, [block.payload.height]);
 
-    const pathData = generateWavePath(waveCount, dimensions.width, dimensions.height);
-
+    const pathData = generateShapePath(type, frequency, dimensions.width, dimensions.height);
+    
     const getFill = () => {
+        const gradientId = `shape-gradient-${block.id}`;
         if (background.type === 'solid') {
             return background.color1;
         }
         if (background.type === 'gradient') {
-             if (background.direction === 'radial') return `url(#wave-gradient-radial-${block.id})`;
-            return `url(#wave-gradient-linear-${block.id})`;
+             return `url(#${gradientId})`;
         }
         return 'none';
     };
 
     return (
-        <svg ref={ref} width="100%" height="100%" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+        <svg ref={ref} width="100%" height={`${block.payload.height}px`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
             {background.type === 'gradient' && (
                 <defs>
-                    <linearGradient id={`wave-gradient-linear-${block.id}`} x1="0%" y1="0%" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
+                    <linearGradient id={`shape-gradient-${block.id}`} x1="0%" y1="0%" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
                         <stop offset="0%" stopColor={background.color1} />
                         <stop offset="100%" stopColor={background.color2} />
                     </linearGradient>
-                    <radialGradient id={`wave-gradient-radial-${block.id}`}>
+                    <radialGradient id={`shape-gradient-${block.id}`}>
                         <stop offset="0%" stopColor={background.color1} />
                         <stop offset="100%" stopColor={background.color2} />
                     </radialGradient>
                 </defs>
             )}
-            <path d={pathData} fill={getFill()} />
+            <path d={pathData} fill={getFill()} stroke="none" />
         </svg>
     );
   }
@@ -2341,18 +2407,17 @@ export default function CreateTemplatePage() {
     const getLineStyle = (linePayload: SeparatorBlock['payload']['line']): React.CSSProperties => {
         const style: React.CSSProperties = {
             height: `${linePayload.thickness}px`,
-            backgroundColor: linePayload.color,
             borderRadius: `${linePayload.borderRadius}px`,
             width: '100%',
         };
 
-        if (linePayload.style === 'dotted') {
+        if (linePayload.style === 'solid') {
+            style.backgroundColor = linePayload.color;
+        } else if (linePayload.style === 'dotted') {
             style.backgroundImage = `radial-gradient(circle, ${linePayload.color} ${linePayload.thickness / 2}px, transparent ${linePayload.thickness / 2}px)`;
             style.backgroundSize = `${linePayload.thickness * 2}px ${linePayload.thickness * 2}px`;
             style.backgroundColor = 'transparent';
-        }
-
-        if (linePayload.style === 'dashed') {
+        } else if (linePayload.style === 'dashed') {
             style.backgroundImage = `linear-gradient(to right, ${linePayload.color} 60%, transparent 40%)`;
             style.backgroundSize = `${linePayload.thickness * 4}px ${linePayload.thickness}px`;
             style.backgroundRepeat = 'repeat-x';
@@ -2435,8 +2500,8 @@ export default function CreateTemplatePage() {
                             {payload.style === 'line' && (
                                 <div style={getLineStyle(payload.line)} />
                             )}
-                            {payload.style === 'waves' && (
-                               <div className="w-full h-full"><WavesSeparator block={separatorBlock} /></div>
+                            {payload.style === 'shapes' && (
+                               <div className="w-full h-full"><ShapesSeparator block={separatorBlock} /></div>
                             )}
                             {payload.style === 'dots' && (
                                 <div className="flex justify-around items-center w-full">
