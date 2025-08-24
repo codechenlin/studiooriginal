@@ -2834,6 +2834,44 @@ export default function CreateTemplatePage() {
     );
   }
 
+  const StyleEditorHeader = () => {
+    if (!selectedElement) return null;
+
+    let title = "Editor de Estilos";
+    let handleDelete = () => {};
+
+    switch (selectedElement.type) {
+      case 'column':
+        title = "Editor de Columna";
+        handleDelete = () => promptDeleteItem(selectedElement.rowId, selectedElement.columnId);
+        break;
+      case 'wrapper':
+        title = "Editor de Contenedor";
+        handleDelete = () => promptDeleteItem(selectedElement.wrapperId);
+        break;
+      case 'primitive':
+      case 'wrapper-primitive':
+        const blockType = getSelectedBlockType(selectedElement, canvasContent);
+        if (blockType) {
+            const blockName = [...columnContentBlocks, ...wrapperContentBlocks].find(b => b.id === blockType)?.name || "Bloque";
+            title = `Editor de ${blockName}`;
+        }
+        handleDelete = () => selectedElement.type === 'primitive' 
+            ? promptDeleteItem(selectedElement.rowId, selectedElement.columnId, selectedElement.primitiveId)
+            : promptDeleteItem(selectedElement.wrapperId, undefined, selectedElement.primitiveId);
+        break;
+    }
+
+    return (
+        <header className="h-[61px] border-b border-border/20 flex-shrink-0 p-4 flex items-center justify-between">
+            <h2 className="font-semibold text-lg">{title}</h2>
+            <Button variant="destructive" size="icon" onClick={handleDelete} className="size-8">
+                <Trash2 className="size-4" />
+            </Button>
+        </header>
+    );
+  };
+
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
@@ -2976,14 +3014,7 @@ export default function CreateTemplatePage() {
       </main>
 
       <aside className="w-80 border-l border-l-black/10 dark:border-border/20 flex flex-col bg-card/5">
-         <header className="h-[61px] border-b border-border/20 flex-shrink-0">
-             <Tabs defaultValue="style" className="flex-1 flex flex-col h-full">
-                <TabsList className="grid w-full grid-cols-2 m-2 bg-card/10 border-border/20">
-                    <TabsTrigger value="style"><Palette className="mr-2"/> Estilo</TabsTrigger>
-                    <TabsTrigger value="config"><ChevronsUpDown className="mr-2"/> Capas</TabsTrigger>
-                </TabsList>
-             </Tabs>
-         </header>
+         <StyleEditorHeader />
          <Separator className="bg-border/20" />
          <ScrollArea className="flex-1 custom-scrollbar">
             <div className="p-4 space-y-6">
@@ -3290,5 +3321,6 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
