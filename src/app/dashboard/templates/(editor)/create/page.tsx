@@ -2853,16 +2853,12 @@ export default function CreateTemplatePage() {
                     };
 
                     const encodedSvg = btoa(playButtonSvg[styles.playButtonType]);
-                    
-                    const PlayButtonLink = link.url && videoId ? 'a' : 'div';
+
                     const linkProps = (link.url && videoId) ? {
                         href: link.url,
                         target: link.openInNewTab ? '_blank' : '_self',
                         rel: "noopener noreferrer",
-                        className: "absolute inset-0 flex items-center justify-center bg-transparent z-10",
-                    } : {
-                        className: "absolute inset-0 flex items-center justify-center bg-transparent z-10 pointer-events-none",
-                    };
+                    } : {};
 
                     const { border } = styles;
                     let borderStyle: React.CSSProperties = {};
@@ -2924,20 +2920,22 @@ export default function CreateTemplatePage() {
                             >
                                 <img src={thumbnailUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
                                 
-                                <PlayButtonLink {...linkProps}>
-                                    <div 
-                                        className="w-full h-full"
-                                        style={{
-                                            backgroundImage: `url(data:image/svg+xml;base64,${encodedSvg})`,
-                                            backgroundPosition: 'center',
-                                            backgroundRepeat: 'no-repeat',
-                                            backgroundSize: '20%',
-                                        }}
-                                    />
-                                </PlayButtonLink>
+                                <div className="absolute inset-0 flex items-center justify-center z-10">
+                                    <a {...linkProps}>
+                                        <div
+                                            className="w-[68px] h-[48px]" // Explicit size for the clickable area
+                                            style={{
+                                                backgroundImage: `url(data:image/svg+xml;base64,${encodedSvg})`,
+                                                backgroundPosition: 'center',
+                                                backgroundRepeat: 'no-repeat',
+                                                backgroundSize: 'contain',
+                                            }}
+                                        />
+                                    </a>
+                                </div>
 
                                 {showTitle && title && (
-                                    <div className="absolute top-0 left-0 w-full p-4 text-white bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+                                    <div className="absolute top-0 left-0 w-full p-4 text-white bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
                                         <p className="text-sm font-semibold truncate">{title}</p>
                                     </div>
                                 )}
