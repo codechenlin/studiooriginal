@@ -98,7 +98,6 @@ import {
   RefreshCw,
   MessageSquare,
   CalendarIcon,
-  XCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -162,32 +161,60 @@ const googleFonts = [
 
 const timezones = [
     // General
-    "UTC", "GMT", 
+    "UTC - Coordinated Universal Time",
+    "GMT - Greenwich Mean Time",
     // Americas
-    "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", // USA
-    "America/Toronto", "America/Vancouver", // Canada
-    "America/Mexico_City", "America/Cancun", "America/Chihuahua", "America/Tijuana", // Mexico
-    "America/Bogota", // Colombia
-    "America/Caracas", // Venezuela
-    "America/Lima", // Peru
-    "America/La_Paz", // Bolivia
-    "America/El_Salvador", // El Salvador
-    "America/Guatemala", // Guatemala
-    "America/Sao_Paulo", "America/Bahia", // Brazil
-    "America/Argentina/Buenos_Aires", // Argentina
-    "America/Santiago", // Chile
-    "America/Asuncion", // Paraguay
-    "America/Montevideo", // Uruguay
-    "America/Godthab", // Greenland
-    // Europe
-    "Europe/London", "Europe/Madrid", "Europe/Berlin", "Europe/Paris", "Europe/Rome", "Europe/Moscow",
-    "Europe/Oslo", "Europe/Stockholm", "Europe/Zurich",
-    // Africa
-    "Africa/Johannesburg", "Africa/Cairo", "Africa/Nairobi", "Africa/Lagos",
+    "America/New_York - USA (East)",
+    "America/Chicago - USA (Central)",
+    "America/Denver - USA (Mountain)",
+    "America/Los_Angeles - USA (Pacific)",
+    "America/Toronto - Canada (East)",
+    "America/Vancouver - Canada (Pacific)",
+    "America/Mexico_City - Mexico (Central)",
+    "America/Cancun - Mexico (Southeast)",
+    "America/Chihuahua - Mexico (Mountain)",
+    "America/Tijuana - Mexico (Pacific)",
+    "America/Bogota - Colombia",
+    "America/Caracas - Venezuela",
+    "America/Lima - Peru",
+    "America/La_Paz - Bolivia",
+    "America/El_Salvador - El Salvador",
+    "America/Guatemala - Guatemala",
+    "America/Sao_Paulo - Brazil (East)",
+    "America/Bahia - Brazil (Bahia)",
+    "America/Argentina/Buenos_Aires - Argentina",
+    "America/Santiago - Chile",
+    "America/Asuncion - Paraguay",
+    "America/Montevideo - Uruguay",
+    "America/Godthab - Greenland",
+    // Europe & Africa
+    "Europe/London - United Kingdom",
+    "Europe/Madrid - Spain",
+    "Europe/Berlin - Germany",
+    "Europe/Paris - France",
+    "Europe/Rome - Italy",
+    "Europe/Moscow - Russia (Moscow)",
+    "Europe/Oslo - Norway",
+    "Europe/Stockholm - Sweden",
+    "Europe/Zurich - Switzerland",
+    "Africa/Johannesburg - South Africa",
+    "Africa/Cairo - Egypt",
+    "Africa/Nairobi - Kenya",
+    "Africa/Lagos - Nigeria",
     // Asia & Australia
-    "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai", "Australia/Sydney", "Asia/Singapore",
-    "Asia/Kamchatka", "Asia/Omsk", "Asia/Kolkata", "Pacific/Auckland", "Asia/Jakarta",
-    "Asia/Manila", "Asia/Kuala_Lumpur", "Asia/Hong_Kong"
+    "Asia/Tokyo - Japan",
+    "Asia/Shanghai - China",
+    "Asia/Dubai - UAE",
+    "Australia/Sydney - Australia (East)",
+    "Asia/Singapore - Singapore",
+    "Asia/Kamchatka - Russia (Kamchatka)",
+    "Asia/Omsk - Russia (Omsk)",
+    "Asia/Kolkata - India",
+    "Pacific/Auckland - New Zealand",
+    "Asia/Jakarta - Indonesia",
+    "Asia/Manila - Philippines",
+    "Asia/Kuala_Lumpur - Malaysia",
+    "Asia/Hong_Kong - Hong Kong"
 ];
 
 // --- STATE MANAGEMENT TYPES ---
@@ -201,7 +228,7 @@ type BackgroundFit = 'cover' | 'contain' | 'auto';
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 type SeparatorLineStyle = 'solid' | 'dotted' | 'dashed';
 type SeparatorShapeType = 'waves' | 'drops' | 'zigzag' | 'leaves' | 'scallops';
-type TimerEndAction = 'stop' | 'restart' | 'message';
+type TimerEndAction = 'stop' | 'message' | 'secondary_countdown';
 
 interface BaseBlock {
   id: string;
@@ -360,6 +387,7 @@ interface TimerBlock extends BaseBlock {
         endAction: {
             type: TimerEndAction;
             message: string;
+            secondaryEndDate?: string; // ISO string
         };
         styles: {
             fontFamily: string;
@@ -371,6 +399,8 @@ interface TimerBlock extends BaseBlock {
                 color2: string;
                 direction: GradientDirection;
             };
+            strokeWidth: number;
+            scale: number;
         }
     }
 }
@@ -2206,6 +2236,8 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     };
 
     const { styles, endDate, timezone, design, endAction } = element.payload;
+    const tomorrow = new Date();
+    tomorrow.setDate(new Date(endDate).getDate() + 1);
 
     return (
         <div className="space-y-4">
@@ -2231,9 +2263,17 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Select value={timezone} onValueChange={(v) => updatePayload('timezone', v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent side="bottom">
-                        {timezones.map(tz => <SelectItem key={tz} value={tz}>{tz.replace(/_/g, ' ')}</SelectItem>)}
+                        {timezones.map(tz => <SelectItem key={tz} value={tz.split(" - ")[0]}>{tz}</SelectItem>)}
                     </SelectContent>
                 </Select>
+            </div>
+            <div className="space-y-2">
+                <Label>Tamaño Global</Label>
+                <Slider
+                    value={[styles.scale]}
+                    min={0.5} max={1.5} step={0.05}
+                    onValueChange={(v) => updateStyle('scale', v[0])}
+                />
             </div>
 
             <Separator className="bg-border/20"/>
@@ -2265,8 +2305,13 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
 
             <div className="space-y-2">
-                <Label>Radio del Borde</Label>
-                <Slider value={[styles.borderRadius]} max={30} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
+                <Label>{design === 'analog' ? 'Grosor de la Barra' : 'Radio del Borde'}</Label>
+                <Slider 
+                  value={[design === 'analog' ? styles.strokeWidth : styles.borderRadius]} 
+                  max={design === 'analog' ? 15 : 30}
+                  min={design === 'analog' ? 2 : 0}
+                  step={1}
+                  onValueChange={(v) => updateStyle(design === 'analog' ? 'strokeWidth' : 'borderRadius', v[0])} />
             </div>
 
             <div className="space-y-2">
@@ -2313,8 +2358,8 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                  <Select value={endAction.type} onValueChange={(v) => updateEndAction('type', v)}>
                     <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="stop"><XCircle className="inline-block mr-2" />Detener en 00</SelectItem>
-                        <SelectItem value="restart"><RefreshCw className="inline-block mr-2" />Reiniciar</SelectItem>
+                        <SelectItem value="stop"><X className="inline-block mr-2" />Detener en 00</SelectItem>
+                        <SelectItem value="secondary_countdown"><RefreshCw className="inline-block mr-2" />Segundo Contador</SelectItem>
                         <SelectItem value="message"><MessageSquare className="inline-block mr-2" />Mostrar Mensaje</SelectItem>
                     </SelectContent>
                 </Select>
@@ -2339,6 +2384,29 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                 </div>
                             </ScrollArea>
                           </div>
+                    </div>
+                )}
+                {endAction.type === 'secondary_countdown' && (
+                    <div className="mt-2 space-y-2">
+                        <Label>Segunda Fecha de Finalización</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {endAction.secondaryEndDate ? format(new Date(endAction.secondaryEndDate), "PPP HH:mm:ss") : <span>Seleccionar fecha</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar 
+                                  mode="single" 
+                                  selected={endAction.secondaryEndDate ? new Date(endAction.secondaryEndDate) : undefined} 
+                                  onSelect={(d) => updateEndAction('secondaryEndDate', d?.toISOString())} 
+                                  initialFocus 
+                                  disabled={{ before: tomorrow }}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <p className="text-xs text-muted-foreground">La segunda fecha debe ser posterior a la primera fecha de finalización.</p>
                     </div>
                 )}
             </div>
@@ -2664,6 +2732,8 @@ export default function CreateTemplatePage() {
                         color2: '#000000',
                         direction: 'vertical'
                     },
+                    strokeWidth: 8,
+                    scale: 1,
                 }
             }
         };
@@ -3385,67 +3455,72 @@ export default function CreateTemplatePage() {
 
   const TimerComponent = ({ block }: { block: TimerBlock }) => {
     const { endDate, timezone, design, endAction, styles } = block.payload;
-    
-    const [startDate, setStartDate] = useState(new Date());
-    
-    useEffect(() => {
-        setStartDate(new Date());
-    }, [endDate, timezone]);
+    const [currentStage, setCurrentStage] = useState<'primary' | 'secondary'>('primary');
+    const [isFinished, setIsFinished] = useState(false);
+
+    const targetDate = currentStage === 'primary' ? endDate : endAction.secondaryEndDate;
+    const initialStartDateRef = useRef(new Date());
 
     const calculateTimeLeft = useCallback(() => {
-        const end = new Date(new Date(endDate).toLocaleString('en-US', { timeZone: timezone }));
-        const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
-
-        const difference = end.getTime() - now.getTime();
+        if (!targetDate) return {};
         
-        let timeLeft: {days?: number, hours?: number, minutes?: number, seconds?: number} = {};
+        try {
+            const end = new Date(new Date(targetDate).toLocaleString('en-US', { timeZone: timezone }));
+            const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+            const difference = end.getTime() - now.getTime();
 
-        if (difference > 0) {
-            timeLeft = {
-                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-                minutes: Math.floor((difference / 1000 / 60) % 60),
-                seconds: Math.floor((difference / 1000) % 60),
-            };
+            if (difference > 0) {
+                return {
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((difference / 1000 / 60) % 60),
+                    seconds: Math.floor((difference / 1000) % 60),
+                };
+            }
+        } catch (e) {
+            console.error("Invalid timezone or date for timer:", e);
         }
-        return timeLeft;
-    }, [endDate, timezone]);
+        return {};
+    }, [targetDate, timezone]);
 
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
-    const [isFinished, setIsFinished] = useState(false);
+
+    useEffect(() => {
+        setIsFinished(false);
+        setCurrentStage('primary');
+        initialStartDateRef.current = new Date();
+    }, [endDate, endAction.secondaryEndDate]);
 
     useEffect(() => {
         const timer = setInterval(() => {
             const newTimeLeft = calculateTimeLeft();
             if (Object.keys(newTimeLeft).length === 0) {
-                if(!isFinished) {
-                  setIsFinished(true);
-                }
-                if(endAction.type === 'restart') {
-                   setIsFinished(false);
+                if (currentStage === 'primary' && endAction.type === 'secondary_countdown' && endAction.secondaryEndDate) {
+                    setCurrentStage('secondary');
                 } else {
-                   clearInterval(timer);
+                    setIsFinished(true);
+                    clearInterval(timer);
                 }
             } else {
                 setTimeLeft(newTimeLeft);
             }
         }, 1000);
         return () => clearInterval(timer);
-    }, [calculateTimeLeft, endDate, timezone, endAction.type, isFinished]);
+    }, [calculateTimeLeft, currentStage, endAction]);
 
     if (isFinished && endAction.type === 'message') {
         return (
-            <div className="p-4 text-center">
+            <div className="p-4 text-center" style={{ transform: `scale(${styles.scale})` }}>
                 <p className="text-lg font-semibold" style={{ fontFamily: styles.fontFamily }}>{endAction.message}</p>
             </div>
         );
     }
     
     const timeData = [
-      { label: 'Días', value: isFinished ? 0 : timeLeft.days, symbol: 'D' },
-      { label: 'Horas', value: isFinished ? 0 : timeLeft.hours, symbol: 'H' },
-      { label: 'Minutos', value: isFinished ? 0 : timeLeft.minutes, symbol: 'M' },
-      { label: 'Segundos', value: isFinished ? 0 : timeLeft.seconds, symbol: 'S' },
+      { label: 'Días', value: isFinished ? 0 : timeLeft.days },
+      { label: 'Horas', value: isFinished ? 0 : timeLeft.hours },
+      { label: 'Minutos', value: isFinished ? 0 : timeLeft.minutes },
+      { label: 'Segundos', value: isFinished ? 0 : timeLeft.seconds },
     ];
     
     const timeUnits = isFinished && endAction.type === 'stop' ? { days: 0, hours: 0, minutes: 0, seconds: 0 } : timeLeft;
@@ -3468,13 +3543,10 @@ export default function CreateTemplatePage() {
     }
 
     if (design === 'analog') {
-        const startDateTime = new Date(startDate.toLocaleString('en-US', { timeZone: timezone }));
-        const endDateTime = new Date(new Date(endDate).toLocaleString('en-US', { timeZone: timezone }));
-        const totalDuration = endDateTime.getTime() - startDateTime.getTime();
-
         const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
             if (isFinished) return 0;
-
+            const end = new Date(new Date(targetDate!).toLocaleString('en-US', { timeZone: timezone }));
+            const totalDuration = end.getTime() - initialStartDateRef.current.getTime();
             const daysLeft = timeUnits.days || 0;
             const hoursLeft = timeUnits.hours || 0;
             const minutesLeft = timeUnits.minutes || 0;
@@ -3482,45 +3554,41 @@ export default function CreateTemplatePage() {
 
             switch (unit) {
                 case 'Días': {
-                   if (totalDuration <= 0) return 1;
+                   if (totalDuration <= 0) return 0;
                    const secondsRemaining = (daysLeft * 86400) + (hoursLeft * 3600) + (minutesLeft * 60) + secondsLeft;
                    return (secondsRemaining * 1000) / totalDuration;
                 }
-                case 'Horas':
-                    return hoursLeft / 23;
-                case 'Minutos':
-                    return minutesLeft / 59;
-                case 'Segundos':
-                    return secondsLeft / 59;
-                default:
-                    return 0;
+                case 'Horas': return hoursLeft / 23;
+                case 'Minutos': return minutesLeft / 59;
+                case 'Segundos': return secondsLeft / 59;
+                default: return 0;
             }
         };
 
         return (
-            <div className="flex justify-center items-center gap-2 p-2">
+            <div className="flex justify-center items-center gap-2 p-2" style={{ transform: `scale(${styles.scale})` }}>
                 {timeData.map(unit => (
                     <div key={unit.label} className="flex flex-col items-center">
                         <div className="relative w-20 h-20">
                             <svg className="w-full h-full" viewBox="0 0 100 100">
                                 <defs>
                                     {styles.background.type === 'gradient' && (
-                                        <linearGradient id={`gradient-${block.id}-${unit.label}`} x1="0%" y1="0%" x2={styles.background.direction === 'horizontal' ? '100%' : '0%'} y2={styles.background.direction === 'vertical' ? '100%' : '0%'}>
+                                        <linearGradient id={`gradient-analog-${block.id}-${unit.label}`} x1="0" y1="0" x2={styles.background.direction === 'horizontal' ? '100%' : '0%'} y2={styles.background.direction === 'vertical' ? '100%' : '0%'}>
                                             <stop offset="0%" stopColor={styles.background.color1} />
-                                            <stop offset="100%" stopColor={styles.background.color2} />
+                                            <stop offset="100%" stopColor={styles.background.color2 || styles.background.color1} />
                                         </linearGradient>
                                     )}
                                 </defs>
-                                <circle className="stroke-current text-muted/20" strokeWidth="8" cx="50" cy="50" r="40" fill="transparent" />
+                                <circle className="stroke-current text-muted/20" strokeWidth={styles.strokeWidth} cx="50" cy="50" r="40" fill="transparent" />
                                 <circle
                                     className="stroke-current"
-                                    strokeWidth="8"
+                                    strokeWidth={styles.strokeWidth}
                                     cx="50" cy="50" r="40" fill="transparent"
                                     strokeDasharray={2 * Math.PI * 40}
                                     strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
                                     transform="rotate(-90 50 50)"
                                     strokeLinecap="round"
-                                    stroke={styles.background.type === 'gradient' ? `url(#gradient-${block.id}-${unit.label})` : styles.background.color1}
+                                    stroke={styles.background.type === 'gradient' ? `url(#gradient-analog-${block.id}-${unit.label})` : styles.background.color1}
                                 />
                                 <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-xl font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
                                     {String(unit.value || 0).padStart(2, '0')}
@@ -3536,8 +3604,8 @@ export default function CreateTemplatePage() {
     
     if (design === 'minimalist') {
       return (
-        <div className="flex justify-center items-end gap-2 p-4" style={{ fontFamily: styles.fontFamily }}>
-            {timeData.map((unit, index) => (
+        <div className="flex justify-center items-end gap-2 p-4" style={{ fontFamily: styles.fontFamily, transform: `scale(${styles.scale})` }}>
+            {timeData.map((unit) => (
                 <React.Fragment key={unit.label}>
                     <div className="flex flex-col items-center">
                          <div className="relative h-20 w-20">
@@ -3545,7 +3613,7 @@ export default function CreateTemplatePage() {
                                 <defs>
                                     <linearGradient id={`gradient-minimalist-${block.id}`} x1="0%" y1="0%" x2={styles.background.direction === 'horizontal' ? '100%' : '0%'} y2={styles.background.direction === 'vertical' ? '100%' : '0%'}>
                                         <stop offset="0%" stopColor={styles.background.color1} />
-                                        <stop offset="100%" stopColor={styles.background.color2} />
+                                        <stop offset="100%" stopColor={styles.background.color2 || styles.background.color1} />
                                     </linearGradient>
                                      <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
                                         <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
@@ -3584,7 +3652,7 @@ export default function CreateTemplatePage() {
     }
 
     return (
-        <div className={cn("flex justify-center items-center gap-2 p-4", design === 'minimalist' && 'gap-1')}>
+        <div className={cn("flex justify-center items-center gap-2 p-4", design === 'minimalist' && 'gap-1')} style={{transform: `scale(${styles.scale})`}}>
             {timeData.map(unit => (
                  <div key={unit.label} className={cn("flex flex-col items-center", design === 'minimalist' && 'flex-row gap-1')}>
                     <div style={baseStyle} className={cn("flex items-center justify-center p-2 w-16 h-16 text-3xl font-bold")}>
@@ -4282,3 +4350,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+    
