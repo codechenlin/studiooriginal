@@ -203,7 +203,6 @@ const timezones = [
     "Africa/Nairobi - Kenya",
     "Africa/Lagos - Nigeria",
     "Asia/Tokyo - Japan",
-    "Asia/Shanghai - China",
     "Asia/Dubai - UAE",
     "Australia/Sydney - Australia (East)",
     "Asia/Singapore - Singapore",
@@ -215,7 +214,7 @@ const timezones = [
     "Asia/Manila - Philippines",
     "Asia/Kuala_Lumpur - Malaysia",
     "Asia/Hong_Kong - Hong Kong",
-    "Asia/Beijing - China"
+    "Asia/Shanghai - China"
 ];
 
 // --- STATE MANAGEMENT TYPES ---
@@ -3645,7 +3644,7 @@ export default function CreateTemplatePage() {
                 };
             }
         } catch (e) {
-            console.error("Invalid timezone or date for timer:", e);
+            console.error("Invalid time zone specified:", e);
         }
         return {};
     }, [targetDate, timezone]);
