@@ -161,8 +161,28 @@ const googleFonts = [
 ];
 
 const timezones = [
-    "UTC", "GMT", "US/Eastern", "US/Central", "US/Mountain", "US/Pacific",
-    "Europe/London", "Europe/Berlin", "Europe/Paris", "Europe/Moscow",
+    // General
+    "UTC", "GMT", 
+    // Americas
+    "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", // USA
+    "America/Toronto", "America/Vancouver", // Canada
+    "America/Mexico_City", "America/Cancun", // Mexico
+    "America/Bogota", // Colombia
+    "America/Caracas", // Venezuela
+    "America/Lima", // Peru
+    "America/La_Paz", // Bolivia
+    "America/El_Salvador", // El Salvador
+    "America/Guatemala", // Guatemala
+    "America/Sao_Paulo", "America/Bahia", // Brazil
+    "America/Argentina/Buenos_Aires", // Argentina
+    "America/Santiago", // Chile
+    "America/Asuncion", // Paraguay
+    "America/Montevideo", // Uruguay
+    // Europe
+    "Europe/London", "Europe/Madrid", "Europe/Berlin", "Europe/Paris", "Europe/Rome", "Europe/Moscow",
+    // Africa
+    "Africa/Johannesburg", "Africa/Cairo", "Africa/Nairobi", "Africa/Lagos",
+    // Asia & Australia
     "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai", "Australia/Sydney"
 ];
 
@@ -2133,6 +2153,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
+    const { toast } = useToast();
     if (selectedElement?.type !== 'primitive') return null;
 
     const getElement = (): TimerBlock | null => {
@@ -2171,6 +2192,15 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         updateStyle('background', { ...element.payload.styles.background, [key]: value });
     }
 
+    const handleCopySymbol = (symbol: string) => {
+        navigator.clipboard.writeText(symbol);
+        toast({
+            title: 'Símbolo Copiado',
+            description: `"${symbol}" ha sido copiado al portapapeles.`,
+            className: 'bg-[#00CB07] border-none text-white',
+        });
+    };
+
     const { styles, endDate, timezone, design, endAction } = element.payload;
 
     return (
@@ -2196,8 +2226,8 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Label>Zona Horaria</Label>
                 <Select value={timezone} onValueChange={(v) => updatePayload('timezone', v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        {timezones.map(tz => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}
+                    <SelectContent side="bottom">
+                        {timezones.map(tz => <SelectItem key={tz} value={tz}>{tz.replace(/_/g, ' ')}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -2264,6 +2294,23 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     <div className="mt-2 space-y-2">
                         <Label>Mensaje a mostrar</Label>
                         <Textarea value={endAction.message} onChange={(e) => updateEndAction('message', e.target.value)} placeholder="¡La oferta ha terminado!"/>
+                          <div className="pt-2">
+                            <Label className="text-xs text-muted-foreground">Símbolos Rápidos</Label>
+                            <ScrollArea className="h-24 w-full rounded-md border p-2 mt-1">
+                                <div className="grid grid-cols-6 gap-1">
+                                {popularEmojis.map(emoji => (
+                                    <TooltipProvider key={emoji}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="text-lg" onClick={() => handleCopySymbol(emoji)}>{emoji}</Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Copiar "{emoji}"</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ))}
+                                </div>
+                            </ScrollArea>
+                          </div>
                     </div>
                 )}
             </div>
@@ -3137,6 +3184,7 @@ export default function CreateTemplatePage() {
                                         style={{ backgroundImage: `url('data:image/svg+xml;base64,${btoa(playButtonSvg[styles.playButtonType])}')` }}
                                         onClick={(e) => {
                                             if (!link.url || !videoId) e.preventDefault();
+                                            e.stopPropagation();
                                         }}
                                      >
                                          <span className="sr-only">Play Video</span>
@@ -3306,12 +3354,21 @@ export default function CreateTemplatePage() {
 
   const TimerComponent = ({ block }: { block: TimerBlock }) => {
     const { endDate, timezone, design, endAction, styles } = block.payload;
+    
+    const [startDate, setStartDate] = useState(new Date());
+    
+    useEffect(() => {
+        setStartDate(new Date());
+    }, [endDate, timezone]);
+
     const calculateTimeLeft = useCallback(() => {
         const end = new Date(new Date(endDate).toLocaleString('en-US', { timeZone: timezone }));
-        const now = new Date();
+        const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+
         const difference = end.getTime() - now.getTime();
         
-        let timeLeft = {};
+        let timeLeft: {days?: number, hours?: number, minutes?: number, seconds?: number} = {};
+
         if (difference > 0) {
             timeLeft = {
                 days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -3330,14 +3387,20 @@ export default function CreateTemplatePage() {
         const timer = setInterval(() => {
             const newTimeLeft = calculateTimeLeft();
             if (Object.keys(newTimeLeft).length === 0) {
-                setIsFinished(true);
-                clearInterval(timer);
+                if(!isFinished) {
+                  setIsFinished(true);
+                }
+                if(endAction.type === 'restart') {
+                   setIsFinished(false);
+                } else {
+                   clearInterval(timer);
+                }
             } else {
                 setTimeLeft(newTimeLeft);
             }
         }, 1000);
         return () => clearInterval(timer);
-    }, [calculateTimeLeft, endDate, timezone]);
+    }, [calculateTimeLeft, endDate, timezone, endAction.type, isFinished]);
 
     if (isFinished && endAction.type === 'message') {
         return (
@@ -3368,7 +3431,31 @@ export default function CreateTemplatePage() {
     }
 
     if (design === 'analog') {
-        return (
+      const startDateTime = new Date(startDate.toLocaleString('en-US', { timeZone: timezone }));
+      const endDateTime = new Date(new Date(endDate).toLocaleString('en-US', { timeZone: timezone }));
+      const totalDuration = endDateTime.getTime() - startDateTime.getTime();
+
+      const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+        if (!timeUnits.days && !timeUnits.hours && !timeUnits.minutes && !timeUnits.seconds) return 0;
+
+        switch (unit) {
+          case 'Días':
+             const currentRemaining = (timeUnits.days || 0) * 86400 + (timeUnits.hours || 0) * 3600 + (timeUnits.minutes || 0) * 60 + (timeUnits.seconds || 0);
+             return totalDuration > 0 ? (currentRemaining * 1000) / totalDuration : 0;
+          case 'Horas':
+            return (timeUnits.hours || 0) / 24;
+          case 'Minutos':
+            return (timeUnits.minutes || 0) / 60;
+          case 'Segundos':
+            return (timeUnits.seconds || 0) / 60;
+          default:
+            return 0;
+        }
+      };
+
+      const analogColor = styles.background.color1;
+
+      return (
             <div className="flex justify-center items-center gap-2 p-2">
                 {timeData.map(unit => (
                     <div key={unit.label} className="flex flex-col items-center">
@@ -3376,13 +3463,14 @@ export default function CreateTemplatePage() {
                              <svg className="w-full h-full" viewBox="0 0 100 100">
                                 <circle className="stroke-current text-muted/20" strokeWidth="8" cx="50" cy="50" r="40" fill="transparent" />
                                 <circle
-                                    className="stroke-current text-primary"
+                                    className="stroke-current"
                                     strokeWidth="8"
                                     cx="50" cy="50" r="40" fill="transparent"
                                     strokeDasharray={2 * Math.PI * 40}
-                                    strokeDashoffset={2 * Math.PI * 40 * (1 - (unit.value || 0) / (unit.label === 'Días' ? 365 : unit.label === 'Horas' ? 24 : 60))}
+                                    strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
                                     transform="rotate(-90 50 50)"
                                     strokeLinecap="round"
+                                    style={{ color: analogColor }}
                                 />
                                 <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-xl font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
                                     {String(unit.value || 0).padStart(2, '0')}
@@ -4095,3 +4183,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
