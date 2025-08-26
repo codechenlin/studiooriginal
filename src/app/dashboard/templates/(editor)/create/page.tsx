@@ -208,13 +208,13 @@ const timezones = [
     "Asia/Singapore - Singapore",
     "Asia/Kamchatka - Russia",
     "Asia/Omsk - Russia",
+    "Asia/Shanghai - China",
     "Asia/Kolkata - India",
     "Pacific/Auckland - New Zealand",
     "Asia/Jakarta - Indonesia",
     "Asia/Manila - Philippines",
     "Asia/Kuala_Lumpur - Malaysia",
     "Asia/Hong_Kong - Hong Kong",
-    "Asia/Shanghai - China"
 ];
 
 // --- STATE MANAGEMENT TYPES ---
@@ -228,7 +228,7 @@ type BackgroundFit = 'cover' | 'contain' | 'auto';
 type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 type SeparatorLineStyle = 'solid' | 'dotted' | 'dashed';
 type SeparatorShapeType = 'waves' | 'drops' | 'zigzag' | 'leaves' | 'scallops';
-type TimerEndAction = 'stop' | 'message' | 'secondary_countdown';
+type TimerEndAction = 'stop' | 'secondary_countdown' | 'message';
 
 interface BaseBlock {
   id: string;
@@ -2530,7 +2530,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
             <div>
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Sparkles/>Acción al Finalizar</h3>
-                 <Select value={endAction.type} onValueChange={(v) => updateEndAction('type', v)}>
+                 <Select value={endAction.type} onValueChange={(v) => updateEndAction('type', v as TimerEndAction)}>
                     <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="stop"><XCircle className="inline-block mr-2" />Detener en 00</SelectItem>
@@ -3362,14 +3362,14 @@ export default function CreateTemplatePage() {
                     const thumbnailUrl = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : 'https://placehold.co/600x400.png?text=YouTube+Video';
 
                     const playButtonSvg = {
-                      default: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill="#FF0000" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"></path><path fill="#FFFFFF" d="M11 10v8l7-4z"></path></svg>`,
-                      classic: `<svg xmlns="http://www.w3.org/2000/svg" height="100%" version="1.1" viewBox="0 0 68 48" width="100%"><path class="ytp-large-play-button-bg" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#212121" fill-opacity="0.8"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
+                      default: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#f00"></path><path d="M 45,24 27,14 27,34" fill="#fff"></path></svg>`,
+                      classic: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><path fill-opacity="0.8" fill="#212121" d="M25.8 8.1c-.2-1.5-.9-2.8-2.1-3.9-1.2-1.2-2.5-1.9-4-2.1C16 2 14 2 14 2s-2 0-5.7.2C6.8 2.3 5.4 3 4.2 4.1 3 5.3 2.3 6.7 2.1 8.1 2 10 2 14 2 14s0 4 .1 5.9c.2 1.5.9 2.8 2.1 3.9 1.2 1.2 2.5 1.9 4 2.1 3.7.2 5.7.2 5.7.2s2 0 5.7-.2c1.5-.2 2.8-.9 4-2.1 1.2-1.2 1.9-2.5 2.1-4 .1-1.9.1-5.9.1-5.9s0-4-.1-5.9z"></path><path fill="#FFFFFF" d="M11 10v8l7-4z"></path></svg>`,
                     };
                     
-                    const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : 'sm';
-                    const playButtonSize = { lg: 'w-32 h-24', md: 'w-16 h-12', sm: 'w-12 h-9' };
-                    const titleSize = { lg: 'text-2xl p-4', md: 'text-lg p-3', sm: 'text-xs px-2 pt-1 pb-0' };
-                    const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs' };
+                    const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
+                    const playButtonSize = { lg: 'w-32 h-24', md: 'w-16 h-12', sm: 'w-12 h-9', xs: 'w-12 h-9' };
+                    const titleSize = { lg: 'text-2xl p-4', md: 'text-lg p-3', sm: 'text-sm p-2', xs: 'text-xs px-2 pt-1 pb-0' };
+                    const durationSize = { lg: 'text-base', md: 'text-sm', sm: 'text-xs', xs: 'text-xs' };
 
                     const formatDuration = () => {
                         const { hours, minutes, seconds } = duration;
@@ -3465,7 +3465,7 @@ export default function CreateTemplatePage() {
                 }
               case 'timer': {
                  const timerBlock = block as TimerBlock;
-                 return <TimerComponent block={timerBlock} />;
+                 return <TimerComponent block={timerBlock} colCount={colCount} />;
               }
               default:
                 return (
@@ -3615,7 +3615,7 @@ export default function CreateTemplatePage() {
     setIsImageModalOpen(false);
   }
 
-  const TimerComponent = ({ block }: { block: TimerBlock }) => {
+  const TimerComponent = ({ block, colCount }: { block: TimerBlock, colCount: number }) => {
     const { endDate, timezone, design, endAction, styles } = block.payload;
     const [currentStage, setCurrentStage] = useState<'primary' | 'secondary'>('primary');
     const [isFinished, setIsFinished] = useState(false);
@@ -3630,8 +3630,7 @@ export default function CreateTemplatePage() {
             const end = new Date(targetDate);
             const now = new Date();
 
-            const timeZoneOffset = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getTime() - now.getTime();
-            const nowInTimezone = new Date(now.getTime() + timeZoneOffset);
+            const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
 
             const difference = end.getTime() - nowInTimezone.getTime();
 
@@ -3774,14 +3773,21 @@ export default function CreateTemplatePage() {
     }
     
      if (design === 'minimalist') {
-      const r = 45;
-      const c = 2 * Math.PI * r;
-      const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
-          if (isFinished) return 0;
+      const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
+      const sizeStyles = {
+        lg: { container: 'w-24 h-24', number: 'text-4xl', label: 'text-[10px]' },
+        md: { container: 'w-20 h-20', number: 'text-2xl', label: 'text-[8px]' },
+        sm: { container: 'w-16 h-16', number: 'text-xl', label: 'text-[7px]' },
+        xs: { container: 'w-12 h-12', number: 'text-base', label: 'text-[6px]' },
+      };
+      const currentSize = sizeStyles[sizeVariant];
+
+      const getPathForUnit = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+          if (isFinished) return 320;
           const end = new Date(targetDate!);
           const start = initialStartDateRef.current;
           const totalDuration = end.getTime() - start.getTime();
-          if(totalDuration <= 0) return 1;
+          if(totalDuration <= 0) return 0;
 
           const daysLeft = timeUnits.days || 0;
           const hoursLeft = timeUnits.hours || 0;
@@ -3789,29 +3795,28 @@ export default function CreateTemplatePage() {
           const secondsLeft = timeUnits.seconds || 0;
 
           const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
+          let progress = 0;
           
           switch (unit) {
-              case 'Días': return totalDays > 0 ? (daysLeft / totalDays) : 0;
-              case 'Horas': return (hoursLeft / 23);
-              case 'Minutos': return (minutesLeft / 59);
-              case 'Segundos': return (secondsLeft / 59);
-              default: return 0;
+              case 'Días': progress = totalDays > 0 ? (daysLeft / totalDays) : 0; break;
+              case 'Horas': progress = (hoursLeft / 23); break;
+              case 'Minutos': progress = (minutesLeft / 59); break;
+              case 'Segundos': progress = (secondsLeft / 59); break;
           }
-      };
-
-      const pathLength = 360;
-      const strokeDashoffset = (1 - getProgress('Días')) * pathLength;
-      
-      const getPathForUnit = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
-          const progress = getProgress(unit);
-          const totalLength = 320; // 4 * 80 for a square of 80x80
-          return totalLength * (1 - progress);
+          return 320 * (1 - progress);
       };
 
       return (
-          <div className="flex justify-center items-end gap-2 p-4" style={{ fontFamily: styles.fontFamily, transform: `scale(${styles.scale})` }}>
+          <div 
+            className="flex justify-center items-end p-2 w-full"
+            style={{ 
+              transform: `scale(${styles.scale})`,
+              transformOrigin: 'center',
+            }}
+          >
+            <div className="flex justify-center items-end gap-2" style={{ fontFamily: styles.fontFamily }}>
               {timeData.map((unit) => (
-                  <div key={unit.label} className="relative flex flex-col items-center w-24 h-24">
+                  <div key={unit.label} className={cn("relative flex flex-col items-center", currentSize.container)}>
                       <svg className="w-full h-full" viewBox="0 0 100 100">
                           <defs>
                               <linearGradient id={`gradient-minimalist-${block.id}-${unit.label}`} x1="0%" y1="0%" x2={styles.background.direction === 'horizontal' ? '100%' : '0%'} y2={styles.background.direction === 'vertical' ? '100%' : '0%'}>
@@ -3850,11 +3855,12 @@ export default function CreateTemplatePage() {
                           />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                         <span className="text-4xl font-light" style={{color: styles.numberColor}}>{String(unit.value || 0).padStart(2, '0')}</span>
-                         <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{unit.label}</span>
+                         <span className={cn("font-light", currentSize.number)} style={{color: styles.numberColor}}>{String(unit.value || 0).padStart(2, '0')}</span>
+                         <span className={cn("uppercase tracking-widest text-muted-foreground", currentSize.label)}>{unit.label}</span>
                       </div>
                   </div>
               ))}
+            </div>
           </div>
       );
     }
@@ -4013,7 +4019,7 @@ export default function CreateTemplatePage() {
                     <div 
                         style={{ ...getElementStyle(col), flexBasis: `${col.width}%` }}
                         className={cn(
-                          "flex-grow p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-[120px] group/column",
+                          "flex-grow p-2 border-2 border-dashed min-h-[100px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors min-w-0 group/column",
                           selectedElement?.type === 'column' && selectedElement.columnId === col.id ? 'border-primary border-solid' : 'border-transparent'
                         )}
                          onClick={(e) => { e.stopPropagation(); setSelectedElement({type: 'column', columnId: col.id, rowId: block.id})}}
@@ -4385,7 +4391,7 @@ export default function CreateTemplatePage() {
           <DialogHeader>
             <DialogTitle>Editar Nombre de la Plantilla</DialogTitle>
             <DialogDescription>
-              Cambia el nombre de tu plantilla para identificarla fácilmente.
+              Cambia el nombre de tu plantilla para identificar fácilmente.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -4558,3 +4564,5 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
+    
