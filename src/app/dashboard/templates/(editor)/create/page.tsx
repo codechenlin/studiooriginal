@@ -1496,7 +1496,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             
             <div>
                  <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Sparkles />Símbolos Rápidos</h3>
-                 <div className="grid grid-cols-8 gap-1 mt-2">
+                 <ScrollArea className="max-h-48 w-full rounded-md border p-2 mt-2">
+                    <div className="grid grid-cols-8 gap-1">
                     {popularEmojis.map(emoji => (
                         <TooltipProvider key={emoji}>
                             <Tooltip>
@@ -1507,7 +1508,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                             </Tooltip>
                         </TooltipProvider>
                     ))}
-                 </div>
+                    </div>
+                </ScrollArea>
             </div>
         </div>
     );
@@ -2682,15 +2684,17 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
       }
   
       return (
-        <div className="flex flex-wrap justify-center items-center gap-1 md:gap-2 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
-          {timeData.map(unit => (
-            <div key={unit.label} className="flex flex-col items-center">
-              <div style={baseStyle} className="flex items-center justify-center p-2 w-[4em] h-[4em] text-[2em] font-bold">
-                {String(unit.value || 0).padStart(2, '0')}
-              </div>
-              <p className="text-xs mt-1" style={{ color: styles.labelColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
+        <div className="w-full flex justify-center">
+            <div className="flex flex-wrap justify-center items-center gap-1 md:gap-2 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
+            {timeData.map(unit => (
+                <div key={unit.label} className="flex flex-col items-center">
+                <div style={baseStyle} className="flex items-center justify-center p-2 w-[4em] h-[4em] text-[2em] font-bold">
+                    {String(unit.value || 0).padStart(2, '0')}
+                </div>
+                <p className="text-xs mt-1" style={{ color: styles.labelColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
+                </div>
+            ))}
             </div>
-          ))}
         </div>
       );
     }
@@ -2722,8 +2726,8 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
         const gradientId = `analog-grad-${block.id}`;
         
         return (
-             <div className="flex w-full justify-center" style={{ fontSize: `${styles.scale * 16}px` }}>
-                <div className="flex flex-wrap justify-center items-center gap-1 p-1">
+             <div className="flex w-full justify-center">
+                <div className="flex flex-wrap justify-center items-center gap-1 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
                     <svg width="0" height="0" className="absolute">
                         <defs>
                             {background.type === 'gradient' && (
@@ -2846,9 +2850,9 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
               </svg>
               {timeData.map((unit) => (
                 <div key={unit.label} className={cn("relative flex flex-col items-center flex-shrink-0", sizeClasses[colCount as keyof typeof sizeClasses] || 'w-[3em] h-[3em]')}>
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
+                   <svg className="w-full h-full" viewBox="0 0 120 120">
                     <path
-                      d={pathD}
+                      d="M 10,10 H 110 V 110 H 10 Z"
                       fill="none"
                       stroke="hsl(var(--ai-track))"
                       strokeWidth={styles.strokeWidth}
@@ -2857,15 +2861,15 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
                       rx="8"
                     />
                     <path
-                      d={pathD}
+                      d="M 10,10 H 110 V 110 H 10 Z"
                       fill="none"
                       stroke={background.type === 'gradient' ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`) : background.color1}
                       strokeWidth={styles.strokeWidth}
                       strokeLinejoin="round"
                       strokeLinecap="round"
                       rx="8"
-                      strokeDasharray={320}
-                      strokeDashoffset={getPathForUnit(unit.label as any)}
+                      strokeDasharray={400}
+                      strokeDashoffset={getPathForUnit(unit.label as any) * (400/320)}
                       style={{
                         filter: `url(#glow-${block.id})`,
                         transition: 'stroke-dashoffset 1s linear',
@@ -2874,7 +2878,7 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className={cn("font-light", textSizeClasses[colCount as keyof typeof textSizeClasses] || 'text-xs')} style={{ color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                    <p className={cn("uppercase tracking-widest text-muted-foreground pt-0.5", labelSizeClasses[colCount as keyof typeof labelSizeClasses] || 'text-[6px]')} style={{color: styles.labelColor, paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
+                    <p className={cn("uppercase tracking-widest text-muted-foreground pt-1", labelSizeClasses[colCount as keyof typeof labelSizeClasses] || 'text-[6px]')} style={{color: styles.labelColor, paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
                   </div>
                 </div>
               ))}
