@@ -392,6 +392,7 @@ interface TimerBlock extends BaseBlock {
         styles: {
             fontFamily: string;
             numberColor: string;
+            labelColor: string;
             borderRadius: number;
             background: {
                 type: 'solid' | 'gradient';
@@ -2292,11 +2293,12 @@ const TimezonePickerModal = ({ isOpen, onOpenChange, onAccept, currentValue }: {
                            return (
                              <Button
                                 key={zone}
-                                variant={selectedValue === zone ? "secondary" : "ghost"}
-                                className="w-full justify-start mb-1"
+                                variant="ghost"
+                                className={cn("w-full justify-between mb-1", selectedValue === zone && "bg-muted")}
                                 onClick={() => setSelectedValue(zone)}
                               >
-                                {zone} {country && <span className="text-muted-foreground ml-2">- {country}</span>}
+                                <span className="text-left flex-1">{zone} {country && <span className="text-muted-foreground ml-2">- {country}</span>}</span>
+                                {selectedValue === zone && <div className="size-2 rounded-full" style={{backgroundColor: '#00CB07', boxShadow: '0 0 6px #00CB07'}}/>}
                               </Button>
                            )
                         })}
@@ -2304,7 +2306,7 @@ const TimezonePickerModal = ({ isOpen, onOpenChange, onAccept, currentValue }: {
                 </ScrollArea>
                  <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-                    <Button onClick={handleAccept}>Aceptar</Button>
+                    <Button onClick={handleAccept}><CheckIcon className="mr-2"/>Aceptar</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -2385,6 +2387,11 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     const handleTimezoneAccept = (tz: string) => {
         updatePayload('timezone', tz);
+        toast({
+            title: "¡Zona Horaria Actualizada!",
+            description: `El contador ahora corre en el tiempo del mundo real para: ${tz}.`,
+            className: 'bg-[#00CB07] border-none text-white',
+        });
     };
 
     const { styles, endDate, timezone, design, endAction } = element.payload;
@@ -2478,6 +2485,10 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Label>Color de los Números</Label>
                 <ColorPickerAdvanced color={styles.numberColor} setColor={(c) => updateStyle('numberColor', c)} />
             </div>
+             <div className="space-y-2">
+                <Label>Color de las Etiquetas</Label>
+                <ColorPickerAdvanced color={styles.labelColor} setColor={(c) => updateStyle('labelColor', c)} />
+            </div>
 
             <div className="space-y-2">
                  <Label>{design === 'minimalist' ? 'Grosor de la Barra' : (design === 'analog' ? 'Grosor de la Barra' : 'Radio del Borde')}</Label>
@@ -2544,7 +2555,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         <Textarea value={endAction.message} onChange={(e) => updateEndAction('message', e.target.value)} placeholder="¡La oferta ha terminado!"/>
                           <div className="pt-2">
                             <Label className="text-xs text-muted-foreground">Símbolos Rápidos</Label>
-                            <ScrollArea className="h-40 w-full rounded-md border p-2 mt-1">
+                            <ScrollArea className="max-h-60 w-full rounded-md border p-2 mt-1">
                                 <div className="grid grid-cols-8 gap-1">
                                 {popularEmojis.map(emoji => (
                                     <TooltipProvider key={emoji}>
@@ -2577,696 +2588,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 };
 
 
-function ThemeToggle() {
-  const { toast } = useToast();
-  const [isDarkMode, setIsDarkMode] = React.useState(true);
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-    const storedTheme = localStorage.getItem("theme");
-    setIsDarkMode(storedTheme === "dark");
-  }, []);
-  
-  React.useEffect(() => {
-    if (mounted) {
-      document.documentElement.classList.toggle("dark", isDarkMode);
-      localStorage.setItem("theme", isDarkMode ? "dark" : "light");
-    }
-  }, [isDarkMode, mounted]);
-
-  const toggleTheme = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    toast({
-      title: `Cambiado a modo ${newMode ? "oscuro" : "claro"}`,
-    });
-  };
-
-  if (!mounted) {
-    return <div className="size-8" />;
-  }
-
-  return (
-    <div className="group rounded-full p-0.5 bg-transparent hover:bg-gradient-to-r from-primary to-accent transition-colors">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          className="rounded-full size-8 bg-card dark:bg-card hover:bg-card/80 dark:hover:bg-card/80"
-        >
-          {isDarkMode ? (
-            <Sun className="size-5 text-foreground" />
-          ) : (
-            <Moon className="size-5 text-foreground" />
-          )}
-          <span className="sr-only">Cambiar tema</span>
-        </Button>
-    </div>
-  );
-}
-
-function getSelectedBlockType(selectedElement: SelectedElement, canvasContent: CanvasBlock[]): StaticPrimitiveBlockType | InteractiveBlockType | 'column' | 'wrapper' | null {
-    if (!selectedElement) return null;
-
-    switch (selectedElement.type) {
-        case 'column':
-            return 'column';
-        case 'wrapper':
-            return 'wrapper';
-        case 'wrapper-primitive': {
-            const wrapper = canvasContent.find(r => r.id === selectedElement.wrapperId) as WrapperBlock | undefined;
-            const block = wrapper?.payload.blocks.find(b => b.id === selectedElement.primitiveId);
-            return block?.type || null;
-        }
-        case 'primitive': {
-            const row = canvasContent.find(r => r.id === selectedElement.rowId) as ColumnsBlock | undefined;
-            const col = row?.payload.columns.find(c => c.id === selectedElement.columnId);
-            const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-            return block?.type || null;
-        }
-        default:
-            return null;
-    }
-}
-
-
-export default function CreateTemplatePage() {
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [viewport, setViewport] = useState<Viewport>('desktop');
-  const [templateName, setTemplateName] = useState("Plantilla sin título");
-  const [tempTemplateName, setTempTemplateName] = useState(templateName);
-  const { toast } = useToast();
-  
-  // Modals State
-  const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
-  const [isColumnBlockSelectorOpen, setIsColumnBlockSelectorOpen] = useState(false);
-  const [isWrapperBlockSelectorOpen, setIsWrapperBlockSelectorOpen] = useState(false);
-  const [isEmojiSelectorOpen, setIsEmojiSelectorOpen] = useState(false);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [activeContainer, setActiveContainer] = useState<{ id: string, type: 'column' | 'wrapper' } | null>(null);
-  const [clickPosition, setClickPosition] = useState<{ x: number; y: number } | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{rowId: string, colId?: string, primId?: string} | null>(null);
-  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
-  const [isActionSelectorModalOpen, setIsActionSelectorModalOpen] = useState(false);
-  const [actionTargetWrapperId, setActionTargetWrapperId] = useState<string | null>(null);
-  const [imageModalState, setImageModalState] = useState({
-      url: '',
-      fit: 'cover' as BackgroundFit,
-      positionX: 50,
-      positionY: 50,
-      zoom: 100,
-  });
-
-  // Canvas State
-  const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
-  const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
-
-  // Wrapper resize state
-  const [isResizing, setIsResizing] = useState(false);
-  const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
-
-  const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  
-  const handleSave = () => {
-    setLastSaved(new Date());
-  };
-  
-  const handleBlockClick = (blockId: BlockType) => {
-    if (blockId === 'columns') {
-      setIsColumnModalOpen(true);
-    }
-    if (blockId === 'wrapper') {
-      const newBlock: WrapperBlock = {
-        id: `wrapper_${Date.now()}`,
-        type: 'wrapper',
-        payload: {
-          blocks: [],
-          height: 200,
-          styles: {},
-        },
-      };
-      setCanvasContent([...canvasContent, newBlock]);
-    }
-  };
-
-  const handleAddColumns = (numColumns: number) => {
-    if (numColumns) {
-      const newBlock: ColumnsBlock = {
-        id: `block_${Date.now()}`,
-        type: 'columns',
-        payload: {
-          columns: Array.from({ length: numColumns }).map((_, i) => ({
-            id: `col_${Date.now()}_${i}`,
-            blocks: [],
-            styles: {},
-            width: 100 / numColumns,
-          })),
-          alignment: 50,
-        },
-      };
-      setCanvasContent([...canvasContent, newBlock]);
-      setIsColumnModalOpen(false);
-    }
-  };
-
-  const handleOpenBlockSelector = (containerId: string, type: 'column' | 'wrapper', event: React.MouseEvent) => {
-    const target = event.target as HTMLElement;
-    const containerElement = target.closest('.group\\/wrapper, .group\\/column');
-    if (containerElement) {
-        const rect = containerElement.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        setClickPosition({ x, y });
-    } else {
-        setClickPosition({ x: 50, y: 50 }); // Fallback
-    }
-
-    setActiveContainer({ id: containerId, type });
-
-    if (type === 'column') {
-        setIsColumnBlockSelectorOpen(true);
-    } else if (type === 'wrapper') {
-        setIsWrapperBlockSelectorOpen(true);
-    }
-  };
-
-  const handleAddBlockToColumn = (blockType: StaticPrimitiveBlockType) => {
-    if (!activeContainer || activeContainer.type !== 'column') return;
-     let newBlock: PrimitiveBlock;
-
-    if (blockType === 'button') {
-        newBlock = {
-            id: `button_${Date.now()}`,
-            type: 'button',
-            payload: { 
-              text: 'Botón', 
-              link: { url: '#', openInNewTab: false },
-              textAlign: 'center', 
-              styles: { 
-                borderRadius: 8, 
-                color: '#FFFFFF', 
-                backgroundColor: '#A020F0',
-                background: { type: 'solid', color1: '#A020F0' } 
-              } 
-            },
-        };
-    } else if (blockType === 'heading') {
-        newBlock = {
-            id: `heading_${Date.now()}`,
-            type: 'heading',
-            payload: { 
-                text: 'Título principal',
-                styles: {
-                    color: '#000000',
-                    fontFamily: 'Roboto',
-                    fontSize: 32,
-                    textAlign: 'left',
-                    fontWeight: 'normal',
-                    fontStyle: 'normal',
-                    textDecoration: 'none',
-                }
-            },
-        };
-    } else if (blockType === 'text') {
-        newBlock = {
-            id: `text_${Date.now()}`,
-            type: 'text',
-            payload: {
-                fragments: [{ id: `frag_${Date.now()}`, text: 'Este es un párrafo de texto. ', styles: {} }],
-                globalStyles: { textAlign: 'left', fontSize: 16 }
-            },
-        };
-    } else if (blockType === 'emoji-static') {
-        newBlock = {
-            id: `emoji-static_${Date.now()}`,
-            type: 'emoji-static',
-            payload: {
-                emoji: '😀',
-                styles: {
-                    fontSize: 48,
-                    textAlign: 'center',
-                    rotate: 0,
-                }
-            }
-        };
-    } else if (blockType === 'separator') {
-        newBlock = {
-            id: `separator_${Date.now()}`,
-            type: 'separator',
-            payload: {
-                height: 20,
-                style: 'line',
-                line: {
-                    thickness: 2,
-                    color: '#cccccc',
-                    style: 'solid',
-                    borderRadius: 0,
-                },
-                shapes: {
-                    type: 'waves',
-                    background: {
-                        type: 'solid',
-                        color1: '#A020F0',
-                        color2: '#3357FF',
-                        direction: 'vertical'
-                    },
-                    frequency: 5,
-                },
-                dots: {
-                    size: 4,
-                    count: 10,
-                    color: '#cccccc',
-                }
-            },
-        };
-    } else if (blockType === 'youtube') {
-        newBlock = {
-            id: `youtube_${Date.now()}`,
-            type: 'youtube',
-            payload: {
-                url: '',
-                videoId: null,
-                title: '',
-                showTitle: false,
-                duration: {
-                    hours: '',
-                    minutes: '',
-                    seconds: '',
-                },
-                showDuration: false,
-                link: {
-                  url: '',
-                  openInNewTab: false,
-                },
-                styles: {
-                    playButtonType: 'default',
-                    borderRadius: 12,
-                    border: {
-                        type: 'solid',
-                        color1: '#000000',
-                        color2: '#ffffff',
-                        direction: 'vertical'
-                    },
-                    borderWidth: 0,
-                }
-            }
-        };
-    } else if (blockType === 'timer') {
-         const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        newBlock = {
-            id: `timer_${Date.now()}`,
-            type: 'timer',
-            payload: {
-                endDate: tomorrow.toISOString(),
-                timezone: 'UTC',
-                design: 'digital',
-                endAction: { type: 'stop', message: '¡La oferta ha terminado!' },
-                styles: {
-                    fontFamily: 'Roboto',
-                    numberColor: '#FFFFFF',
-                    borderRadius: 8,
-                    background: {
-                        type: 'solid',
-                        color1: '#1a1a1a',
-                        color2: '#000000',
-                        direction: 'vertical'
-                    },
-                    strokeWidth: 8,
-                    scale: 1,
-                }
-            }
-        };
-    } else {
-        newBlock = {
-            id: `${blockType}_${Date.now()}`,
-            type: blockType,
-            payload: {},
-        };
-    }
-
-    const newCanvasContent = canvasContent.map((row) => {
-      if (row.type === 'columns') {
-        const newColumns = row.payload.columns.map((col) => {
-          if (col.id === activeContainer.id) {
-            return { ...col, blocks: [...col.blocks, newBlock] };
-          }
-          return col;
-        });
-        return { ...row, payload: { ...row.payload, columns: newColumns } };
-      }
-      return row;
-    });
-
-    setCanvasContent(newCanvasContent as CanvasBlock[]);
-    setIsColumnBlockSelectorOpen(false);
-    setActiveContainer(null);
-  }
-
- const handleAddBlockToWrapper = (blockType: InteractiveBlockType) => {
-    if (!activeContainer || activeContainer.type !== 'wrapper') return;
-     if (blockType === 'emoji-interactive') {
-      setIsWrapperBlockSelectorOpen(false);
-      setIsEmojiSelectorOpen(true);
-    }
-  };
-
-  
-  const handleSelectEmojiForWrapper = (emoji: string) => {
-    if (!activeContainer || !clickPosition || !wrapperRefs.current[activeContainer.id]) return;
-
-    const containerRect = wrapperRefs.current[activeContainer.id]!.getBoundingClientRect();
-    const xPercent = (clickPosition.x / containerRect.width) * 100;
-    const yPercent = (clickPosition.y / containerRect.height) * 100;
-    
-    const newBlock: InteractiveEmojiBlock = {
-      id: `emoji_${Date.now()}`,
-      type: 'emoji-interactive',
-      payload: {
-        emoji,
-        x: xPercent, 
-        y: yPercent,
-        scale: 1,
-        rotate: 0,
-      }
-    };
-
-    const newCanvasContent = canvasContent.map(row => {
-      if (row.type === 'wrapper' && row.id === activeContainer.id) {
-        return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
-      }
-      return row;
-    });
-
-    setCanvasContent(newCanvasContent as CanvasBlock[]);
-    setIsEmojiSelectorOpen(false);
-    setActiveContainer(null);
-    setClickPosition(null);
-  }
-  
-  const promptDeleteItem = (rowId: string, colId?: string, primId?: string) => {
-    setItemToDelete({ rowId, colId, primId });
-    setIsDeleteModalOpen(true);
-  };
-  
-  const handleDeleteItem = () => {
-    if (!itemToDelete) return;
-  
-    let newCanvasContent;
-  
-    if (itemToDelete.primId && itemToDelete.colId) { // Deleting a primitive from a column
-      newCanvasContent = canvasContent.map((row) => {
-        if (row.id !== itemToDelete.rowId || row.type !== 'columns') return row;
-        
-        const newColumns = row.payload.columns.map((col) => {
-          if (col.id !== itemToDelete.colId) return col;
-          return { ...col, blocks: col.blocks.filter((block) => block.id !== itemToDelete!.primId) };
-        });
-        return { ...row, payload: { ...row.payload, columns: newColumns } };
-      });
-    } else if (itemToDelete.primId) { // Deleting a primitive from a wrapper
-       newCanvasContent = canvasContent.map((row) => {
-        if (row.id !== itemToDelete.rowId || row.type !== 'wrapper') return row;
-  
-        const newBlocks = row.payload.blocks.filter((block) => block.id !== itemToDelete!.primId);
-        return { ...row, payload: { ...row.payload, blocks: newBlocks } };
-      });
-    } else { // Deleting a whole row (ColumnsBlock or WrapperBlock)
-      newCanvasContent = canvasContent.filter((row) => row.id !== itemToDelete.rowId);
-    }
-  
-    setCanvasContent(newCanvasContent as CanvasBlock[]);
-    setIsDeleteModalOpen(false);
-    setItemToDelete(null);
-    setSelectedElement(null);
-  };
-  
-  const getButtonStyle = (block: ButtonBlock) => {
-    const style: React.CSSProperties = {
-        padding: '10px 20px',
-        border: 'none',
-        cursor: 'pointer',
-    };
-    const { styles } = block.payload;
-
-    if(styles.borderRadius !== undefined) {
-        style.borderRadius = `${styles.borderRadius}px`;
-    }
-    
-    style.color = styles.color;
-
-    if(styles.background) {
-        if(styles.background.type === 'solid') {
-            style.backgroundColor = styles.background.color1;
-        } else if (styles.background.type === 'gradient') {
-             if (styles.background.direction === 'radial') {
-              style.backgroundImage = `radial-gradient(${styles.background.color1}, ${styles.background.color2})`;
-            } else {
-              const angle = styles.background.direction === 'horizontal' ? 'to right' : 'to bottom';
-              style.backgroundImage = `linear-gradient(${angle}, ${styles.background.color1}, ${styles.background.color2})`;
-            }
-        }
-    } else {
-      style.backgroundColor = styles.backgroundColor;
-    }
-    return style;
-  }
-  
-  const getButtonContainerStyle = (block: ButtonBlock): React.CSSProperties => {
-    const textAlignToJustifyContent = {
-        left: 'flex-start',
-        center: 'center',
-        right: 'flex-end',
-    }
-    return {
-        display: 'flex',
-        justifyContent: textAlignToJustifyContent[block.payload.textAlign] || 'center'
-    }
-  }
-
-  const getHeadingStyle = (block: HeadingBlock): React.CSSProperties => {
-    const { color, fontFamily, fontSize, textAlign, fontWeight, fontStyle, textDecoration, highlight } = block.payload.styles;
-    const style: React.CSSProperties = {
-        color: color || '#000000',
-        fontFamily: fontFamily || 'Arial, sans-serif',
-        fontSize: `${fontSize || 32}px`,
-        fontWeight: fontWeight || 'normal',
-        fontStyle: fontStyle || 'normal',
-        textDecoration: textDecoration || 'none',
-        padding: '8px',
-        wordBreak: 'break-word',
-    };
-    
-    if(highlight) {
-      style.backgroundColor = highlight;
-      style.display = 'inline';
-      style.lineHeight = 'normal'; 
-    }
-
-    const containerStyle: React.CSSProperties = {
-      textAlign: textAlign || 'left',
-      width: '100%',
-    };
-
-    return { ...style, ...containerStyle };
-  };
-
- const getFragmentStyle = (fragment: TextFragment): React.CSSProperties => {
-    const style: React.CSSProperties = {};
-    if (fragment.styles.bold) style.fontWeight = 'bold';
-    if (fragment.styles.italic) style.fontStyle = 'italic';
-    
-    let textDecoration = '';
-    if (fragment.styles.underline) textDecoration += ' underline';
-    if (fragment.styles.strikethrough) textDecoration += ' line-through';
-    if (textDecoration) style.textDecoration = textDecoration.trim();
-
-    if (fragment.styles.color) style.color = fragment.styles.color;
-    if (fragment.styles.highlight) style.backgroundColor = fragment.styles.highlight;
-    if(fragment.styles.fontFamily) style.fontFamily = fragment.styles.fontFamily;
-    return style;
-  };
-
-  const getStaticEmojiStyle = (block: StaticEmojiBlock): React.CSSProperties => {
-    const { fontSize, textAlign, rotate } = block.payload.styles;
-    return {
-        fontSize: `${fontSize || 48}px`,
-        textAlign: textAlign || 'center',
-        width: '100%',
-        padding: '8px',
-        transform: `rotate(${rotate || 0}deg)`,
-        display: 'inline-block',
-    };
-  };
-
-  const generateShapePath = (
-    type: SeparatorShapeType,
-    frequency: number,
-    width: number,
-    height: number
-  ): string => {
-    if (width <= 0 || height <= 0) return "";
-    let path = "";
-  
-    switch (type) {
-      case 'waves': {
-        const amplitude = height / 2;
-        path = `M0,${amplitude}`;
-        for (let i = 0; i <= frequency * 2; i++) {
-          const x = (i / (frequency * 2)) * width;
-          const y = amplitude + (amplitude * 0.8) * Math.sin((i / frequency) * Math.PI);
-          path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
-        }
-        break;
-      }
-      case 'drops': {
-        path = `M0,0`;
-        const segmentWidth = width / frequency;
-        const dropHeight = height * 0.9;
-        const dropWidth = Math.min(segmentWidth * 0.6, height * 0.5); 
-        for (let i = 0; i < frequency; i++) {
-            const startX = i * segmentWidth + (segmentWidth - dropWidth) / 2;
-            const midX = startX + dropWidth / 2;
-            const endX = startX + dropWidth;
-            path += ` M${midX},${height * 0.1} Q${startX},${height * 0.5} ${midX},${dropHeight} Q${endX},${height * 0.5} ${midX},${height * 0.1} Z`;
-        }
-        break;
-      }
-      case 'zigzag': {
-        path = `M0,${height/2}`;
-        for (let i = 0; i <= frequency * 2; i++) {
-            const x = (i / (frequency * 2)) * width;
-            const y = i % 2 === 0 ? 0 : height;
-            path += ` L${x.toFixed(2)},${y.toFixed(2)}`;
-        }
-        break;
-      }
-      case 'leaves': {
-         path = '';
-         const segmentWidth = width / frequency;
-         const leafHeight = height * 0.8;
-         const leafWidth = Math.min(segmentWidth * 0.8, height * 1.5);
-        for (let i = 0; i < frequency; i++) {
-          const startX = i * segmentWidth + (segmentWidth - leafWidth) / 2;
-          const midX = startX + leafWidth / 2;
-          const endX = startX + leafWidth;
-          const midY = height / 2;
-          path += ` M${startX},${midY} Q${midX},${midY - leafHeight/2} ${endX},${midY} Q${midX},${midY + leafHeight/2} ${startX},${midY} Z`;
-        }
-        break;
-      }
-       case 'scallops': {
-        path = `M-1,${height}`;
-        const segmentWidth = width / frequency;
-        const r = Math.min(segmentWidth / 2, height);
-        for (let i = 0; i < frequency; i++) {
-          const x1 = i * segmentWidth;
-          const x2 = x1 + segmentWidth;
-          path += ` A ${r} ${r} 0 0 1 ${x2} ${height}`;
-        }
-        path += ` L${width + 1},${height} L${width+1},0 L-1,0 Z`;
-        break;
-      }
-    }
-    return path;
-  };
-  
-  
-  const ShapesSeparator = ({ block }: { block: SeparatorBlock }) => {
-    const ref = useRef<SVGSVGElement>(null);
-    const [dimensions, setDimensions] = useState({ width: 0, height: block.payload.height });
-    const { type, background, frequency } = block.payload.shapes;
-
-    useEffect(() => {
-        const observer = new ResizeObserver(entries => {
-            if (entries[0]) {
-                const { width } = entries[0].contentRect;
-                setDimensions({ width, height: block.payload.height });
-            }
-        });
-        if (ref.current) {
-            observer.observe(ref.current);
-        }
-        return () => {
-            if (ref.current) {
-                observer.unobserve(ref.current);
-            }
-        };
-    }, [block.payload.height]);
-    
-    useEffect(() => {
-        setDimensions(prev => ({ ...prev, height: block.payload.height }));
-    }, [block.payload.height]);
-
-    const pathData = generateShapePath(type, frequency, dimensions.width, dimensions.height);
-    
-    const getFill = () => {
-        const gradientId = `shape-gradient-${block.id}`;
-        if (background.type === 'solid') {
-            return background.color1;
-        }
-        if (background.type === 'gradient') {
-             return `url(#${gradientId})`;
-        }
-        return 'none';
-    };
-
-    return (
-        <svg ref={ref} width="100%" height={`${block.payload.height}px`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-            {background.type === 'gradient' && (
-                <defs>
-                    {background.direction === 'radial' ? (
-                         <radialGradient id={`shape-gradient-${block.id}`}>
-                            <stop offset="0%" stopColor={background.color1} />
-                            <stop offset="100%" stopColor={background.color2} />
-                        </radialGradient>
-                    ) : (
-                        <linearGradient id={`shape-gradient-${block.id}`} x1="0%" y1="0%" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
-                            <stop offset="0%" stopColor={background.color1} />
-                            <stop offset="100%" stopColor={background.color2} />
-                        </linearGradient>
-                    )}
-                </defs>
-            )}
-            <path d={pathData} fill={getFill()} stroke="none" />
-        </svg>
-    );
-  }
-
-   const LineSeparator = ({ block }: { block: SeparatorBlock }) => {
-    const { thickness, borderRadius, color, style } = block.payload.line;
-    
-     const lineStyle: React.CSSProperties = {
-        height: `${thickness}px`,
-        borderRadius: `${borderRadius}px`,
-        width: '100%',
-        backgroundColor: style === 'solid' ? color : 'transparent',
-    };
-    
-    if (style !== 'solid') {
-        const lineSegment = style === 'dashed' ? '10px' : `${thickness}px`;
-        const gap = style === 'dashed' ? '5px' : `${thickness}px`;
-        lineStyle.backgroundImage = `repeating-linear-gradient(to right, ${color} 0, ${color} ${lineSegment}, transparent ${lineSegment}, transparent calc(${lineSegment} + ${gap}))`;
-    }
-
-    const containerStyle: React.CSSProperties = {
-        height: `${block.payload.height}px`,
-        display: 'flex',
-        alignItems: 'center',
-        width: '100%',
-        padding: `0 1px`
-    };
-
-    return (
-        <div style={containerStyle}>
-            <div style={lineStyle}></div>
-        </div>
-    );
-};
-
-  const TimerComponent = ({ block, colCount }: { block: TimerBlock; colCount: number }) => {
+const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; colCount: number }) => {
     const { endDate, timezone, design, endAction, styles } = block.payload;
     const [currentStage, setCurrentStage] = useState<'primary' | 'secondary'>('primary');
     const [isFinished, setIsFinished] = useState(false);
@@ -3275,29 +2597,28 @@ export default function CreateTemplatePage() {
     const initialStartDateRef = useRef(new Date());
   
     const calculateTimeLeft = useCallback(() => {
-      if (!targetDate) return {};
-      try {
-        const end = new Date(targetDate);
-        const now = new Date();
-  
-        const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
-        const timeZoneOffset = nowInTimezone.getTime() - now.getTime();
-        const adjustedEnd = new Date(end.getTime() - timeZoneOffset);
-  
-        const difference = adjustedEnd.getTime() - now.getTime();
-  
-        if (difference > 0) {
-          return {
-            days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-            minutes: Math.floor((difference / 1000 / 60) % 60),
-            seconds: Math.floor((difference / 1000) % 60),
-          };
+        if (!targetDate) return {};
+        try {
+            const end = new Date(targetDate);
+            const now = new Date();
+
+            const timeZoneOffset = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getTime() - now.getTime();
+            const nowInTimezone = new Date(now.getTime() + timeZoneOffset);
+
+            const difference = end.getTime() - nowInTimezone.getTime();
+    
+            if (difference > 0) {
+                return {
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((difference / 1000 / 60) % 60),
+                    seconds: Math.floor((difference / 1000) % 60),
+                };
+            }
+        } catch (e) {
+            console.error("Invalid time zone specified:", e);
         }
-      } catch (e) {
-        console.error("Invalid time zone specified:", e);
-      }
-      return {};
+        return {};
     }, [targetDate, timezone]);
   
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
@@ -3327,10 +2648,8 @@ export default function CreateTemplatePage() {
   
     if (isFinished && endAction.type === 'message') {
       return (
-        <div className="p-4 text-center w-full flex justify-center">
-          <div style={{ transform: `scale(${styles.scale})` }}>
+        <div className="p-4 text-center w-full flex justify-center" style={{fontSize: `${styles.scale * 16}px`}}>
             <p className="text-lg font-semibold" style={{ fontFamily: styles.fontFamily }}>{endAction.message}</p>
-          </div>
         </div>
       );
     }
@@ -3369,7 +2688,7 @@ export default function CreateTemplatePage() {
               <div style={baseStyle} className="flex items-center justify-center p-2 w-[4em] h-[4em] text-[2em] font-bold">
                 {String(unit.value || 0).padStart(2, '0')}
               </div>
-              <p className="text-xs mt-1" style={{ color: styles.numberColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
+              <p className="text-xs mt-1" style={{ color: styles.labelColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
             </div>
           ))}
         </div>
@@ -3403,48 +2722,49 @@ export default function CreateTemplatePage() {
         const gradientId = `analog-grad-${block.id}`;
         
         return (
-            <div className="flex flex-wrap justify-center items-center gap-1 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
-                 <svg width="0" height="0" className="absolute">
-                    <defs>
-                        {background.type === 'gradient' && (
-                            <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
-                                <stop offset="0%" stopColor={background.color1} />
-                                <stop offset="100%" stopColor={background.color2 || background.color1} />
-                            </linearGradient>
-                        )}
-                        {background.type === 'gradient' && background.direction === 'radial' && (
-                             <radialGradient id={`${gradientId}-radial`}>
-                                <stop offset="0%" stopColor={background.color1} />
-                                <stop offset="100%" stopColor={background.color2 || background.color1} />
-                            </radialGradient>
-                        )}
-                  </defs>
-                </svg>
-                {timeData.map(unit => (
-                    <div key={unit.label} className="flex flex-col items-center flex-shrink-0" style={{width: '6em', height: '7em'}}>
-                        <div className="relative w-full h-[6em]">
-                             <svg className="w-full h-full" viewBox="0 0 100 100">
-                                <circle className="stroke-current text-muted/20" strokeWidth={styles.strokeWidth} cx="50" cy="50" r="40" fill="transparent" />
-                                <circle
-                                    strokeWidth={styles.strokeWidth}
-                                    cx="50" cy="50" r="40" fill="transparent"
-                                    strokeDasharray={2 * Math.PI * 40}
-                                    strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
-                                    transform="rotate(-90 50 50)"
-                                    strokeLinecap="round"
-                                    stroke={background.type === 'gradient' 
-                                        ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`)
-                                        : background.color1
-                                    }
-                                />
-                                <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-[1.25em] font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
-                                    {String(unit.value || 0).padStart(2, '0')}
-                                </text>
-                            </svg>
+             <div className="flex w-full justify-center" style={{ fontSize: `${styles.scale * 16}px` }}>
+                <div className="flex flex-wrap justify-center items-center gap-1 p-1">
+                    <svg width="0" height="0" className="absolute">
+                        <defs>
+                            {background.type === 'gradient' && background.direction === 'radial' ? (
+                                <radialGradient id={`${gradientId}-radial`}>
+                                    <stop offset="0%" stopColor={background.color1} />
+                                    <stop offset="100%" stopColor={background.color2 || background.color1} />
+                                </radialGradient>
+                            ) : background.type === 'gradient' ? (
+                                <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                                    <stop offset="0%" stopColor={background.color1} />
+                                    <stop offset="100%" stopColor={background.color2 || background.color1} />
+                                </linearGradient>
+                            ) : null}
+                        </defs>
+                    </svg>
+                    {timeData.map(unit => (
+                        <div key={unit.label} className="flex flex-col items-center flex-shrink-0" style={{width: '6em', height: '7em'}}>
+                            <div className="relative w-full h-[6em]">
+                                <svg className="w-full h-full" viewBox="0 0 100 100">
+                                    <circle className="stroke-current text-muted/20" strokeWidth={styles.strokeWidth} cx="50" cy="50" r="40" fill="transparent" />
+                                    <circle
+                                        strokeWidth={styles.strokeWidth}
+                                        cx="50" cy="50" r="40" fill="transparent"
+                                        strokeDasharray={2 * Math.PI * 40}
+                                        strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
+                                        transform="rotate(-90 50 50)"
+                                        strokeLinecap="round"
+                                        stroke={background.type === 'gradient' 
+                                            ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`)
+                                            : background.color1
+                                        }
+                                    />
+                                    <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-[1.25em] font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
+                                        {String(unit.value || 0).padStart(2, '0')}
+                                    </text>
+                                </svg>
+                            </div>
+                            <p className="text-[0.75em] -mt-[0.5em]" style={{color: styles.labelColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
                         </div>
-                        <p className="text-[0.75em] -mt-[0.5em]" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
         );
     }
@@ -3498,8 +2818,8 @@ export default function CreateTemplatePage() {
         const gradientId = `minimalist-grad-${block.id}`;
   
         return (
-          <div className="flex flex-wrap justify-center items-end p-1 w-full" style={{ fontSize: `${styles.scale * 16}px` }}>
-            <div className="flex justify-center items-end flex-wrap gap-1" style={{ fontFamily: styles.fontFamily }}>
+          <div className="flex w-full justify-center" style={{ fontSize: `${styles.scale * 16}px` }}>
+            <div className="flex justify-center items-end flex-wrap gap-1 p-1" style={{ fontFamily: styles.fontFamily }}>
               <svg width="0" height="0" className="absolute">
                 <defs>
                   {background.type === 'gradient' && (
@@ -3553,7 +2873,7 @@ export default function CreateTemplatePage() {
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className={cn("font-light", textSizeClasses[colCount as keyof typeof textSizeClasses] || 'text-xs')} style={{ color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                    <span className={cn("uppercase tracking-widest text-muted-foreground", labelSizeClasses[colCount as keyof typeof labelSizeClasses] || 'text-[6px]')}>{unit.label}</span>
+                    <p className={cn("uppercase tracking-widest text-muted-foreground pt-0.5", labelSizeClasses[colCount as keyof typeof labelSizeClasses] || 'text-[6px]')} style={{color: styles.labelColor, paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
                   </div>
                 </div>
               ))}
@@ -3577,6 +2897,519 @@ export default function CreateTemplatePage() {
           {renderContent()}
         </div>
       );
+});
+TimerComponent.displayName = 'TimerComponent';
+
+export default function CreateTemplatePage() {
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [viewport, setViewport] = useState<Viewport>('desktop');
+  const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+  const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
+  const [selectedElement, setSelectedElement] = useState<SelectedElement>(null);
+  const [templateName, setTemplateName] = useState('Mi Plantilla Increíble');
+  const [tempTemplateName, setTempTemplateName] = useState(templateName);
+  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode for editor
+  const [itemToDelete, setItemToDelete] = useState<{ rowId: string, colId?: string, primId?: string } | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  
+  // State for block selectors
+  const [activeContainer, setActiveContainer] = useState<{ id: string; type: 'column' | 'wrapper' } | null>(null);
+  const [isColumnBlockSelectorOpen, setIsColumnBlockSelectorOpen] = useState(false);
+  const [isWrapperBlockSelectorOpen, setIsWrapperBlockSelectorOpen] = useState(false);
+
+  // State for wrapper actions
+  const [isActionSelectorModalOpen, setIsActionSelectorModalOpen] = useState(false);
+  const [actionTargetWrapperId, setActionTargetWrapperId] = useState<string | null>(null);
+  const [clickPosition, setClickPosition] = useState<{x: number, y: number} | null>(null);
+  const [isEmojiSelectorOpen, setIsEmojiSelectorOpen] = useState(false);
+
+  // States for resizing
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizingWrapperId, setResizingWrapperId] = useState<string | null>(null);
+
+  // State for background image modal
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imageModalState, setImageModalState] = useState({
+    url: '',
+    fit: 'cover' as BackgroundFit,
+    positionX: 50,
+    positionY: 50,
+    zoom: 100,
+  });
+  
+  const wrapperRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  const { toast } = useToast();
+
+  const handleSave = () => {
+    setLastSaved(new Date());
+    toast({
+      title: "¡Plantilla Guardada!",
+      description: "Tus cambios han sido guardados exitosamente.",
+      className: 'bg-[#00CB07] border-none text-white',
+    })
+  };
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle('dark', !isDarkMode);
+  };
+  
+  const ThemeToggle = () => (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+            {isDarkMode ? <Sun /> : <Moon />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Cambiar a modo {isDarkMode ? 'claro' : 'oscuro'}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+  
+  const handleBlockClick = (type: BlockType) => {
+      if (type === 'columns') {
+          setIsColumnModalOpen(true);
+      } else if (type === 'wrapper') {
+        const newWrapper: WrapperBlock = {
+            id: `wrap_${Date.now()}`,
+            type: 'wrapper',
+            payload: {
+                blocks: [],
+                height: 300,
+                styles: {
+                    background: {
+                        type: 'solid',
+                        color1: 'rgba(255,255,255,0.05)',
+                    }
+                }
+            }
+        };
+        setCanvasContent([...canvasContent, newWrapper]);
+      }
+  }
+
+  const handleAddColumns = (numColumns: number) => {
+    const newColumnsBlock: ColumnsBlock = {
+      id: `row_${Date.now()}`,
+      type: 'columns',
+      payload: {
+        columns: Array.from({ length: numColumns }, (_, i) => ({
+          id: `col_${Date.now()}_${i}`,
+          blocks: [],
+          width: 100 / numColumns,
+           styles: {}
+        })),
+        alignment: 50,
+      }
+    };
+    setCanvasContent([...canvasContent, newColumnsBlock]);
+    setIsColumnModalOpen(false);
+  };
+
+  const getSelectedBlockType = (element: SelectedElement, content: CanvasBlock[]): BlockType | null => {
+      if (!element) return null;
+
+      if (element.type === 'column') {
+          return 'columns';
+      }
+      if (element.type === 'wrapper') {
+          return 'wrapper';
+      }
+      if (element.type === 'primitive') {
+          const row = content.find(r => r.id === element.rowId);
+          if (row?.type !== 'columns') return null;
+          const col = row.payload.columns.find(c => c.id === element.columnId);
+          const block = col?.blocks.find(b => b.id === element.primitiveId);
+          return block?.type || null;
+      }
+       if (element.type === 'wrapper-primitive') {
+          const row = content.find(r => r.id === element.wrapperId);
+          if (row?.type !== 'wrapper') return null;
+          const block = row.payload.blocks.find(b => b.id === element.primitiveId);
+          return block?.type || null;
+      }
+
+      return null;
+  }
+  
+  const handleOpenBlockSelector = (containerId: string, containerType: 'column' | 'wrapper', e: React.MouseEvent) => {
+      e.stopPropagation();
+      setActiveContainer({ id: containerId, type: containerType });
+      if (containerType === 'column') {
+        setIsColumnBlockSelectorOpen(true);
+      } else {
+        setIsWrapperBlockSelectorOpen(true);
+      }
+  };
+  
+  const handleAddBlockToColumn = (type: StaticPrimitiveBlockType) => {
+      if (!activeContainer || activeContainer.type !== 'column') return;
+
+      let newBlock: PrimitiveBlock;
+      const basePayload = { id: `${type}_${Date.now()}` };
+
+      switch(type) {
+         case 'heading':
+            newBlock = {
+                ...basePayload,
+                type: 'heading',
+                payload: {
+                    text: 'Escribe tu título aquí',
+                    styles: {
+                        color: isDarkMode ? '#FFFFFF' : '#000000',
+                        fontFamily: 'Roboto',
+                        fontSize: 32,
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        fontStyle: 'normal',
+                        textDecoration: 'none'
+                    }
+                }
+            };
+            break;
+        case 'text':
+            newBlock = {
+                ...basePayload,
+                type: 'text',
+                payload: {
+                    fragments: [
+                        { id: `frag_${Date.now()}`, text: 'Este es un bloque de texto editable. ¡Haz clic para personalizarlo! ', styles: { color: isDarkMode ? '#CCCCCC' : '#333333' } }
+                    ],
+                    globalStyles: {
+                        textAlign: 'left',
+                        fontSize: 16
+                    }
+                }
+            };
+            break;
+         case 'button':
+            newBlock = {
+                ...basePayload,
+                type: 'button',
+                payload: {
+                    text: 'Haz Clic Aquí',
+                    link: { url: '#', openInNewTab: false },
+                    textAlign: 'center',
+                    styles: {
+                        color: '#FFFFFF',
+                        backgroundColor: '#A020F0',
+                        borderRadius: 8,
+                         background: { type: 'solid', color1: '#A020F0' }
+                    }
+                }
+            };
+            break;
+        case 'emoji-static':
+             newBlock = {
+                ...basePayload,
+                type: 'emoji-static',
+                payload: {
+                    emoji: '🚀',
+                    styles: {
+                        fontSize: 64,
+                        textAlign: 'center',
+                        rotate: 0,
+                    }
+                }
+            };
+            break;
+        case 'separator':
+            newBlock = {
+                ...basePayload,
+                type: 'separator',
+                payload: {
+                    height: 20,
+                    style: 'invisible',
+                    line: { thickness: 1, color: '#CCCCCC', style: 'solid', borderRadius: 0 },
+                    shapes: { type: 'waves', background: { type: 'solid', color1: '#A020F0' }, frequency: 20 },
+                    dots: { size: 4, count: 10, color: '#CCCCCC' }
+                }
+            };
+            break;
+        case 'youtube':
+            newBlock = {
+                ...basePayload,
+                type: 'youtube',
+                payload: {
+                    url: '', videoId: null, title: 'Título de tu video', showTitle: true,
+                    duration: { hours: '', minutes: '', seconds: '' }, showDuration: false,
+                    link: { url: '', openInNewTab: false },
+                    styles: { playButtonType: 'default', borderRadius: 12, borderWidth: 0, border: { type: 'solid', color1: '#FF0000' } }
+                }
+            };
+            break;
+        case 'timer':
+            const defaultEndDate = new Date();
+            defaultEndDate.setDate(defaultEndDate.getDate() + 7);
+             newBlock = {
+                ...basePayload,
+                type: 'timer',
+                payload: {
+                    endDate: defaultEndDate.toISOString(),
+                    timezone: 'UTC - Coordinated Universal Time',
+                    design: 'minimalist',
+                    endAction: { type: 'stop', message: '¡La oferta ha terminado!' },
+                    styles: {
+                        fontFamily: 'Roboto', numberColor: isDarkMode ? '#FFFFFF' : '#000000', labelColor: isDarkMode ? '#999999' : '#666666',
+                        borderRadius: 15, background: { type: 'gradient', color1: '#AD00EC', color2: '#0018EC', direction: 'vertical' },
+                        strokeWidth: 4, scale: 1
+                    }
+                }
+            };
+            break;
+          default:
+              newBlock = { ...basePayload, type: 'text', payload: { text: `Contenido para ${type}` } };
+      }
+
+      setCanvasContent(canvasContent.map(row => {
+          if (row.type !== 'columns') return row;
+          const newColumns = row.payload.columns.map(col => {
+              if (col.id === activeContainer?.id) {
+                  return { ...col, blocks: [...col.blocks, newBlock] };
+              }
+              return col;
+          });
+          return { ...row, payload: { ...row.payload, columns: newColumns } };
+      }));
+
+      setIsColumnBlockSelectorOpen(false);
+  };
+  
+  const handleAddBlockToWrapper = (type: InteractiveBlockType) => {
+    if (!activeContainer || activeContainer.type !== 'wrapper') return;
+    
+    if (type === 'emoji-interactive') {
+        setIsEmojiSelectorOpen(true);
+    }
+
+    setIsWrapperBlockSelectorOpen(false);
+  };
+
+  const handleSelectEmojiForWrapper = (emoji: string) => {
+     if (!activeContainer || activeContainer.type !== 'wrapper' || !clickPosition) return;
+     
+     const wrapperElement = wrapperRefs.current[activeContainer.id];
+     if (!wrapperElement) return;
+
+     const rect = wrapperElement.getBoundingClientRect();
+     const xPercent = (clickPosition.x / rect.width) * 100;
+     const yPercent = (clickPosition.y / rect.height) * 100;
+     
+     const newBlock: InteractiveEmojiBlock = {
+        id: `emoji_${Date.now()}`,
+        type: 'emoji-interactive',
+        payload: {
+            emoji,
+            x: xPercent,
+            y: yPercent,
+            scale: 1,
+            rotate: 0,
+        }
+     };
+
+     setCanvasContent(canvasContent.map(row => {
+        if (row.id === activeContainer.id && row.type === 'wrapper') {
+            return {
+                ...row,
+                payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] }
+            }
+        }
+        return row;
+     }));
+
+     setIsEmojiSelectorOpen(false);
+     setClickPosition(null);
+     setActiveContainer(null);
+  }
+  
+  const promptDeleteItem = (rowId: string, colId?: string, primId?: string) => {
+      setItemToDelete({ rowId, colId, primId });
+      setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteItem = () => {
+    if (!itemToDelete) return;
+    const { rowId, colId, primId } = itemToDelete;
+
+    let newCanvasContent = [...canvasContent];
+
+    if (primId && colId) { // Deleting a primitive from a column
+        newCanvasContent = newCanvasContent.map(row => {
+            if (row.id === rowId && row.type === 'columns') {
+                const newCols = row.payload.columns.map(col => {
+                    if (col.id === colId) {
+                        return { ...col, blocks: col.blocks.filter(b => b.id !== primId) };
+                    }
+                    return col;
+                });
+                return { ...row, payload: { ...row.payload, columns: newCols } };
+            }
+            return row;
+        });
+    } else if (primId && !colId) { // Deleting a primitive from a wrapper
+         newCanvasContent = newCanvasContent.map(row => {
+            if (row.id === rowId && row.type === 'wrapper') {
+                const newBlocks = row.payload.blocks.filter(b => b.id !== primId);
+                return { ...row, payload: { ...row.payload, blocks: newBlocks }};
+            }
+            return row;
+         });
+    } else if (colId) { // Deleting a column - not implemented, delete the whole row
+        newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
+    } else { // Deleting a row (ColumnsBlock or WrapperBlock)
+        newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
+    }
+
+    setCanvasContent(newCanvasContent as CanvasBlock[]);
+    setSelectedElement(null);
+    setIsDeleteModalOpen(false);
+    setItemToDelete(null);
+  };
+  
+  const getFragmentStyle = (fragment: TextFragment): React.CSSProperties => {
+    const style: React.CSSProperties = {};
+    if (fragment.styles.bold) style.fontWeight = 'bold';
+    if (fragment.styles.italic) style.fontStyle = 'italic';
+    if (fragment.styles.color) style.color = fragment.styles.color;
+    if (fragment.styles.highlight) style.backgroundColor = fragment.styles.highlight;
+    if (fragment.styles.fontFamily) style.fontFamily = fragment.styles.fontFamily;
+    
+    let textDecoration = '';
+    if (fragment.styles.underline) textDecoration += ' underline';
+    if (fragment.styles.strikethrough) textDecoration += ' line-through';
+    if(textDecoration) style.textDecoration = textDecoration.trim();
+
+    return style;
+  };
+  
+  const getButtonStyle = (block: ButtonBlock): React.CSSProperties => {
+    const { styles } = block.payload;
+    const style: React.CSSProperties = {
+      color: styles.color,
+      borderRadius: `${styles.borderRadius}px`,
+      padding: '10px 20px',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'inline-block',
+      fontWeight: 'bold',
+    };
+    if(styles.background?.type === 'solid') {
+      style.backgroundColor = styles.background.color1;
+    } else if (styles.background?.type === 'gradient') {
+        const { direction, color1, color2 } = styles.background;
+        if (direction === 'radial') {
+          style.backgroundImage = `radial-gradient(circle, ${color1}, ${color2})`;
+        } else {
+          const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+          style.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
+        }
+    }
+    return style;
+  };
+  
+  const getButtonContainerStyle = (block: ButtonBlock): React.CSSProperties => {
+    return {
+      textAlign: block.payload.textAlign,
+      padding: '8px',
+    }
+  }
+
+  const getHeadingStyle = (block: HeadingBlock): React.CSSProperties => {
+      const { styles } = block.payload;
+      const style: React.CSSProperties = {
+          color: styles.color,
+          fontFamily: styles.fontFamily,
+          fontSize: `${styles.fontSize}px`,
+          fontWeight: styles.fontWeight,
+          fontStyle: styles.fontStyle,
+          textAlign: styles.textAlign,
+          padding: '8px',
+          wordBreak: 'break-word',
+      };
+      if (styles.highlight) {
+          style.backgroundColor = styles.highlight;
+      }
+      
+      let textDecoration = '';
+      if (styles.textDecoration === 'underline') textDecoration = 'underline';
+      if (styles.textDecoration === 'line-through') textDecoration = 'line-through';
+      if (textDecoration) style.textDecoration = textDecoration;
+      
+      return style;
+  };
+
+  const getStaticEmojiStyle = (block: StaticEmojiBlock): React.CSSProperties => {
+    return {
+        fontSize: `${block.payload.styles.fontSize}px`,
+        transform: `rotate(${block.payload.styles.rotate}deg)`,
+        display: 'inline-block',
+        padding: '8px',
+    }
+  };
+  
+  const LineSeparator = ({ block }: { block: SeparatorBlock }) => {
+    const { height, line } = block.payload;
+    return (
+        <div style={{ height: `${height}px`, width: '100%', display: 'flex', alignItems: 'center' }}>
+            <div style={{
+                height: `${line.thickness}px`,
+                width: '100%',
+                backgroundColor: line.color,
+                borderStyle: line.style,
+                borderRadius: `${line.borderRadius}px`,
+            }} />
+        </div>
+    );
+  };
+  
+  const ShapesSeparator = ({ block }: { block: SeparatorBlock }) => {
+    const { height, shapes } = block.payload;
+    const { type, background, frequency } = shapes;
+    
+    const bgStyle: React.CSSProperties = {};
+    if (background.type === 'solid') {
+      bgStyle.backgroundColor = background.color1;
+    } else if (background.type === 'gradient') {
+      const { direction, color1, color2 } = background;
+      if (direction === 'radial') {
+        bgStyle.backgroundImage = `radial-gradient(circle, ${color1}, ${color2})`;
+      } else {
+        const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+        bgStyle.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
+      }
+    }
+
+    const getPathForShape = () => {
+        let path = '';
+        const numRepeats = frequency || 20;
+
+        switch(type) {
+            case 'waves':
+                path = `M0,50 Q${50/numRepeats},0 ${100/numRepeats},50 T${200/numRepeats},50`;
+                return <path d={path} strokeWidth="0" className="fill-current" style={{ transform: `scale(${numRepeats}, 1)` }} />;
+            case 'zigzag':
+                 path = `M0,50 L${50/numRepeats},0 L${100/numRepeats},50`;
+                 return <path d={path} strokeWidth="0" className="fill-current" style={{ transform: `scale(${numRepeats}, 1)` }}/>;
+            case 'drops':
+                path = `M0,0 A50,50 0 0 1 100,0 L100,100 L0,100 Z`; // Simplified path
+                return <path d={path} strokeWidth="0" className="fill-current" style={{ transform: `scale(1, ${height/100})` }} />;
+            case 'leaves':
+            case 'scallops':
+            default:
+                return null;
+        }
+    }
+
+    return (
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full" style={{color: bgStyle.backgroundColor, backgroundImage: bgStyle.backgroundImage}}>
+           {getPathForShape()}
+        </svg>
+    )
   };
   
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string, colCount: number) => {
@@ -4147,7 +3980,6 @@ export default function CreateTemplatePage() {
       </div>
     );
 };
-
 
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
