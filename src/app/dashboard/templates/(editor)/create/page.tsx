@@ -3615,7 +3615,7 @@ export default function CreateTemplatePage() {
     setIsImageModalOpen(false);
   }
 
-  const TimerComponent = ({ block, colCount }: { block: TimerBlock, colCount: number }) => {
+ const TimerComponent = ({ block, colCount }: { block: TimerBlock, colCount: number }) => {
     const { endDate, timezone, design, endAction, styles } = block.payload;
     const [currentStage, setCurrentStage] = useState<'primary' | 'secondary'>('primary');
     const [isFinished, setIsFinished] = useState(false);
@@ -3629,7 +3629,9 @@ export default function CreateTemplatePage() {
         try {
             const end = new Date(targetDate);
             const now = new Date();
-            const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+            
+            const timeZoneOffset = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getTime() - now.getTime();
+            const nowInTimezone = new Date(now.getTime() + timeZoneOffset);
 
             const difference = end.getTime() - nowInTimezone.getTime();
 
@@ -3736,7 +3738,7 @@ export default function CreateTemplatePage() {
         const gradientId = `analog-grad-${block.id}`;
         
         return (
-            <div className="flex justify-center items-center gap-2 p-2">
+            <div className="flex justify-center items-center gap-2 p-2" style={{ transform: `scale(${styles.scale})` }}>
                  <svg width="0" height="0" className="absolute">
                   <defs>
                      {background.type === 'gradient' && (
@@ -3774,44 +3776,44 @@ export default function CreateTemplatePage() {
     }
     
     const renderMinimalist = () => {
-      const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
-      const sizeStyles = {
-        lg: { container: 'w-24 h-24', number: 'text-4xl', label: 'text-[10px]' },
-        md: { container: 'w-20 h-20', number: 'text-2xl', label: 'text-[8px]' },
-        sm: { container: 'w-12 h-12', number: 'text-base', label: 'text-[7px]' },
-        xs: { container: 'w-10 h-10', number: 'text-xs', label: 'text-[6px]' },
-      };
-      const currentSize = sizeStyles[sizeVariant];
-
-      const getPathForUnit = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
-          if (isFinished) return 320;
-          const end = new Date(targetDate!);
-          const start = initialStartDateRef.current;
-          const totalDuration = end.getTime() - start.getTime();
-          if(totalDuration <= 0) return 0;
-
-          const daysLeft = timeUnits.days || 0;
-          const hoursLeft = timeUnits.hours || 0;
-          const minutesLeft = timeUnits.minutes || 0;
-          const secondsLeft = timeUnits.seconds || 0;
-
-          const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
-          let progress = 0;
-          
-          switch (unit) {
-              case 'Días': progress = totalDays > 0 ? (daysLeft / totalDays) : 0; break;
-              case 'Horas': progress = (hoursLeft / 23); break;
-              case 'Minutos': progress = (minutesLeft / 59); break;
-              case 'Segundos': progress = (secondsLeft / 59); break;
-          }
-          return 320 * (1 - progress);
-      };
-
-      const pathD = "M 10,10 H 90 V 90 H 10 Z";
-
-      return (
+        const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
+        const sizeStyles = {
+          lg: { container: 'w-24 h-24', number: 'text-4xl', label: 'text-[10px]' },
+          md: { container: 'w-20 h-20', number: 'text-2xl', label: 'text-[8px]' },
+          sm: { container: 'w-12 h-12', number: 'text-base', label: 'text-[7px]' },
+          xs: { container: 'w-10 h-10', number: 'text-xs', label: 'text-[6px]' },
+        };
+        const currentSize = sizeStyles[sizeVariant];
+  
+        const getPathForUnit = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+            if (isFinished) return 320;
+            const end = new Date(targetDate!);
+            const start = initialStartDateRef.current;
+            const totalDuration = end.getTime() - start.getTime();
+            if(totalDuration <= 0) return 0;
+  
+            const daysLeft = timeUnits.days || 0;
+            const hoursLeft = timeUnits.hours || 0;
+            const minutesLeft = timeUnits.minutes || 0;
+            const secondsLeft = timeUnits.seconds || 0;
+  
+            const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
+            let progress = 0;
+            
+            switch (unit) {
+                case 'Días': progress = totalDays > 0 ? (daysLeft / totalDays) : 0; break;
+                case 'Horas': progress = (hoursLeft / 23); break;
+                case 'Minutos': progress = (minutesLeft / 59); break;
+                case 'Segundos': progress = (secondsLeft / 59); break;
+            }
+            return 320 * (1 - progress);
+        };
+  
+        const pathD = "M 10,10 H 90 V 90 H 10 Z";
+  
+        return (
           <div className="flex justify-center items-end p-2 w-full">
-            <div className="flex justify-center items-end gap-2" style={{ fontFamily: styles.fontFamily }}>
+            <div className="flex justify-center items-end gap-2" style={{ fontFamily: styles.fontFamily, transform: `scale(${styles.scale})` }}>
               {timeData.map((unit) => (
                   <div key={unit.label} className={cn("relative flex flex-col items-center", currentSize.container)}>
                       <svg className="w-full h-full" viewBox="0 0 100 100">
@@ -3861,12 +3863,12 @@ export default function CreateTemplatePage() {
               ))}
             </div>
           </div>
-      );
-    }
+        );
+      }
 
     const renderDigital = () => {
         return (
-             <div className="flex justify-center items-center gap-2 p-4">
+             <div className="flex justify-center items-center gap-2 p-4" style={{ transform: `scale(${styles.scale})` }}>
                 {timeData.map(unit => (
                      <div key={unit.label} className="flex flex-col items-center">
                         <div style={baseStyle} className="flex items-center justify-center p-2 w-16 h-16 text-3xl font-bold">
@@ -3890,10 +3892,8 @@ export default function CreateTemplatePage() {
     }
 
     return (
-      <div className="w-full flex justify-center">
-        <div style={{ transform: `scale(${styles.scale})` }}>
-          {renderContent()}
-        </div>
+      <div className="w-full flex justify-center items-center">
+        {renderContent()}
       </div>
     );
   }
