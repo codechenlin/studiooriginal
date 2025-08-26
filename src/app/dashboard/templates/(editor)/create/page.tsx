@@ -202,13 +202,13 @@ const timezones = [
     "Africa/Cairo - Egypt",
     "Africa/Nairobi - Kenya",
     "Africa/Lagos - Nigeria",
+    "Asia/Shanghai - China",
     "Asia/Tokyo - Japan",
     "Asia/Dubai - UAE",
     "Australia/Sydney - Australia (East)",
     "Asia/Singapore - Singapore",
     "Asia/Kamchatka - Russia",
     "Asia/Omsk - Russia",
-    "Asia/Shanghai - China",
     "Asia/Kolkata - India",
     "Pacific/Auckland - New Zealand",
     "Asia/Jakarta - Indonesia",
@@ -3629,7 +3629,6 @@ export default function CreateTemplatePage() {
         try {
             const end = new Date(targetDate);
             const now = new Date();
-
             const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
 
             const difference = end.getTime() - nowInTimezone.getTime();
@@ -3675,9 +3674,11 @@ export default function CreateTemplatePage() {
 
     if (isFinished && endAction.type === 'message') {
         return (
-            <div className="p-4 text-center" style={{ transform: `scale(${styles.scale})` }}>
-                <p className="text-lg font-semibold" style={{ fontFamily: styles.fontFamily }}>{endAction.message}</p>
+          <div className="p-4 text-center w-full flex justify-center">
+            <div style={{ transform: `scale(${styles.scale})` }}>
+              <p className="text-lg font-semibold" style={{ fontFamily: styles.fontFamily }}>{endAction.message}</p>
             </div>
+          </div>
         );
     }
     
@@ -3706,8 +3707,8 @@ export default function CreateTemplatePage() {
             baseStyle.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
         }
     }
-
-    if (design === 'analog') {
+    
+    const renderAnalog = () => {
         const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
             if (isFinished) return 0;
             const end = new Date(targetDate!);
@@ -3735,11 +3736,11 @@ export default function CreateTemplatePage() {
         const gradientId = `analog-grad-${block.id}`;
         
         return (
-            <div className="flex justify-center items-center gap-2 p-2" style={{ transform: `scale(${styles.scale})` }}>
+            <div className="flex justify-center items-center gap-2 p-2">
                  <svg width="0" height="0" className="absolute">
                   <defs>
                      {background.type === 'gradient' && (
-                         <linearGradient id={gradientId} x1="0" y1="0" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
+                       <linearGradient id={gradientId} x1="0" y1="0" x2={background.direction === 'horizontal' ? '100%' : '0%'} y2={background.direction === 'vertical' ? '100%' : '0%'}>
                             <stop offset="0%" stopColor={background.color1} />
                             <stop offset="100%" stopColor={background.color2 || background.color1} />
                         </linearGradient>
@@ -3772,13 +3773,13 @@ export default function CreateTemplatePage() {
         );
     }
     
-     if (design === 'minimalist') {
+    const renderMinimalist = () => {
       const sizeVariant = colCount === 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
       const sizeStyles = {
         lg: { container: 'w-24 h-24', number: 'text-4xl', label: 'text-[10px]' },
         md: { container: 'w-20 h-20', number: 'text-2xl', label: 'text-[8px]' },
-        sm: { container: 'w-16 h-16', number: 'text-xl', label: 'text-[7px]' },
-        xs: { container: 'w-12 h-12', number: 'text-base', label: 'text-[6px]' },
+        sm: { container: 'w-12 h-12', number: 'text-base', label: 'text-[7px]' },
+        xs: { container: 'w-10 h-10', number: 'text-xs', label: 'text-[6px]' },
       };
       const currentSize = sizeStyles[sizeVariant];
 
@@ -3806,14 +3807,10 @@ export default function CreateTemplatePage() {
           return 320 * (1 - progress);
       };
 
+      const pathD = "M 10,10 H 90 V 90 H 10 Z";
+
       return (
-          <div 
-            className="flex justify-center items-end p-2 w-full"
-            style={{ 
-              transform: `scale(${styles.scale})`,
-              transformOrigin: 'center',
-            }}
-          >
+          <div className="flex justify-center items-end p-2 w-full">
             <div className="flex justify-center items-end gap-2" style={{ fontFamily: styles.fontFamily }}>
               {timeData.map((unit) => (
                   <div key={unit.label} className={cn("relative flex flex-col items-center", currentSize.container)}>
@@ -3832,20 +3829,22 @@ export default function CreateTemplatePage() {
                               </filter>
                           </defs>
                            <path
-                              d="M 10,10 H 90 V 90 H 10 Z"
+                              d={pathD}
                               fill="none"
                               stroke="hsl(var(--ai-track))"
                               strokeWidth={styles.strokeWidth}
-                              strokeLinecap="round"
                               strokeLinejoin="round"
+                              strokeLinecap="round"
+                              rx="8"
                           />
                           <path
-                              d="M 10,10 H 90 V 90 H 10 Z"
+                              d={pathD}
                               fill="none"
                               stroke={`url(#gradient-minimalist-${block.id}-${unit.label})`}
                               strokeWidth={styles.strokeWidth}
-                              strokeLinecap="round"
                               strokeLinejoin="round"
+                              strokeLinecap="round"
+                              rx="8"
                               strokeDasharray={320}
                               strokeDashoffset={getPathForUnit(unit.label as any)}
                               style={{
@@ -3865,17 +3864,37 @@ export default function CreateTemplatePage() {
       );
     }
 
+    const renderDigital = () => {
+        return (
+             <div className="flex justify-center items-center gap-2 p-4">
+                {timeData.map(unit => (
+                     <div key={unit.label} className="flex flex-col items-center">
+                        <div style={baseStyle} className="flex items-center justify-center p-2 w-16 h-16 text-3xl font-bold">
+                            {String(unit.value || 0).padStart(2, '0')}
+                        </div>
+                         <p className="text-xs mt-1" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
+                     </div>
+                ))}
+            </div>
+        )
+    }
+
+    const renderContent = () => {
+        switch (design) {
+            case 'analog': return renderAnalog();
+            case 'minimalist': return renderMinimalist();
+            case 'digital':
+            default:
+                return renderDigital();
+        }
+    }
+
     return (
-        <div className={cn("flex justify-center items-center gap-2 p-4", design === 'minimalist' && 'gap-1')} style={{transform: `scale(${styles.scale})`}}>
-            {timeData.map(unit => (
-                 <div key={unit.label} className={cn("flex flex-col items-center", design === 'minimalist' && 'flex-row gap-1')}>
-                    <div style={baseStyle} className={cn("flex items-center justify-center p-2 w-16 h-16 text-3xl font-bold")}>
-                        {String(unit.value || 0).padStart(2, '0')}
-                    </div>
-                     <p className={cn("text-xs mt-1")} style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
-                 </div>
-            ))}
+      <div className="w-full flex justify-center">
+        <div style={{ transform: `scale(${styles.scale})` }}>
+          {renderContent()}
         </div>
+      </div>
     );
   }
 
@@ -4564,5 +4583,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
-    
