@@ -47,7 +47,6 @@ import {
   Youtube,
   Timer,
   Smile,
-  Code,
   Shapes,
   LayoutGrid,
   Box,
@@ -129,7 +128,6 @@ const columnContentBlocks = [
   { name: "Video Youtube", icon: Youtube, id: 'youtube' },
   { name: "Contador", icon: Timer, id: 'timer' },
   { name: "Emoji", icon: Smile, id: 'emoji-static' },
-  { name: "Codigo HTML", icon: Code, id: 'html' },
 ];
 
 const wrapperContentBlocks = [
@@ -222,7 +220,7 @@ const timezones = [
 ];
 
 // --- STATE MANAGEMENT TYPES ---
-type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static' | 'html';
+type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static';
 type InteractiveBlockType = 'emoji-interactive';
 
 type BlockType = StaticPrimitiveBlockType | InteractiveBlockType | 'columns' | 'wrapper';
@@ -411,13 +409,6 @@ interface TimerBlock extends BaseBlock {
     }
 }
 
-interface HtmlBlock extends BaseBlock {
-    type: 'html';
-    payload: {
-        htmlContent: string;
-    }
-}
-
 interface InteractiveEmojiBlock extends BaseBlock {
     type: 'emoji-interactive';
     payload: {
@@ -429,7 +420,7 @@ interface InteractiveEmojiBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock | HtmlBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock;
 
 
@@ -2854,62 +2845,6 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
 TimerComponent.displayName = 'TimerComponent';
 
 
-const HtmlEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
-  selectedElement: SelectedElement;
-  canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
-}) => {
-    if(selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'html') return null;
-
-    const getElement = () => {
-        const row = canvasContent.find(r => r.id === selectedElement.rowId);
-        if (row?.type !== 'columns') return null;
-        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
-        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
-        return block?.type === 'html' ? block as HtmlBlock : null;
-    }
-    const element = getElement();
-    if(!element) return null;
-
-    const updatePayload = (key: keyof HtmlBlock['payload'], value: any) => {
-        const newCanvasContent = canvasContent.map(row => {
-          if (row.id !== (selectedElement as { rowId: string }).rowId) return row;
-          if (row.type !== 'columns') return row;
-          const newColumns = row.payload.columns.map(col => {
-            if (col.id === (selectedElement as { columnId: string }).columnId) {
-                const newBlocks = col.blocks.map(block => {
-                    if (block.id === selectedElement.primitiveId && block.type === 'html') {
-                        return { ...block, payload: { ...block.payload, [key]: value }};
-                    }
-                    return block;
-                })
-                return {...col, blocks: newBlocks};
-            }
-            return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
-        });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
-    }
-
-    return (
-      <div className="space-y-4">
-        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Code/> Código HTML Personalizado</h3>
-        <p className="text-xs text-muted-foreground">Pega tu código HTML a continuación. El contenido se renderizará dentro de un contenedor seguro en tu correo electrónico.</p>
-        <Textarea
-          value={element.payload.htmlContent}
-          onChange={(e) => updatePayload('htmlContent', e.target.value)}
-          placeholder='<div style="padding: 10px; background: lightblue;">\n  <p>¡Hola desde HTML!</p>\n</div>'
-          className="w-full bg-background/50 border-border/50 min-h-[200px] font-mono text-xs"
-        />
-        <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 bg-muted/50 rounded-md">
-            <AlertTriangle className="size-8 text-amber-500 shrink-0"/>
-            <span>Por seguridad y compatibilidad, algunos scripts y estilos complejos podrían ser eliminados o no funcionar en todos los clientes de correo.</span>
-        </div>
-      </div>
-    );
-};
-
 export default function CreateTemplatePage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [viewport, setViewport] = useState<Viewport>('desktop');
@@ -3172,17 +3107,6 @@ export default function CreateTemplatePage() {
                         borderRadius: 15, background: { type: 'gradient', color1: '#AD00EC', color2: '#0018EC', direction: 'vertical' },
                         strokeWidth: 4, scale: 1, minimalistLabelSize: 1
                     }
-                }
-            };
-            break;
-        case 'html':
-            newBlock = {
-                ...basePayload,
-                type: 'html',
-                payload: {
-                    htmlContent: `<div style="display:flex; align-items:center; justify-content:center; height:100%; border:2px dashed #333; border-radius: 8px; padding: 1rem; color: #555; text-align:center;">
-    <p>¡Pega tu código HTML en la barra de estilo!</p>
-</div>`
                 }
             };
             break;
@@ -3638,19 +3562,6 @@ export default function CreateTemplatePage() {
                  const timerBlock = block as TimerBlock;
                  return <TimerComponent block={timerBlock} />;
               }
-               case 'html': {
-                    const htmlBlock = block as HtmlBlock;
-                    return (
-                        <div className="p-2 w-full h-full min-h-[150px]">
-                            <iframe
-                                srcDoc={htmlBlock.payload.htmlContent}
-                                sandbox="allow-scripts allow-same-origin"
-                                className="w-full h-full border-0"
-                                title="HTML Content Preview"
-                            />
-                        </div>
-                    );
-                }
               default:
                 return (
                   <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
@@ -4225,9 +4136,6 @@ export default function CreateTemplatePage() {
                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
                       <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} onOpenCopyModal={handleOpenCopyModal} />
                   )}
-                   { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'html' && (
-                      <HtmlEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
-                  )}
                   
                   { !selectedElement && (
                      <div className="text-center text-muted-foreground p-4 text-sm">
@@ -4512,5 +4420,6 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
 
 
