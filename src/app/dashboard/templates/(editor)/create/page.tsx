@@ -1388,15 +1388,6 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             });
         }
     };
-
-    const handleCopySymbol = (symbol: string) => {
-        navigator.clipboard.writeText(symbol);
-        toast({
-            title: 'Símbolo Copiado',
-            description: `"${symbol}" ha sido copiado al portapapeles.`,
-            className: 'bg-[#00CB07] border-none text-white',
-        });
-    };
     
     const { globalStyles } = element.payload;
 
@@ -1503,26 +1494,6 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 </div>
             </ScrollArea>
             <Button variant="outline" className="w-full" onClick={handleAddFragment}><PlusCircle className="mr-2" />Añadir Fragmento de Texto</Button>
-            
-            <Separator className="bg-border/20" />
-            
-            <div>
-                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Sparkles />Símbolos Rápidos</h3>
-                 <ScrollArea className="max-h-48 w-full rounded-md border p-2 mt-2">
-                    <div className="grid grid-cols-8 gap-1">
-                    {popularEmojis.map(emoji => (
-                        <TooltipProvider key={emoji}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-lg" onClick={() => handleCopySymbol(emoji)}>{emoji}</Button>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Copiar "{emoji}"</p></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    ))}
-                    </div>
-                </ScrollArea>
-            </div>
         </div>
     );
 };
@@ -2422,7 +2393,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenC
                 title="Establecer Fecha de Finalización"
                 description="Selecciona la fecha y hora exactas en que terminará la cuenta regresiva."
             />
-            <TimezonePickerModal 
+             <TimezonePickerModal 
                 isOpen={isTimezonePickerOpen}
                 onOpenChange={setIsTimezonePickerOpen}
                 currentValue={timezone}
@@ -2452,8 +2423,8 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenC
                         <DialogTitle>Seleccionar Símbolo Rápido</DialogTitle>
                         <DialogDescription>Haz clic en un símbolo para copiarlo a tu portapapeles.</DialogDescription>
                     </DialogHeader>
-                    <ScrollArea className="max-h-60 w-full rounded-md border p-2 mt-2">
-                        <div className="grid grid-cols-8 gap-1">
+                    <ScrollArea className="h-72">
+                         <div className="grid grid-cols-8 gap-1 p-1">
                             {popularEmojis.map(emoji => (
                                 <TooltipProvider key={emoji}>
                                     <Tooltip>
@@ -2478,7 +2449,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenC
                     {endDate ? format(new Date(endDate), "PPP, HH:mm") : <span>Seleccionar fecha</span>}
                 </Button>
             </div>
-             <div className="space-y-2">
+            <div className="space-y-2">
                 <Label>Zona Horaria</Label>
                  <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsTimezonePickerOpen(true)}>
                      <Globe className="mr-2 h-4 w-4" />
@@ -2854,7 +2825,7 @@ const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
                         </svg>
                         <div className="z-10 flex flex-col items-center justify-center">
                              <span className="font-light" style={{ fontSize: '1.5em', color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                             <p className="uppercase tracking-widest text-muted-foreground pt-1" style={{color: styles.labelColor, fontSize: `${styles.minimalistLabelSize * 0.6}em` }}>{unit.label}</p>
+                             <p className="uppercase tracking-widest text-muted-foreground pt-2" style={{color: styles.labelColor, fontSize: `${styles.minimalistLabelSize * 0.6}em` }}>{unit.label}</p>
                         </div>
                     </div>
                 ))}
@@ -2888,7 +2859,7 @@ const HtmlEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[]) => void;
 }) => {
-    if(selectedElement?.type !== 'primitive') return null;
+    if(selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'html') return null;
 
     const getElement = () => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
