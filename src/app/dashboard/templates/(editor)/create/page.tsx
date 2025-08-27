@@ -2560,7 +2560,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         <Textarea value={endAction.message} onChange={(e) => updateEndAction('message', e.target.value)} placeholder="¡La oferta ha terminado!"/>
                           <div className="pt-2">
                             <Label className="text-xs text-muted-foreground">Símbolos Rápidos</Label>
-                            <ScrollArea className="max-h-60 w-full rounded-md border p-2 mt-1 custom-scrollbar">
+                             <ScrollArea className="max-h-48 w-full rounded-md border p-2 mt-1 custom-scrollbar">
                                 <div className="grid grid-cols-8 gap-1">
                                 {popularEmojis.map(emoji => (
                                     <TooltipProvider key={emoji}>
@@ -2778,25 +2778,6 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
     }
   
     const renderMinimalist = () => {
-        const sizeClasses = {
-          1: 'w-[4.5em] h-[4.5em]',
-          2: 'w-[4em] h-[4em]',
-          3: 'w-[3.5em] h-[3.5em]',
-          4: 'w-[3em] h-[3em]'
-        };
-        const textSizeClasses = {
-            1: 'text-[1.5em]',
-            2: 'text-[1.25em]',
-            3: 'text-[1em]',
-            4: 'text-[0.8em]'
-        }
-        const labelSizeClasses = {
-            1: 'text-[0.6em]',
-            2: 'text-[0.5em]',
-            3: 'text-[0.45em]',
-            4: 'text-[0.4em]'
-        }
-
         const getPathForUnit = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
           if (isFinished) return 320;
           const end = new Date(targetDate!);
@@ -2821,12 +2802,14 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
           return 320 * (1 - progress);
         };
   
-        const pathD = "M 10,10 H 90 V 90 H 10 Z";
         const { background } = styles;
         const gradientId = `minimalist-grad-${block.id}`;
-  
+        
+        const fontSize = `${styles.scale * 1}em`;
+        const baseSize = 4 * styles.scale; 
+
         return (
-          <div className="w-full flex justify-center items-center overflow-hidden" style={{ fontSize: `${styles.scale * 16}px` }}>
+          <div className="w-full flex justify-center items-center overflow-hidden" style={{ fontSize }}>
             <div className="flex justify-center items-end flex-wrap gap-1 p-1" style={{ fontFamily: styles.fontFamily }}>
               <svg width="0" height="0" className="absolute">
                 <defs>
@@ -2852,7 +2835,7 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
                 </defs>
               </svg>
               {timeData.map((unit) => (
-                <div key={unit.label} className={cn("relative flex flex-col items-center flex-shrink-0", sizeClasses[colCount as keyof typeof sizeClasses] || 'w-[3em] h-[3em]')}>
+                <div key={unit.label} className="relative flex flex-col items-center flex-shrink-0" style={{ width: `${baseSize}em`, height: `${baseSize}em` }}>
                    <svg className="w-full h-full" viewBox="0 0 120 120">
                     <path
                       d="M 10,10 H 110 V 110 H 10 Z"
@@ -2880,8 +2863,8 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className={cn("font-light", textSizeClasses[colCount as keyof typeof textSizeClasses] || 'text-xs')} style={{ color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                    <p className={cn("uppercase tracking-widest text-muted-foreground pt-1", labelSizeClasses[colCount as keyof typeof labelSizeClasses] || 'text-[6px]')} style={{color: styles.labelColor, paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
+                    <span className="font-light" style={{ fontSize: `${baseSize * 0.35}em`, color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
+                    <p className="uppercase tracking-widest text-muted-foreground pt-1" style={{color: styles.labelColor, fontSize: `${baseSize * 0.15}em`, paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
                   </div>
                 </div>
               ))}
@@ -4456,4 +4439,3 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
-
