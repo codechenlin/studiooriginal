@@ -140,7 +140,7 @@ const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -2607,8 +2607,8 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
             const end = new Date(targetDate);
             const now = new Date();
 
-            const timeZoneOffset = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getTime() - now.getTime();
-            const nowInTimezone = new Date(now.getTime() + timeZoneOffset);
+            // This is a robust way to get time in a specific timezone
+            const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
     
             const difference = end.getTime() - nowInTimezone.getTime();
     
@@ -2621,7 +2621,7 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
                 };
             }
         } catch (e) {
-            console.error("Invalid time zone specified:", e);
+            console.error("Invalid time zone specified:", timezone);
         }
         return {};
     }, [targetDate, timezone]);
@@ -2778,18 +2778,16 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
     }
   
     const renderMinimalist = () => {
-        const sizeVariant = colCount <= 1 ? 'lg' : colCount === 2 ? 'md' : colCount === 3 ? 'sm' : 'xs';
-        const containerSizes = { lg: '6em', md: '4.5em', sm: '3.5em', xs: '2.8em' };
-        const fontSizes = { lg: '1.5em', md: '1.1em', sm: '0.9em', xs: '0.7em' };
-        const labelSizes = { lg: '0.6em', md: '0.5em', sm: '0.45em', xs: '0.4em' };
-        const labelPadding = { lg: 'pt-1', md: 'pt-0.5', sm: 'pt-0.5', xs: 'pt-0' };
+        const containerStyle: React.CSSProperties = {
+            fontSize: `${styles.scale * 16}px`, // Global scale applied here
+        };
 
         const { background } = styles;
         const gradientId = `minimalist-grad-${block.id}`;
         
         return (
-            <div className="w-full flex justify-center items-center overflow-hidden" style={{ fontSize: `${styles.scale * 16}px` }}>
-              <div className="flex justify-center items-end flex-wrap gap-1 p-1" style={{ fontFamily: styles.fontFamily }}>
+            <div className="w-full flex justify-center items-center overflow-hidden" style={containerStyle}>
+              <div className="flex justify-center items-center flex-wrap gap-1 p-1" style={{ fontFamily: styles.fontFamily }}>
                 <svg width="0" height="0" className="absolute">
                   <defs>
                     {background.type === 'gradient' && (
@@ -2814,7 +2812,7 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
                   </defs>
                 </svg>
                 {timeData.map((unit) => (
-                  <div key={unit.label} className="relative flex flex-col items-center flex-shrink-0" style={{ width: containerSizes[sizeVariant], height: containerSizes[sizeVariant] }}>
+                  <div key={unit.label} className="relative flex flex-col items-center flex-shrink-0" style={{ width: '4.5em', height: '4.5em' }}>
                      <svg className="w-full h-full" viewBox="0 0 120 120">
                       <path
                         d="M 10,10 H 110 V 110 H 10 Z"
@@ -2842,8 +2840,8 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="font-light" style={{ fontSize: fontSizes[sizeVariant], color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                      <p className={cn("uppercase tracking-widest text-muted-foreground", labelPadding[sizeVariant])} style={{color: styles.labelColor, fontSize: labelSizes[sizeVariant], paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
+                      <span className="font-light" style={{ fontSize: '1.1em', color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
+                      <p className={cn("uppercase tracking-widest text-muted-foreground pt-0.5")} style={{color: styles.labelColor, fontSize: '0.5em', paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
                     </div>
                   </div>
                 ))}
@@ -4418,3 +4416,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
