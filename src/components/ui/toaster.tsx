@@ -10,9 +10,19 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+import React from "react"
 
 export function Toaster() {
   const { toasts } = useToast()
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <ToastProvider>
