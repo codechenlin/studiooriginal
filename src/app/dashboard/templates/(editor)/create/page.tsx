@@ -152,7 +152,7 @@ const popularEmojis = Array.from(new Set([
     '🔴', '🔵', '⚫️', '⚪️', '🔶', '🔷', '▪️', '▫️', '▲', '▼',
     '←', '↑', '→', '↓', '↔️', '↕️', '↩️', '↪️', '➕', '➖',
     '➗', '✖️', '💲', '💶', '💷', '💴', '🔒', '🔓', '🔑', '🔔',
-    '🔕', '🔎', '💡', '💤', '🌍', '🌎', '🌏', '💯', '✅', '✔️', '☑️'
+    '🔕', '🔎', '💡', '💤', '🌍', '🌎', '🌏'
 ]));
   
 const googleFonts = [
@@ -2326,6 +2326,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const [isDateTimePickerOpen, setIsDateTimePickerOpen] = useState(false);
     const [isSecondaryPickerOpen, setIsSecondaryPickerOpen] = useState(false);
     const [isTimezonePickerOpen, setIsTimezonePickerOpen] = useState(false);
+    const [isEmojiModalOpen, setIsEmojiModalOpen] = useState(false);
 
     const getElement = (): TimerBlock | null => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
@@ -2363,15 +2364,6 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         updateStyle('background', { ...element.payload.styles.background, [key]: value });
     }
 
-    const handleCopySymbol = (symbol: string) => {
-        navigator.clipboard.writeText(symbol);
-        toast({
-            title: `¡Símbolo Copiado!`,
-            description: `El emoji "${symbol}" ya está en tu portapapeles, listo para brillar.`,
-            className: 'bg-[#00CB07] border-none text-white',
-        });
-    };
-
     const handleDateAccept = (date: Date, isSecondary: boolean = false) => {
         const isoString = date.toISOString();
         if (isSecondary) {
@@ -2395,6 +2387,11 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             description: `El contador ahora corre en el tiempo del mundo real para: ${tzLabel}.`,
             className: 'bg-[#00CB07] border-none text-white',
         });
+    };
+    
+    const handleInsertEmoji = (emoji: string) => {
+        updateEndAction('message', element.payload.endAction.message + emoji);
+        setIsEmojiModalOpen(false);
     };
 
     const { styles, endDate, timezone, design, endAction } = element.payload;
@@ -2437,6 +2434,27 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 title="Establecer Segundo Contador"
                 description="Elige la fecha y hora para la segunda cuenta regresiva."
             />
+             <Dialog open={isEmojiModalOpen} onOpenChange={setIsEmojiModalOpen}>
+                <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
+                    <DialogHeader>
+                        <DialogTitle>Seleccionar Símbolo Rápido</DialogTitle>
+                    </DialogHeader>
+                    <ScrollArea className="max-h-60 w-full rounded-md border p-2 mt-2">
+                        <div className="grid grid-cols-8 gap-1">
+                            {popularEmojis.map(emoji => (
+                                <TooltipProvider key={emoji}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="text-lg" onClick={() => handleInsertEmoji(emoji)}>{emoji}</Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Insertar "{emoji}"</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </DialogContent>
+            </Dialog>
             <div>
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Timer/>Configuración del Contador</h3>
             </div>
@@ -2451,8 +2469,9 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Label>Zona Horaria</Label>
                 <Button variant="outline" className="w-full justify-start text-left font-normal" onClick={() => setIsTimezonePickerOpen(true)}>
                      <Globe className="mr-2 h-4 w-4" />
-                     <span className="truncate">{currentTimezoneLabel}</span>
+                     <span>Seleccionar Zona Horaria</span>
                 </Button>
+                <p className="text-xs text-muted-foreground break-words">Actual: <span className="font-medium text-foreground">{currentTimezoneLabel}</span></p>
             </div>
             <div className="space-y-2">
                 <Label>Tamaño Global</Label>
@@ -2558,23 +2577,10 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     <div className="mt-2 space-y-2">
                         <Label>Mensaje a mostrar</Label>
                         <Textarea value={endAction.message} onChange={(e) => updateEndAction('message', e.target.value)} placeholder="¡La oferta ha terminado!"/>
-                          <div className="pt-2">
-                            <Label className="text-xs text-muted-foreground">Símbolos Rápidos</Label>
-                            <ScrollArea className="max-h-48 w-full rounded-md border p-2 mt-1 custom-scrollbar">
-                                <div className="grid grid-cols-8 gap-1">
-                                {popularEmojis.map(emoji => (
-                                    <TooltipProvider key={emoji}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="text-lg" onClick={() => handleCopySymbol(emoji)}>{emoji}</Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Copiar "{emoji}"</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                ))}
-                                </div>
-                            </ScrollArea>
-                          </div>
+                        <Button variant="outline" size="sm" className="w-full" onClick={() => setIsEmojiModalOpen(true)}>
+                            <Smile className="mr-2"/>
+                            Añadir Símbolo Rápido
+                        </Button>
                     </div>
                 )}
                 {endAction.type === 'secondary_countdown' && (
@@ -2593,276 +2599,235 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 };
 
 
-const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; colCount: number }) => {
-    const { endDate, timezone, design, endAction, styles } = block.payload;
-    const [currentStage, setCurrentStage] = useState<'primary' | 'secondary'>('primary');
-    const [isFinished, setIsFinished] = useState(false);
-  
-    const targetDate = currentStage === 'primary' ? endDate : endAction.secondaryEndDate;
-    const initialStartDateRef = useRef(new Date());
-  
-    const calculateTimeLeft = useCallback(() => {
-        if (!targetDate) return {};
-        try {
-            const end = new Date(targetDate);
-            const now = new Date();
+const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
+  const { endDate, timezone, design, endAction, styles } = block.payload;
+  const [currentStage, setCurrentStage] = useState<'primary' | 'secondary'>('primary');
+  const [isFinished, setIsFinished] = useState(false);
 
-            // This is a robust way to get time in a specific timezone
-            const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
-    
-            const difference = end.getTime() - nowInTimezone.getTime();
-    
-            if (difference > 0) {
-                return {
-                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-                    minutes: Math.floor((difference / 1000 / 60) % 60),
-                    seconds: Math.floor((difference / 1000) % 60),
-                };
-            }
-        } catch (e) {
-            console.error("Invalid time zone specified:", timezone);
-        }
-        return {};
-    }, [targetDate, timezone]);
-  
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
-  
-    useEffect(() => {
-      setIsFinished(false);
-      setCurrentStage('primary');
-      initialStartDateRef.current = new Date();
-    }, [endDate, endAction.secondaryEndDate]);
-  
-    useEffect(() => {
-      const timer = setInterval(() => {
-        const newTimeLeft = calculateTimeLeft();
-        if (Object.keys(newTimeLeft).length === 0) {
-          if (currentStage === 'primary' && endAction.type === 'secondary_countdown' && endAction.secondaryEndDate) {
-            setCurrentStage('secondary');
-          } else {
-            setIsFinished(true);
-            clearInterval(timer);
-          }
-        } else {
-          setTimeLeft(newTimeLeft);
-        }
-      }, 1000);
-      return () => clearInterval(timer);
-    }, [calculateTimeLeft, currentStage, endAction]);
-  
-    if (isFinished && endAction.type === 'message') {
-      return (
-        <div className="p-4 text-center w-full flex justify-center" style={{fontSize: `${styles.scale * 16}px`}}>
-            <p className="text-lg font-semibold" style={{ fontFamily: styles.fontFamily }}>{endAction.message}</p>
-        </div>
-      );
-    }
-  
-    const timeUnits = isFinished && endAction.type === 'stop' ? { days: 0, hours: 0, minutes: 0, seconds: 0 } : timeLeft;
-  
-    const timeData = [
-      { label: 'Días', value: timeUnits.days },
-      { label: 'Horas', value: timeUnits.hours },
-      { label: 'Minutos', value: timeUnits.minutes },
-      { label: 'Segundos', value: timeUnits.seconds },
-    ];
-  
-    const renderDigital = () => {
-      const baseStyle: React.CSSProperties = {
-        borderRadius: `${styles.borderRadius}px`,
-        color: styles.numberColor,
-        fontFamily: styles.fontFamily,
-      };
-      if (styles.background.type === 'solid') {
-        baseStyle.backgroundColor = styles.background.color1;
-      } else {
-        const { direction, color1, color2 } = styles.background;
-        if (direction === 'radial') {
-          baseStyle.backgroundImage = `radial-gradient(circle, ${color1}, ${color2})`;
-        } else {
-          const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
-          baseStyle.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
-        }
-      }
-  
-      return (
-        <div className="w-full flex justify-center">
-            <div className="flex flex-wrap justify-center items-center gap-1 md:gap-2 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
-            {timeData.map(unit => (
-                <div key={unit.label} className="flex flex-col items-center">
-                <div style={baseStyle} className="flex items-center justify-center p-2 w-[4em] h-[4em] text-[2em] font-bold">
-                    {String(unit.value || 0).padStart(2, '0')}
-                </div>
-                <p className="text-xs mt-1" style={{ color: styles.labelColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
-                </div>
-            ))}
-            </div>
-        </div>
-      );
-    }
+  const targetDate = currentStage === 'primary' ? endDate : endAction.secondaryEndDate;
+  const initialStartDateRef = useRef(new Date());
 
-     const renderAnalog = () => {
-        const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
-            if (isFinished) return 0;
-            const end = new Date(targetDate!);
-            const start = initialStartDateRef.current;
-            const totalDuration = end.getTime() - start.getTime();
-            if(totalDuration <= 0) return 1;
+  const calculateTimeLeft = useCallback(() => {
+    if (!targetDate) return {};
+    try {
+      const end = new Date(targetDate);
+      const now = new Date();
 
-            const daysLeft = timeUnits.days || 0;
-            const hoursLeft = timeUnits.hours || 0;
-            const minutesLeft = timeUnits.minutes || 0;
-            const secondsLeft = timeUnits.seconds || 0;
-            const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
-            
-            switch (unit) {
-                case 'Días': return totalDays > 0 ? (daysLeft / totalDays) : (daysLeft > 0 ? 1 : 0);
-                case 'Horas': return (hoursLeft / 23);
-                case 'Minutos': return (minutesLeft / 59);
-                case 'Segundos': return (secondsLeft / 59);
-                default: return 0;
-            }
+      // This is a robust way to get time in a specific timezone
+      const nowInTimezone = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+      const timeZoneOffset = nowInTimezone.getTime() - now.getTime();
+      const correctedEnd = new Date(end.getTime() - timeZoneOffset);
+
+      const difference = correctedEnd.getTime() - now.getTime();
+
+      if (difference > 0) {
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
         };
-
-        const { background } = styles;
-        const gradientId = `analog-grad-${block.id}`;
-        
-        return (
-             <div className="flex w-full justify-center">
-                <div className="flex flex-wrap justify-center items-center gap-1 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
-                    <svg width="0" height="0" className="absolute">
-                        <defs>
-                            {background.type === 'gradient' && (
-                                <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : (background.direction === 'vertical' ? 'rotate(0)' : undefined)}>
-                                    <stop offset="0%" stopColor={background.color1} />
-                                    <stop offset="100%" stopColor={background.color2 || background.color1} />
-                                </linearGradient>
-                            )}
-                             {background.type === 'gradient' && background.direction === 'radial' && (
-                                <radialGradient id={`${gradientId}-radial`}>
-                                    <stop offset="0%" stopColor={background.color1} />
-                                    <stop offset="100%" stopColor={background.color2 || background.color1} />
-                                </radialGradient>
-                            )}
-                        </defs>
-                    </svg>
-                    {timeData.map(unit => (
-                        <div key={unit.label} className="flex flex-col items-center flex-shrink-0" style={{width: '6em', height: '7em'}}>
-                            <div className="relative w-full h-[6em]">
-                                <svg className="w-full h-full" viewBox="0 0 100 100">
-                                    <circle className="stroke-current text-muted/20" strokeWidth={styles.strokeWidth} cx="50" cy="50" r="40" fill="transparent" />
-                                    <circle
-                                        strokeWidth={styles.strokeWidth}
-                                        cx="50" cy="50" r="40" fill="transparent"
-                                        strokeDasharray={2 * Math.PI * 40}
-                                        strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
-                                        transform="rotate(-90 50 50)"
-                                        strokeLinecap="round"
-                                        stroke={background.type === 'solid' 
-                                          ? background.color1 
-                                          : (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`)
-                                        }
-                                    />
-                                    <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-[1.25em] font-bold fill-current" style={{color: styles.numberColor, fontFamily: styles.fontFamily}}>
-                                        {String(unit.value || 0).padStart(2, '0')}
-                                    </text>
-                                </svg>
-                            </div>
-                            <p className="text-[0.75em] -mt-[0.5em]" style={{color: styles.labelColor, fontFamily: styles.fontFamily}}>{unit.label}</p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-  
-    const renderMinimalist = () => {
-      const containerStyle: React.CSSProperties = {
-        fontSize: `${styles.scale * 14}px`, // Adjusted base size
-      };
-    
-      const { background } = styles;
-      const gradientId = `minimalist-grad-${block.id}`;
-      
-      return (
-        <div className="w-full flex justify-center items-center overflow-hidden" style={containerStyle}>
-          <div className="flex justify-center items-center flex-wrap gap-x-1 gap-y-2 p-1" style={{ fontFamily: styles.fontFamily }}>
-            <svg width="0" height="0" className="absolute">
-              <defs>
-                {background.type === 'gradient' && (
-                  <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
-                    <stop offset="0%" stopColor={background.color1} />
-                    <stop offset="100%" stopColor={background.color2 || background.color1} />
-                  </linearGradient>
-                )}
-                {background.type === 'gradient' && background.direction === 'radial' && (
-                  <radialGradient id={`${gradientId}-radial`}>
-                    <stop offset="0%" stopColor={background.color1} />
-                    <stop offset="100%" stopColor={background.color2 || background.color1} />
-                  </radialGradient>
-                )}
-                <filter id={`glow-${block.id}`} x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-            </svg>
-            {timeData.map((unit) => (
-              <div key={unit.label} className="relative flex flex-col items-center flex-shrink-0" style={{ width: '4.5em', height: '4.5em' }}>
-                <svg className="w-full h-full" viewBox="0 0 120 120">
-                  <path
-                    d="M 10,10 H 110 V 110 H 10 Z"
-                    fill="none"
-                    stroke="hsl(var(--ai-track))"
-                    strokeWidth={styles.strokeWidth}
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M 10,10 H 110 V 110 H 10 Z"
-                    fill="none"
-                    stroke={background.type === 'gradient' ? (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`) : background.color1}
-                    strokeWidth={styles.strokeWidth}
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                    strokeDasharray={400}
-                    strokeDashoffset={0}
-                    style={{
-                      filter: `url(#glow-${block.id})`,
-                      transition: 'stroke-dashoffset 1s linear',
-                    }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-light" style={{ fontSize: '1.2em', color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
-                  <p className={cn("uppercase tracking-widest text-muted-foreground pt-1.5")} style={{color: styles.labelColor, fontSize: '0.6em', paddingLeft: '1px', paddingRight: '1px'}}>{unit.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    };
-  
-    const renderContent = () => {
-      switch (design) {
-        case 'analog': return renderAnalog();
-        case 'minimalist': return renderMinimalist();
-        case 'digital':
-        default:
-          return renderDigital();
       }
-    };
-  
+    } catch (e) {
+      // Fallback for invalid timezone, though list should prevent this
+    }
+    return {};
+  }, [targetDate, timezone]);
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
+
+  useEffect(() => {
+    setIsFinished(false);
+    setCurrentStage('primary');
+    initialStartDateRef.current = new Date();
+  }, [endDate, endAction.secondaryEndDate]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const newTimeLeft = calculateTimeLeft();
+      if (Object.keys(newTimeLeft).length === 0) {
+        if (currentStage === 'primary' && endAction.type === 'secondary_countdown' && endAction.secondaryEndDate) {
+          setCurrentStage('secondary');
+        } else {
+          setIsFinished(true);
+          clearInterval(timer);
+        }
+      } else {
+        setTimeLeft(newTimeLeft);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [calculateTimeLeft, currentStage, endAction]);
+
+  if (isFinished && endAction.type === 'message') {
     return (
-      <div className="w-full h-full flex justify-center items-center">
-        {renderContent()}
+      <div className="p-4 text-center w-full flex justify-center" style={{ fontSize: `${styles.scale * 16}px` }}>
+        <p className="text-lg font-semibold" style={{ fontFamily: styles.fontFamily }}>{endAction.message}</p>
       </div>
     );
+  }
+
+  const timeUnits = isFinished && endAction.type === 'stop' ? { days: 0, hours: 0, minutes: 0, seconds: 0 } : timeLeft;
+
+  const timeData = [
+    { label: 'Días', value: timeUnits.days },
+    { label: 'Horas', value: timeUnits.hours },
+    { label: 'Minutos', value: timeUnits.minutes },
+    { label: 'Segundos', value: timeUnits.seconds },
+  ];
+
+  const renderDigital = () => {
+    const baseStyle: React.CSSProperties = {
+      borderRadius: `${styles.borderRadius}px`,
+      color: styles.numberColor,
+      fontFamily: styles.fontFamily,
+    };
+    if (styles.background.type === 'solid') {
+      baseStyle.backgroundColor = styles.background.color1;
+    } else {
+      const { direction, color1, color2 } = styles.background;
+      if (direction === 'radial') {
+        baseStyle.backgroundImage = `radial-gradient(circle, ${color1}, ${color2})`;
+      } else {
+        const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+        baseStyle.backgroundImage = `linear-gradient(${angle}, ${color1}, ${color2})`;
+      }
+    }
+
+    return (
+      <div className="w-full flex justify-center">
+        <div className="flex flex-wrap justify-center items-center gap-1 md:gap-2 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
+          {timeData.map(unit => (
+            <div key={unit.label} className="flex flex-col items-center">
+              <div style={baseStyle} className="flex items-center justify-center p-2 w-[4em] h-[4em] text-[2em] font-bold">
+                {String(unit.value || 0).padStart(2, '0')}
+              </div>
+              <p className="text-xs mt-1" style={{ color: styles.labelColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const renderAnalog = () => {
+    const getProgress = (unit: 'Días' | 'Horas' | 'Minutos' | 'Segundos') => {
+      if (isFinished) return 0;
+      const end = new Date(targetDate!);
+      const start = initialStartDateRef.current;
+      const totalDuration = end.getTime() - start.getTime();
+      if (totalDuration <= 0) return 1;
+
+      const daysLeft = timeUnits.days || 0;
+      const hoursLeft = timeUnits.hours || 0;
+      const minutesLeft = timeUnits.minutes || 0;
+      const secondsLeft = timeUnits.seconds || 0;
+      const totalDays = Math.floor(totalDuration / (1000 * 60 * 60 * 24));
+
+      switch (unit) {
+        case 'Días': return totalDays > 0 ? (daysLeft / totalDays) : (daysLeft > 0 ? 1 : 0);
+        case 'Horas': return (hoursLeft / 23);
+        case 'Minutos': return (minutesLeft / 59);
+        case 'Segundos': return (secondsLeft / 59);
+        default: return 0;
+      }
+    };
+
+    const { background } = styles;
+    const gradientId = `analog-grad-${block.id}`;
+
+    return (
+      <div className="flex w-full justify-center">
+        <div className="flex flex-wrap justify-center items-center gap-1 p-1" style={{ fontSize: `${styles.scale * 16}px` }}>
+          <svg width="0" height="0" className="absolute">
+            <defs>
+              {background.type === 'gradient' && (
+                <linearGradient id={gradientId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : (background.direction === 'vertical' ? 'rotate(0)' : undefined)}>
+                  <stop offset="0%" stopColor={background.color1} />
+                  <stop offset="100%" stopColor={background.color2 || background.color1} />
+                </linearGradient>
+              )}
+              {background.type === 'gradient' && background.direction === 'radial' && (
+                <radialGradient id={`${gradientId}-radial`}>
+                  <stop offset="0%" stopColor={background.color1} />
+                  <stop offset="100%" stopColor={background.color2 || background.color1} />
+                </radialGradient>
+              )}
+            </defs>
+          </svg>
+          {timeData.map(unit => (
+            <div key={unit.label} className="flex flex-col items-center flex-shrink-0" style={{ width: '6em', height: '7em' }}>
+              <div className="relative w-full h-[6em]">
+                <svg className="w-full h-full" viewBox="0 0 100 100">
+                  <circle className="stroke-current text-muted/20" strokeWidth={styles.strokeWidth} cx="50" cy="50" r="40" fill="transparent" />
+                  <circle
+                    strokeWidth={styles.strokeWidth}
+                    cx="50" cy="50" r="40" fill="transparent"
+                    strokeDasharray={2 * Math.PI * 40}
+                    strokeDashoffset={2 * Math.PI * 40 * (1 - getProgress(unit.label as any))}
+                    transform="rotate(-90 50 50)"
+                    strokeLinecap="round"
+                    stroke={background.type === 'solid'
+                      ? background.color1
+                      : (background.direction === 'radial' ? `url(#${gradientId}-radial)` : `url(#${gradientId})`)
+                    }
+                  />
+                  <text x="50" y="50" textAnchor="middle" dy="0.3em" className="text-[1.25em] font-bold fill-current" style={{ color: styles.numberColor, fontFamily: styles.fontFamily }}>
+                    {String(unit.value || 0).padStart(2, '0')}
+                  </text>
+                </svg>
+              </div>
+              <p className="text-[0.75em] -mt-[0.5em]" style={{ color: styles.labelColor, fontFamily: styles.fontFamily }}>{unit.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const renderMinimalist = () => {
+    return (
+        <div className="w-full flex justify-center items-center" style={{ fontSize: `${styles.scale * 14}px` }}>
+            <div className="flex justify-center items-center flex-wrap gap-x-1 gap-y-2 p-1" style={{ fontFamily: styles.fontFamily }}>
+                {timeData.map((unit, index) => (
+                    <div key={unit.label} className="relative flex flex-col items-center justify-center flex-shrink-0" style={{ width: '5em', height: '5em' }}>
+                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 120 120">
+                            <path
+                                d="M 10,10 H 110 V 110 H 10 Z"
+                                fill="none"
+                                stroke="hsl(var(--ai-track))"
+                                strokeWidth={styles.strokeWidth}
+                                strokeLinejoin="round"
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        <div className="z-10 flex flex-col items-center justify-center">
+                             <span className="font-light" style={{ fontSize: '1.5em', color: styles.numberColor }}>{String(unit.value || 0).padStart(2, '0')}</span>
+                             <p className="uppercase tracking-widest text-muted-foreground" style={{color: styles.labelColor, fontSize: '0.6em', paddingTop: '0.25em'}}>{unit.label}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
+  const renderContent = () => {
+    switch (design) {
+      case 'analog': return renderAnalog();
+      case 'minimalist': return renderMinimalist();
+      case 'digital':
+      default:
+        return renderDigital();
+    }
+  };
+
+  return (
+    <div className="w-full h-full flex justify-center items-center overflow-hidden">
+      {renderContent()}
+    </div>
+  );
 });
 TimerComponent.displayName = 'TimerComponent';
 
@@ -3578,7 +3543,7 @@ export default function CreateTemplatePage() {
                 }
               case 'timer': {
                  const timerBlock = block as TimerBlock;
-                 return <TimerComponent block={timerBlock} colCount={colCount} />;
+                 return <TimerComponent block={timerBlock} />;
               }
               default:
                 return (
@@ -4414,3 +4379,4 @@ export default function CreateTemplatePage() {
     </div>
   );
 }
+
