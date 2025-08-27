@@ -26,7 +26,7 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, toastType, ...props }) {
+      {toasts.map(function ({ id, title, description, action, toastType, viewportName, ...props }) {
         const isEmojiCopy = toastType === 'emoji-copy';
         return (
           <Toast key={id} {...props}>
