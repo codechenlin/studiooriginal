@@ -140,7 +140,7 @@ const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -149,7 +149,10 @@ const popularEmojis = Array.from(new Set([
     '📅', '🧠', '⭐', '✨', '🙌', '👀', '💼', '⏰', '💸', '📊',
     '💻', '📱', '🎯', '📣', '✍️', '😎', '😮', '🤯', '🙏', '💪',
     '🎊', '🎈', '▶️', '➡️', '⬅️', '⬆️', '⬇️', '⚠️', '❌', '⭕️',
-    '🔴', '🔵', '⚫️', '⚪️', '🔶', '🔷'
+    '🔴', '🔵', '⚫️', '⚪️', '🔶', '🔷', '▪️', '▫️', '▲', '▼',
+    '←', '↑', '→', '↓', '↔️', '↕️', '↩️', '↪️', '➕', '➖',
+    '➗', '✖️', '💲', '💶', '💷', '💴', '🔒', '🔓', '🔑', '🔔',
+    '🔕', '🔎', '💡', '💤', '🌍', '🌎', '🌏'
 ]));
   
 const googleFonts = [
@@ -2363,8 +2366,8 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     const handleCopySymbol = (symbol: string) => {
         navigator.clipboard.writeText(symbol);
         toast({
-            title: 'Símbolo Copiado',
-            description: `"${symbol}" ha sido copiado al portapapeles.`,
+            title: `¡Símbolo Copiado!`,
+            description: `El emoji "${symbol}" ya está en tu portapapeles, listo para brillar.`,
             className: 'bg-[#00CB07] border-none text-white',
         });
     };
@@ -2557,7 +2560,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         <Textarea value={endAction.message} onChange={(e) => updateEndAction('message', e.target.value)} placeholder="¡La oferta ha terminado!"/>
                           <div className="pt-2">
                             <Label className="text-xs text-muted-foreground">Símbolos Rápidos</Label>
-                            <ScrollArea className="max-h-60 w-full rounded-md border p-2 mt-1">
+                            <ScrollArea className="max-h-60 w-full rounded-md border p-2 mt-1 custom-scrollbar">
                                 <div className="grid grid-cols-8 gap-1">
                                 {popularEmojis.map(emoji => (
                                     <TooltipProvider key={emoji}>
@@ -2606,7 +2609,7 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
 
             const timeZoneOffset = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getTime() - now.getTime();
             const nowInTimezone = new Date(now.getTime() + timeZoneOffset);
-
+    
             const difference = end.getTime() - nowInTimezone.getTime();
     
             if (difference > 0) {
@@ -2823,7 +2826,7 @@ const TimerComponent = React.memo(({ block, colCount }: { block: TimerBlock; col
         const gradientId = `minimalist-grad-${block.id}`;
   
         return (
-          <div className="flex w-full justify-center" style={{ fontSize: `${styles.scale * 16}px` }}>
+          <div className="w-full flex justify-center items-center overflow-hidden" style={{ fontSize: `${styles.scale * 16}px` }}>
             <div className="flex justify-center items-end flex-wrap gap-1 p-1" style={{ fontFamily: styles.fontFamily }}>
               <svg width="0" height="0" className="absolute">
                 <defs>
