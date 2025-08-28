@@ -36,7 +36,6 @@ import {
   Smartphone,
   Undo,
   Redo,
-  Save,
   Rocket,
   Palette,
   Bold,
@@ -2690,7 +2689,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenC
             <div>
                 <h3 className="text-sm font-medium text-foreground/80">Diseño</h3>
                 <Tabs value={design} onValueChange={(v) => updatePayload('design', v)} className="w-full mt-2">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid grid-cols-3">
                         <TabsTrigger value="digital">Digital</TabsTrigger>
                         <TabsTrigger value="analog">Analógico</TabsTrigger>
                         <TabsTrigger value="minimalist">Minimalista</TabsTrigger>
@@ -3365,7 +3364,14 @@ export default function CreateTemplatePage() {
          }));
     }
     
-    setIsWrapperBlockSelectorOpen(false);
+    if (isActionSelectorModalOpen) {
+      setIsWrapperBlockSelectorOpen(false);
+    } else {
+      setIsActionSelectorModalOpen(false);
+      setIsWrapperBlockSelectorOpen(false);
+      setActiveContainer(null);
+      setClickPosition(null);
+    }
   };
 
   const handleSelectEmojiForWrapper = (emoji: string) => {
@@ -3500,7 +3506,9 @@ export default function CreateTemplatePage() {
 
   const getHeadingStyle = (block: HeadingBlock | InteractiveHeadingBlock): React.CSSProperties => {
       const { styles } = block.payload;
-      const interactiveStyles = 'scale' in block.payload ? { fontSize: `${32 * block.payload.scale}px` } : { fontSize: `${(block.payload as HeadingBlock['payload']).styles.fontSize}px`, textAlign: (block.payload as HeadingBlock['payload']).styles.textAlign as TextAlign};
+      const interactiveStyles: React.CSSProperties = 'scale' in block.payload 
+      ? { transform: `scale(${block.payload.scale})` } 
+      : { fontSize: `${(block.payload as HeadingBlock['payload']).styles.fontSize}px`, textAlign: (block.payload as HeadingBlock['payload']).styles.textAlign as TextAlign};
 
       const style: React.CSSProperties = {
           color: styles.color,
@@ -3509,6 +3517,7 @@ export default function CreateTemplatePage() {
           fontStyle: styles.fontStyle,
           padding: '8px',
           wordBreak: 'break-word',
+          whiteSpace: 'nowrap',
           ...interactiveStyles,
       };
       if (styles.highlight) {
@@ -3852,10 +3861,7 @@ export default function CreateTemplatePage() {
   }, []);
   
   const handleOpenCopyModal = (emoji: string) => {
-    toast({
-      title: "¡Símbolo en el Portapapeles!",
-      description: `El emoji ${emoji} está listo para que lo pegues donde quieras.`,
-    });
+    setIsCopySuccessModalOpen(true);
   };
 
   useEffect(() => {
@@ -4056,7 +4062,7 @@ export default function CreateTemplatePage() {
                             setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id });
                           }}
                         >
-                            <div style={{ textAlign: 'center' }}>
+                            <div style={{ textAlign: 'center', display: 'inline-block' }}>
                                 <span style={textStyles}>
                                   {headingBlock.payload.text}
                                 </span>
@@ -4227,7 +4233,10 @@ const LayerPanel = () => {
     const handleRename = (blockId: string, newName: string) => {
         if (!selectedWrapper) return;
         const trimmedName = newName.trim();
-        if (trimmedName === '') return;
+        if (trimmedName === '') {
+            setEditingBlockId(null);
+            return;
+        }
 
         const isNameTaken = selectedWrapper.payload.blocks.some(b => b.id !== blockId && b.payload.name === trimmedName);
 
@@ -4235,6 +4244,7 @@ const LayerPanel = () => {
              toast({
                 title: "¡Nombre en uso!",
                 description: "Cada capa debe tener un identificador único en el lienzo. Por favor, elige otro nombre.",
+                variant: 'destructive',
                 style: { backgroundColor: '#F00000', color: 'white' }
             });
             return;
@@ -4313,11 +4323,21 @@ const LayerPanel = () => {
                                 onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id) }}
                                 className="p-1 rounded-md hover:bg-primary/20"
                               >
-                                  <Pencil className="size-4 text-muted-foreground hover:text-primary transition-colors"/>
+                                  <div className="size-6 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 border border-black/20 dark:border-white/20 hover:border-primary/50 transition-colors">
+                                     <Pencil className="size-3 text-foreground/70 group-hover:text-primary"/>
+                                  </div>
                               </button>
                               <div className="flex flex-col ml-1">
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={visualIndex === 0} className="disabled:opacity-30"><ChevronUp className="size-4"/></button>
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={visualIndex === blocksInVisualOrder.length - 1} className="disabled:opacity-30"><ChevronDown className="size-4"/></button>
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={originalIndex === selectedWrapper.payload.blocks.length - 1} className="disabled:opacity-30">
+                                      <div className="size-5 flex items-center justify-center rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-primary/50 transition-colors">
+                                          <ChevronUp className="size-4 text-foreground/70 group-hover:text-primary"/>
+                                      </div>
+                                  </button>
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={originalIndex === 0} className="disabled:opacity-30">
+                                      <div className="size-5 flex items-center justify-center rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-primary/50 transition-colors">
+                                         <ChevronDown className="size-4 text-foreground/70 group-hover:text-primary"/>
+                                      </div>
+                                  </button>
                               </div>
                           </div>
                         </div>
@@ -4434,18 +4454,16 @@ const LayerPanel = () => {
              <ThemeToggle />
           </div>
            <div className="flex items-center gap-4">
-                 <div className="group rounded-md p-0.5 bg-gradient-to-r from-[#AD00EC] to-[#1700E6] hover:from-transparent hover:to-transparent transition-all duration-300">
-                  <Button 
-                    className="bg-card/80 dark:bg-card/80 text-white hover:bg-transparent hover:text-black dark:hover:text-black hover:border-2 hover:border-[#00EF10]"
+                <Button 
+                    className="group bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white dark:text-white hover:bg-none hover:bg-transparent hover:border-2 hover:border-[#00EF10] dark:hover:bg-transparent dark:hover:border-[#00EF10] transition-all duration-300"
                     onClick={handlePublish}
-                  >
-                    <Rocket className="mr-2 text-white group-hover:text-[#00EF10]"/>
-                    <span className="text-white group-hover:text-black dark:group-hover:text-black">
-                        Publicar
+                >
+                    <Rocket className="mr-2 text-white dark:text-white group-hover:text-[#00EF10] transition-colors"/>
+                    <span className="text-white dark:text-white group-hover:text-[#00EF10] transition-colors">
+                        Guardar
                     </span>
-                  </Button>
-              </div>
-          </div>
+                </Button>
+            </div>
         </header>
 
          <div id="editor-canvas" className="flex-1 overflow-auto custom-scrollbar relative">
@@ -4568,13 +4586,16 @@ const LayerPanel = () => {
         </DialogContent>
       </Dialog>
 
-       <Dialog open={isWrapperBlockSelectorOpen} onOpenChange={(open) => {
-           setIsWrapperBlockSelectorOpen(open);
-           if (!open) {
-             setClickPosition(null);
-             setActiveContainer(null);
-           }
-        }}>
+      <Dialog open={isWrapperBlockSelectorOpen} onOpenChange={(open) => {
+          setIsWrapperBlockSelectorOpen(open);
+          if (!open && isActionSelectorModalOpen) {
+              // This case happens when we open the block selector FROM the action selector.
+              // We don't want to clear state here.
+          } else if (!open) {
+              setClickPosition(null);
+              setActiveContainer(null);
+          }
+      }}>
         <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><PlusCircle className="text-primary"/>Añadir Bloque a Contenedor</DialogTitle>
@@ -4671,32 +4692,34 @@ const LayerPanel = () => {
         </DialogContent>
       </Dialog>
       
-       <Dialog open={isCopySuccessModalOpen} onOpenChange={setIsCopySuccessModalOpen}>
-          <DialogContent className="sm:max-w-sm bg-card/80 backdrop-blur-sm">
-              <DialogHeader>
-                  <DialogTitle className="flex flex-col items-center text-center gap-2">
-                      <div className="p-3 bg-green-500/20 rounded-full border-4 border-green-500/30">
-                          <ClipboardCheck className="size-8 text-green-500"/>
-                      </div>
-                      ¡Símbolo en el Portapapeles!
-                  </DialogTitle>
-                  <DialogDescription className="text-center pt-2">
-                     El emoji está listo para que lo pegues donde quieras.
-                  </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                  <Button className="w-full" onClick={() => setIsCopySuccessModalOpen(false)}>Entendido</Button>
-              </DialogFooter>
-          </DialogContent>
-       </Dialog>
+      <Dialog open={isCopySuccessModalOpen} onOpenChange={setIsCopySuccessModalOpen}>
+        <DialogContent className="sm:max-w-sm bg-card/90 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="flex flex-col items-center text-center gap-3">
+              <div className="p-3 bg-green-500/20 rounded-full border-4 border-green-500/30">
+                <ClipboardCheck className="size-8 text-green-500" />
+              </div>
+              ¡Símbolo Copiado!
+            </DialogTitle>
+            <DialogDescription className="text-center pt-2">
+              El emoji está listo para que lo pegues donde quieras.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button className="w-full" onClick={() => setIsCopySuccessModalOpen(false)}>
+              Entendido
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isActionSelectorModalOpen} onOpenChange={(open) => {
-           setIsActionSelectorModalOpen(open);
-           if (!open) {
-             setClickPosition(null);
-             setActiveContainer(null);
-           }
-        }}>
+          setIsActionSelectorModalOpen(open);
+          if (!open) {
+              setClickPosition(null);
+              setActiveContainer(null);
+          }
+      }}>
           <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
               <DialogHeader>
                   <DialogTitle>¿Qué deseas hacer?</DialogTitle>
