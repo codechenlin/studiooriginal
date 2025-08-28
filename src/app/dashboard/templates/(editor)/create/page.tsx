@@ -102,6 +102,8 @@ import {
   XCircle,
   ClipboardCheck,
   Code,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -3776,7 +3778,7 @@ export default function CreateTemplatePage() {
             onClick={handleWrapperClick}
           >
             <div className="w-full h-full relative">
-              {block.payload.blocks.map(b => {
+              {block.payload.blocks.map((b, bIndex) => {
                 if (b.type === 'emoji-interactive') {
                   const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === b.id;
                   return (
@@ -3784,13 +3786,14 @@ export default function CreateTemplatePage() {
                         key={b.id}
                         className={cn(
                           "interactive-emoji absolute text-4xl cursor-pointer select-none", 
-                          isSelected ? "ring-2 ring-accent z-10 p-2" : "z-0"
+                          isSelected ? "ring-2 ring-accent z-10 p-2" : ""
                         )}
                         style={{
                            left: `${b.payload.x}%`,
                            top: `${b.payload.y}%`,
                            transform: `translate(-50%, -50%) scale(${b.payload.scale}) rotate(${b.payload.rotate}deg)`,
                            fontSize: '48px',
+                           zIndex: bIndex,
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -3936,6 +3939,10 @@ export default function CreateTemplatePage() {
 };
 
 const LayerPanel = () => {
+    const { toast } = useToast();
+    const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+    const [tempName, setTempName] = useState('');
+
     const selectedWrapper = canvasContent.find(
       (block): block is WrapperBlock =>
         block.type === 'wrapper' &&
@@ -3943,6 +3950,50 @@ const LayerPanel = () => {
           (selectedElement?.type === 'wrapper-primitive' && block.id === selectedElement.wrapperId))
     );
 
+    const reorderLayers = (wrapperId: string, fromIndex: number, toIndex: number) => {
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id === wrapperId && row.type === 'wrapper') {
+                const newBlocks = Array.from(row.payload.blocks);
+                const [movedItem] = newBlocks.splice(fromIndex, 1);
+                newBlocks.splice(toIndex, 0, movedItem);
+                return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+            }
+            return row;
+        }));
+    };
+
+    const handleRename = (blockId: string, newName: string) => {
+        if (!selectedWrapper) return;
+        const trimmedName = newName.trim();
+        if (trimmedName === '') return;
+
+        const isNameTaken = selectedWrapper.payload.blocks.some(b => b.id !== blockId && b.payload.name === trimmedName);
+
+        if (isNameTaken) {
+             toast({
+                title: "¡Nombre en uso!",
+                description: "Cada capa debe tener un identificador único en el lienzo. Por favor, elige otro nombre.",
+                variant: 'destructive',
+                style: { backgroundColor: '#F00000' }
+            });
+            return;
+        }
+
+        setCanvasContent(prev => prev.map(row => {
+            if (row.id === selectedWrapper.id && row.type === 'wrapper') {
+                const newBlocks = row.payload.blocks.map(block => {
+                    if (block.id === blockId) {
+                        return { ...block, payload: { ...block.payload, name: trimmedName } };
+                    }
+                    return block;
+                });
+                return { ...row, payload: { ...row.payload, blocks: newBlocks } };
+            }
+            return row;
+        }));
+        setEditingBlockId(null);
+    }
+    
     if (!selectedWrapper) {
         return (
             <div className="text-center text-muted-foreground p-4 text-sm">
@@ -3951,7 +4002,8 @@ const LayerPanel = () => {
         );
     }
     
-    const blocksInOrder = [...selectedWrapper.payload.blocks].reverse();
+    // The visual list is reversed so the top item in UI is the front-most layer (last in array)
+    const blocksInVisualOrder = [...selectedWrapper.payload.blocks].reverse();
 
     return (
         <div className="p-2 space-y-2">
@@ -3960,7 +4012,8 @@ const LayerPanel = () => {
                  <p className="text-xs text-muted-foreground">Gestiona las capas de tu contenedor.</p>
              </div>
              <div className="space-y-1">
-                {blocksInOrder.map((block) => {
+                {blocksInVisualOrder.map((block, visualIndex) => {
+                    const originalIndex = selectedWrapper.payload.blocks.length - 1 - visualIndex;
                     const Icon = Smile; // Hardcoded for now
                     const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id;
 
@@ -3971,13 +4024,43 @@ const LayerPanel = () => {
                             "group flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer",
                             isSelected ? "bg-primary/20" : "hover:bg-muted/50"
                           )}
-                          onClick={() => setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId: selectedWrapper.id })}
+                          onClick={() => {
+                             if(isSelected) {
+                               setSelectedElement(null);
+                             } else {
+                               setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId: selectedWrapper.id });
+                             }
+                          }}
                         >
                           <div className="p-1.5 bg-muted rounded-md">
                             <Icon className="size-4 text-primary" />
                           </div>
-                          <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
-                          <GripVertical className="size-4 text-muted-foreground opacity-50 group-hover:opacity-100" />
+
+                          {editingBlockId === block.id ? (
+                            <Input 
+                                defaultValue={block.payload.name}
+                                onBlur={(e) => handleRename(block.id, e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleRename(block.id, e.currentTarget.value) }}
+                                autoFocus
+                                className="h-7 text-sm"
+                            />
+                          ) : (
+                             <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
+                          )}
+                          
+                          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="size-6" onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id)}}>
+                                <Pencil className="size-3"/>
+                            </Button>
+                            <div className="flex flex-col">
+                                <Button variant="ghost" size="icon" className="size-5 h-5" disabled={visualIndex === 0} onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}}>
+                                    <ChevronUp className="size-3"/>
+                                </Button>
+                                <Button variant="ghost" size="icon" className="size-5 h-5" disabled={visualIndex === blocksInVisualOrder.length - 1} onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}}>
+                                    <ChevronDown className="size-3"/>
+                                </Button>
+                            </div>
+                          </div>
                         </div>
                     );
                 })}
@@ -4092,9 +4175,15 @@ const LayerPanel = () => {
              <ThemeToggle />
           </div>
           <div className="flex items-center gap-4">
-               <div className="group rounded-md p-0.5 bg-transparent hover:bg-gradient-to-r from-publish-hover-start to-publish-hover-end transition-colors">
-                  <Button className="bg-card/20 dark:bg-card/20 hover:bg-card/30 dark:hover:bg-card/30 text-foreground" onClick={handlePublish}>
-                      <Rocket className="mr-2"/> Publicar
+               <div className="group rounded-md p-0.5 bg-gradient-to-r from-[#AD00EC] to-[#1700E6] hover:bg-gradient-to-r hover:from-publish-hover-start hover:to-publish-hover-end transition-all duration-300">
+                  <Button 
+                    className="bg-card/80 dark:bg-card/80 hover:bg-transparent text-white dark:hover:text-transparent hover:text-white" 
+                    onClick={handlePublish}
+                  >
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white group-hover:from-[#00CE07] group-hover:to-[#A6EE00]">
+                      <Rocket className="mr-2 inline-block"/>
+                      Publicar
+                    </span>
                   </Button>
               </div>
           </div>
