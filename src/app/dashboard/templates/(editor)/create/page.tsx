@@ -512,6 +512,32 @@ type SelectedElement =
   | null;
 
 
+const getSelectedBlockType = (element: SelectedElement, content: CanvasBlock[]): BlockType | null => {
+    if (!element) return null;
+
+    if (element.type === 'column') {
+        return 'columns';
+    }
+    if (element.type === 'wrapper') {
+        return 'wrapper';
+    }
+    if (element.type === 'primitive') {
+        const row = content.find(r => r.id === element.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === element.columnId);
+        const block = col?.blocks.find(b => b.id === element.primitiveId);
+        return block?.type || null;
+    }
+     if (element.type === 'wrapper-primitive') {
+        const row = content.find(r => r.id === element.wrapperId);
+        if (row?.type !== 'wrapper') return null;
+        const block = row.payload.blocks.find(b => b.id === element.primitiveId);
+        return block?.type || null;
+    }
+
+    return null;
+}
+
 const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     selectedElement: SelectedElement;
     canvasContent: CanvasBlock[];
@@ -3182,32 +3208,6 @@ export default function CreateTemplatePage() {
     setCanvasContent([...canvasContent, newColumnsBlock]);
     setIsColumnModalOpen(false);
   };
-
-  const getSelectedBlockType = (element: SelectedElement, content: CanvasBlock[]): BlockType | null => {
-      if (!element) return null;
-
-      if (element.type === 'column') {
-          return 'columns';
-      }
-      if (element.type === 'wrapper') {
-          return 'wrapper';
-      }
-      if (element.type === 'primitive') {
-          const row = content.find(r => r.id === element.rowId);
-          if (row?.type !== 'columns') return null;
-          const col = row.payload.columns.find(c => c.id === element.columnId);
-          const block = col?.blocks.find(b => b.id === element.primitiveId);
-          return block?.type || null;
-      }
-       if (element.type === 'wrapper-primitive') {
-          const row = content.find(r => r.id === element.wrapperId);
-          if (row?.type !== 'wrapper') return null;
-          const block = row.payload.blocks.find(b => b.id === element.primitiveId);
-          return block?.type || null;
-      }
-
-      return null;
-  }
   
   const handleOpenBlockSelector = (containerId: string, containerType: 'column' | 'wrapper', e: React.MouseEvent) => {
       e.stopPropagation();
@@ -4237,7 +4237,8 @@ const LayerPanel = () => {
     );
 
     const reorderLayers = (wrapperId: string, fromIndex: number, toIndex: number) => {
-        if (toIndex < 0 || toIndex >= selectedWrapper!.payload.blocks.length) return;
+        if (!selectedWrapper || toIndex < 0 || toIndex >= selectedWrapper.payload.blocks.length) return;
+
         setCanvasContent(prev => prev.map(row => {
             if (row.id === wrapperId && row.type === 'wrapper') {
                 const newBlocks = Array.from(row.payload.blocks);
@@ -4471,7 +4472,7 @@ const LayerPanel = () => {
                   >
                     <Rocket className="mr-2 text-white group-hover:text-black dark:group-hover:text-black"/>
                     <span className="text-white group-hover:text-black dark:group-hover:text-black">
-                        Guardar
+                        Publicar
                     </span>
                   </Button>
               </div>
