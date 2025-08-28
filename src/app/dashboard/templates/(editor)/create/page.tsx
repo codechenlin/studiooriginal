@@ -412,6 +412,7 @@ interface TimerBlock extends BaseBlock {
 interface InteractiveEmojiBlock extends BaseBlock {
     type: 'emoji-interactive';
     payload: {
+        name: string;
         emoji: string;
         x: number;
         y: number;
@@ -2846,7 +2847,6 @@ TimerComponent.displayName = 'TimerComponent';
 
 
 export default function CreateTemplatePage() {
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [viewport, setViewport] = useState<Viewport>('desktop');
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   const [canvasContent, setCanvasContent] = useState<CanvasBlock[]>([]);
@@ -2891,7 +2891,6 @@ export default function CreateTemplatePage() {
   const { toast } = useToast();
 
   const handleSave = () => {
-    setLastSaved(new Date());
     toast({
       title: "¡Plantilla Guardada!",
       description: "Tus cambios han sido guardados exitosamente.",
@@ -3152,6 +3151,7 @@ export default function CreateTemplatePage() {
         id: `emoji_${Date.now()}`,
         type: 'emoji-interactive',
         payload: {
+            name: `Emoji-${Math.floor(Math.random() * 1000)}`,
             emoji,
             x: xPercent,
             y: yPercent,
@@ -3934,6 +3934,65 @@ export default function CreateTemplatePage() {
     );
 };
 
+const LayerPanel = () => {
+    const selectedWrapper = canvasContent.find(
+        block => block.type === 'wrapper' && (selectedElement?.type === 'wrapper' ? block.id === selectedElement.wrapperId : selectedElement?.type === 'wrapper-primitive' ? block.id === selectedElement.wrapperId : false)
+    ) as WrapperBlock | undefined;
+
+    if (!selectedWrapper) {
+        return (
+            <div className="text-center text-muted-foreground p-4 text-sm">
+                Selecciona un Contenedor Flexible en el lienzo para ver sus capas.
+            </div>
+        );
+    }
+    
+    const blocksInOrder = [...selectedWrapper.payload.blocks].reverse();
+
+    const handleReorder = (fromIndex: number, toIndex: number) => {
+        const newBlocks = [...selectedWrapper.payload.blocks];
+        const [movedBlock] = newBlocks.splice(fromIndex, 1);
+        newBlocks.splice(toIndex, 0, movedBlock);
+
+        setCanvasContent(canvasContent.map(row => 
+            row.id === selectedWrapper.id ? { ...row, payload: { ...row.payload, blocks: newBlocks } } : row
+        ));
+    };
+
+    return (
+        <div className="p-2 space-y-2">
+             <div className="px-2 pb-2">
+                 <h3 className="font-semibold flex items-center gap-2"><Shapes className="text-primary"/>Contenedor Flexible</h3>
+                 <p className="text-xs text-muted-foreground">Gestiona las capas de tu contenedor.</p>
+             </div>
+             <div className="space-y-1">
+                {blocksInOrder.map((block, index) => {
+                    const Icon = Smile; // Hardcoded for now
+                    const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id;
+
+                    return (
+                        <div
+                          key={block.id}
+                          className={cn(
+                            "group flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer",
+                            isSelected ? "bg-primary/20" : "hover:bg-muted/50"
+                          )}
+                          onClick={() => setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId: selectedWrapper.id })}
+                        >
+                          <div className="p-1.5 bg-muted rounded-md">
+                            <Icon className="size-4 text-primary" />
+                          </div>
+                          <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
+                          <GripVertical className="size-4 text-muted-foreground opacity-50 group-hover:opacity-100" />
+                        </div>
+                    );
+                })}
+             </div>
+        </div>
+    );
+};
+
+
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
@@ -4039,18 +4098,8 @@ export default function CreateTemplatePage() {
              <ThemeToggle />
           </div>
           <div className="flex items-center gap-4">
-              <div className="text-xs text-muted-foreground">
-                {lastSaved
-                  ? `Último guardado: ${lastSaved.toLocaleTimeString()}`
-                  : "Aún sin guardar"}
-              </div>
-               <div className="group rounded-md p-0.5 bg-transparent hover:bg-gradient-to-r from-[#00CE07] to-[#A6EE00] transition-colors">
-                   <Button variant="outline" size="sm" onClick={handleSave} className="bg-transparent text-foreground dark:text-white hover:bg-transparent hover:text-black dark:hover:text-white">
-                      <Save className="mr-1"/> Guardar
-                  </Button>
-              </div>
-               <div className="group rounded-md p-0.5 bg-gradient-to-r from-primary to-accent/80 transition-colors">
-                  <Button className="bg-card/20 dark:bg-card/20 hover:bg-card/30 dark:hover:bg-card/30 text-foreground">
+               <div className="group rounded-md p-0.5 bg-gradient-to-r from-primary to-accent/80 transition-colors hover:bg-gradient-to-r hover:from-publish-hover-start hover:to-publish-hover-end">
+                  <Button className="bg-card/20 dark:bg-card/20 hover:bg-card/30 dark:hover:bg-card/30 text-foreground" onClick={handleSave}>
                       <Rocket className="mr-2"/> Publicar
                   </Button>
               </div>
@@ -4145,7 +4194,7 @@ export default function CreateTemplatePage() {
               </div>
               </TabsContent>
               <TabsContent value="layers">
-                  {/* Layers content will go here */}
+                  <LayerPanel />
               </TabsContent>
            </Tabs>
          </ScrollArea>
@@ -4423,3 +4472,6 @@ export default function CreateTemplatePage() {
 
 
 
+
+
+    

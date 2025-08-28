@@ -94,6 +94,8 @@ export default {
         'ai-glow-start': 'hsl(var(--ai-glow-start))',
         'ai-glow-mid': 'hsl(var(--ai-glow-mid))',
         'ai-glow-end': 'hsl(var(--ai-glow-end))',
+        'publish-hover-start': '#00CE07',
+        'publish-hover-end': '#A6EE00',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -126,3 +128,5 @@ export default {
   },
   plugins: [require('tailwindcss-animate')],
 } satisfies Config;
+
+    
