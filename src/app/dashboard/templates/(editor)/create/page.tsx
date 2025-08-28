@@ -437,8 +437,6 @@ interface InteractiveHeadingBlock extends BaseBlock {
         styles: {
             color: string;
             fontFamily: string;
-            fontSize: number;
-            textAlign: TextAlign;
             fontWeight: 'normal' | 'bold';
             fontStyle: 'normal' | 'italic';
             textDecoration: 'none' | 'underline' | 'line-through';
@@ -1885,28 +1883,6 @@ const InteractiveHeadingEditor = ({ selectedElement, canvasContent, setCanvasCon
                  </div>
             </div>
             
-            <div className="space-y-4">
-                 <h3 className="text-sm font-medium text-foreground/80">Alineación</h3>
-                 <div className="grid grid-cols-3 gap-2">
-                    <Button variant={styles.textAlign === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','left')}><AlignLeft/></Button>
-                    <Button variant={styles.textAlign === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','center')}><AlignCenter/></Button>
-                    <Button variant={styles.textAlign === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updateStyle('textAlign','right')}><AlignRight/></Button>
-                 </div>
-            </div>
-
-            <div className="space-y-4">
-                <h3 className="text-sm font-medium text-foreground/80">Tamaño de Fuente</h3>
-                <div className="flex items-center gap-2">
-                  <Slider 
-                      value={[styles.fontSize]}
-                      max={100}
-                      min={12}
-                      step={1} 
-                      onValueChange={(value) => updateStyle('fontSize', value[0])}
-                  />
-                  <span className="text-xs text-muted-foreground w-12 text-right">{styles.fontSize}px</span>
-                </div>
-            </div>
              <Separator className="bg-border/20"/>
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Move />Posición</h3>
@@ -3135,7 +3111,6 @@ export default function CreateTemplatePage() {
   });
   
   const [isCopySuccessModalOpen, setIsCopySuccessModalOpen] = useState(false);
-  const [copiedEmoji, setCopiedEmoji] = useState('');
   
   const wrapperRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -3375,8 +3350,6 @@ export default function CreateTemplatePage() {
                 styles: {
                     color: isDarkMode ? '#FFFFFF' : '#000000',
                     fontFamily: 'Roboto',
-                    fontSize: 32,
-                    textAlign: 'center',
                     fontWeight: 'bold',
                     fontStyle: 'normal',
                     textDecoration: 'none'
@@ -3390,11 +3363,9 @@ export default function CreateTemplatePage() {
             }
             return row;
          }));
-
-        setIsWrapperBlockSelectorOpen(false);
-        setClickPosition(null);
-        setActiveContainer(null);
     }
+    
+    setIsWrapperBlockSelectorOpen(false);
   };
 
   const handleSelectEmojiForWrapper = (emoji: string) => {
@@ -3529,15 +3500,16 @@ export default function CreateTemplatePage() {
 
   const getHeadingStyle = (block: HeadingBlock | InteractiveHeadingBlock): React.CSSProperties => {
       const { styles } = block.payload;
+      const interactiveStyles = 'scale' in block.payload ? { fontSize: `${32 * block.payload.scale}px` } : { fontSize: `${(block.payload as HeadingBlock['payload']).styles.fontSize}px`, textAlign: (block.payload as HeadingBlock['payload']).styles.textAlign as TextAlign};
+
       const style: React.CSSProperties = {
           color: styles.color,
           fontFamily: styles.fontFamily,
-          fontSize: `${styles.fontSize}px`,
           fontWeight: styles.fontWeight,
           fontStyle: styles.fontStyle,
-          textAlign: styles.textAlign,
           padding: '8px',
           wordBreak: 'break-word',
+          ...interactiveStyles,
       };
       if (styles.highlight) {
           style.backgroundColor = styles.highlight;
@@ -3880,8 +3852,10 @@ export default function CreateTemplatePage() {
   }, []);
   
   const handleOpenCopyModal = (emoji: string) => {
-    setCopiedEmoji(emoji);
-    setIsCopySuccessModalOpen(true);
+    toast({
+      title: "¡Símbolo en el Portapapeles!",
+      description: `El emoji ${emoji} está listo para que lo pegues donde quieras.`,
+    });
   };
 
   useEffect(() => {
@@ -4082,7 +4056,7 @@ export default function CreateTemplatePage() {
                             setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id });
                           }}
                         >
-                            <div style={{ textAlign: textAlign as TextAlign }}>
+                            <div style={{ textAlign: 'center' }}>
                                 <span style={textStyles}>
                                   {headingBlock.payload.text}
                                 </span>
@@ -4261,7 +4235,6 @@ const LayerPanel = () => {
              toast({
                 title: "¡Nombre en uso!",
                 description: "Cada capa debe tener un identificador único en el lienzo. Por favor, elige otro nombre.",
-                variant: 'destructive',
                 style: { backgroundColor: '#F00000', color: 'white' }
             });
             return;
@@ -4311,7 +4284,7 @@ const LayerPanel = () => {
                             "group flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer",
                             isSelected ? "bg-primary/20" : "hover:bg-muted/50"
                           )}
-                           onClick={() => {
+                          onClick={() => {
                             if (isSelected) {
                                 setSelectedElement({ type: 'wrapper', wrapperId: selectedWrapper.id });
                             } else {
@@ -4319,7 +4292,7 @@ const LayerPanel = () => {
                             }
                           }}
                         >
-                          <div className="p-1.5 bg-muted rounded-md">
+                           <div className="p-1.5 bg-muted rounded-md">
                             <Icon className="size-4 text-primary" />
                           </div>
 
@@ -4335,21 +4308,17 @@ const LayerPanel = () => {
                              <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
                           )}
                           
-                          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                             <Button
-                                variant="ghost" size="icon" className="size-7 rounded-full group/edit-btn"
+                          <div className="flex items-center ml-auto">
+                              <button
                                 onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id) }}
-                            >
-                                <Pencil className="size-4 text-muted-foreground transition-colors group-hover/edit-btn:text-primary" />
-                            </Button>
-                            <div className="flex flex-col">
-                                <Button variant="ghost" size="icon" className="size-5 h-5" disabled={visualIndex === 0} onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}}>
-                                    <ChevronUp className="size-3"/>
-                                </Button>
-                                <Button variant="ghost" size="icon" className="size-5 h-5" disabled={visualIndex === blocksInVisualOrder.length - 1} onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}}>
-                                    <ChevronDown className="size-3"/>
-                                </Button>
-                            </div>
+                                className="p-1 rounded-md hover:bg-primary/20"
+                              >
+                                  <Pencil className="size-4 text-muted-foreground hover:text-primary transition-colors"/>
+                              </button>
+                              <div className="flex flex-col ml-1">
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={visualIndex === 0} className="disabled:opacity-30"><ChevronUp className="size-4"/></button>
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={visualIndex === blocksInVisualOrder.length - 1} className="disabled:opacity-30"><ChevronDown className="size-4"/></button>
+                              </div>
                           </div>
                         </div>
                     );
@@ -4467,10 +4436,10 @@ const LayerPanel = () => {
            <div className="flex items-center gap-4">
                  <div className="group rounded-md p-0.5 bg-gradient-to-r from-[#AD00EC] to-[#1700E6] hover:from-transparent hover:to-transparent transition-all duration-300">
                   <Button 
-                    className="bg-card/80 dark:bg-card/80 text-white hover:bg-transparent hover:text-black dark:hover:text-black hover:border-[#00EF10] border-2 border-transparent"
+                    className="bg-card/80 dark:bg-card/80 text-white hover:bg-transparent hover:text-black dark:hover:text-black hover:border-2 hover:border-[#00EF10]"
                     onClick={handlePublish}
                   >
-                    <Rocket className="mr-2 text-white group-hover:text-black dark:group-hover:text-black"/>
+                    <Rocket className="mr-2 text-white group-hover:text-[#00EF10]"/>
                     <span className="text-white group-hover:text-black dark:group-hover:text-black">
                         Publicar
                     </span>
@@ -4599,7 +4568,13 @@ const LayerPanel = () => {
         </DialogContent>
       </Dialog>
 
-       <Dialog open={isWrapperBlockSelectorOpen} onOpenChange={setIsWrapperBlockSelectorOpen}>
+       <Dialog open={isWrapperBlockSelectorOpen} onOpenChange={(open) => {
+           setIsWrapperBlockSelectorOpen(open);
+           if (!open) {
+             setClickPosition(null);
+             setActiveContainer(null);
+           }
+        }}>
         <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><PlusCircle className="text-primary"/>Añadir Bloque a Contenedor</DialogTitle>
@@ -4706,7 +4681,7 @@ const LayerPanel = () => {
                       ¡Símbolo en el Portapapeles!
                   </DialogTitle>
                   <DialogDescription className="text-center pt-2">
-                     El emoji <span className="font-bold text-lg">{copiedEmoji}</span> está listo para que lo pegues donde quieras.
+                     El emoji está listo para que lo pegues donde quieras.
                   </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -4715,7 +4690,13 @@ const LayerPanel = () => {
           </DialogContent>
        </Dialog>
 
-      <Dialog open={isActionSelectorModalOpen} onOpenChange={setIsActionSelectorModalOpen}>
+      <Dialog open={isActionSelectorModalOpen} onOpenChange={(open) => {
+           setIsActionSelectorModalOpen(open);
+           if (!open) {
+             setClickPosition(null);
+             setActiveContainer(null);
+           }
+        }}>
           <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
               <DialogHeader>
                   <DialogTitle>¿Qué deseas hacer?</DialogTitle>
