@@ -101,6 +101,7 @@ import {
   Search as SearchIcon,
   XCircle,
   ClipboardCheck,
+  Code,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -2890,10 +2891,10 @@ export default function CreateTemplatePage() {
 
   const { toast } = useToast();
 
-  const handleSave = () => {
+  const handlePublish = () => {
     toast({
-      title: "¡Plantilla Guardada!",
-      description: "Tus cambios han sido guardados exitosamente.",
+      title: "¡Plantilla Publicada!",
+      description: "Tu nueva plantilla está lista para ser usada.",
       className: 'bg-[#00CB07] border-none text-white',
     })
   };
@@ -3936,8 +3937,11 @@ export default function CreateTemplatePage() {
 
 const LayerPanel = () => {
     const selectedWrapper = canvasContent.find(
-        block => block.type === 'wrapper' && (selectedElement?.type === 'wrapper' ? block.id === selectedElement.wrapperId : selectedElement?.type === 'wrapper-primitive' ? block.id === selectedElement.wrapperId : false)
-    ) as WrapperBlock | undefined;
+      (block): block is WrapperBlock =>
+        block.type === 'wrapper' &&
+        ((selectedElement?.type === 'wrapper' && block.id === selectedElement.wrapperId) ||
+          (selectedElement?.type === 'wrapper-primitive' && block.id === selectedElement.wrapperId))
+    );
 
     if (!selectedWrapper) {
         return (
@@ -3949,16 +3953,6 @@ const LayerPanel = () => {
     
     const blocksInOrder = [...selectedWrapper.payload.blocks].reverse();
 
-    const handleReorder = (fromIndex: number, toIndex: number) => {
-        const newBlocks = [...selectedWrapper.payload.blocks];
-        const [movedBlock] = newBlocks.splice(fromIndex, 1);
-        newBlocks.splice(toIndex, 0, movedBlock);
-
-        setCanvasContent(canvasContent.map(row => 
-            row.id === selectedWrapper.id ? { ...row, payload: { ...row.payload, blocks: newBlocks } } : row
-        ));
-    };
-
     return (
         <div className="p-2 space-y-2">
              <div className="px-2 pb-2">
@@ -3966,7 +3960,7 @@ const LayerPanel = () => {
                  <p className="text-xs text-muted-foreground">Gestiona las capas de tu contenedor.</p>
              </div>
              <div className="space-y-1">
-                {blocksInOrder.map((block, index) => {
+                {blocksInOrder.map((block) => {
                     const Icon = Smile; // Hardcoded for now
                     const isSelected = selectedElement?.type === 'wrapper-primitive' && selectedElement.primitiveId === block.id;
 
@@ -4099,7 +4093,7 @@ const LayerPanel = () => {
           </div>
           <div className="flex items-center gap-4">
                <div className="group rounded-md p-0.5 bg-gradient-to-r from-primary to-accent/80 transition-colors hover:bg-gradient-to-r hover:from-publish-hover-start hover:to-publish-hover-end">
-                  <Button className="bg-card/20 dark:bg-card/20 hover:bg-card/30 dark:hover:bg-card/30 text-foreground" onClick={handleSave}>
+                  <Button className="bg-card/20 dark:bg-card/20 hover:bg-card/30 dark:hover:bg-card/30 text-foreground" onClick={handlePublish}>
                       <Rocket className="mr-2"/> Publicar
                   </Button>
               </div>
