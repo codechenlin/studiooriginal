@@ -508,7 +508,6 @@ type SelectedElement =
   | { type: 'wrapper-primitive', primitiveId: string, wrapperId: string } 
   | null;
 
-
 const getSelectedBlockType = (element: SelectedElement, content: CanvasBlock[]): BlockType | null => {
     if (!element) return null;
 
@@ -534,6 +533,7 @@ const getSelectedBlockType = (element: SelectedElement, content: CanvasBlock[]):
 
     return null;
 }
+
 
 const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     selectedElement: SelectedElement;
@@ -3329,6 +3329,8 @@ export default function CreateTemplatePage() {
   const handleAddBlockToWrapper = (type: InteractiveBlockType) => {
     if (!activeContainer || activeContainer.type !== 'wrapper' || !clickPosition) return;
     
+    setIsWrapperBlockSelectorOpen(false); // Close the selector first
+
     if (type === 'emoji-interactive') {
         setIsEmojiSelectorOpen(true);
     } else if (type === 'heading-interactive') {
@@ -3362,15 +3364,8 @@ export default function CreateTemplatePage() {
             }
             return row;
          }));
-    }
-    
-    if (isActionSelectorModalOpen) {
-      setIsWrapperBlockSelectorOpen(false);
-    } else {
-      setIsActionSelectorModalOpen(false);
-      setIsWrapperBlockSelectorOpen(false);
-      setActiveContainer(null);
-      setClickPosition(null);
+         setClickPosition(null);
+         setActiveContainer(null);
     }
   };
 
@@ -3517,9 +3512,13 @@ export default function CreateTemplatePage() {
           fontStyle: styles.fontStyle,
           padding: '8px',
           wordBreak: 'break-word',
-          whiteSpace: 'nowrap',
           ...interactiveStyles,
       };
+
+      if ('text' in block.payload && typeof block.payload.text === 'string' && !block.payload.text.includes(' ')) {
+          style.whiteSpace = 'nowrap';
+      }
+
       if (styles.highlight) {
           style.backgroundColor = styles.highlight;
       }
@@ -4047,7 +4046,7 @@ export default function CreateTemplatePage() {
                     )
                   } else if (b.type === 'heading-interactive') {
                     const headingBlock = b as InteractiveHeadingBlock;
-                    const {textAlign, ...textStyles} = getHeadingStyle(headingBlock);
+                    const style = getHeadingStyle(headingBlock);
                     
                     return (
                         <div
@@ -4063,7 +4062,7 @@ export default function CreateTemplatePage() {
                           }}
                         >
                             <div style={{ textAlign: 'center', display: 'inline-block' }}>
-                                <span style={textStyles}>
+                                <span style={style}>
                                   {headingBlock.payload.text}
                                 </span>
                             </div>
@@ -4318,7 +4317,7 @@ const LayerPanel = () => {
                              <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
                           )}
                           
-                          <div className="flex items-center ml-auto">
+                          <div className="flex items-center ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id) }}
                                 className="p-1 rounded-md hover:bg-primary/20"
@@ -4460,7 +4459,7 @@ const LayerPanel = () => {
                 >
                     <Rocket className="mr-2 text-white dark:text-white group-hover:text-[#00EF10] transition-colors"/>
                     <span className="text-white dark:text-white group-hover:text-[#00EF10] transition-colors">
-                        Guardar
+                        Publicar
                     </span>
                 </Button>
             </div>
@@ -4588,10 +4587,7 @@ const LayerPanel = () => {
 
       <Dialog open={isWrapperBlockSelectorOpen} onOpenChange={(open) => {
           setIsWrapperBlockSelectorOpen(open);
-          if (!open && isActionSelectorModalOpen) {
-              // This case happens when we open the block selector FROM the action selector.
-              // We don't want to clear state here.
-          } else if (!open) {
+          if (!open) {
               setClickPosition(null);
               setActiveContainer(null);
           }
@@ -4716,8 +4712,8 @@ const LayerPanel = () => {
       <Dialog open={isActionSelectorModalOpen} onOpenChange={(open) => {
           setIsActionSelectorModalOpen(open);
           if (!open) {
-              setClickPosition(null);
-              setActiveContainer(null);
+            setClickPosition(null);
+            setActiveContainer(null);
           }
       }}>
           <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
