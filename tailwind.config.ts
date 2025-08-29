@@ -94,6 +94,8 @@ export default {
         'ai-glow-start': 'hsl(var(--ai-glow-start))',
         'ai-glow-mid': 'hsl(var(--ai-glow-mid))',
         'ai-glow-end': 'hsl(var(--ai-glow-end))',
+        'publish-normal-start': '#AD00EC',
+        'publish-normal-end': '#1700E6',
         'publish-hover-start': '#00CE07',
         'publish-hover-end': '#A6EE00',
       },

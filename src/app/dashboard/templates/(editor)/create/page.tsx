@@ -114,6 +114,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 
 const mainContentBlocks = [
@@ -3119,7 +3120,7 @@ export default function CreateTemplatePage() {
     toast({
       title: "¡Plantilla Guardada!",
       description: "Tu plantilla ha sido guardada exitosamente.",
-      className: 'bg-gradient-to-r from-[#00CE07] to-[#A6EE00] border-none text-white',
+      className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
     })
   };
 
@@ -3515,7 +3516,7 @@ export default function CreateTemplatePage() {
           ...interactiveStyles,
       };
 
-      if ('text' in block.payload && typeof block.payload.text === 'string' && !block.payload.text.includes(' ')) {
+      if ('text' in block.payload && typeof block.payload.text === 'string') {
           style.whiteSpace = 'nowrap';
       }
 
@@ -4061,7 +4062,7 @@ export default function CreateTemplatePage() {
                             setSelectedElement({ type: 'wrapper-primitive', primitiveId: b.id, wrapperId: block.id });
                           }}
                         >
-                            <div style={{ textAlign: 'center', display: 'inline-block' }}>
+                            <div style={{ textAlign: 'center', display: 'inline-block', whiteSpace: 'nowrap' }}>
                                 <span style={style}>
                                   {headingBlock.payload.text}
                                 </span>
@@ -4317,24 +4318,24 @@ const LayerPanel = () => {
                              <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
                           )}
                           
-                          <div className="flex items-center ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center ml-auto">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id) }}
-                                className="p-1 rounded-md hover:bg-[#00ADEC]"
+                                className="p-1 rounded-md"
                               >
-                                  <div className="size-6 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 border border-black/20 dark:border-white/20 hover:border-primary/50 transition-colors">
-                                     <Pencil className="size-3 text-foreground/70 group-hover:text-primary"/>
+                                  <div className="size-6 flex items-center justify-center rounded-full border border-white bg-transparent hover:border-[#00EF10] text-white hover:text-[#00EF10] transition-colors">
+                                     <Pencil className="size-3"/>
                                   </div>
                               </button>
                               <div className="flex flex-col ml-1">
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={originalIndex === selectedWrapper.payload.blocks.length - 1} className="disabled:opacity-30 p-1 rounded-md hover:bg-[#00ADEC]">
-                                      <div className="size-5 flex items-center justify-center rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-primary/50 transition-colors">
-                                          <ChevronUp className="size-4 text-foreground/70 group-hover:text-primary"/>
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={originalIndex === selectedWrapper.payload.blocks.length - 1} className="disabled:opacity-30 p-0.5 rounded-md">
+                                      <div className="size-5 flex items-center justify-center rounded-md border border-white bg-transparent hover:border-[#00EF10] text-white hover:text-[#00EF10] transition-colors">
+                                          <ChevronUp className="size-4"/>
                                       </div>
                                   </button>
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={originalIndex === 0} className="disabled:opacity-30 p-1 rounded-md hover:bg-[#00ADEC]">
-                                      <div className="size-5 flex items-center justify-center rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-primary/50 transition-colors">
-                                         <ChevronDown className="size-4 text-foreground/70 group-hover:text-primary"/>
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={originalIndex === 0} className="disabled:opacity-30 p-0.5 rounded-md">
+                                      <div className="size-5 flex items-center justify-center rounded-md border border-white bg-transparent hover:border-[#00EF10] text-white hover:text-[#00EF10] transition-colors">
+                                         <ChevronDown className="size-4"/>
                                       </div>
                                   </button>
                               </div>
@@ -4359,7 +4360,7 @@ const LayerPanel = () => {
               </Button>
           </div>
         </header>
-        <div className="p-2 space-y-2">
+        <div className="p-2 space-y-2 flex-1 flex flex-col">
             <Dialog open={isColumnModalOpen} onOpenChange={setIsColumnModalOpen}>
               <DialogTrigger asChild>
                  <Card 
@@ -4412,6 +4413,13 @@ const LayerPanel = () => {
                  {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
+             <div className="mt-auto pb-2">
+                <Link href="/dashboard" className="group relative flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 overflow-hidden bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white border-2 border-transparent hover:border-purple-400/50 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
+                    <div className="absolute top-0 left-[-100%] h-full w-full bg-gradient-to-r from-transparent via-purple-500/50 to-transparent transition-all duration-500 group-hover:left-0"></div>
+                    <LayoutDashboard className="size-7 mb-1 z-10"/>
+                    <span className="text-xs font-semibold text-center z-10">Regresar al menú principal</span>
+                </Link>
+            </div>
         </div>
       </aside>
 
@@ -4422,6 +4430,10 @@ const LayerPanel = () => {
             <Button variant="ghost" size="icon"><Redo/></Button>
           </div>
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-1.5 rounded-lg border border-white/5">
+                <Cloud className="size-4 text-green-400"/>
+                <span>Guardado a las 10:45 AM</span>
+            </div>
             <TooltipProvider>
               <div className="flex items-center gap-2 p-1 bg-card/10 rounded-lg border border-border/20">
                   <Tooltip>
@@ -4454,11 +4466,11 @@ const LayerPanel = () => {
           </div>
            <div className="flex items-center gap-4">
                 <Button 
-                    className="group bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white dark:text-white hover:bg-none hover:bg-transparent hover:border-2 hover:border-[#00EF10] dark:hover:bg-transparent dark:hover:border-[#00EF10] transition-all duration-300"
+                    className="group bg-gradient-to-r from-publish-normal-start to-publish-normal-end text-white dark:text-white hover:bg-none hover:bg-transparent hover:border-2 hover:border-[#00EF10] dark:hover:bg-transparent dark:hover:border-[#00EF10] transition-all duration-300"
                     onClick={handlePublish}
                 >
-                    <Rocket className="mr-2 text-white dark:text-white group-hover:text-[#00EF10] transition-colors"/>
-                    <span className="text-white dark:text-white group-hover:text-[#00EF10] transition-colors">
+                    <Rocket className="mr-2 text-white dark:text-white group-hover:text-[#00EF10] dark:group-hover:text-black transition-colors"/>
+                    <span className="text-white dark:text-white group-hover:text-[#00EF10] dark:group-hover:text-black transition-colors">
                         Publicar
                     </span>
                 </Button>
