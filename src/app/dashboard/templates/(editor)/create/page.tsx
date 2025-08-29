@@ -4320,19 +4320,19 @@ const LayerPanel = () => {
                           <div className="flex items-center ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id) }}
-                                className="p-1 rounded-md hover:bg-primary/20"
+                                className="p-1 rounded-md hover:bg-[#00ADEC]"
                               >
                                   <div className="size-6 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 border border-black/20 dark:border-white/20 hover:border-primary/50 transition-colors">
                                      <Pencil className="size-3 text-foreground/70 group-hover:text-primary"/>
                                   </div>
                               </button>
                               <div className="flex flex-col ml-1">
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={originalIndex === selectedWrapper.payload.blocks.length - 1} className="disabled:opacity-30">
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={originalIndex === selectedWrapper.payload.blocks.length - 1} className="disabled:opacity-30 p-1 rounded-md hover:bg-[#00ADEC]">
                                       <div className="size-5 flex items-center justify-center rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-primary/50 transition-colors">
                                           <ChevronUp className="size-4 text-foreground/70 group-hover:text-primary"/>
                                       </div>
                                   </button>
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={originalIndex === 0} className="disabled:opacity-30">
+                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={originalIndex === 0} className="disabled:opacity-30 p-1 rounded-md hover:bg-[#00ADEC]">
                                       <div className="size-5 flex items-center justify-center rounded-md bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-primary/50 transition-colors">
                                          <ChevronDown className="size-4 text-foreground/70 group-hover:text-primary"/>
                                       </div>
@@ -4847,5 +4847,7 @@ const LayerPanel = () => {
 
 
 
+
+    
 
     
