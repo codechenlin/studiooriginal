@@ -4207,6 +4207,7 @@ const LayerPanel = () => {
     const { toast } = useToast();
     const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
     const [tempName, setTempName] = useState('');
+    const [isDarkMode] = useState(true); // Assuming dark mode for style decisions
 
     const selectedWrapper = canvasContent.find(
       (block): block is WrapperBlock =>
@@ -4278,7 +4279,7 @@ const LayerPanel = () => {
         <div className="p-2 space-y-2">
              <div className="px-2 pb-2">
                  <h3 className="font-semibold flex items-center gap-2"><Shapes className="text-primary"/>Contenedor Flexible</h3>
-                 <p className="text-xs text-muted-foreground">Gestiona las capas de tu contenedor.</p>
+                 <p className="text-xs text-muted-foreground">Gestiona y reordena las capas de tu contenedor.</p>
              </div>
              <div className="space-y-1">
                 {blocksInVisualOrder.map((block, visualIndex) => {
@@ -4288,51 +4289,63 @@ const LayerPanel = () => {
 
                     return (
                         <div
-                          key={block.id}
-                          className={cn(
-                            "group flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer",
-                            isSelected ? "bg-primary/20" : "hover:bg-muted/50"
-                          )}
-                           onClick={() => {
-                            if (isSelected) {
-                                setSelectedElement({ type: 'wrapper', wrapperId: selectedWrapper.id });
-                            } else {
-                                setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId: selectedWrapper.id });
-                            }
-                          }}
+                            key={block.id}
+                            className={cn(
+                              "group/layer-item relative overflow-hidden rounded-lg p-2 transition-colors cursor-pointer border border-transparent",
+                              isSelected ? "bg-primary/20 border-primary/50" : "hover:bg-muted/50"
+                            )}
+                            onClick={() => {
+                                if (isSelected) {
+                                    setSelectedElement({ type: 'wrapper', wrapperId: selectedWrapper.id });
+                                } else {
+                                    setSelectedElement({ type: 'wrapper-primitive', primitiveId: block.id, wrapperId: selectedWrapper.id });
+                                }
+                            }}
                         >
-                           <div className="p-1.5 bg-muted rounded-md">
-                            <Icon className="size-4 text-primary" />
-                          </div>
-
-                          {editingBlockId === block.id ? (
-                            <Input 
-                                defaultValue={block.payload.name}
-                                onBlur={(e) => handleRename(block.id, e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleRename(block.id, e.currentTarget.value) }}
-                                autoFocus
-                                className="h-7 text-sm flex-1 min-w-0"
-                            />
-                          ) : (
-                             <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
-                          )}
-                          
-                          <div className="flex items-center ml-auto">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id) }}
-                                className="group/button p-1 rounded-md bg-transparent hover:bg-[#1700E6] transition-colors"
-                              >
-                                <Pencil className="size-4 text-white group-hover/button:text-white transition-colors"/>
-                              </button>
-                              <div className="flex flex-col ml-1">
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={originalIndex === selectedWrapper.payload.blocks.length - 1} className="group/button disabled:opacity-30 p-0.5 rounded-md bg-transparent hover:bg-[#AD00EC] transition-colors">
-                                      <ChevronUp className="size-4 text-white group-hover/button:text-white transition-colors"/>
-                                  </button>
-                                  <button onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={originalIndex === 0} className="group/button disabled:opacity-30 p-0.5 rounded-md bg-transparent hover:bg-[#AD00EC] transition-colors">
-                                      <ChevronDown className="size-4 text-white group-hover/button:text-white transition-colors"/>
-                                  </button>
-                              </div>
-                          </div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-1.5 bg-muted rounded-md">
+                                    <Icon className="size-4 text-primary" />
+                                </div>
+                                {editingBlockId === block.id ? (
+                                    <Input 
+                                        defaultValue={block.payload.name}
+                                        onBlur={(e) => handleRename(block.id, e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') handleRename(block.id, e.currentTarget.value) }}
+                                        autoFocus
+                                        className="h-7 text-sm flex-1 min-w-0"
+                                    />
+                                ) : (
+                                    <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
+                                )}
+                            </div>
+                            
+                            <div className={cn("pl-9 pt-2 mt-2 border-t border-border/10", isSelected ? "block" : "hidden group-hover/layer-item:block")}>
+                                <div className="flex items-center justify-between gap-2">
+                                     <p className="text-xs text-muted-foreground">Acciones</p>
+                                     <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id) }}
+                                            className="group/button size-7 flex items-center justify-center rounded-md bg-zinc-700/50 hover:bg-cyan-400/80 border border-cyan-400/30 hover:border-cyan-300 transition-all"
+                                        >
+                                            <Pencil className="size-4 text-cyan-300 group-hover/button:text-white transition-colors"/>
+                                        </button>
+                                        <div className="flex flex-col gap-0.5">
+                                            <button 
+                                                onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex + 1)}} disabled={originalIndex === selectedWrapper.payload.blocks.length - 1}
+                                                className="group/button size-6 flex items-center justify-center rounded-md bg-zinc-700/50 hover:bg-green-400/80 border border-green-400/30 hover:border-green-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                            >
+                                                <ChevronUp className="size-4 text-green-300 group-hover/button:text-white transition-colors"/>
+                                            </button>
+                                            <button 
+                                                onClick={(e) => {e.stopPropagation(); reorderLayers(selectedWrapper.id, originalIndex, originalIndex - 1)}} disabled={originalIndex === 0}
+                                                className="group/button size-6 flex items-center justify-center rounded-md bg-zinc-700/50 hover:bg-green-400/80 border border-green-400/30 hover:border-green-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                            >
+                                                <ChevronDown className="size-4 text-green-300 group-hover/button:text-white transition-colors"/>
+                                            </button>
+                                        </div>
+                                     </div>
+                                </div>
+                            </div>
                         </div>
                     );
                 })}
@@ -4407,12 +4420,14 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-               <div className="w-full h-[4px] animated-separator-2 mb-2" />
+               <div className="w-full h-[4px] animated-separator mb-2" />
                <Link href="/dashboard" className="group ai-core-button relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300">
-                  <div className="ai-core-border-animation"></div>
-                  <LayoutDashboard className="size-7 mb-1 z-10"/>
-                  <span className="z-10 text-xs text-center">Regresar al Menú Principal</span>
-              </Link>
+                    <div className="animated-border"></div>
+                    <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
+                        <LayoutDashboard className="size-7 mb-1"/>
+                        <span className="text-xs text-center">Regresar al Menú Principal</span>
+                    </div>
+                </Link>
             </div>
         </div>
       </aside>
