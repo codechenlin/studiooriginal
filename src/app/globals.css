@@ -144,4 +144,29 @@ body {
     .animate-spin-slow {
         animation: spin-slow 3s linear infinite;
     }
+
+    @keyframes animated-border {
+      0% {
+        box-shadow: 0 0 0 0 rgba(225, 135, 0, 0.7);
+      }
+      50% {
+        box-shadow: 0 0 10px 3px rgba(255, 171, 0, 0.4);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(225, 135, 0, 0.7);
+      }
+    }
+    .animated-border {
+      --border-color-1: #E18700;
+      --border-color-2: #FFAB00;
+      background-image: 
+        linear-gradient(to right, var(--border-color-1), var(--border-color-2)),
+        linear-gradient(to right, var(--border-color-1), var(--border-color-2)),
+        linear-gradient(to bottom, var(--border-color-1), var(--border-color-2)),
+        linear-gradient(to bottom, var(--border-color-1), var(--border-color-2));
+      background-size: 100% 2px, 100% 2px, 2px 100%, 2px 100%;
+      background-position: 0 0, 0 100%, 0 0, 100% 0;
+      background-repeat: no-repeat;
+      animation: animated-border 2s linear infinite;
+    }
 }

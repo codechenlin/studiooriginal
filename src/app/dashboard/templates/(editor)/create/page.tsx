@@ -4407,10 +4407,14 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2">
-                <Link href="/dashboard" className="group relative flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 overflow-hidden bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white border-2 border-transparent hover:border-purple-400/50 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
-                    <div className="absolute top-0 left-[-100%] h-full w-full bg-gradient-to-r from-transparent via-purple-500/50 to-transparent transition-all duration-500 group-hover:left-0"></div>
-                    <LayoutDashboard className="size-7 mb-1 z-10"/>
-                    <span className="text-xs font-semibold text-center z-10">Regresar al menú principal</span>
+                 <div className="my-2 h-[1px] w-full bg-gradient-to-r from-transparent via-border/30 to-transparent" />
+                 <Link
+                  href="/dashboard"
+                  className="group relative flex items-center justify-center p-3 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[#AD00EC] to-[#1700E6] hover:bg-[#00CB07] transition-all duration-300 overflow-hidden"
+                >
+                  <div className="absolute inset-0 animated-border rounded-lg -z-10" />
+                  <LayoutDashboard className="mr-2 size-5" />
+                  Regresar al menú principal
                 </Link>
             </div>
         </div>
