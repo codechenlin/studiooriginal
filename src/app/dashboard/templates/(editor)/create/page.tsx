@@ -3838,6 +3838,11 @@ export default function CreateTemplatePage() {
     if (isInitialNameModalOpen) {
         setTemplateName(tempTemplateName || 'Mi Plantilla Increíble');
         setIsInitialNameModalOpen(false);
+         toast({
+            title: "¡Plantilla Guardada!",
+            description: "Tu plantilla ha sido guardada exitosamente.",
+            className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
+        })
     } else {
         setTemplateName(tempTemplateName);
         setIsEditNameModalOpen(false);
@@ -4254,7 +4259,6 @@ const LayerPanel = () => {
                 description: "El nombre no puede exceder los 20 caracteres.",
                 variant: 'destructive',
             });
-            setTempName(newName.substring(0, 20)); // Keep the truncated value for potential re-render
             return;
         }
 
@@ -4339,7 +4343,7 @@ const LayerPanel = () => {
                                         onKeyDown={(e) => { if (e.key === 'Enter') handleRename(block.id, e.currentTarget.value) }}
                                         autoFocus
                                         maxLength={20}
-                                        className="h-7 text-sm flex-1 min-w-0"
+                                        className="h-7 text-sm flex-1"
                                     />
                                 ) : (
                                     <div className="flex-1 min-w-0">
@@ -4449,10 +4453,10 @@ const LayerPanel = () => {
               </Card>
             ))}
              <div className="mt-auto pb-2 space-y-2">
-                <div className="w-full h-[4px] animated-separator mb-2" style={{"--start-color": "#1700E6", "--end-color": "#009AFF"} as React.CSSProperties} />
+                <div className="w-full h-[4px] animated-separator" style={{"--start-color": "#1700E6", "--end-color": "#009AFF"} as React.CSSProperties} />
                 <button
                     onClick={() => setIsConfirmExitModalOpen(true)}
-                    className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button hover:bg-[#00CB07]/10"
+                    className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"
                 >
                     <div className="ai-core-border-animation" style={{"--start-color": "#00F0FF", "--end-color": "#A6FF00"} as React.CSSProperties}></div>
                     <div className="ai-core"></div>
@@ -4917,11 +4921,15 @@ const LayerPanel = () => {
              <Button
               type="button"
               onClick={() => router.push('/dashboard')}
-              className="bg-[#F00000] text-white hover:bg-[#A11C00]"
+              className="bg-[#A11C00] text-white hover:bg-[#F00000]"
             >
               Cancelar
             </Button>
-            <Button type="button" onClick={handleSaveTemplateName}>
+            <Button 
+                type="button" 
+                onClick={handleSaveTemplateName}
+                className="hover:bg-[#00CB07] hover:text-white"
+            >
               Guardar y Empezar
             </Button>
           </DialogFooter>
@@ -4950,16 +4958,15 @@ const LayerPanel = () => {
                   variant="ghost"
                   size="sm"
                   onClick={handlePublish}
-                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:opacity-90"
+                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-[#00EF10]"
                 >
                   Guardar ahora
                 </Button>
             </div>
              <Button
               type="button"
-              variant="destructive"
               onClick={() => router.push('/dashboard')}
-              className="w-full text-lg py-6 bg-[#F00000] hover:bg-[#A11C00]"
+              className="w-full text-lg py-6 bg-[#A11C00] text-white hover:bg-[#F00000]"
             >
               Si, salir
             </Button>
