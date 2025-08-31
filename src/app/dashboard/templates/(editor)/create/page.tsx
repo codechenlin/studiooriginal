@@ -4325,7 +4325,9 @@ const LayerPanel = () => {
                                         className="h-7 text-sm flex-1 min-w-0"
                                     />
                                 ) : (
-                                    <span className="flex-1 text-sm font-medium truncate">{block.payload.name}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate">{block.payload.name}</p>
+                                    </div>
                                 )}
                             </div>
                             
@@ -4429,11 +4431,11 @@ const LayerPanel = () => {
                  {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
-            <div className="mt-auto pb-2 space-y-2">
+             <div className="mt-auto pb-2 space-y-2">
                 <div className="w-full h-[4px] animated-separator mb-2" />
-                <Link href="/dashboard" className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300">
-                    <div className="animated-border-2"></div>
-                    <div className="ai-core-2"></div>
+                <Link href="/dashboard" className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button hover:bg-green-500/10">
+                    <div className="ai-core-border-animation"></div>
+                    <div className="ai-core"></div>
                     <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
                         <LayoutDashboard className="size-7 mb-1"/>
                         <span className="text-xs text-center font-bold">Regresar al Menú Principal</span>

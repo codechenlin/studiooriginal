@@ -152,7 +152,7 @@ body {
         background-position: 200% 50%;
       }
     }
-    .animated-separator-2 {
+    .animated-separator {
       background: linear-gradient(to right, transparent, #1700E6, #009AFF, #1700E6, transparent);
       background-size: 50% 100%;
       background-repeat: no-repeat;
@@ -160,13 +160,8 @@ body {
     }
 
     @keyframes glow-stream {
-      0% {
-        box-shadow: 0 0 5px #00F0FF, 0 0 10px #00F0FF, 0 0 15px #A6FF00, 0 0 20px #A6FF00;
-        transform: rotate(0deg);
-      }
-      100% {
-        box-shadow: 0 0 5px #00F0FF, 0 0 10px #00F0FF, 0 0 15px #A6FF00, 0 0 20px #A6FF00;
-        transform: rotate(360deg);
+      to {
+        --angle: 360deg;
       }
     }
     
@@ -206,6 +201,12 @@ body {
         animation: ai-core-pulse 2s infinite ease-in-out;
     }
     
+    @property --angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
     .ai-core-border-animation {
       content: '';
       position: absolute;
@@ -227,17 +228,5 @@ body {
       z-index: 0;
       border-radius: inherit;
       filter: blur(3px);
-    }
-
-    @property --angle {
-      syntax: '<angle>';
-      initial-value: 0deg;
-      inherits: false;
-    }
-
-    @keyframes glow-stream {
-      to {
-        --angle: 360deg;
-      }
     }
 }
