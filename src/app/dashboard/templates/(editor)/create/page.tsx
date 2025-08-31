@@ -3862,17 +3862,24 @@ export default function CreateTemplatePage() {
   };
 
   const handleSaveTemplateName = () => {
-    if (isInitialNameModalOpen) {
-        setTemplateName(tempTemplateName || 'Mi Plantilla Increíble');
+    if (tempTemplateName.trim() === '') {
+        toast({
+            title: 'Nombre requerido',
+            description: 'Por favor, dale un nombre a tu plantilla.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    setTemplateName(tempTemplateName);
+    setIsEditNameModalOpen(false);
+    if(isInitialNameModalOpen){
         setIsInitialNameModalOpen(false);
-         toast({
-          title: "¡Plantilla Guardada!",
-          description: "Tu obra maestra está a salvo en nuestra base de datos.",
-          className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
+        toast({
+            title: "¡Listo para empezar!",
+            description: `Tu plantilla "${tempTemplateName}" ha sido creada.`,
+            className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
         });
     } else {
-        setTemplateName(tempTemplateName);
-        setIsEditNameModalOpen(false);
         handlePublish();
     }
   };
@@ -4032,10 +4039,23 @@ export default function CreateTemplatePage() {
 
     const { data: { publicUrl } } = supabase.storage.from('template_backgrounds').getPublicUrl(filePath);
     
-    setImageModalState(prevState => ({...prevState, url: publicUrl }));
+    const newImageState = { ...imageModalState, url: publicUrl };
+
+    setCanvasContent(prevCanvasContent => 
+        prevCanvasContent.map(row => {
+            if (row.id === selectedElement.wrapperId && row.type === 'wrapper') {
+                const currentStyles = row.payload.styles || {};
+                const newPayload = { ...row.payload, styles: { ...currentStyles, backgroundImage: newImageState } };
+                return { ...row, payload: newPayload };
+            }
+            return row;
+        }) as CanvasBlock[]
+    );
+    
+    setImageModalState(newImageState);
     setIsUploading(false);
     toast({ title: '¡Éxito!', description: 'Imagen subida y aplicada como fondo.', className: 'bg-green-500 text-white' });
-    handleApplyBackgroundImage();
+    setIsImageModalOpen(false);
 };
 
 
@@ -4409,7 +4429,7 @@ const LayerPanel = () => {
                                         className="h-7 text-sm flex-1"
                                     />
                                 ) : (
-                                    <div className="flex-1 min-w-0">
+                                     <div className="flex-1 min-w-0">
                                       <p className="text-sm font-medium truncate">{block.payload.name}</p>
                                     </div>
                                 )}
@@ -4710,6 +4730,7 @@ const LayerPanel = () => {
             setClickPosition(null);
             setActiveContainer(null);
           }
+          setIsWrapperBlockSelectorOpen(open);
       }}>
         <DialogContent className="sm:max-w-2xl bg-card/80 backdrop-blur-sm">
           <DialogHeader>
@@ -5065,3 +5086,4 @@ const LayerPanel = () => {
     </div>
   );
 }
+
