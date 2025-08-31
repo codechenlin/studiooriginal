@@ -1,3 +1,4 @@
+
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
@@ -5,21 +6,25 @@ export function createClient() {
   const cookieStore = cookies()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-     console.warn("Supabase URL or Anon Key is missing. Returning a mock client.");
-    // Return a mock or placeholder client
+  if (!supabaseUrl || !supabaseKey) {
+     console.warn("Supabase URL or Anon Key is missing. Returning a mock client for server-side operations.");
     return {
       auth: {
-        getSession: async () => ({ data: { session: null } }),
+        getUser: async () => ({ data: { user: null }, error: new Error("Supabase credentials not provided.") }),
       },
+       from: (table: string) => ({
+        select: async () => ({ data: [], error: new Error(`Supabase not configured for table ${table}.`) }),
+        insert: async () => ({ data: [], error: new Error(`Supabase not configured for table ${table}.`) }),
+        update: async () => ({ data: [], error: new Error(`Supabase not configured for table ${table}.`) }),
+      }),
     } as any;
   }
 
   return createServerClient(
     supabaseUrl,
-    supabaseAnonKey,
+    supabaseKey,
     {
       cookies: {
         get(name: string) {

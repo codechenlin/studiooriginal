@@ -105,6 +105,12 @@ import {
   ChevronDown,
   LayoutDashboard,
   FileSignature,
+  FileArchive,
+  ImagePlay,
+  FileImage,
+  UploadCloud,
+  Grip,
+  ListFilter,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -3121,6 +3127,7 @@ export default function CreateTemplatePage() {
   // New states for the modals
   const [isInitialNameModalOpen, setIsInitialNameModalOpen] = useState(false);
   const [isConfirmExitModalOpen, setIsConfirmExitModalOpen] = useState(false);
+  const [isFileGalleryModalOpen, setIsFileGalleryModalOpen] = useState(false);
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -4026,10 +4033,9 @@ export default function CreateTemplatePage() {
     }
     
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `${user.id}/${fileName}`;
-
-    const { error } = await supabase.storage.from('template_backgrounds').upload(filePath, file);
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    
+    const { error } = await supabase.storage.from('template_backgrounds').upload(fileName, file);
 
     if (error) {
         toast({ title: 'Error al subir', description: error.message, variant: 'destructive' });
@@ -4037,13 +4043,13 @@ export default function CreateTemplatePage() {
         return;
     }
 
-    const { data: { publicUrl } } = supabase.storage.from('template_backgrounds').getPublicUrl(filePath);
+    const { data: { publicUrl } } = supabase.storage.from('template_backgrounds').getPublicUrl(fileName);
     
     const newImageState = { ...imageModalState, url: publicUrl };
 
     setCanvasContent(prevCanvasContent => 
         prevCanvasContent.map(row => {
-            if (row.id === selectedElement.wrapperId && row.type === 'wrapper') {
+            if (row.id === (selectedElement as { wrapperId: string }).wrapperId && row.type === 'wrapper') {
                 const currentStyles = row.payload.styles || {};
                 const newPayload = { ...row.payload, styles: { ...currentStyles, backgroundImage: newImageState } };
                 return { ...row, payload: newPayload };
@@ -4419,6 +4425,7 @@ const LayerPanel = () => {
                                 <div className="p-1.5 bg-muted rounded-md">
                                     <Icon className="size-4 text-primary" />
                                 </div>
+                                <div className="flex-1 min-w-0">
                                 {editingBlockId === block.id ? (
                                     <Input 
                                         defaultValue={block.payload.name}
@@ -4429,10 +4436,9 @@ const LayerPanel = () => {
                                         className="h-7 text-sm flex-1"
                                     />
                                 ) : (
-                                     <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium truncate">{block.payload.name}</p>
-                                    </div>
+                                     <p className="text-sm font-medium truncate">{block.payload.name}</p>
                                 )}
+                                </div>
                             </div>
                             
                             <div className={cn("pl-9 pt-2 mt-2 border-t border-border/10", isSelected ? "block" : "hidden group-hover/layer-item:block")}>
@@ -4536,11 +4542,19 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                 <button
+              <div className="relative h-px my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-dashed border-border/20" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-card/5 px-2 text-xs uppercase text-muted-foreground">Navegación</span>
+                </div>
+              </div>
+               <button
                     onClick={() => setIsConfirmExitModalOpen(true)}
                     className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"
                 >
-                    <div className="ai-core-border-animation" style={{"--start-color": "#E18700", "--end-color": "#FFAB00"} as React.CSSProperties}></div>
+                    <div className="ai-core-border-animation" style={{"--start-color": "#1700E6", "--end-color": "#009AFF"} as React.CSSProperties}></div>
                     <div className="ai-core"></div>
                     <div className="relative z-10 flex h-full w-full flex-col items-center justify-center">
                         <LayoutDashboard className="size-7" />
@@ -4591,6 +4605,9 @@ const LayerPanel = () => {
               </div>
             </TooltipProvider>
              <ThemeToggle />
+              <Button variant="ghost" size="icon" onClick={() => setIsFileGalleryModalOpen(true)}>
+                <FileArchive />
+              </Button>
           </div>
            <div className="flex items-center gap-4">
                 <Button 
@@ -4904,14 +4921,15 @@ const LayerPanel = () => {
               Añade una URL o carga un archivo y ajusta la posición y el tamaño de tu imagen de fondo.
             </DialogDescription>
           </DialogHeader>
-          <Tabs defaultValue="url" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="url">Desde URL</TabsTrigger>
-                <TabsTrigger value="upload">Cargar Archivo</TabsTrigger>
-            </TabsList>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                <div className="space-y-4">
-                    <TabsContent value="url" className="mt-0 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+              <div className="space-y-4">
+                  <Tabs defaultValue="url" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="url">Desde URL</TabsTrigger>
+                        <TabsTrigger value="upload">Cargar Archivo</TabsTrigger>
+                        <TabsTrigger value="gallery">Galería</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="url" className="mt-4 space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="image-url">URL de la Imagen</Label>
                         <Input
@@ -4922,7 +4940,7 @@ const LayerPanel = () => {
                         />
                       </div>
                     </TabsContent>
-                    <TabsContent value="upload" className="mt-0 space-y-4">
+                    <TabsContent value="upload" className="mt-4 space-y-4">
                        <div className="space-y-2">
                          <Label htmlFor="image-upload">Archivo Local</Label>
                          <Input
@@ -4936,63 +4954,69 @@ const LayerPanel = () => {
                          {isUploading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="size-4 animate-spin"/>Subiendo imagen...</div>}
                        </div>
                     </TabsContent>
-                    <div className="space-y-2">
-                        <Label>Ajuste de Imagen</Label>
-                        <Select
-                        value={imageModalState.fit}
-                        onValueChange={(value: BackgroundFit) => setImageModalState({ ...imageModalState, fit: value })}
-                        >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar ajuste" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="cover">Cubrir (Cover)</SelectItem>
-                            <SelectItem value="contain">Contener (Contain)</SelectItem>
-                            <SelectItem value="auto">Automático/Zoom</SelectItem>
-                        </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><ArrowLeftRight className="size-4"/> Posición Horizontal</Label>
-                        <Slider
-                        value={[imageModalState.positionX]}
-                        onValueChange={(v) => setImageModalState({ ...imageModalState, positionX: v[0] })}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><ArrowUpDown className="size-4"/> Posición Vertical</Label>
-                        <Slider
-                        value={[imageModalState.positionY]}
-                        onValueChange={(v) => setImageModalState({ ...imageModalState, positionY: v[0] })}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-2"><Expand className="size-4"/> Zoom (solo con ajuste 'Auto')</Label>
-                        <Slider
-                        value={[imageModalState.zoom]}
-                        min={10} max={300}
-                        onValueChange={(v) => setImageModalState({ ...imageModalState, zoom: v[0] })}
-                        disabled={imageModalState.fit !== 'auto'}
-                        />
-                    </div>
-                </div>
-                <div className="flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden border border-dashed">
-                    {imageModalState.url ? (
-                        <div className="w-full h-full" style={{
-                            backgroundImage: `url(${imageModalState.url})`,
-                            backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
-                            backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
-                            backgroundRepeat: 'no-repeat',
-                        }} />
-                    ) : (
-                        <div className="text-center text-muted-foreground p-8">
-                            <ImageIcon className="mx-auto size-12" />
-                            <p className="mt-2">Vista previa de la imagen</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-          </Tabs>
+                     <TabsContent value="gallery" className="mt-4 space-y-4">
+                        <Button className="w-full" variant="outline" onClick={() => { setIsImageModalOpen(false); setIsFileGalleryModalOpen(true);}}>
+                            <FileArchive className="mr-2"/>
+                            Abrir Galería de Archivos
+                        </Button>
+                     </TabsContent>
+                  </Tabs>
+                  <div className="space-y-2">
+                      <Label>Ajuste de Imagen</Label>
+                      <Select
+                      value={imageModalState.fit}
+                      onValueChange={(value: BackgroundFit) => setImageModalState({ ...imageModalState, fit: value })}
+                      >
+                      <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar ajuste" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="cover">Cubrir (Cover)</SelectItem>
+                          <SelectItem value="contain">Contener (Contain)</SelectItem>
+                          <SelectItem value="auto">Automático/Zoom</SelectItem>
+                      </SelectContent>
+                      </Select>
+                  </div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2"><ArrowLeftRight className="size-4"/> Posición Horizontal</Label>
+                      <Slider
+                      value={[imageModalState.positionX]}
+                      onValueChange={(v) => setImageModalState({ ...imageModalState, positionX: v[0] })}
+                      />
+                  </div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2"><ArrowUpDown className="size-4"/> Posición Vertical</Label>
+                      <Slider
+                      value={[imageModalState.positionY]}
+                      onValueChange={(v) => setImageModalState({ ...imageModalState, positionY: v[0] })}
+                      />
+                  </div>
+                  <div className="space-y-2">
+                      <Label className="flex items-center gap-2"><Expand className="size-4"/> Zoom (solo con ajuste 'Auto')</Label>
+                      <Slider
+                      value={[imageModalState.zoom]}
+                      min={10} max={300}
+                      onValueChange={(v) => setImageModalState({ ...imageModalState, zoom: v[0] })}
+                      disabled={imageModalState.fit !== 'auto'}
+                      />
+                  </div>
+              </div>
+              <div className="flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden border border-dashed">
+                  {imageModalState.url ? (
+                      <div className="w-full h-full" style={{
+                          backgroundImage: `url(${imageModalState.url})`,
+                          backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
+                          backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
+                          backgroundRepeat: 'no-repeat',
+                      }} />
+                  ) : (
+                      <div className="text-center text-muted-foreground p-8">
+                          <ImageIcon className="mx-auto size-12" />
+                          <p className="mt-2">Vista previa de la imagen</p>
+                      </div>
+                  )}
+              </div>
+          </div>
           <DialogFooter>
              <DialogClose asChild>
                 <Button type="button" variant="outline">Cancelar</Button>
@@ -5004,6 +5028,90 @@ const LayerPanel = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+        <Dialog open={isFileGalleryModalOpen} onOpenChange={setIsFileGalleryModalOpen}>
+            <DialogContent className="max-w-6xl h-[90vh] flex flex-col bg-card/90 backdrop-blur-xl border-border/50">
+                 <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-2xl"><FileArchive className="size-8 text-primary"/> Gestor de Archivos</DialogTitle>
+                    <DialogDescription>
+                        Gestiona, sube y selecciona tus imágenes y GIFs para usarlos en tus plantillas.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 grid grid-cols-4 gap-4 overflow-hidden">
+                    <div className="col-span-1 flex flex-col gap-4">
+                        <div className="p-4 rounded-lg bg-background/50 border border-dashed border-primary/30 flex flex-col items-center justify-center text-center">
+                             <UploadCloud className="size-12 text-primary/70"/>
+                             <p className="font-semibold mt-2">Arrastra y suelta tus archivos</p>
+                             <p className="text-xs text-muted-foreground mt-1">o</p>
+                             <Button size="sm" className="mt-2">Seleccionar Archivos</Button>
+                        </div>
+                        <Card className="flex-1">
+                             <CardContent className="p-4">
+                                <h3 className="font-semibold mb-2">Detalles del Archivo</h3>
+                             </CardContent>
+                        </Card>
+                    </div>
+                     <div className="col-span-3 flex flex-col gap-4">
+                         <Tabs defaultValue="images" className="w-full">
+                            <div className="flex justify-between items-center pb-2 border-b border-border/50">
+                                <TabsList>
+                                    <TabsTrigger value="images"><FileImage className="mr-2"/>Imágenes</TabsTrigger>
+                                    <TabsTrigger value="gifs"><ImagePlay className="mr-2"/>GIFs</TabsTrigger>
+                                </TabsList>
+                                <div className="flex items-center gap-2">
+                                     <div className="relative">
+                                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
+                                        <Input placeholder="Buscar por nombre..." className="pl-10 h-9 w-48"/>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" size="sm" className="h-9"><ListFilter className="mr-2"/>Filtrar</Button>
+                                        </DropdownMenuTrigger>
+                                    </DropdownMenu>
+                                </div>
+                            </div>
+                            <TabsContent value="images" className="mt-4">
+                                <ScrollArea className="h-[calc(90vh-220px)]">
+                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
+                                     {/* Mock data */}
+                                     {Array.from({length: 10}).map((_, i) => (
+                                         <Card key={i} className="group relative overflow-hidden aspect-square border-2 border-transparent hover:border-primary transition-all cursor-pointer">
+                                             <img src={`https://picsum.photos/200/200?random=${i}`} className="object-cover w-full h-full"/>
+                                             <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                                                 <p className="text-white text-xs font-semibold truncate">image_name_{i}.jpg</p>
+                                                 <div className="flex gap-1 mt-1">
+                                                     <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white"><Pencil/></Button>
+                                                     <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white"><Trash2/></Button>
+                                                 </div>
+                                             </div>
+                                         </Card>
+                                     ))}
+                                 </div>
+                                </ScrollArea>
+                            </TabsContent>
+                            <TabsContent value="gifs" className="mt-4">
+                               <div className="text-center text-muted-foreground p-10">
+                                   <ImagePlay className="mx-auto size-16 mb-4"/>
+                                   <p>Aún no has subido ningún GIF.</p>
+                               </div>
+                            </TabsContent>
+                         </Tabs>
+                     </div>
+                </div>
+                 <DialogFooter>
+                    <div className="w-full flex justify-between items-center">
+                        <div className="text-xs text-muted-foreground">
+                            <span>0 archivos seleccionados</span>
+                        </div>
+                         <div className="flex gap-2">
+                             <Button variant="destructive"><Trash2 className="mr-2"/>Eliminar Seleccionados</Button>
+                            <Button variant="outline" onClick={() => setIsFileGalleryModalOpen(false)}>Cerrar</Button>
+                            <Button>Seleccionar para Fondo</Button>
+                        </div>
+                    </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
        
        {/* Initial Name Modal */}
        <Dialog open={isInitialNameModalOpen} onOpenChange={setIsInitialNameModalOpen}>
@@ -5030,7 +5138,7 @@ const LayerPanel = () => {
              <Button
               type="button"
               onClick={() => router.push('/dashboard')}
-              className="bg-[#A11C00] text-white hover:bg-[#F00000]"
+              className="text-white bg-[#A11C00] hover:bg-[#F00000]"
             >
               Cancelar
             </Button>
@@ -5067,7 +5175,7 @@ const LayerPanel = () => {
                   variant="ghost"
                   size="sm"
                   onClick={handlePublish}
-                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-[#00EF10]"
+                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-[#00EF10] hover:text-white"
                 >
                   Guardar ahora
                 </Button>
@@ -5086,4 +5194,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-

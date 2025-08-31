@@ -4,28 +4,42 @@
 import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {
-  // Ensure the environment variables are not empty
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Return a mock or placeholder client if variables are not set
-    // This prevents the app from crashing during development if keys are missing
     console.warn("Supabase URL or Anon Key is missing. Returning a mock client.");
+    // This mock needs to be more robust for local development without keys.
+    // Let's ensure getUser doesn't always return null if there's a session.
+    let mockSession = null;
+    try {
+        const sessionStr = localStorage.getItem('supabase.auth.token');
+        if (sessionStr) {
+            // A very basic mock. In a real scenario, you'd parse the JWT.
+            const parsed = JSON.parse(sessionStr);
+            if (parsed.user) mockSession = { user: parsed.user };
+        }
+    } catch (e) {
+        // ignore
+    }
+
     return {
       auth: {
         signInWithPassword: async () => ({ error: { message: "Supabase not configured." } }),
         signUp: async () => ({ error: { message: "Supabase not configured." } }),
         resetPasswordForEmail: async () => ({ error: { message: "Supabase not configured." } }),
-        getUser: async () => ({ data: { user: null }, error: null }),
+        getUser: async () => ({ data: { user: mockSession?.user || null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
       },
       storage: {
         from: () => ({
             upload: async () => ({ error: { message: "Supabase not configured." } }),
             getPublicUrl: () => ({ data: { publicUrl: '' } }),
         })
-      }
-      // You can mock other Supabase methods if your app uses them
+      },
+       from: () => ({
+        select: async () => ({ data: [], error: { message: "Supabase not configured." } }),
+      }),
     } as any;
   }
 
