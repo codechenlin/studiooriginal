@@ -118,6 +118,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { saveTemplateAction } from './actions';
 
 
 const mainContentBlocks = [
@@ -3119,17 +3120,41 @@ export default function CreateTemplatePage() {
   // New states for the modals
   const [isInitialNameModalOpen, setIsInitialNameModalOpen] = useState(false);
   const [isConfirmExitModalOpen, setIsConfirmExitModalOpen] = useState(false);
+
+  const [templateId, setTemplateId] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSaving, startSaving] = useTransition();
   
   const wrapperRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const { toast } = useToast();
 
   const handlePublish = () => {
-    toast({
-      title: "¡Plantilla Guardada!",
-      description: "Tu plantilla ha sido guardada exitosamente.",
-      className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
-    })
+    startSaving(async () => {
+      const result = await saveTemplateAction({
+        name: templateName,
+        content: canvasContent,
+        templateId: templateId ?? undefined,
+      });
+
+      if (result.success && result.data) {
+        if (!templateId) {
+          setTemplateId(result.data.id);
+        }
+        setLastSaved(new Date(result.data.updated_at));
+        toast({
+          title: "¡Plantilla Guardada!",
+          description: "Tu obra maestra está a salvo en nuestra base de datos.",
+          className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
+        });
+      } else {
+        toast({
+          title: "Error al Guardar",
+          description: result.error || "No se pudo guardar la plantilla. Intenta de nuevo.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const toggleTheme = () => {
@@ -3838,14 +3863,10 @@ export default function CreateTemplatePage() {
     if (isInitialNameModalOpen) {
         setTemplateName(tempTemplateName || 'Mi Plantilla Increíble');
         setIsInitialNameModalOpen(false);
-         toast({
-            title: "¡Plantilla Guardada!",
-            description: "Tu plantilla ha sido guardada exitosamente.",
-            className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
-        })
     } else {
         setTemplateName(tempTemplateName);
         setIsEditNameModalOpen(false);
+        handlePublish();
     }
   };
   
@@ -4309,7 +4330,7 @@ const LayerPanel = () => {
         <div className="p-2 space-y-2">
              <div className="px-2 pb-2">
                  <h3 className="font-semibold flex items-center gap-2"><Shapes className="text-primary"/>Contenedor Flexible</h3>
-                 <p className="text-xs text-muted-foreground text-center">Gestiona el posicionamiento de tus bloques de contenido, asigna niveles de posicionamiento al frente y cuáles quedan atrás</p>
+                 <p className="text-xs text-muted-foreground text-center">Gestiona el posicionamiento de tus bloques de contenido, asigna niveles de prioridad para definir qué bloques al frente y cuáles quedan atrás</p>
              </div>
              <div className="space-y-1">
                 {blocksInVisualOrder.map((block, visualIndex) => {
@@ -4454,15 +4475,15 @@ const LayerPanel = () => {
             ))}
             <div className="mt-auto pb-2 space-y-2">
                 <div className="w-full h-[4px] animated-separator" style={{"--start-color": "#1700E6", "--end-color": "#009AFF"} as React.CSSProperties} />
-                <button
+                 <button
                     onClick={() => setIsConfirmExitModalOpen(true)}
                     className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"
                 >
-                    <div className="ai-core-border-animation" style={{"--start-color": "#00F0FF", "--end-color": "#A6FF00"} as React.CSSProperties}></div>
+                    <div className="ai-core-border-animation" style={{"--start-color": "#E18700", "--end-color": "#FFAB00"} as React.CSSProperties}></div>
                     <div className="ai-core"></div>
-                    <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
-                        <LayoutDashboard className="size-7 mb-1"/>
-                        <span className="text-xs text-center font-bold">Regresar al Menú Principal</span>
+                    <div className="relative z-10 flex h-full w-full flex-col items-center justify-center">
+                        <LayoutDashboard className="size-7" />
+                        <span className="mt-1 text-xs font-bold text-center">Regresar al Menú Principal</span>
                     </div>
                 </button>
             </div>
@@ -4478,7 +4499,7 @@ const LayerPanel = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-1.5 rounded-lg border border-white/5">
                 <Cloud className="size-4 text-green-400"/>
-                <span>Guardado a las 10:45 AM</span>
+                <span>{lastSaved ? `Guardado a las ${format(lastSaved, 'HH:mm')}` : 'Sin guardar'}</span>
             </div>
             <TooltipProvider>
               <div className="flex items-center gap-2 p-1 bg-card/10 rounded-lg border border-border/20">
@@ -4513,11 +4534,12 @@ const LayerPanel = () => {
            <div className="flex items-center gap-4">
                 <Button 
                     onClick={handlePublish}
+                    disabled={isSaving}
                     className="group relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-[#AD00EC] to-[#1700E6] px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]"
                 >
                     <div className="absolute -inset-0.5 -z-10 animate-spin-slow rounded-full bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                    <Rocket className="mr-2"/>
-                    Guardar
+                    {isSaving ? <RefreshCw className="mr-2 animate-spin"/> : <Rocket className="mr-2"/>}
+                    {isSaving ? 'Guardando...' : 'Guardar'}
                 </Button>
             </div>
         </header>
@@ -4952,13 +4974,13 @@ const LayerPanel = () => {
              <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-2 rounded-lg border border-white/5">
                 <div className="flex items-center gap-2">
                     <Cloud className="size-4 text-green-400"/>
-                    <span>Último guardado a las 10:45 AM</span>
+                    <span>{lastSaved ? `Último guardado a las ${format(lastSaved, 'HH:mm')}`: 'No se ha guardado'}</span>
                 </div>
                  <Button
                   variant="ghost"
                   size="sm"
                   onClick={handlePublish}
-                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-[#00EF10] hover:text-white"
+                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-[#00EF10]"
                 >
                   Guardar ahora
                 </Button>
