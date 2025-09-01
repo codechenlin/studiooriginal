@@ -1,13 +1,14 @@
 
 'use server';
 
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client'; // Keep this for potential client-side use
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 
 const BUCKET_NAME = 'template_backgrounds';
 
+// This function should be used for all server-side Supabase actions
 async function getSupabaseServerClient() {
     const cookieStore = cookies();
     return createServerClient(
@@ -23,15 +24,10 @@ async function getSupabaseServerClient() {
     );
 }
 
-export async function listFiles() {
+export async function listFiles(userId: string) {
   const supabase = await getSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { success: false, error: 'Usuario no autenticado.' };
-  }
   
-  const { data, error } = await supabase.storage.from(BUCKET_NAME).list(user.id, {
+  const { data, error } = await supabase.storage.from(BUCKET_NAME).list(userId, {
     limit: 100,
     offset: 0,
     sortBy: { column: 'created_at', order: 'desc' },
@@ -42,25 +38,15 @@ export async function listFiles() {
     return { success: false, error: error.message };
   }
   
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  
-  const filesWithPublicUrls = data.map(file => {
-      const { data: { publicUrl } } = supabase.storage.from(BUCKET_NAME).getPublicUrl(`${user.id}/${file.name}`);
-      return { ...file, publicUrl };
-  });
-
-  return { success: true, data: { files: filesWithPublicUrls, supabaseUrl, userId: user.id } };
+  // Return the base URL so client can construct the full path
+  return { success: true, data: { files: data, supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL! } };
 }
 
-export async function uploadFile(file: File) {
+export async function uploadFile(file: File, userId: string) {
     const supabase = await getSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-        return { success: false, error: 'Debes iniciar sesión para subir un archivo.' };
-    }
-
-    const filePath = `${user.id}/${Date.now()}_${file.name}`;
+    // The user session is automatically handled by the server client from cookies
+    const filePath = `${userId}/${Date.now()}_${file.name}`;
 
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
@@ -85,12 +71,11 @@ export async function renameFile(oldPath: string, newName: string) {
     if (!validated.success) return { success: false, error: 'Datos inválidos.' };
 
     const supabase = await getSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'No autenticado.' };
     
     const parts = oldPath.split('/');
     const oldFileName = parts.pop();
-    const newPath = [...parts, newName].join('/');
+    const userIdFolder = parts.join('/');
+    const newPath = `${userIdFolder}/${newName}`;
 
     const { error } = await supabase.storage.from(BUCKET_NAME).move(oldPath, newPath);
 
@@ -111,8 +96,6 @@ export async function deleteFile(filePath: string) {
     if (!validated.success) return { success: false, error: 'Datos inválidos.' };
 
     const supabase = await getSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: 'No autenticado.' };
     
     const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
     

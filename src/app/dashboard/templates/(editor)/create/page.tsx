@@ -3156,20 +3156,14 @@ export default function CreateTemplatePage() {
     const getSession = async () => {
       const supabase = createClient();
       const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error getting session:", error);
-        return;
-      }
-      if (session) {
-        setUserId(session.user.id);
+      if (error || !session) {
+        toast({ title: "Error de autenticación", description: "No se pudo obtener la sesión del usuario.", variant: "destructive" });
       } else {
-        // Handle case where there is no session
-        // Maybe redirect to login
-        console.warn("No active session found.");
+        setUserId(session.user.id);
       }
     };
     getSession();
-  }, []);
+  }, [toast]);
 
   const handlePublish = () => {
     startSaving(async () => {
@@ -4031,8 +4025,8 @@ export default function CreateTemplatePage() {
     setIsImageModalOpen(true);
   };
   
-  const handleApplyBackgroundImage = () => {
-     if (selectedElement?.type !== 'wrapper') return;
+ const handleApplyBackgroundImage = () => {
+    if (selectedElement?.type !== 'wrapper' || !imageModalState.url) return;
 
     setCanvasContent(prevCanvasContent => 
         prevCanvasContent.map(row => {
@@ -4063,8 +4057,9 @@ export default function CreateTemplatePage() {
   };
   
   const fetchGalleryFiles = useCallback(async () => {
+    if (!userId) return;
     setIsGalleryLoading(true);
-    const result = await listFiles();
+    const result = await listFiles(userId);
     if (result.success && result.data) {
         setGalleryFiles(result.data.files);
         setSupabaseUrl(result.data.supabaseUrl);
@@ -4072,7 +4067,7 @@ export default function CreateTemplatePage() {
         toast({ title: 'Error', description: result.error, variant: 'destructive' });
     }
     setIsGalleryLoading(false);
-  }, [toast]);
+  }, [userId, toast]);
   
   useEffect(() => {
     if (isFileGalleryModalOpen) {
@@ -4081,10 +4076,10 @@ export default function CreateTemplatePage() {
   }, [isFileGalleryModalOpen, fetchGalleryFiles]);
 
   const handleGalleryUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !userId) return;
     setIsUploading(true);
     try {
-        await Promise.all(Array.from(files).map(file => uploadFile(file)));
+        await Promise.all(Array.from(files).map(file => uploadFile(file, userId)));
         toast({ title: "Subida completa", description: `${files.length} archivo(s) subido(s) con éxito.` });
         await fetchGalleryFiles();
     } catch (error: any) {
@@ -4461,9 +4456,9 @@ const LayerPanel = () => {
 
     return (
         <div className="p-2 space-y-2">
-             <div className="px-2 pb-2">
-                 <h3 className="font-semibold flex items-center gap-2"><Shapes className="text-primary"/>Contenedor Flexible</h3>
-                 <p className="text-xs text-muted-foreground text-center">Gestiona el posicionamiento de tus bloques de contenido, asigna niveles de prioridad para definir qué bloques al frente y cuáles quedan atrás</p>
+             <div className="px-2 pb-2 text-center">
+                 <h3 className="font-semibold flex items-center justify-center gap-2"><Shapes className="text-primary"/>Contenedor Flexible</h3>
+                 <p className="text-xs text-muted-foreground mt-1">Gestiona el posicionamiento de tus bloques de contenido, asigna niveles de prioridad para definir qué bloques al frente y cuáles quedan atrás</p>
              </div>
              <div className="space-y-1">
                 {blocksInVisualOrder.map((block, visualIndex) => {
@@ -4609,7 +4604,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-              <div className="relative h-px my-2">
+               <div className="relative h-px my-2">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-dashed border-border/20 animated-separator" style={{'--start-color': '#1700E6', '--end-color': '#009AFF'} as React.CSSProperties}/>
                 </div>
@@ -5322,4 +5317,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-
