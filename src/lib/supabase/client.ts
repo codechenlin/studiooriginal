@@ -13,11 +13,13 @@ export function createClient() {
     // Let's ensure getUser doesn't always return null if there's a session.
     let mockSession = null;
     try {
-        const sessionStr = localStorage.getItem('supabase.auth.token');
-        if (sessionStr) {
-            // A very basic mock. In a real scenario, you'd parse the JWT.
-            const parsed = JSON.parse(sessionStr);
-            if (parsed.user) mockSession = { user: parsed.user };
+        if (typeof window !== 'undefined') {
+            const sessionStr = localStorage.getItem('supabase.auth.token');
+            if (sessionStr) {
+                // A very basic mock. In a real scenario, you'd parse the JWT.
+                const parsed = JSON.parse(sessionStr);
+                if (parsed.user) mockSession = { user: parsed.user };
+            }
         }
     } catch (e) {
         // ignore

@@ -3,7 +3,7 @@
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -126,6 +126,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { saveTemplateAction } from './actions';
 import { createClient } from '@/lib/supabase/client';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 const mainContentBlocks = [
@@ -3881,6 +3882,7 @@ export default function CreateTemplatePage() {
     setIsEditNameModalOpen(false);
     if(isInitialNameModalOpen){
         setIsInitialNameModalOpen(false);
+        handlePublish()
         toast({
             title: "¡Listo para empezar!",
             description: `Tu plantilla "${tempTemplateName}" ha sido creada.`,
@@ -4421,7 +4423,7 @@ const LayerPanel = () => {
                                 }
                             }}
                         >
-                            <div className="flex items-center gap-3">
+                             <div className="flex items-center gap-3">
                                 <div className="p-1.5 bg-muted rounded-md">
                                     <Icon className="size-4 text-primary" />
                                 </div>
@@ -4436,7 +4438,9 @@ const LayerPanel = () => {
                                         className="h-7 text-sm flex-1"
                                     />
                                 ) : (
-                                     <p className="text-sm font-medium truncate">{block.payload.name}</p>
+                                    <div className="flex-1 min-w-0">
+                                       <p className="text-sm font-medium truncate">{block.payload.name}</p>
+                                    </div>
                                 )}
                                 </div>
                             </div>
@@ -4544,10 +4548,7 @@ const LayerPanel = () => {
             <div className="mt-auto pb-2 space-y-2">
               <div className="relative h-px my-2">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-dashed border-border/20" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-card/5 px-2 text-xs uppercase text-muted-foreground">Navegación</span>
+                  <div className="w-full border-t border-dashed border-border/20 animated-separator" style={{'--start-color': '#1700E6', '--end-color': '#009AFF'} as React.CSSProperties}/>
                 </div>
               </div>
                <button
@@ -5175,7 +5176,7 @@ const LayerPanel = () => {
                   variant="ghost"
                   size="sm"
                   onClick={handlePublish}
-                  className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-[#00EF10] hover:text-white"
+                  className="text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-[#00EF10]"
                 >
                   Guardar ahora
                 </Button>
