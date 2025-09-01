@@ -3883,11 +3883,6 @@ export default function CreateTemplatePage() {
     if(isInitialNameModalOpen){
         setIsInitialNameModalOpen(false);
         handlePublish()
-        toast({
-            title: "¡Listo para empezar!",
-            description: `Tu plantilla "${tempTemplateName}" ha sido creada.`,
-            className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
-        });
     } else {
         handlePublish();
     }
@@ -4021,23 +4016,22 @@ export default function CreateTemplatePage() {
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!selectedElement || selectedElement.type !== 'wrapper') return;
     if (!file) return;
 
     setIsUploading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
         toast({ title: 'Error', description: 'Debes iniciar sesión para subir archivos.', variant: 'destructive' });
         setIsUploading(false);
         return;
     }
     
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    const filePath = `${session.user.id}/${Date.now()}.${fileExt}`;
     
-    const { error } = await supabase.storage.from('template_backgrounds').upload(fileName, file);
+    const { error } = await supabase.storage.from('template_backgrounds').upload(filePath, file);
 
     if (error) {
         toast({ title: 'Error al subir', description: error.message, variant: 'destructive' });
@@ -4045,25 +4039,12 @@ export default function CreateTemplatePage() {
         return;
     }
 
-    const { data: { publicUrl } } = supabase.storage.from('template_backgrounds').getPublicUrl(fileName);
+    const { data: { publicUrl } } = supabase.storage.from('template_backgrounds').getPublicUrl(filePath);
     
-    const newImageState = { ...imageModalState, url: publicUrl };
-
-    setCanvasContent(prevCanvasContent => 
-        prevCanvasContent.map(row => {
-            if (row.id === (selectedElement as { wrapperId: string }).wrapperId && row.type === 'wrapper') {
-                const currentStyles = row.payload.styles || {};
-                const newPayload = { ...row.payload, styles: { ...currentStyles, backgroundImage: newImageState } };
-                return { ...row, payload: newPayload };
-            }
-            return row;
-        }) as CanvasBlock[]
-    );
+    setImageModalState(prev => ({ ...prev, url: publicUrl }));
     
-    setImageModalState(newImageState);
     setIsUploading(false);
-    toast({ title: '¡Éxito!', description: 'Imagen subida y aplicada como fondo.', className: 'bg-green-500 text-white' });
-    setIsImageModalOpen(false);
+    toast({ title: '¡Éxito!', description: 'Imagen subida y lista para ajustar.', className: 'bg-green-500 text-white' });
 };
 
 
@@ -5077,7 +5058,7 @@ const LayerPanel = () => {
                                      {/* Mock data */}
                                      {Array.from({length: 10}).map((_, i) => (
                                          <Card key={i} className="group relative overflow-hidden aspect-square border-2 border-transparent hover:border-primary transition-all cursor-pointer">
-                                             <img src={`https://picsum.photos/200/200?random=${i}`} className="object-cover w-full h-full"/>
+                                             <img src={`https://picsum.photos/200/200?random=${i}`} className="object-cover w-full h-full" alt="" />
                                              <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
                                                  <p className="text-white text-xs font-semibold truncate">image_name_{i}.jpg</p>
                                                  <div className="flex gap-1 mt-1">
@@ -5133,6 +5114,7 @@ const LayerPanel = () => {
               placeholder="Ej: Newsletter de Bienvenida"
               autoFocus
               maxLength={20}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateName()}
             />
           </div>
           <DialogFooter className="sm:justify-between">
@@ -5175,7 +5157,10 @@ const LayerPanel = () => {
                  <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handlePublish}
+                  onClick={() => {
+                      handlePublish();
+                      toast({ title: "Progreso Guardado", description: "Tus últimos cambios están a salvo."});
+                  }}
                   className="text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-[#00EF10]"
                 >
                   Guardar ahora
