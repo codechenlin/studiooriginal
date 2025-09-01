@@ -127,6 +127,8 @@ import { useRouter } from 'next/navigation';
 import { saveTemplateAction } from './actions';
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { listFiles, uploadFile, renameFile, deleteFile } from './gallery-actions';
+import { type FileObject } from '@supabase/storage-js';
 
 
 const mainContentBlocks = [
@@ -3128,7 +3130,12 @@ export default function CreateTemplatePage() {
   // New states for the modals
   const [isInitialNameModalOpen, setIsInitialNameModalOpen] = useState(false);
   const [isConfirmExitModalOpen, setIsConfirmExitModalOpen] = useState(false);
+  
+  // State for File Gallery
   const [isFileGalleryModalOpen, setIsFileGalleryModalOpen] = useState(false);
+  const [galleryFiles, setGalleryFiles] = useState<FileObject[]>([]);
+  const [selectedFile, setSelectedFile] = useState<FileObject | null>(null);
+  const [isGalleryLoading, setIsGalleryLoading] = useState(false);
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -4016,37 +4023,66 @@ export default function CreateTemplatePage() {
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!file) return;
+      if (!file) return;
+      setIsUploading(true);
 
+      const result = await uploadFile(file);
+
+      if (result.success && result.publicUrl) {
+          setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
+          toast({ title: '¡Éxito!', description: 'Imagen subida y lista para ajustar.', className: 'bg-green-500 text-white' });
+      } else {
+          toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
+      }
+      setIsUploading(false);
+  };
+
+  const fetchGalleryFiles = useCallback(async () => {
+    setIsGalleryLoading(true);
+    const result = await listFiles();
+    if (result.success && result.data) {
+        setGalleryFiles(result.data);
+    } else {
+        toast({ title: 'Error', description: result.error, variant: 'destructive' });
+    }
+    setIsGalleryLoading(false);
+  }, [toast]);
+  
+  useEffect(() => {
+    if (isFileGalleryModalOpen) {
+        fetchGalleryFiles();
+    }
+  }, [isFileGalleryModalOpen, fetchGalleryFiles]);
+
+  const handleGalleryUpload = async (files: FileList | null) => {
+    if (!files) return;
     setIsUploading(true);
-    const supabase = createClient();
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-        toast({ title: 'Error', description: 'Debes iniciar sesión para subir archivos.', variant: 'destructive' });
-        setIsUploading(false);
-        return;
-    }
-    
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${session.user.id}/${Date.now()}.${fileExt}`;
-    
-    const { error } = await supabase.storage.from('template_backgrounds').upload(filePath, file);
-
-    if (error) {
-        toast({ title: 'Error al subir', description: error.message, variant: 'destructive' });
-        setIsUploading(false);
-        return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage.from('template_backgrounds').getPublicUrl(filePath);
-    
-    setImageModalState(prev => ({ ...prev, url: publicUrl }));
-    
+    await Promise.all(Array.from(files).map(file => uploadFile(file)));
     setIsUploading(false);
-    toast({ title: '¡Éxito!', description: 'Imagen subida y lista para ajustar.', className: 'bg-green-500 text-white' });
-};
+    fetchGalleryFiles(); // Refresh gallery
+    toast({ title: "Subida completa", description: `${files.length} archivo(s) subido(s) con éxito.` });
+  };
+  
+  const handleRenameFile = async (filePath: string, newName: string) => {
+    const result = await renameFile(filePath, newName);
+    if(result.success) {
+      toast({ title: "Archivo renombrado" });
+      fetchGalleryFiles();
+    } else {
+      toast({ title: "Error", description: result.error, variant: 'destructive' });
+    }
+  };
 
+  const handleDeleteFile = async (filePath: string) => {
+    const result = await deleteFile(filePath);
+     if(result.success) {
+      toast({ title: "Archivo eliminado" });
+      fetchGalleryFiles();
+      setSelectedFile(null);
+    } else {
+      toast({ title: "Error", description: result.error, variant: 'destructive' });
+    }
+  }
 
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
@@ -4527,7 +4563,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-              <div className="relative h-px my-2">
+               <div className="relative h-px my-2">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-dashed border-border/20 animated-separator" style={{'--start-color': '#1700E6', '--end-color': '#009AFF'} as React.CSSProperties}/>
                 </div>
@@ -5011,7 +5047,7 @@ const LayerPanel = () => {
         </DialogContent>
       </Dialog>
 
-        <Dialog open={isFileGalleryModalOpen} onOpenChange={setIsFileGalleryModalOpen}>
+      <Dialog open={isFileGalleryModalOpen} onOpenChange={setIsFileGalleryModalOpen}>
             <DialogContent className="max-w-6xl h-[90vh] flex flex-col bg-card/90 backdrop-blur-xl border-border/50">
                  <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-2xl"><FileArchive className="size-8 text-primary"/> Gestor de Archivos</DialogTitle>
@@ -5021,16 +5057,37 @@ const LayerPanel = () => {
                 </DialogHeader>
                 <div className="flex-1 grid grid-cols-4 gap-4 overflow-hidden">
                     <div className="col-span-1 flex flex-col gap-4">
-                        <div className="p-4 rounded-lg bg-background/50 border border-dashed border-primary/30 flex flex-col items-center justify-center text-center">
+                        <div 
+                          className="p-4 rounded-lg bg-background/50 border border-dashed border-primary/30 flex flex-col items-center justify-center text-center"
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => { e.preventDefault(); handleGalleryUpload(e.dataTransfer.files); }}
+                        >
                              <UploadCloud className="size-12 text-primary/70"/>
                              <p className="font-semibold mt-2">Arrastra y suelta tus archivos</p>
                              <p className="text-xs text-muted-foreground mt-1">o</p>
-                             <Button size="sm" className="mt-2">Seleccionar Archivos</Button>
+                             <Button size="sm" className="mt-2" onClick={() => document.getElementById('gallery-file-input')?.click()}>Seleccionar Archivos</Button>
+                             <Input id="gallery-file-input" type="file" multiple className="hidden" onChange={(e) => handleGalleryUpload(e.target.files)} />
                         </div>
-                        <Card className="flex-1">
-                             <CardContent className="p-4">
+                        <Card className="flex-1 bg-background/50">
+                            <CardContent className="p-4 space-y-2">
                                 <h3 className="font-semibold mb-2">Detalles del Archivo</h3>
-                             </CardContent>
+                                {selectedFile ? (
+                                    <div className="text-xs space-y-1 text-muted-foreground">
+                                        <p><strong className="text-foreground">Nombre:</strong> <span className="break-all">{selectedFile.name}</span></p>
+                                        <p><strong className="text-foreground">Tamaño:</strong> {(selectedFile.metadata.size / 1024).toFixed(2)} KB</p>
+                                        <p><strong className="text-foreground">Tipo:</strong> {selectedFile.metadata.mimetype}</p>
+                                        <p><strong className="text-foreground">Subido:</strong> {format(new Date(selectedFile.created_at), "PPP p")}</p>
+                                        <Button size="sm" variant="outline" className="w-full mt-2" asChild>
+                                            <a href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${selectedFile.name}`} target="_blank" rel="noopener noreferrer">
+                                                <View className="mr-2"/>
+                                                Ver Original
+                                            </a>
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-muted-foreground text-center pt-8">Selecciona un archivo para ver sus detalles.</p>
+                                )}
+                            </CardContent>
                         </Card>
                     </div>
                      <div className="col-span-3 flex flex-col gap-4">
@@ -5054,21 +5111,31 @@ const LayerPanel = () => {
                             </div>
                             <TabsContent value="images" className="mt-4">
                                 <ScrollArea className="h-[calc(90vh-220px)]">
-                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
-                                     {/* Mock data */}
-                                     {Array.from({length: 10}).map((_, i) => (
-                                         <Card key={i} className="group relative overflow-hidden aspect-square border-2 border-transparent hover:border-primary transition-all cursor-pointer">
-                                             <img src={`https://picsum.photos/200/200?random=${i}`} className="object-cover w-full h-full" alt="" />
-                                             <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                                                 <p className="text-white text-xs font-semibold truncate">image_name_{i}.jpg</p>
-                                                 <div className="flex gap-1 mt-1">
-                                                     <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white"><Pencil/></Button>
-                                                     <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white"><Trash2/></Button>
+                                 {isGalleryLoading ? <p>Cargando...</p> : galleryFiles.filter(f => !f.metadata.mimetype.includes('gif')).length === 0 ? (
+                                    <div className="text-center text-muted-foreground p-10">
+                                        <FileImage className="mx-auto size-16 mb-4"/>
+                                        <p>Aún no has subido ninguna imagen.</p>
+                                    </div>
+                                 ) : (
+                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
+                                         {galleryFiles.filter(f => !f.metadata.mimetype.includes('gif')).map((file) => (
+                                             <Card 
+                                                key={file.id} 
+                                                onClick={() => setSelectedFile(file)}
+                                                className={cn("group relative overflow-hidden aspect-square border-2 hover:border-primary transition-all cursor-pointer", selectedFile?.id === file.id ? 'border-primary' : 'border-transparent')}
+                                             >
+                                                 <img src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${file.name}`} className="object-cover w-full h-full" alt={file.name} />
+                                                 <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                                                     <p className="text-white text-xs font-semibold truncate">{file.name.split('/').pop()}</p>
+                                                      <div className="flex gap-1 mt-1">
+                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); const newName = prompt("Nuevo nombre:", file.name.split('/').pop()); if(newName) handleRenameFile(file.name, newName); }}><Pencil/></Button>
+                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); if(confirm('¿Eliminar este archivo?')) handleDeleteFile(file.name);}}><Trash2/></Button>
+                                                      </div>
                                                  </div>
-                                             </div>
-                                         </Card>
-                                     ))}
-                                 </div>
+                                             </Card>
+                                         ))}
+                                     </div>
+                                 )}
                                 </ScrollArea>
                             </TabsContent>
                             <TabsContent value="gifs" className="mt-4">
@@ -5083,12 +5150,10 @@ const LayerPanel = () => {
                  <DialogFooter>
                     <div className="w-full flex justify-between items-center">
                         <div className="text-xs text-muted-foreground">
-                            <span>0 archivos seleccionados</span>
+                            <span>{galleryFiles.length} archivos totales</span>
                         </div>
                          <div className="flex gap-2">
-                             <Button variant="destructive"><Trash2 className="mr-2"/>Eliminar Seleccionados</Button>
                             <Button variant="outline" onClick={() => setIsFileGalleryModalOpen(false)}>Cerrar</Button>
-                            <Button>Seleccionar para Fondo</Button>
                         </div>
                     </div>
                 </DialogFooter>
@@ -5127,7 +5192,14 @@ const LayerPanel = () => {
             </Button>
             <Button 
                 type="button" 
-                onClick={handleSaveTemplateName}
+                onClick={() => {
+                  handleSaveTemplateName();
+                  toast({
+                      title: "¡Plantilla Guardada!",
+                      description: "Tu obra maestra está a salvo en nuestra base de datos.",
+                      className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white',
+                  });
+                }}
                 className="bg-primary text-primary-foreground hover:bg-[#00CB07] hover:text-white"
             >
               Guardar y Empezar
