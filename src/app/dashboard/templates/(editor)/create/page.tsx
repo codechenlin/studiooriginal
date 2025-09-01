@@ -4048,24 +4048,23 @@ export default function CreateTemplatePage() {
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!file || !userId) return;
+    if (!file) return;
     setIsUploading(true);
 
-    const result = await uploadFile(file, userId);
+    const result = await uploadFile(file);
 
     if (result.success && result.publicUrl) {
-        setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
-        toast({ title: '¡Éxito!', description: 'Imagen subida y lista para ajustar.', className: 'bg-green-500 text-white' });
+      setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
+      toast({ title: '¡Éxito!', description: 'Imagen subida y lista para ajustar.', className: 'bg-green-500 text-white' });
     } else {
-        toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
+      toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
     }
     setIsUploading(false);
   };
-
+  
   const fetchGalleryFiles = useCallback(async () => {
-    if (!userId) return;
     setIsGalleryLoading(true);
-    const result = await listFiles(userId);
+    const result = await listFiles();
     if (result.success && result.data) {
         setGalleryFiles(result.data.files);
         setSupabaseUrl(result.data.supabaseUrl);
@@ -4073,21 +4072,21 @@ export default function CreateTemplatePage() {
         toast({ title: 'Error', description: result.error, variant: 'destructive' });
     }
     setIsGalleryLoading(false);
-  }, [toast, userId]);
+  }, [toast]);
   
   useEffect(() => {
-    if (isFileGalleryModalOpen && userId) {
+    if (isFileGalleryModalOpen) {
         fetchGalleryFiles();
     }
-  }, [isFileGalleryModalOpen, fetchGalleryFiles, userId]);
+  }, [isFileGalleryModalOpen, fetchGalleryFiles]);
 
   const handleGalleryUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0 || !userId) return;
+    if (!files || files.length === 0) return;
     setIsUploading(true);
     try {
-        await Promise.all(Array.from(files).map(file => uploadFile(file, userId)));
+        await Promise.all(Array.from(files).map(file => uploadFile(file)));
         toast({ title: "Subida completa", description: `${files.length} archivo(s) subido(s) con éxito.` });
-        await fetchGalleryFiles(); // Refresh gallery
+        await fetchGalleryFiles();
     } catch (error: any) {
         toast({ title: 'Error en la subida', description: error.message, variant: 'destructive' });
     } finally {
@@ -4096,7 +4095,7 @@ export default function CreateTemplatePage() {
   };
   
   const handleRenameFile = async () => {
-    if (!fileToRename || !newFileName.trim() || !userId) {
+    if (!fileToRename || !newFileName.trim()) {
         setIsRenameModalOpen(false);
         return;
     }
@@ -4125,8 +4124,9 @@ export default function CreateTemplatePage() {
 
   const promptRenameFile = (file: FileObject, e: React.MouseEvent) => {
     e.stopPropagation();
-    setFileToRename({ path: file.name, currentName: file.name || ''});
-    setNewFileName(file.name || '');
+    const currentName = file.name.split('/').pop() || '';
+    setFileToRename({ path: file.name, currentName: currentName });
+    setNewFileName(currentName);
     setIsRenameModalOpen(true);
   };
 
@@ -4609,22 +4609,22 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-px my-2">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-dashed border-border/20 animated-separator" style={{'--start-color': '#1700E6', '--end-color': '#009AFF'} as React.CSSProperties}/>
-                  </div>
+              <div className="relative h-px my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-dashed border-border/20 animated-separator" style={{'--start-color': '#1700E6', '--end-color': '#009AFF'} as React.CSSProperties}/>
                 </div>
-                <button
-                    onClick={() => setIsConfirmExitModalOpen(true)}
-                    className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"
-                >
-                    <div className="ai-core-border-animation" style={{"--start-color": "#1700E6", "--end-color": "#009AFF"} as React.CSSProperties}></div>
-                    <div className="ai-core"></div>
-                    <div className="relative z-10 flex h-full w-full flex-col items-center justify-center">
-                        <LayoutDashboard className="size-7" />
-                        <span className="mt-1 text-xs font-bold text-center">Regresar al Menú Principal</span>
-                    </div>
-                </button>
+              </div>
+              <button
+                  onClick={() => setIsConfirmExitModalOpen(true)}
+                  className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"
+              >
+                  <div className="ai-core-border-animation" style={{"--start-color": "#1700E6", "--end-color": "#009AFF"} as React.CSSProperties}></div>
+                  <div className="ai-core"></div>
+                  <div className="relative z-10 flex h-full w-full flex-col items-center justify-center">
+                      <LayoutDashboard className="size-7" />
+                      <span className="mt-1 text-xs font-bold text-center">Regresar al Menú Principal</span>
+                  </div>
+              </button>
             </div>
         </div>
       </aside>
@@ -5148,7 +5148,7 @@ const LayerPanel = () => {
                                 <h3 className="font-semibold mb-2">Detalles del Archivo</h3>
                                 {selectedFile ? (
                                     <div className="text-xs space-y-1 text-muted-foreground">
-                                        <p><strong className="text-foreground">Nombre:</strong> <span className="break-all">{selectedFile.name}</span></p>
+                                        <p><strong className="text-foreground">Nombre:</strong> <span className="break-all">{selectedFile.name.split('/').pop()}</span></p>
                                         <p><strong className="text-foreground">Tamaño:</strong> {(selectedFile.metadata.size / 1024).toFixed(2)} KB</p>
                                         <p><strong className="text-foreground">Tipo:</strong> {selectedFile.metadata.mimetype}</p>
                                         <p><strong className="text-foreground">Subido:</strong> {format(new Date(selectedFile.created_at), "PPP p")}</p>
@@ -5201,7 +5201,7 @@ const LayerPanel = () => {
                                              >
                                                  <img src={`${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`} className="object-cover w-full h-full" alt={file.name || 'gallery image'} />
                                                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                                                     <p className="text-white text-xs font-semibold truncate">{file.name}</p>
+                                                     <p className="text-white text-xs font-semibold truncate">{file.name.split('/').pop()}</p>
                                                       <div className="flex gap-1 mt-1">
                                                           <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => promptRenameFile(file, e)}><Pencil className="size-3"/></Button>
                                                           <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); if(confirm('¿Eliminar este archivo?')) handleDeleteFile(file.name);}}><Trash2 className="size-3"/></Button>
@@ -5303,7 +5303,7 @@ const LayerPanel = () => {
                       handlePublish();
                       toast({ title: "Progreso Guardado", description: "Tus últimos cambios están a salvo."});
                   }}
-                  className="text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-green-500 hover:text-white"
+                  className="text-white bg-gradient-to-r from-primary to-accent hover:from-[#00CE07] hover:to-[#A6EE00] hover:text-white"
                 >
                   Guardar ahora
                 </Button>
@@ -5322,3 +5322,4 @@ const LayerPanel = () => {
     </div>
   );
 }
+
