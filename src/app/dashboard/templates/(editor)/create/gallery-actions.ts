@@ -24,7 +24,7 @@ export async function listFiles() {
     return { success: false, error: error.message };
   }
 
-  return { success: true, data };
+  return { success: true, data: { files: data, supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL! } };
 }
 
 export async function uploadFile(file: File) {
@@ -51,26 +51,32 @@ export async function uploadFile(file: File) {
 }
 
 const renameFileSchema = z.object({
-  filePath: z.string(),
+  oldPath: z.string(),
   newName: z.string().min(1),
 });
 
-export async function renameFile(filePath: string, newName: string) {
-    const validated = renameFileSchema.safeParse({ filePath, newName });
+export async function renameFile(oldPath: string, newName: string) {
+    const validated = renameFileSchema.safeParse({ oldPath, newName });
     if (!validated.success) return { success: false, error: 'Datos inválidos.' };
 
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'No autenticado.' };
+    
+    if (!oldPath.startsWith(user.id)) {
+      return { success: false, error: "Permiso denegado." };
+    }
 
-    const oldPath = filePath;
     const pathParts = oldPath.split('/');
     pathParts[pathParts.length - 1] = newName;
     const newPath = pathParts.join('/');
 
     const { error } = await supabase.storage.from(BUCKET_NAME).move(oldPath, newPath);
 
-    if (error) return { success: false, error: error.message };
+    if (error) {
+        console.error("Supabase rename error:", error)
+        return { success: false, error: error.message };
+    }
     return { success: true };
 }
 
@@ -94,6 +100,9 @@ export async function deleteFile(filePath: string) {
 
     const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
     
-    if (error) return { success: false, error: error.message };
+    if (error) { 
+        console.error("Supabase delete error:", error)
+        return { success: false, error: error.message };
+    }
     return { success: true };
 }

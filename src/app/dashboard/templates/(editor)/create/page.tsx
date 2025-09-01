@@ -3134,6 +3134,7 @@ export default function CreateTemplatePage() {
   // State for File Gallery
   const [isFileGalleryModalOpen, setIsFileGalleryModalOpen] = useState(false);
   const [galleryFiles, setGalleryFiles] = useState<FileObject[]>([]);
+  const [supabaseUrl, setSupabaseUrl] = useState('');
   const [selectedFile, setSelectedFile] = useState<FileObject | null>(null);
   const [isGalleryLoading, setIsGalleryLoading] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
@@ -4026,25 +4027,26 @@ export default function CreateTemplatePage() {
   };
 
   const handleFileUpload = async (file: File) => {
-      if (!file) return;
-      setIsUploading(true);
+    if (!file) return;
+    setIsUploading(true);
 
-      const result = await uploadFile(file);
+    const result = await uploadFile(file);
 
-      if (result.success && result.publicUrl) {
-          setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
-          toast({ title: '¡Éxito!', description: 'Imagen subida y lista para ajustar.', className: 'bg-green-500 text-white' });
-      } else {
-          toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
-      }
-      setIsUploading(false);
+    if (result.success && result.publicUrl) {
+        setImageModalState(prev => ({ ...prev, url: result.publicUrl as string }));
+        toast({ title: '¡Éxito!', description: 'Imagen subida y lista para ajustar.', className: 'bg-green-500 text-white' });
+    } else {
+        toast({ title: 'Error al subir', description: result.error, variant: 'destructive' });
+    }
+    setIsUploading(false);
   };
 
   const fetchGalleryFiles = useCallback(async () => {
     setIsGalleryLoading(true);
     const result = await listFiles();
     if (result.success && result.data) {
-        setGalleryFiles(result.data);
+        setGalleryFiles(result.data.files);
+        setSupabaseUrl(result.data.supabaseUrl);
     } else {
         toast({ title: 'Error', description: result.error, variant: 'destructive' });
     }
@@ -4586,11 +4588,11 @@ const LayerPanel = () => {
             ))}
             <div className="mt-auto pb-2 space-y-2">
                <div className="relative h-px my-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-dashed border-border/20 animated-separator" style={{'--start-color': '#1700E6', '--end-color': '#009AFF'} as React.CSSProperties}/>
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-dashed border-border/20 animated-separator" style={{'--start-color': '#1700E6', '--end-color': '#009AFF'} as React.CSSProperties}/>
+                  </div>
                 </div>
-              </div>
-               <button
+                <button
                     onClick={() => setIsConfirmExitModalOpen(true)}
                     className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"
                 >
@@ -5123,7 +5125,7 @@ const LayerPanel = () => {
                                         <p><strong className="text-foreground">Tipo:</strong> {selectedFile.metadata.mimetype}</p>
                                         <p><strong className="text-foreground">Subido:</strong> {format(new Date(selectedFile.created_at), "PPP p")}</p>
                                         <Button size="sm" variant="outline" className="w-full mt-2" asChild>
-                                            <a href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${selectedFile.name}`} target="_blank" rel="noopener noreferrer">
+                                            <a href={`${supabaseUrl}/storage/v1/object/public/template_backgrounds/${selectedFile.name}`} target="_blank" rel="noopener noreferrer">
                                                 <View className="mr-2"/>
                                                 Ver Original
                                             </a>
@@ -5169,12 +5171,12 @@ const LayerPanel = () => {
                                                 onClick={() => setSelectedFile(file)}
                                                 className={cn("group relative overflow-hidden aspect-square border-2 hover:border-primary transition-all cursor-pointer", selectedFile?.id === file.id ? 'border-primary' : 'border-transparent')}
                                              >
-                                                 <img src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/template_backgrounds/${file.name}`} className="object-cover w-full h-full" alt={file.name.split('/').pop() || 'gallery image'} />
+                                                 <img src={`${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`} className="object-cover w-full h-full" alt={file.name.split('/').pop() || 'gallery image'} />
                                                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
                                                      <p className="text-white text-xs font-semibold truncate">{file.name.split('/').pop()}</p>
                                                       <div className="flex gap-1 mt-1">
-                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => promptRenameFile(file, e)}><Pencil/></Button>
-                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); if(confirm('¿Eliminar este archivo?')) handleDeleteFile(file.name);}}><Trash2/></Button>
+                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => promptRenameFile(file, e)}><Pencil className="size-3"/></Button>
+                                                          <Button size="icon" variant="ghost" className="size-6 text-white hover:bg-white/20 hover:text-white" onClick={(e) => { e.stopPropagation(); if(confirm('¿Eliminar este archivo?')) handleDeleteFile(file.name);}}><Trash2 className="size-3"/></Button>
                                                       </div>
                                                  </div>
                                              </Card>
