@@ -555,7 +555,7 @@ const getSelectedBlockType = (element: SelectedElement, content: CanvasBlock[]):
 const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     selectedElement: SelectedElement;
     canvasContent: CanvasBlock[];
-    setCanvasContent: (content: CanvasBlock[]) => void;
+    setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if (selectedElement?.type !== 'column') return null;
 
@@ -567,109 +567,111 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
     if(columnIndex === -1) return null;
 
     const handleTwoColumnChange = (value: number) => {
-        const newColumns = [...columns];
-        const clampedValue = Math.max(10, Math.min(90, value));
-        newColumns[0] = { ...newColumns[0], width: clampedValue };
-        newColumns[1] = { ...newColumns[1], width: 100 - clampedValue };
-
-        const updatedCanvasContent = canvasContent.map(r => {
-            if (r.id === selectedElement.rowId) {
+        const newCanvasContent = canvasContent.map(r => {
+            if (r.id === selectedElement.rowId && r.type === 'columns') {
+                const newColumns = [...r.payload.columns];
+                const clampedValue = Math.max(10, Math.min(90, value));
+                newColumns[0] = { ...newColumns[0], width: clampedValue };
+                newColumns[1] = { ...newColumns[1], width: 100 - clampedValue };
                 return { ...r, payload: { ...r.payload, columns: newColumns } };
             }
             return r;
         });
-        setCanvasContent(updatedCanvasContent);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     }
     
     const handleThreeColumnChange = (changedIndex: number, newValue: number) => {
-        let newColumns = [...columns];
-        const clampedValue = Math.max(10, Math.min(80, newValue));
-    
-        const remainingWidth = 100 - clampedValue;
-        const otherIndices = [0, 1, 2].filter(i => i !== changedIndex);
-    
-        newColumns[changedIndex].width = clampedValue;
-    
-        if (changedIndex === 0) {
-            let col2Width = newColumns[1].width;
-            let col3Width = newColumns[2].width;
-            const totalOtherWidth = col2Width + col3Width;
-
-            let newCol2Width = (col2Width / totalOtherWidth) * remainingWidth;
-            let newCol3Width = (col3Width / totalOtherWidth) * remainingWidth;
+        const newCanvasContent = canvasContent.map(r => {
+            if (r.id === selectedElement.rowId && r.type === 'columns') {
+                let newColumns = [...r.payload.columns];
+                const clampedValue = Math.max(10, Math.min(80, newValue));
             
-            if(newCol2Width < 10) {
-                newCol2Width = 10;
-                newCol3Width = remainingWidth - 10;
-            }
-            if(newCol3Width < 10) {
-                newCol3Width = 10;
-                newCol2Width = remainingWidth - 10;
-            }
+                const remainingWidth = 100 - clampedValue;
+                const otherIndices = [0, 1, 2].filter(i => i !== changedIndex);
+            
+                newColumns[changedIndex].width = clampedValue;
+            
+                if (changedIndex === 0) {
+                    let col2Width = newColumns[1].width;
+                    let col3Width = newColumns[2].width;
+                    const totalOtherWidth = col2Width + col3Width;
 
-            newColumns[1].width = newCol2Width;
-            newColumns[2].width = newCol3Width;
-        } else if (changedIndex === 1) {
-            let col3Width = 100 - newColumns[0].width - clampedValue;
-            if (col3Width < 10) {
-                col3Width = 10;
-                newColumns[1].width = 100 - newColumns[0].width - 10;
-            } else {
-                 newColumns[1].width = clampedValue;
+                    let newCol2Width = (col2Width / totalOtherWidth) * remainingWidth;
+                    let newCol3Width = (col3Width / totalOtherWidth) * remainingWidth;
+                    
+                    if(newCol2Width < 10) {
+                        newCol2Width = 10;
+                        newCol3Width = remainingWidth - 10;
+                    }
+                    if(newCol3Width < 10) {
+                        newCol3Width = 10;
+                        newCol2Width = remainingWidth - 10;
+                    }
+
+                    newColumns[1].width = newCol2Width;
+                    newColumns[2].width = newCol3Width;
+                } else if (changedIndex === 1) {
+                    let col3Width = 100 - newColumns[0].width - clampedValue;
+                    if (col3Width < 10) {
+                        col3Width = 10;
+                        newColumns[1].width = 100 - newColumns[0].width - 10;
+                    } else {
+                         newColumns[1].width = clampedValue;
+                    }
+                    newColumns[2].width = 100 - newColumns[0].width - newColumns[1].width;
+                } else { // changedIndex === 2
+                    let col2Width = 100 - newColumns[0].width - clampedValue;
+                     if (col2Width < 10) {
+                        col2Width = 10;
+                        newColumns[2].width = 100 - newColumns[0].width - 10;
+                    } else {
+                        newColumns[2].width = clampedValue;
+                    }
+                    newColumns[1].width = 100 - newColumns[0].width - newColumns[2].width;
+                }
+                return { ...r, payload: { ...r.payload, columns: newColumns } };
             }
-            newColumns[2].width = 100 - newColumns[0].width - newColumns[1].width;
-        } else { // changedIndex === 2
-            let col2Width = 100 - newColumns[0].width - clampedValue;
-             if (col2Width < 10) {
-                col2Width = 10;
-                newColumns[2].width = 100 - newColumns[0].width - 10;
-            } else {
-                newColumns[2].width = clampedValue;
-            }
-            newColumns[1].width = 100 - newColumns[0].width - newColumns[2].width;
-        }
-    
-        setCanvasContent(canvasContent.map(r => 
-            r.id === selectedElement.rowId ? { ...r, payload: { ...r.payload, columns: newColumns } } : r
-        ));
+            return r;
+        });
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
 
     const handleFourColumnChange = (changedIndex: number, newValue: number) => {
-        let newColumns = [...columns];
-        // Clamp the new value between 10 and 70
-        let clampedValue = Math.max(10, Math.min(70, newValue));
+        const newCanvasContent = canvasContent.map(r => {
+            if (r.id === selectedElement.rowId && r.type === 'columns') {
+                let newColumns = [...r.payload.columns];
+                let clampedValue = Math.max(10, Math.min(70, newValue));
 
-        const otherIndices = [0, 1, 2, 3].filter(i => i > changedIndex);
-        const fixedIndices = [0, 1, 2, 3].filter(i => i < changedIndex);
-        
-        const fixedWidth = fixedIndices.reduce((acc, i) => acc + newColumns[i].width, 0);
+                const otherIndices = [0, 1, 2, 3].filter(i => i > changedIndex);
+                const fixedIndices = [0, 1, 2, 3].filter(i => i < changedIndex);
+                
+                const fixedWidth = fixedIndices.reduce((acc, i) => acc + newColumns[i].width, 0);
 
-        // Check if the new value is possible
-        const remainingForOthers = 100 - fixedWidth - clampedValue;
-        if (remainingForOthers < otherIndices.length * 10) {
-             clampedValue = 100 - fixedWidth - (otherIndices.length * 10);
-        }
+                const remainingForOthers = 100 - fixedWidth - clampedValue;
+                if (remainingForOthers < otherIndices.length * 10) {
+                     clampedValue = 100 - fixedWidth - (otherIndices.length * 10);
+                }
 
-        newColumns[changedIndex].width = clampedValue;
-        
-        const remainingWidth = 100 - fixedWidth - clampedValue;
-        const totalOtherWidth = otherIndices.reduce((acc, i) => acc + columns[i].width, 0); // use original width for proportion
+                newColumns[changedIndex].width = clampedValue;
+                
+                const remainingWidth = 100 - fixedWidth - clampedValue;
+                const totalOtherWidth = otherIndices.reduce((acc, i) => acc + r.payload.columns[i].width, 0);
 
-        otherIndices.forEach(i => {
-            const proportion = columns[i].width / totalOtherWidth;
-            newColumns[i].width = remainingWidth * proportion;
+                otherIndices.forEach(i => {
+                    const proportion = r.payload.columns[i].width / totalOtherWidth;
+                    newColumns[i].width = remainingWidth * proportion;
+                });
+
+                const finalTotalWidth = newColumns.reduce((sum, col) => sum + col.width, 0);
+                const roundingError = 100 - finalTotalWidth;
+                if (newColumns[3]) {
+                    newColumns[3].width += roundingError;
+                }
+                return { ...r, payload: { ...r.payload, columns: newColumns } };
+            }
+            return r;
         });
-
-        // Due to rounding, ensure total is 100
-        const finalTotalWidth = newColumns.reduce((sum, col) => sum + col.width, 0);
-        const roundingError = 100 - finalTotalWidth;
-        if (newColumns[3]) {
-            newColumns[3].width += roundingError;
-        }
-        
-        setCanvasContent(canvasContent.map(r => 
-            r.id === selectedElement.rowId ? { ...r, payload: { ...r.payload, columns: newColumns } } : r
-        ));
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
     
     if(columns.length === 1) return null;
@@ -766,7 +768,7 @@ const ColumnDistributionEditor = ({ selectedElement, canvasContent, setCanvasCon
 const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenImageModal }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
   onOpenImageModal: () => void;
 }) => {
   if (!selectedElement || (selectedElement.type !== 'column' && selectedElement.type !== 'wrapper')) return null;
@@ -791,9 +793,10 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent, on
   const { background, borderRadius } = styles || {};
   
   const updateStyle = (key: string, value: any) => {
-    setCanvasContent(prevCanvasContent => {
-        return prevCanvasContent.map(row => {
-            if (selectedElement.type === 'column' && row.id === selectedElement.rowId && row.type === 'columns') {
+    let newCanvasContent = [...canvasContent];
+    if (selectedElement.type === 'column') {
+        newCanvasContent = canvasContent.map(row => {
+            if (row.id === selectedElement.rowId && row.type === 'columns') {
                 const newColumns = row.payload.columns.map(col => {
                     if (col.id === selectedElement.columnId) {
                         return { ...col, styles: { ...col.styles, [key]: value } };
@@ -802,14 +805,19 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent, on
                 });
                 return { ...row, payload: { ...row.payload, columns: newColumns } };
             }
-            if (selectedElement.type === 'wrapper' && row.id === selectedElement.wrapperId && row.type === 'wrapper') {
+            return row;
+        });
+    } else if (selectedElement.type === 'wrapper') {
+        newCanvasContent = canvasContent.map(row => {
+            if (row.id === selectedElement.wrapperId && row.type === 'wrapper') {
                 const currentStyles = row.payload.styles || {};
                 const newPayload = { ...row.payload, styles: { ...currentStyles, [key]: value } };
                 return { ...row, payload: newPayload };
             }
             return row;
-        }) as CanvasBlock[];
-    });
+        });
+    }
+    setCanvasContent(newCanvasContent as CanvasBlock[], true);
   };
   
   const setBgType = (type: 'solid' | 'gradient') => {
@@ -938,7 +946,7 @@ const BackgroundEditor = ({ selectedElement, canvasContent, setCanvasContent, on
 const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if(selectedElement?.type !== 'primitive') return null;
     
@@ -970,7 +978,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
           });
           return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     }
     
     const updateStyle = (key: keyof ButtonBlock['payload']['styles'], value: any) => {
@@ -992,7 +1000,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
 
     const setTextAlign = (align: TextAlign) => {
@@ -1130,7 +1138,7 @@ const ButtonEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if(selectedElement?.type !== 'primitive') return null;
     
@@ -1162,7 +1170,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
           });
           return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     }
 
     const updateStyle = (key: keyof HeadingBlock['payload']['styles'], value: any) => {
@@ -1183,7 +1191,7 @@ const HeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
           });
           return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     }
     
     const { styles } = element.payload;
@@ -1321,7 +1329,7 @@ const LinkPopoverContent = ({ initialUrl, initialNewTab, onAccept, onOpenChange 
 const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     const { toast } = useToast();
     const [fragmentToDelete, setFragmentToDelete] = useState<string | null>(null);
@@ -1342,7 +1350,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     if (!element) return null;
 
     const updateBlockPayload = (key: keyof TextBlock['payload']['globalStyles'], value: any) => {
-         setCanvasContent(prev => prev.map(row => {
+         const newCanvasContent = prev.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             const newColumns = row.payload.columns.map(col => {
                 if (col.id !== selectedElement.columnId) return col;
@@ -1354,11 +1362,12 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 return { ...col, blocks: newBlocks };
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
-        }));
+        });
+        setCanvasContent(newCanvasContent, true);
     }
 
     const updateFragment = (fragmentId: string, newProps: Partial<TextFragment> | { styles: Partial<TextFragment['styles']> }) => {
-        setCanvasContent(prev => prev.map(row => {
+        const newCanvasContent = canvasContent.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             
             const newColumns = row.payload.columns.map(col => {
@@ -1381,7 +1390,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 return { ...col, blocks: newBlocks };
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
-        }));
+        });
+        setCanvasContent(newCanvasContent, true);
     };
     
     const handleAddFragment = () => {
@@ -1390,7 +1400,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             text: 'Nuevo texto... ',
             styles: {},
         };
-        setCanvasContent(prev => prev.map(row => {
+        const newCanvasContent = canvasContent.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             const newColumns = row.payload.columns.map(col => {
                 if (col.id !== selectedElement.columnId) return col;
@@ -1401,7 +1411,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 return { ...col, blocks: newBlocks };
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
-        }));
+        });
+        setCanvasContent(newCanvasContent, true);
     };
     
     const confirmDeleteFragment = (fragmentId: string) => {
@@ -1410,7 +1421,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     const handleDeleteFragment = () => {
         if (!fragmentToDelete) return;
-        setCanvasContent(prev => prev.map(row => {
+        const newCanvasContent = canvasContent.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             const newColumns = row.payload.columns.map(col => {
                 if (col.id !== selectedElement.columnId) return col;
@@ -1422,7 +1433,8 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 return { ...col, blocks: newBlocks };
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
-        }));
+        });
+        setCanvasContent(newCanvasContent, true);
         setFragmentToDelete(null);
     };
     
@@ -1560,7 +1572,7 @@ const TextEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if (selectedElement?.type !== 'primitive') return null;
 
@@ -1592,7 +1604,7 @@ const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }:
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
 
     const updateStyle = (key: keyof StaticEmojiBlock['payload']['styles'], value: any) => {
@@ -1614,7 +1626,7 @@ const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }:
             });
             return { ...row, payload: { ...row.payload, columns: newColumns } };
         });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     };
     
     const { styles } = element.payload;
@@ -1692,7 +1704,7 @@ const StaticEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }:
 const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
   if (selectedElement?.type !== 'wrapper-primitive') return null;
 
@@ -1719,7 +1731,7 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
       }
       return row;
     });
-    setCanvasContent(newCanvasContent as CanvasBlock[]);
+    setCanvasContent(newCanvasContent as CanvasBlock[], true);
   };
   
   return (
@@ -1782,7 +1794,7 @@ const InteractiveEmojiEditor = ({ selectedElement, canvasContent, setCanvasConte
 const InteractiveHeadingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if(selectedElement?.type !== 'wrapper-primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'heading-interactive') return null;
     
@@ -1806,7 +1818,7 @@ const InteractiveHeadingEditor = ({ selectedElement, canvasContent, setCanvasCon
           })
           return { ...row, payload: { ...row.payload, blocks: newBlocks } };
         });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     }
 
     const updateStyle = (key: keyof InteractiveHeadingBlock['payload']['styles'], value: any) => {
@@ -1820,7 +1832,7 @@ const InteractiveHeadingEditor = ({ selectedElement, canvasContent, setCanvasCon
           })
           return { ...row, payload: { ...row.payload, blocks: newBlocks } };
         });
-        setCanvasContent(newCanvasContent as CanvasBlock[]);
+        setCanvasContent(newCanvasContent as CanvasBlock[], true);
     }
     
     const { styles } = element.payload;
@@ -1959,7 +1971,7 @@ const InteractiveHeadingEditor = ({ selectedElement, canvasContent, setCanvasCon
 const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if (selectedElement?.type !== 'primitive') return null;
 
@@ -1974,7 +1986,7 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     if (!element) return null;
     
     const updatePayload = (key: keyof SeparatorBlock['payload'], value: any) => {
-      setCanvasContent(prev => prev.map(row => {
+      const newCanvasContent = canvasContent.map(row => {
           if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
           return {
               ...row,
@@ -1992,11 +2004,12 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                   })
               }
           };
-      }));
+      });
+      setCanvasContent(newCanvasContent, true);
     };
     
     const updateSubPayload = (mainKey: 'line' | 'shapes' | 'dots', subKey: string, value: any) => {
-        setCanvasContent(prev => prev.map(row => {
+        const newCanvasContent = canvasContent.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             return {
                 ...row,
@@ -2020,7 +2033,8 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     })
                 }
             };
-        }));
+        });
+        setCanvasContent(newCanvasContent, true);
     };
 
     const updateShapesBackground = (key: string, value: any) => {
@@ -2168,7 +2182,7 @@ const SeparatorEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if (selectedElement?.type !== 'primitive') return null;
 
@@ -2183,7 +2197,7 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     if (!element) return null;
 
     const updatePayload = (key: keyof YouTubeBlock['payload'], value: any) => {
-      setCanvasContent(prev => prev.map(row => {
+      const newCanvasContent = canvasContent.map(row => {
           if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
           return {
               ...row,
@@ -2201,7 +2215,8 @@ const YouTubeEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                   })
               }
           };
-      }));
+      });
+      setCanvasContent(newCanvasContent, true);
     };
 
     const updateStyle = (key: keyof YouTubeBlock['payload']['styles'], value: any) => {
@@ -2533,7 +2548,7 @@ const TimezonePickerModal = ({ isOpen, onOpenChange, onAccept, currentValue }: {
 const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenCopyModal }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
-  setCanvasContent: (content: CanvasBlock[]) => void;
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
   onOpenCopyModal: (emoji: string) => void;
 }) => {
     // This is a complete reconstruction of the TimerEditor component.
@@ -2556,7 +2571,7 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenC
     if (!element) return null;
 
     const updatePayload = (key: keyof TimerBlock['payload'], value: any) => {
-         setCanvasContent(prev => prev.map(row => {
+         const newCanvasContent = canvasContent.map(row => {
             if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
             return {
                 ...row,
@@ -2568,7 +2583,8 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent, onOpenC
                     }) };
                 }) }
             };
-        }));
+        });
+        setCanvasContent(newCanvasContent, true);
     };
 
     const updateStyle = (key: keyof TimerBlock['payload']['styles'], value: any) => {
@@ -3091,7 +3107,6 @@ TimerComponent.displayName = 'TimerComponent';
 
 const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
     const { toast } = useToast();
-    const BUCKET_NAME = 'template_backgrounds';
     const [userId, setUserId] = useState<string | null>(null);
     const [supabaseUrl, setSupabaseUrl] = useState<string>('');
     const [files, setFiles] = useState<StorageFile[]>([]);
@@ -3208,7 +3223,8 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
         }
     };
     
-    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/${BUCKET_NAME}/${file.name}`;
+    // Correctly construct the public URL
+    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
     
     const formatBytes = (bytes: number, decimals = 2) => {
         if (bytes === 0) return '0 Bytes';
@@ -3466,9 +3482,42 @@ export default function CreateTemplatePage() {
   const [isSaving, startSaving] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   
+  // Undo/Redo states
+  const [history, setHistory] = useState<CanvasBlock[][]>([[]]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+
   const wrapperRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const { toast } = useToast();
+  
+  const updateCanvasContent = useCallback((newContent: CanvasBlock[], recordHistory: boolean = true) => {
+    setCanvasContent(newContent);
+    
+    if(recordHistory) {
+        const newHistory = history.slice(0, historyIndex + 1);
+        setHistory([...newHistory, newContent]);
+        setHistoryIndex(newHistory.length);
+    }
+  }, [history, historyIndex]);
+
+  const handleUndo = () => {
+      if (historyIndex > 0) {
+          const newIndex = historyIndex - 1;
+          setHistoryIndex(newIndex);
+          setCanvasContent(history[newIndex]);
+          setSelectedElement(null);
+      }
+  };
+
+  const handleRedo = () => {
+      if (historyIndex < history.length - 1) {
+          const newIndex = historyIndex + 1;
+          setHistoryIndex(newIndex);
+          setCanvasContent(history[newIndex]);
+          setSelectedElement(null);
+      }
+  };
+
 
   const handlePublish = () => {
     startSaving(async () => {
@@ -3548,7 +3597,7 @@ export default function CreateTemplatePage() {
                 }
             }
         };
-        setCanvasContent([...canvasContent, newWrapper]);
+        updateCanvasContent([...canvasContent, newWrapper]);
       }
   }
 
@@ -3566,7 +3615,7 @@ export default function CreateTemplatePage() {
         alignment: 50,
       }
     };
-    setCanvasContent([...canvasContent, newColumnsBlock]);
+    updateCanvasContent([...canvasContent, newColumnsBlock]);
     setIsColumnModalOpen(false);
   };
   
@@ -3699,7 +3748,7 @@ export default function CreateTemplatePage() {
               newBlock = { ...basePayload, type: 'text', payload: { text: `Contenido para ${type}` } };
       }
 
-      setCanvasContent(canvasContent.map(row => {
+      const newContent = canvasContent.map(row => {
           if (row.type !== 'columns') return row;
           const newColumns = row.payload.columns.map(col => {
               if (col.id === activeContainer?.id) {
@@ -3708,8 +3757,8 @@ export default function CreateTemplatePage() {
               return col;
           }));
           return { ...row, payload: { ...row.payload, columns: newColumns } };
-      }));
-
+      });
+      updateCanvasContent(newContent as CanvasBlock[]);
       setIsColumnBlockSelectorOpen(false);
   };
   
@@ -3746,12 +3795,13 @@ export default function CreateTemplatePage() {
             }
          };
 
-         setCanvasContent(canvasContent.map(row => {
+         const newContent = canvasContent.map(row => {
             if (row.id === activeContainer.id && row.type === 'wrapper') {
                 return { ...row, payload: { ...row.payload, blocks: [...row.payload.blocks, newBlock] } };
             }
             return row;
-         }));
+         });
+         updateCanvasContent(newContent as CanvasBlock[]);
          setClickPosition(null);
          setActiveContainer(null);
     }
@@ -3780,7 +3830,7 @@ export default function CreateTemplatePage() {
         }
      };
 
-     setCanvasContent(canvasContent.map(row => {
+     const newContent = canvasContent.map(row => {
         if (row.id === activeContainer.id && row.type === 'wrapper') {
             return {
                 ...row,
@@ -3788,8 +3838,8 @@ export default function CreateTemplatePage() {
             }
         }
         return row;
-     }));
-
+     });
+     updateCanvasContent(newContent as CanvasBlock[]);
      setIsEmojiSelectorOpen(false);
      setClickPosition(null);
      setActiveContainer(null);
@@ -3833,7 +3883,7 @@ export default function CreateTemplatePage() {
         newCanvasContent = newCanvasContent.filter(row => row.id !== rowId);
     }
 
-    setCanvasContent(newCanvasContent as CanvasBlock[]);
+    updateCanvasContent(newCanvasContent as CanvasBlock[]);
     setSelectedElement(null);
     setIsDeleteModalOpen(false);
     setItemToDelete(null);
@@ -4205,7 +4255,7 @@ export default function CreateTemplatePage() {
     const item = newCanvasContent.splice(index, 1)[0];
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     newCanvasContent.splice(newIndex, 0, item);
-    setCanvasContent(newCanvasContent);
+    updateCanvasContent(newCanvasContent);
   };
 
   const handleSaveTemplateName = () => {
@@ -4248,10 +4298,10 @@ export default function CreateTemplatePage() {
           }
           return block;
         });
-        setCanvasContent(updatedCanvasContent as CanvasBlock[]);
+        updateCanvasContent(updatedCanvasContent as CanvasBlock[]);
       }
     }
-  }, [isResizing, resizingWrapperId, canvasContent, setCanvasContent]);
+  }, [isResizing, resizingWrapperId, canvasContent, updateCanvasContent]);
   
   const handleMouseUpResize = useCallback(() => {
     setIsResizing(false);
@@ -4369,18 +4419,17 @@ export default function CreateTemplatePage() {
 
     const finalBgImageState = { ...imageModalState, url: publicUrl };
 
-    setCanvasContent(prevCanvasContent => 
-        prevCanvasContent.map(row => {
+    const newContent = canvasContent.map(row => {
             if (row.id === selectedElement.wrapperId && row.type === 'wrapper') {
                 const currentStyles = row.payload.styles || {};
                 const newPayload = { ...row.payload, styles: { ...currentStyles, backgroundImage: finalBgImageState } };
                 return { ...row, payload: newPayload };
             }
             return row;
-        }) as CanvasBlock[]
-    );
+        })
+    updateCanvasContent(newContent as CanvasBlock[]);
     setIsImageModalOpen(false);
-}, [selectedElement, imageModalState, toast, setCanvasContent]);
+}, [selectedElement, imageModalState, toast, canvasContent, updateCanvasContent]);
 
   const WrapperComponent = React.memo(({ block, index }: { block: WrapperBlock, index: number }) => {
       const wrapperRef = useRef<HTMLDivElement>(null);
@@ -4644,7 +4693,7 @@ const LayerPanel = () => {
     const reorderLayers = (wrapperId: string, fromIndex: number, toIndex: number) => {
         if (!selectedWrapper || toIndex < 0 || toIndex >= selectedWrapper.payload.blocks.length) return;
 
-        setCanvasContent(prev => prev.map(row => {
+        const newContent = canvasContent.map(row => {
             if (row.id === wrapperId && row.type === 'wrapper') {
                 const newBlocks = Array.from(row.payload.blocks);
                 const [movedItem] = newBlocks.splice(fromIndex, 1);
@@ -4652,7 +4701,8 @@ const LayerPanel = () => {
                 return { ...row, payload: { ...row.payload, blocks: newBlocks } };
             }
             return row;
-        }));
+        });
+        updateCanvasContent(newContent as CanvasBlock[]);
     };
 
     const handleRename = (blockId: string, newName: string) => {
@@ -4685,7 +4735,7 @@ const LayerPanel = () => {
             return;
         }
 
-        setCanvasContent(prev => prev.map(row => {
+        const newContent = canvasContent.map(row => {
             if (row.id === selectedWrapper.id && row.type === 'wrapper') {
                 const newBlocks = row.payload.blocks.map(block => {
                     if (block.id === blockId) {
@@ -4696,7 +4746,8 @@ const LayerPanel = () => {
                 return { ...row, payload: { ...row.payload, blocks: newBlocks } };
             }
             return row;
-        }));
+        });
+        updateCanvasContent(newContent as CanvasBlock[]);
         setEditingBlockId(null);
     }
     
@@ -4859,7 +4910,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-[3px] w-full my-2 overflow-hidden" style={{ background: '#00ADEC' }}>
+                <div className="relative h-[3px] w-full my-2 overflow-hidden" style={{ background: 'transparent' }}>
                     <div className="animated-tech-separator-line h-full"/>
                 </div>
                 <button
@@ -4880,8 +4931,8 @@ const LayerPanel = () => {
       <main className="flex-1 flex flex-col min-w-0">
         <header className="flex items-center justify-between p-2 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] flex-shrink-0">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon"><Undo/></Button>
-            <Button variant="ghost" size="icon"><Redo/></Button>
+            <Button variant="ghost" size="icon" onClick={handleUndo} disabled={historyIndex === 0}><Undo/></Button>
+            <Button variant="ghost" size="icon" onClick={handleRedo} disabled={historyIndex === history.length - 1}><Redo/></Button>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-black/10 dark:bg-black/20 px-3 py-1.5 rounded-lg border border-white/5">
@@ -4977,14 +5028,14 @@ const LayerPanel = () => {
                         <BackgroundEditor 
                             selectedElement={selectedElement} 
                             canvasContent={canvasContent} 
-                            setCanvasContent={setCanvasContent}
+                            setCanvasContent={updateCanvasContent}
                             onOpenImageModal={handleOpenImageModal}
                         />
                             <Separator className="bg-border/20" />
                             <ColumnDistributionEditor 
                                 selectedElement={selectedElement}
                                 canvasContent={canvasContent}
-                                setCanvasContent={setCanvasContent}
+                                setCanvasContent={updateCanvasContent}
                             />
                         </>
                         )}
@@ -4992,36 +5043,36 @@ const LayerPanel = () => {
                         <BackgroundEditor 
                             selectedElement={selectedElement} 
                             canvasContent={canvasContent} 
-                            setCanvasContent={setCanvasContent}
+                            setCanvasContent={updateCanvasContent}
                             onOpenImageModal={handleOpenImageModal}
                         />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'button' && (
-                            <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                            <ButtonEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading' && (
-                            <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                            <HeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'text' && (
-                            <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                            <TextEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-static' && (
-                            <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                            <StaticEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
                         )}
                         { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'emoji-interactive' && (
-                            <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                            <InteractiveEmojiEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
                         )}
                         { selectedElement?.type === 'wrapper-primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'heading-interactive' && (
-                            <InteractiveHeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                            <InteractiveHeadingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'separator' && (
-                            <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                            <SeparatorEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'youtube' && (
-                            <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                            <YouTubeEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} />
                         )}
                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'timer' && (
-                            <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} onOpenCopyModal={handleOpenCopyModal} />
+                            <TimerEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={updateCanvasContent} onOpenCopyModal={handleOpenCopyModal} />
                         )}
                         
                         { !selectedElement && (
