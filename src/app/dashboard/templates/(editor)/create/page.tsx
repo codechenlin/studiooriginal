@@ -3,7 +3,7 @@
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -110,6 +110,7 @@ import {
   UploadCloud,
   Grip,
   ListFilter,
+  File as FileIcon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -4532,14 +4533,14 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-[3px] w-full my-2 overflow-hidden bg-primary/20 rounded-full">
-                    <div className="animated-tech-separator h-full"/>
+                <div className="relative h-[3px] w-full my-2 overflow-hidden bg-transparent rounded-full">
+                    <div className="animated-tech-separator-line h-full"/>
                 </div>
-              <button
+                <button
                   onClick={() => setIsConfirmExitModalOpen(true)}
                   className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"
-              >
-                  <div className="ai-core-border-animation" style={{"--start-color": "#1700E6", "--end-color": "#009AFF"} as React.CSSProperties}></div>
+                >
+                  <div className="ai-core-border-animation"></div>
                   <div className="ai-core"></div>
                   <div className="relative z-10 flex h-full w-full flex-col items-center justify-center">
                       <LayoutDashboard className="size-7" />
@@ -4592,6 +4593,18 @@ const LayerPanel = () => {
              <ThemeToggle />
           </div>
            <div className="flex items-center gap-4">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <FileIcon />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Abrir Gestor de Archivos</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
                 <Button 
                     onClick={handlePublish}
                     disabled={isSaving}

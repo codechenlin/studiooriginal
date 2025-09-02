@@ -153,30 +153,32 @@ body {
     
     @keyframes tech-scanner {
       0% {
-        transform: translateX(-100%);
+        transform: translateX(-100%) scaleX(0.1);
         opacity: 0.6;
-        filter: drop-shadow(0 0 1.5px #1700E6);
+        filter: drop-shadow(0 0 1px #00ADEC);
       }
-      50% {
-        transform: translateX(100%);
-        opacity: 1;
-        filter: drop-shadow(0 0 4px #009AFF);
+      20% {
+         opacity: 1;
+      }
+      80% {
+         opacity: 1;
       }
       100% {
-        transform: translateX(200%);
+        transform: translateX(200%) scaleX(1);
         opacity: 0.6;
-        filter: drop-shadow(0 0 1.5px #1700E6);
+        filter: drop-shadow(0 0 3px #1700E6);
       }
     }
-    .animated-tech-separator::after {
+    
+    .animated-tech-separator-line {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
-      width: 40%;
+      width: 50%;
       height: 100%;
       background: linear-gradient(90deg, transparent, #1700E6, #009AFF, transparent);
-      animation: tech-scanner 3s infinite linear;
+      animation: tech-scanner 3.5s infinite linear;
     }
     
     @keyframes ai-core-pulse {
@@ -191,7 +193,7 @@ body {
         filter: blur(8px);
       }
     }
-    
+
     .ai-core-button {
         background: rgba(10, 5, 20, 0.7);
         border: 1px solid rgba(173, 0, 236, 0.2);
@@ -203,6 +205,12 @@ body {
         background: rgba(0, 203, 7, 0.1);
     }
     
+    .ai-core-button:hover .ai-core-border-animation {
+       --start-color: #00CE07;
+       --end-color: #A6EE00;
+       animation-duration: 1.5s;
+    }
+
     .ai-core-button:hover .ai-core {
         animation-duration: 0.5s;
         background: radial-gradient(circle, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.5) 80%);
@@ -231,15 +239,26 @@ body {
         from var(--angle, 0deg),
         transparent 0%,
         transparent 60%,
-        var(--start-color, #00F0FF),
-        var(--end-color, #A6FF00),
-        var(--start-color, #00F0FF),
+        var(--start-color, #1700E6),
+        var(--end-color, #009AFF),
+        var(--start-color, #1700E6),
         transparent 90%,
         transparent 100%
       );
-      animation: glow-stream 2s linear infinite;
+      animation: spin-slow 4s linear infinite;
       z-index: 0;
       border-radius: inherit;
       filter: blur(3px);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .ai-core-button:hover .ai-core-border-animation {
+      opacity: 1;
+    }
+    .ai-core-button .ai-core-border-animation {
+       animation-play-state: paused;
+    }
+     .ai-core-button:hover .ai-core-border-animation {
+       animation-play-state: running;
     }
 }
