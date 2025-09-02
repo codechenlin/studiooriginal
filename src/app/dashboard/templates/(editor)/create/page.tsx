@@ -3091,6 +3091,7 @@ TimerComponent.displayName = 'TimerComponent';
 
 const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
     const { toast } = useToast();
+    const BUCKET_NAME = 'template_backgrounds';
     const [userId, setUserId] = useState<string | null>(null);
     const [supabaseUrl, setSupabaseUrl] = useState<string>('');
     const [files, setFiles] = useState<StorageFile[]>([]);
@@ -5357,3 +5358,4 @@ const LayerPanel = () => {
     </div>
   );
 }
+
