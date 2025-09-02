@@ -3102,6 +3102,8 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
     const [isUploading, setIsUploading] = useState(false);
     const [renamingFile, setRenamingFile] = useState<StorageFile | null>(null);
     const [newName, setNewName] = useState('');
+    const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+    const [fileToDelete, setFileToDelete] = useState<string[] | null>(null);
 
     const fetchFiles = useCallback(async () => {
         setIsLoading(true);
@@ -3123,6 +3125,10 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
     useEffect(() => {
         if (open) {
             fetchFiles();
+        } else {
+            // Reset state on close
+            setIsMultiSelectMode(false);
+            setSelectedFiles([]);
         }
     }, [open, fetchFiles]);
 
@@ -3134,14 +3140,19 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
         const results = await Promise.all(uploadPromises);
 
         let successCount = 0;
+        const newUploadedFiles: StorageFile[] = [];
         results.forEach((result, index) => {
             if (result.success && result.data) {
                 successCount++;
-                setFiles(prev => [result.data.uploadedFile, ...prev]);
+                newUploadedFiles.push(result.data.uploadedFile);
             } else {
                 toast({ title: `Error al subir ${uploadedFiles[index].name}`, description: result.error, variant: 'destructive' });
             }
         });
+        
+        if (newUploadedFiles.length > 0) {
+            setFiles(prev => [...newUploadedFiles, ...prev]);
+        }
         
         setIsUploading(false);
         if (successCount > 0) {
@@ -3163,30 +3174,40 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
             await fetchFiles(); // Refresh list to get new data
             setRenamingFile(null);
             setNewName('');
+            setSelectedFiles([]);
         } else {
             toast({ title: "Error al renombrar", description: result.error, variant: 'destructive' });
         }
     };
     
+    const confirmDelete = (paths: string[]) => {
+        setFileToDelete(paths);
+    }
+    
     const handleDeleteFiles = async () => {
-        if (selectedFiles.length === 0) return;
-        const result = await deleteFiles({ paths: selectedFiles });
+        if (!fileToDelete || fileToDelete.length === 0) return;
+        
+        const result = await deleteFiles({ paths: fileToDelete });
         if(result.success) {
-            toast({title: "Archivos eliminados", description: `${selectedFiles.length} archivo(s) ha(n) sido eliminado(s).`});
-            setFiles(prev => prev.filter(f => !selectedFiles.includes(f.name)));
-            setSelectedFiles([]);
+            toast({title: "Archivos eliminados", description: `${fileToDelete.length} archivo(s) ha(n) sido eliminado(s).`});
+            setFiles(prev => prev.filter(f => !fileToDelete.includes(f.name)));
+            setSelectedFiles(prev => prev.filter(f => !fileToDelete.includes(f)));
         } else {
             toast({ title: "Error al eliminar", description: result.error, variant: 'destructive'});
         }
+        setFileToDelete(null);
     };
 
     const toggleSelection = (fileName: string) => {
-        setSelectedFiles(prev => 
-            prev.includes(fileName) ? prev.filter(f => f !== fileName) : [...prev, fileName]
-        );
+        if (isMultiSelectMode) {
+            setSelectedFiles(prev => 
+                prev.includes(fileName) ? prev.filter(f => f !== fileName) : [...prev, fileName]
+            );
+        } else {
+            setSelectedFiles(prev => prev[0] === fileName ? [] : [fileName]);
+        }
     };
-
-    // Correctly construct the public URL
+    
     const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/${BUCKET_NAME}/${file.name}`;
     
     const formatBytes = (bytes: number, decimals = 2) => {
@@ -3212,8 +3233,10 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     };
 
-    const displayedFiles = filterAndSortFiles(files);
-    
+    const imageFiles = filterAndSortFiles(files.filter(f => /\.(png|jpg|jpeg|svg|webp)$/i.test(f.name)));
+    const gifFiles = filterAndSortFiles(files.filter(f => /\.gif$/i.test(f.name)));
+    const displayedFiles = activeTab === 'images' ? imageFiles : gifFiles;
+
     const selectedFileDetails = files.find(f => f.name === selectedFiles[0]);
 
     return (
@@ -3222,6 +3245,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                 <DialogHeader className="p-4 border-b border-border/20">
                     <DialogTitle className="text-lg flex items-center gap-2"><LayoutGrid className="text-primary"/> Gestor de Archivos</DialogTitle>
                 </DialogHeader>
+                
                  {/* Rename Modal */}
                  <Dialog open={!!renamingFile} onOpenChange={(isOpen) => !isOpen && setRenamingFile(null)}>
                     <DialogContent>
@@ -3243,6 +3267,22 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                             <Button onClick={handleRenameFile} disabled={!newName.trim()}>
                                 Guardar
                             </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+                
+                 {/* Delete Confirmation Modal */}
+                 <Dialog open={!!fileToDelete} onOpenChange={(isOpen) => !isOpen && setFileToDelete(null)}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>¿Estás seguro?</DialogTitle>
+                            <DialogDescription>
+                                Esta acción eliminará {fileToDelete?.length} archivo(s) permanentemente. No podrás deshacer esto.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setFileToDelete(null)}>Cancelar</Button>
+                            <Button variant="destructive" onClick={handleDeleteFiles}>Sí, eliminar</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -3292,21 +3332,54 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
 
                     {/* Right Panel */}
                     <div className="col-span-9 flex flex-col">
-                        <div className="p-4 border-b border-border/20 flex justify-between items-center">
+                        <div className="p-4 border-b border-border/20 flex justify-between items-center gap-4">
                             <div className="relative w-full max-w-sm">
                                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
                                 <Input placeholder="Buscar por nombre..." className="pl-10 h-9" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
                             </div>
-                            <Button variant="destructive" size="sm" onClick={handleDeleteFiles} disabled={selectedFiles.length === 0}>
-                                <Trash2 className="mr-2"/>
-                                Eliminar ({selectedFiles.length})
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                 <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setIsMultiSelectMode(!isMultiSelectMode);
+                                        setSelectedFiles([]); // Clear selection on mode change
+                                    }}
+                                    className={cn("transition-all", isMultiSelectMode && "ring-2 ring-offset-2 ring-offset-card ring-[#00CB07]")}
+                                 >
+                                    <div className={cn("size-2 rounded-full mr-2 bg-muted-foreground/50 transition-colors", isMultiSelectMode && "bg-[#00CB07] shadow-[0_0_8px_#00CB07]")}/>
+                                    Realizar selección múltiple
+                                 </Button>
+                                <Button variant="destructive" size="sm" onClick={() => confirmDelete(selectedFiles)} disabled={selectedFiles.length === 0}>
+                                    <Trash2 className="mr-2"/>
+                                    Eliminar ({selectedFiles.length})
+                                </Button>
+                            </div>
                         </div>
-                         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
-                           <TabsList className="m-4">
-                               <TabsTrigger value="images">Imágenes</TabsTrigger>
-                               <TabsTrigger value="gifs">GIFs</TabsTrigger>
-                           </TabsList>
+                        
+                         <div className="flex-1 flex flex-col">
+                           <div className="grid grid-cols-2 gap-2 p-4">
+                                <button
+                                    onClick={() => setActiveTab('images')}
+                                    className={cn(
+                                        "p-3 rounded-lg border-2 transition-all duration-300",
+                                        activeTab === 'images' ? 'bg-primary/10 border-primary shadow-lg' : 'bg-muted/30 border-transparent hover:bg-muted/70'
+                                    )}
+                                >
+                                    <p className="font-semibold">Imágenes</p>
+                                    <p className="text-xs text-muted-foreground">{imageFiles.length} archivos</p>
+                                </button>
+                                 <button
+                                    onClick={() => setActiveTab('gifs')}
+                                    className={cn(
+                                        "p-3 rounded-lg border-2 transition-all duration-300",
+                                        activeTab === 'gifs' ? 'bg-primary/10 border-primary shadow-lg' : 'bg-muted/30 border-transparent hover:bg-muted/70'
+                                    )}
+                                >
+                                    <p className="font-semibold">GIFs</p>
+                                     <p className="text-xs text-muted-foreground">{gifFiles.length} archivos</p>
+                                </button>
+                           </div>
                            <ScrollArea className="flex-1">
                                 <div className="p-4 pt-0">
                                    {isLoading ? (
@@ -3318,8 +3391,9 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                                            {displayedFiles.map(file => (
                                                <Card key={file.id} onClick={() => toggleSelection(file.name)} className={cn("relative group overflow-hidden cursor-pointer aspect-square", selectedFiles.includes(file.name) && "ring-2 ring-primary ring-offset-2 ring-offset-card")}>
                                                    <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
-                                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                                                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
                                                         <Button size="icon" variant="ghost" className="hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setRenamingFile(file); setNewName(file.name.split('/').pop()?.split('.').slice(0, -1).join('.') || ''); }}><Pencil className="text-white"/></Button>
+                                                        <Button size="icon" variant="ghost" className="hover:bg-destructive/50" onClick={(e) => { e.stopPropagation(); confirmDelete([file.name]); }}><Trash2 className="text-white"/></Button>
                                                    </div>
                                                    {selectedFiles.includes(file.name) && <div className="absolute top-2 right-2 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
                                                </Card>
@@ -3328,7 +3402,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                                    ) : <p className="text-center text-muted-foreground py-16">No se encontraron archivos.</p>}
                                </div>
                            </ScrollArea>
-                        </Tabs>
+                        </div>
                     </div>
                 </div>
             </DialogContent>
@@ -4785,7 +4859,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-[3px] w-full my-2 overflow-hidden rounded-full" style={{ background: '#00ADEC' }}>
+                <div className="relative h-[3px] w-full my-2 overflow-hidden" style={{ background: '#00ADEC' }}>
                     <div className="animated-tech-separator-line h-full"/>
                 </div>
                 <button
@@ -5358,4 +5432,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-
