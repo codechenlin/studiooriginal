@@ -3120,7 +3120,6 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
     const [newName, setNewName] = useState('');
     const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
     const [fileToDelete, setFileToDelete] = useState<string[] | null>(null);
-    const BUCKET_NAME = 'template_backgrounds';
 
     const fetchFiles = useCallback(async () => {
         setIsLoading(true);
@@ -3230,7 +3229,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
         }
     };
     
-    // Correctly construct the public URL
+    const BUCKET_NAME = 'template_backgrounds';
     const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/${BUCKET_NAME}/${file.name}`;
     
     const formatBytes = (bytes: number, decimals = 2) => {
@@ -5492,3 +5491,4 @@ const LayerPanel = () => {
     </div>
   );
 }
+
