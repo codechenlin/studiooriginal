@@ -3131,27 +3131,28 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
         }
     }, [open, fetchFiles]);
 
-    const handleFileUpload = async (uploadedFiles: FileList | null) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const uploadedFiles = e.target.files;
         if (!uploadedFiles || uploadedFiles.length === 0) return;
         setIsUploading(true);
-    
+
         const uploadPromises = Array.from(uploadedFiles).map(file => {
             const formData = new FormData();
             formData.append('file', file);
             return uploadFile(formData);
         });
-    
+
         const results = await Promise.all(uploadPromises);
         
         const successfulUploads = results.filter(r => r.success);
-    
+
         if (successfulUploads.length > 0) {
             toast({ title: "Subida Exitosa", description: `${successfulUploads.length} archivo(s) subido(s) correctamente.` });
             await fetchFiles();
         }
         
         results.forEach((result, index) => {
-            if (!result.success) {
+            if (!result.success && uploadedFiles) {
                 toast({ title: `Error al subir ${uploadedFiles[index].name}`, description: result.error, variant: 'destructive' });
             }
         });
@@ -3291,7 +3292,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
                     {/* Left Panel */}
                     <div className="col-span-4 md:col-span-3 border-r border-border/20 flex flex-col p-4 space-y-4">
                         <div 
-                            onDrop={(e) => { e.preventDefault(); handleFileUpload(e.dataTransfer.files); }}
+                            onDrop={(e) => { e.preventDefault(); /* handleFileUpload(e.dataTransfer.files); */ }}
                             onDragOver={(e) => e.preventDefault()}
                             className="border-2 border-dashed border-border/50 rounded-lg p-6 text-center"
                         >
@@ -3301,7 +3302,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
                                 <Button asChild variant="outline" size="sm">
                                   <span>Seleccionar Archivos</span>
                                 </Button>
-                                <input id="file-upload" type="file" className="hidden" multiple onChange={(e) => handleFileUpload(e.target.files)} accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml"/>
+                                <input id="file-upload" type="file" className="hidden" multiple onChange={handleFileUpload} accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml"/>
                             </label>
                              {isUploading && <p className="text-xs text-muted-foreground mt-2 animate-pulse">Subiendo...</p>}
                         </div>
@@ -3362,7 +3363,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
                             </div>
                         </div>
                         
-                         <div className="flex-1 flex flex-col overflow-y-auto">
+                        <div className="flex-1 flex flex-col overflow-y-auto">
                             <div className="p-4 shrink-0">
                                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'images' | 'gifs')} className="w-full">
                                     <TabsList className="grid w-full grid-cols-2">
@@ -3371,7 +3372,7 @@ const FileManagerModal = React.memo(({ open, onOpenChange, onSelectFile }: { ope
                                     </TabsList>
                                 </Tabs>
                             </div>
-                            <ScrollArea className="flex-1 px-4 pb-4">
+                            <ScrollArea className="flex-1 px-4 pb-4 custom-scrollbar">
                                    {isLoading ? (
                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                            {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg"/>)}
@@ -4832,7 +4833,7 @@ const LayerPanel = () => {
 
     return (
        <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-        <DialogContent className="max-w-5xl w-[90vw] h-[85vh] flex flex-col p-0 gap-0 bg-zinc-900/80 border-zinc-700 backdrop-blur-xl text-white">
+        <DialogContent className="max-w-6xl w-[90vw] h-[85vh] flex flex-col p-0 gap-0 bg-zinc-900/80 border-zinc-700 backdrop-blur-xl text-white">
             <div className="absolute inset-0 w-full h-full overflow-hidden -z-10">
                 {Array.from({ length: 20 }).map((_, i) => (
                     <div key={i} className="particle" style={{
@@ -4869,49 +4870,49 @@ const LayerPanel = () => {
             <div className="flex-1 grid md:grid-cols-2 overflow-hidden">
                 <div className="flex flex-col">
                     <ScrollArea className="flex-1 custom-scrollbar">
-                        <div className="p-4 space-y-4">
+                        <div className="p-4 space-y-3">
                             {activeSource === 'upload' && (
                                 <div className="space-y-2">
-                                    <Label htmlFor="image-upload" className="flex items-center gap-2 text-zinc-300 text-base"><UploadCloud/> Subir Archivo Local</Label>
+                                    <Label htmlFor="image-upload" className="flex items-center gap-2 text-zinc-300 text-sm"><UploadCloud/> Subir Archivo Local</Label>
                                     <Input id="image-upload" type="file" accept="image/png, image/jpeg, image/gif, image/webp" onChange={(e) => e.target.files?.[0] && handleApplyBackgroundImage(e.target.files[0])} disabled={isUploading} className="text-zinc-300 border-zinc-700 file:text-primary file:font-semibold"/>
-                                    {isUploading && <div className="flex items-center gap-2 text-sm text-zinc-400"><RefreshCw className="size-4 animate-spin"/>Subiendo...</div>}
+                                    {isUploading && <div className="flex items-center gap-2 text-xs text-zinc-400"><RefreshCw className="size-4 animate-spin"/>Subiendo...</div>}
                                 </div>
                             )}
                             {activeSource === 'url' && (
                                 <div className="space-y-2">
-                                    <Label htmlFor="image-url" className="flex items-center gap-2 text-zinc-300 text-base"><LinkIcon/> URL de la Imagen</Label>
+                                    <Label htmlFor="image-url" className="flex items-center gap-2 text-zinc-300 text-sm"><LinkIcon/> URL de la Imagen</Label>
                                     <Input id="image-url" placeholder="https://example.com/image.png" value={imageModalState.url || ''} onChange={(e) => setImageModalState({ ...imageModalState, url: e.target.value })} className="border-zinc-700 text-zinc-200"/>
                                 </div>
                             )}
                             {activeSource === 'gallery' && (
                                 <div>
-                                    <Label className="flex items-center gap-2 text-zinc-300 text-base"><LayoutGrid/> Seleccionar de la Galería</Label>
+                                    <Label className="flex items-center gap-2 text-zinc-300 text-sm"><LayoutGrid/> Seleccionar de la Galería</Label>
                                     <p className="text-xs text-zinc-400 mb-2">Haz clic en el botón de abajo para abrir tu galería de archivos.</p>
                                     <Button onClick={() => { setIsImageModalOpen(false); setIsGalleryOpen(true);}} className="w-full bg-primary/80 hover:bg-primary">
                                         Abrir Galería
                                     </Button>
                                 </div>
                             )}
-                            <Separator className="bg-zinc-800"/>
-                            <div className="space-y-4">
-                                <h3 className="font-semibold text-zinc-200">Ajustes de la Imagen</h3>
-                                <div className="space-y-2">
-                                    <Label className="text-zinc-300">Ajuste</Label>
+                            <Separator className="bg-zinc-800 !my-4"/>
+                            <div className="space-y-3">
+                                <h3 className="font-semibold text-zinc-200 text-sm">Ajustes de la Imagen</h3>
+                                <div className="space-y-1">
+                                    <Label className="text-zinc-300 text-xs">Ajuste</Label>
                                     <Select value={imageModalState.fit} onValueChange={(value: BackgroundFit) => setImageModalState({ ...imageModalState, fit: value })}>
-                                        <SelectTrigger className="border-zinc-700 text-zinc-200"><SelectValue/></SelectTrigger>
+                                        <SelectTrigger className="border-zinc-700 text-zinc-200 h-9"><SelectValue/></SelectTrigger>
                                         <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="cover">Cubrir</SelectItem><SelectItem value="contain">Contener</SelectItem><SelectItem value="auto">Automático/Zoom</SelectItem></SelectContent>
                                     </Select>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center gap-2 text-zinc-300"><ArrowLeftRight className="size-4"/> Posición Horizontal</Label>
+                                <div className="space-y-1">
+                                    <Label className="flex items-center gap-1.5 text-zinc-300 text-xs"><ArrowLeftRight className="size-3"/> Posición Horizontal</Label>
                                     <Slider value={[imageModalState.positionX]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionX: v[0] })}/>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center gap-2 text-zinc-300"><ArrowUpDown className="size-4"/> Posición Vertical</Label>
+                                <div className="space-y-1">
+                                    <Label className="flex items-center gap-1.5 text-zinc-300 text-xs"><ArrowUpDown className="size-3"/> Posición Vertical</Label>
                                     <Slider value={[imageModalState.positionY]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionY: v[0] })}/>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center gap-2 text-zinc-300"><Expand className="size-4"/> Zoom (sólo con 'Auto')</Label>
+                                <div className="space-y-1">
+                                    <Label className="flex items-center gap-1.5 text-zinc-300 text-xs"><Expand className="size-3"/> Zoom (sólo con 'Auto')</Label>
                                     <Slider value={[imageModalState.zoom]} min={10} max={300} onValueChange={(v) => setImageModalState({ ...imageModalState, zoom: v[0] })} disabled={imageModalState.fit !== 'auto'}/>
                                 </div>
                             </div>
@@ -4920,7 +4921,7 @@ const LayerPanel = () => {
                 </div>
                 
                 <div className="flex items-center justify-center bg-black/30 p-4 border-l border-zinc-800">
-                    <div className="w-full h-full rounded-lg overflow-hidden border-2 border-dashed border-zinc-700 bg-zinc-900/50">
+                    <div className="w-full max-w-full max-h-full aspect-video rounded-lg overflow-hidden border-2 border-dashed border-zinc-700 bg-zinc-900/50">
                         {imageModalState.url ? (
                             <div className="w-full h-full" style={{
                                 backgroundImage: `url(${imageModalState.url})`,
@@ -4930,8 +4931,8 @@ const LayerPanel = () => {
                             }} />
                         ) : (
                             <div className="text-center text-zinc-500 p-8 flex flex-col items-center justify-center h-full">
-                                <ImageIcon className="mx-auto size-16" />
-                                <p className="mt-4">Vista previa de la imagen</p>
+                                <ImageIcon className="mx-auto size-12" />
+                                <p className="mt-2 text-sm">Vista previa</p>
                             </div>
                         )}
                     </div>
@@ -5014,8 +5015,10 @@ const LayerPanel = () => {
                  {block.id === 'columns' && <span className="text-xs font-medium text-center text-muted-foreground">1 - 4</span>}
               </Card>
             ))}
-             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-[3px] w-full my-2 tech-scanner"/>
+            <div className="mt-auto pb-2 space-y-2">
+                <div className="relative h-[3px] w-full my-2 tech-scanner-container overflow-hidden">
+                    <div className="tech-scanner"/>
+                </div>
                 <button
                   onClick={() => setIsConfirmExitModalOpen(true)}
                   className="group relative inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-lg p-3 text-sm font-semibold text-white transition-all duration-300 ai-core-button"
