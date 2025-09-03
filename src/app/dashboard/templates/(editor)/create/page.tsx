@@ -3446,7 +3446,7 @@ export default function CreateTemplatePage() {
 
   // State for background image modal
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [imageModalSourceTab, setImageModalSourceTab] = useState<'upload' | 'url'>('upload');
+  const [imageModalSourceTab, setImageModalSourceTab] = useState<'upload' | 'url'>('url');
   const [imageModalState, setImageModalState] = useState({
     url: '',
     fit: 'cover' as BackgroundFit,
@@ -5297,108 +5297,112 @@ const LayerPanel = () => {
           </DialogContent>
       </Dialog>
       
-      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-        <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0 gap-0 bg-card/90 backdrop-blur-xl border-border/50">
-            <DialogHeader className="p-4 border-b">
-                <DialogTitle>Gestionar Imagen de Fondo</DialogTitle>
-                <DialogDescription>
-                    Añade una URL, carga un archivo o selecciona de tu galería para usarla como fondo.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="grid md:grid-cols-2 flex-1 gap-6 p-6 overflow-hidden">
-                <div className="flex flex-col space-y-4">
-                    <div className="flex flex-col space-y-2">
-                        <button onClick={() => setImageModalSourceTab('upload')} className={cn("p-4 rounded-lg border-2 text-left transition-all", imageModalSourceTab === 'upload' ? 'bg-primary/10 border-primary' : 'bg-muted/30 border-transparent hover:bg-muted/70')}>
-                            <p className="font-semibold flex items-center gap-2"><UploadCloud/>Cargar Archivo</p>
-                            <p className="text-xs text-muted-foreground mt-1">Sube una imagen desde tu dispositivo.</p>
-                        </button>
-                        <button onClick={() => setImageModalSourceTab('url')} className={cn("p-4 rounded-lg border-2 text-left transition-all", imageModalSourceTab === 'url' ? 'bg-primary/10 border-primary' : 'bg-muted/30 border-transparent hover:bg-muted/70')}>
-                            <p className="font-semibold flex items-center gap-2"><LinkIcon/>Desde URL</p>
-                            <p className="text-xs text-muted-foreground mt-1">Pega un enlace a una imagen existente en la web.</p>
-                        </button>
-                        <Button variant="outline" className="w-full py-6" onClick={() => { setGalleryMode('select'); setIsImageModalOpen(false); setIsGalleryOpen(true); }}>
-                            <LayoutGrid className="mr-2"/>
-                            Seleccionar de la Galería
-                        </Button>
-                    </div>
-                    
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={imageModalSourceTab}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className="space-y-4 pt-4 border-t"
-                        >
-                            {imageModalSourceTab === 'url' && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="image-url">URL de la Imagen</Label>
-                                    <Input id="image-url" placeholder="https://example.com/image.png" value={imageModalState.url || ''} onChange={(e) => setImageModalState({ ...imageModalState, url: e.target.value })}/>
-                                </div>
-                            )}
-                            {imageModalSourceTab === 'upload' && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="image-upload">Archivo Local</Label>
-                                    <Input id="image-upload" type="file" accept="image/png, image/jpeg, image/gif, image/webp" onChange={(e) => e.target.files?.[0] && handleApplyBackgroundImage(e.target.files[0])} disabled={isUploading} className="file:text-primary file:font-semibold"/>
-                                    {isUploading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="size-4 animate-spin"/>Subiendo...</div>}
-                                </div>
-                            )}
-                            <Separator/>
-                             <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Ajuste de Imagen</Label>
-                                    <Select value={imageModalState.fit} onValueChange={(value: BackgroundFit) => setImageModalState({ ...imageModalState, fit: value })}>
-                                        <SelectTrigger><SelectValue placeholder="Seleccionar ajuste" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="cover">Cubrir (Cover)</SelectItem>
-                                            <SelectItem value="contain">Contener (Contain)</SelectItem>
-                                            <SelectItem value="auto">Automático/Zoom</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center gap-2"><ArrowLeftRight className="size-4"/> Posición Horizontal</Label>
-                                    <Slider value={[imageModalState.positionX]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionX: v[0] })}/>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center gap-2"><ArrowUpDown className="size-4"/> Posición Vertical</Label>
-                                    <Slider value={[imageModalState.positionY]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionY: v[0] })}/>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center gap-2"><Expand className="size-4"/> Zoom (solo con ajuste 'Auto')</Label>
-                                    <Slider value={[imageModalState.zoom]} min={10} max={300} onValueChange={(v) => setImageModalState({ ...imageModalState, zoom: v[0] })} disabled={imageModalState.fit !== 'auto'}/>
-                                </div>
-                             </div>
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
-                <div className="flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden border border-dashed">
-                    {imageModalState.url ? (
-                        <div className="w-full h-full" style={{
-                            backgroundImage: `url(${imageModalState.url})`,
-                            backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
-                            backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
-                            backgroundRepeat: 'no-repeat',
-                        }} />
-                    ) : (
-                        <div className="text-center text-muted-foreground p-8">
-                            <ImageIcon className="mx-auto size-12" />
-                            <p className="mt-2">Vista previa de la imagen</p>
+        <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+            <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0 gap-0 bg-card/90 backdrop-blur-xl border-border/50">
+                <DialogHeader className="p-4 border-b">
+                    <DialogTitle>Gestionar Imagen de Fondo</DialogTitle>
+                    <DialogDescription>
+                        Añade una URL, carga un archivo o selecciona de tu galería para usarla como fondo.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid md:grid-cols-2 flex-1 gap-6 p-6 overflow-hidden">
+                    <div className="flex flex-col space-y-4">
+                        <div className="flex flex-col space-y-2">
+                            <button onClick={() => setImageModalSourceTab('upload')} className={cn("p-4 rounded-lg border-2 text-left transition-all", imageModalSourceTab === 'upload' ? 'bg-primary/10 border-primary' : 'bg-muted/30 border-transparent hover:bg-muted/70')}>
+                                <p className="font-semibold flex items-center gap-2"><UploadCloud/>Cargar Archivo</p>
+                                <p className="text-xs text-muted-foreground mt-1">Sube una imagen desde tu dispositivo.</p>
+                            </button>
+                            <button onClick={() => setImageModalSourceTab('url')} className={cn("p-4 rounded-lg border-2 text-left transition-all", imageModalSourceTab === 'url' ? 'bg-primary/10 border-primary' : 'bg-muted/30 border-transparent hover:bg-muted/70')}>
+                                <p className="font-semibold flex items-center gap-2"><LinkIcon/>Desde URL</p>
+                                <p className="text-xs text-muted-foreground mt-1">Pega un enlace a una imagen existente en la web.</p>
+                            </button>
+                            <Button variant="outline" className="w-full py-6" onClick={() => { setGalleryMode('select'); setIsImageModalOpen(false); setIsGalleryOpen(true); }}>
+                                <LayoutGrid className="mr-2"/>
+                                Seleccionar de la Galería
+                            </Button>
                         </div>
-                    )}
+                        
+                        <div className="flex-1 min-h-0">
+                           <ScrollArea className="h-full pr-4">
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={imageModalSourceTab}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="space-y-4 pt-4 border-t"
+                                    >
+                                        {imageModalSourceTab === 'url' && (
+                                            <div className="space-y-2">
+                                                <Label htmlFor="image-url">URL de la Imagen</Label>
+                                                <Input id="image-url" placeholder="https://example.com/image.png" value={imageModalState.url ?? ''} onChange={(e) => setImageModalState({ ...imageModalState, url: e.target.value })}/>
+                                            </div>
+                                        )}
+                                        {imageModalSourceTab === 'upload' && (
+                                            <div className="space-y-2">
+                                                <Label htmlFor="image-upload">Archivo Local</Label>
+                                                <Input id="image-upload" type="file" accept="image/png, image/jpeg, image/gif, image/webp" onChange={(e) => e.target.files?.[0] && handleApplyBackgroundImage(e.target.files[0])} disabled={isUploading} className="file:text-primary file:font-semibold"/>
+                                                {isUploading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCw className="size-4 animate-spin"/>Subiendo...</div>}
+                                            </div>
+                                        )}
+                                        <Separator/>
+                                         <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label>Ajuste de Imagen</Label>
+                                                <Select value={imageModalState.fit} onValueChange={(value: BackgroundFit) => setImageModalState({ ...imageModalState, fit: value })}>
+                                                    <SelectTrigger><SelectValue placeholder="Seleccionar ajuste" /></SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="cover">Cubrir (Cover)</SelectItem>
+                                                        <SelectItem value="contain">Contener (Contain)</SelectItem>
+                                                        <SelectItem value="auto">Automático/Zoom</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="flex items-center gap-2"><ArrowLeftRight className="size-4"/> Posición Horizontal</Label>
+                                                <Slider value={[imageModalState.positionX]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionX: v[0] })}/>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="flex items-center gap-2"><ArrowUpDown className="size-4"/> Posición Vertical</Label>
+                                                <Slider value={[imageModalState.positionY]} onValueChange={(v) => setImageModalState({ ...imageModalState, positionY: v[0] })}/>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="flex items-center gap-2"><Expand className="size-4"/> Zoom (solo con ajuste 'Auto')</Label>
+                                                <Slider value={[imageModalState.zoom]} min={10} max={300} onValueChange={(v) => setImageModalState({ ...imageModalState, zoom: v[0] })} disabled={imageModalState.fit !== 'auto'}/>
+                                            </div>
+                                         </div>
+                                    </motion.div>
+                                </AnimatePresence>
+                           </ScrollArea>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden border border-dashed">
+                        {imageModalState.url ? (
+                            <div className="w-full h-full" style={{
+                                backgroundImage: `url(${imageModalState.url})`,
+                                backgroundSize: imageModalState.fit === 'auto' ? `${imageModalState.zoom}%` : imageModalState.fit,
+                                backgroundPosition: `${imageModalState.positionX}% ${imageModalState.positionY}%`,
+                                backgroundRepeat: 'no-repeat',
+                            }} />
+                        ) : (
+                            <div className="text-center text-muted-foreground p-8">
+                                <ImageIcon className="mx-auto size-12" />
+                                <p className="mt-2">Vista previa de la imagen</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
-            <DialogFooter className="p-4 border-t">
-                <DialogClose asChild>
-                    <Button type="button" variant="outline">Cancelar</Button>
-                </DialogClose>
-                <Button onClick={() => handleApplyBackgroundImage()} disabled={!imageModalState.url || isUploading}>
-                    {isUploading ? <RefreshCw className="mr-2 size-4 animate-spin"/> : null}
-                    Aplicar Imagen
-                </Button>
-            </DialogFooter>
-        </DialogContent>
+                <DialogFooter className="p-4 border-t shrink-0">
+                    <DialogClose asChild>
+                        <Button type="button" variant="outline">Cancelar</Button>
+                    </DialogClose>
+                    <Button onClick={() => handleApplyBackgroundImage()} disabled={!imageModalState.url || isUploading}>
+                        {isUploading ? <RefreshCw className="mr-2 size-4 animate-spin"/> : null}
+                        Aplicar Imagen
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
       </Dialog>
       
        {/* Initial Name Modal */}
@@ -5488,6 +5492,7 @@ const LayerPanel = () => {
     </div>
   );
 }
+
 
 
 
