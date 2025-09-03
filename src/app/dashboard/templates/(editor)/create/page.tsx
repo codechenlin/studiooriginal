@@ -3333,8 +3333,8 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                     </div>
 
                     {/* Right Panel */}
-                    <div className="col-span-9 flex flex-col">
-                        <div className="p-4 border-b border-border/20 flex justify-between items-center gap-4">
+                    <div className="col-span-9 flex flex-col overflow-hidden">
+                        <div className="p-4 border-b border-border/20 flex justify-between items-center gap-4 shrink-0">
                             <div className="relative w-full max-w-sm">
                                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
                                 <Input placeholder="Buscar por nombre..." className="pl-10 h-9" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
@@ -3359,8 +3359,8 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                             </div>
                         </div>
                         
-                         <div className="flex-1 flex flex-col overflow-hidden">
-                           <div className="grid grid-cols-2 gap-2 p-4">
+                         <div className="flex-1 flex flex-col overflow-y-hidden">
+                           <div className="grid grid-cols-2 gap-2 p-4 shrink-0">
                                 <button
                                     onClick={() => setActiveTab('images')}
                                     className={cn(
@@ -3382,26 +3382,28 @@ const FileManagerModal = React.memo(({ open, onOpenChange }: { open: boolean, on
                                      <p className="text-xs text-muted-foreground">{gifFiles.length} archivos</p>
                                 </button>
                            </div>
-                           <ScrollArea className="flex-1 px-4 pb-4">
-                               {isLoading ? (
-                                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                       {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg"/>)}
-                                   </div>
-                               ) : displayedFiles.length > 0 ? (
-                                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                       {displayedFiles.map(file => (
-                                           <Card key={file.id} onClick={() => toggleSelection(file.name)} className={cn("relative group overflow-hidden cursor-pointer aspect-square", selectedFiles.includes(file.name) && "ring-2 ring-primary ring-offset-2 ring-offset-card")}>
-                                               <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
-                                               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
-                                                    <Button size="icon" variant="ghost" className="hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setRenamingFile(file); setNewName(file.name.split('/').pop()?.split('.').slice(0, -1).join('.') || ''); }}><Pencil className="text-white"/></Button>
-                                                    <Button size="icon" variant="ghost" className="hover:bg-destructive/50" onClick={(e) => { e.stopPropagation(); confirmDelete([file.name]); }}><Trash2 className="text-white"/></Button>
-                                               </div>
-                                               {selectedFiles.includes(file.name) && <div className="absolute top-2 right-2 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
-                                           </Card>
-                                       ))}
-                                   </div>
-                               ) : <p className="text-center text-muted-foreground py-16">No se encontraron archivos.</p>}
-                           </ScrollArea>
+                           <div className="flex-1 overflow-y-auto px-4 pb-4">
+                                <ScrollArea className="h-full custom-scrollbar pr-2">
+                                   {isLoading ? (
+                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                           {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg"/>)}
+                                       </div>
+                                   ) : displayedFiles.length > 0 ? (
+                                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                           {displayedFiles.map(file => (
+                                               <Card key={file.id} onClick={() => toggleSelection(file.name)} className={cn("relative group overflow-hidden cursor-pointer aspect-square", selectedFiles.includes(file.name) && "ring-2 ring-primary ring-offset-2 ring-offset-card")}>
+                                                   <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
+                                                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                                                        <Button size="icon" variant="ghost" className="hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setRenamingFile(file); setNewName(file.name.split('/').pop()?.split('.').slice(0, -1).join('.') || ''); }}><Pencil className="text-white"/></Button>
+                                                        <Button size="icon" variant="ghost" className="hover:bg-destructive/50" onClick={(e) => { e.stopPropagation(); confirmDelete([file.name]); }}><Trash2 className="text-white"/></Button>
+                                                   </div>
+                                                   {selectedFiles.includes(file.name) && <div className="absolute top-2 right-2 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
+                                               </Card>
+                                           ))}
+                                       </div>
+                                   ) : <p className="text-center text-muted-foreground py-16">No se encontraron archivos.</p>}
+                                </ScrollArea>
+                           </div>
                         </div>
                     </div>
                 </div>
@@ -4900,7 +4902,7 @@ const LayerPanel = () => {
               </Card>
             ))}
             <div className="mt-auto pb-2 space-y-2">
-                <div className="relative h-[3px] w-full my-2 overflow-hidden bg-transparent">
+                <div className="relative h-[3px] w-full my-2 overflow-hidden">
                     <div className="animated-tech-separator-line h-full"/>
                 </div>
                 <button
@@ -5473,6 +5475,7 @@ const LayerPanel = () => {
     </div>
   );
 }
+
 
 
 
