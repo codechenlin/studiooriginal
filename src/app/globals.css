@@ -151,7 +151,7 @@ body {
         animation: spin-slow 3s linear infinite;
     }
     
-    @keyframes tech-scanner {
+    @keyframes ping-pong-scanner {
       0% {
         transform: translateX(-100%);
       }
@@ -160,15 +160,13 @@ body {
       }
     }
     
-    .animated-tech-separator-line {
-        width: 100%;
-        height: 100%;
-        background: transparent;
+    .ping-pong-scanner-line {
         position: relative;
         overflow: hidden;
+        background: transparent;
     }
 
-    .animated-tech-separator-line::after {
+    .ping-pong-scanner-line::after {
       content: '';
       position: absolute;
       top: 0;
@@ -176,7 +174,7 @@ body {
       width: 40%;
       height: 100%;
       background: linear-gradient(90deg, transparent, hsl(var(--primary)), hsl(var(--accent)), transparent);
-      animation: tech-scanner 3.5s infinite linear;
+      animation: ping-pong-scanner 3.5s infinite linear alternate;
       filter: blur(2px);
     }
     
@@ -260,5 +258,30 @@ body {
     }
     .ai-core-button .ai-core-border-animation {
        animation-play-state: running;
+    }
+
+    .futuristic-button {
+      @apply w-full justify-start gap-3 p-3 rounded-lg border-2 text-left transition-all duration-300;
+      @apply bg-zinc-800/50 border-zinc-700 text-zinc-300;
+      @apply hover:bg-primary/20 hover:border-primary hover:text-white;
+    }
+    .futuristic-button[data-state=active] {
+        @apply bg-primary/20 border-primary text-white shadow-[0_0_15px_hsl(var(--primary)/0.5)];
+    }
+    
+    @keyframes particle-float {
+      0% { transform: translateY(0) translateX(0); opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(var(--x-end)); opacity: 0; }
+    }
+
+    .particle {
+      position: absolute;
+      bottom: 0;
+      left: var(--x-start);
+      width: var(--size);
+      height: var(--size);
+      background: radial-gradient(circle, hsl(var(--primary)), transparent 70%);
+      border-radius: 50%;
+      animation: particle-float var(--duration) var(--delay) linear infinite;
     }
 }
