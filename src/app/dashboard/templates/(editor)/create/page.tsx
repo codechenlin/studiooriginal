@@ -3426,7 +3426,7 @@ const BackgroundManagerModal = ({ open, onOpenChange, onApply, initialValue }: {
     onApply: (state: WrapperStyles['backgroundImage']) => void;
     initialValue?: WrapperStyles['backgroundImage'];
 }) => {
-    const [internalState, setInternalState] = useState<ImageModalState>(initialValue || initialImageModalState);
+    const [internalState, setInternalState] = useState<ImageModalState>(initialImageModalState);
     const [activeSource, setActiveSource] = useState<BackgroundSource>('upload');
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
