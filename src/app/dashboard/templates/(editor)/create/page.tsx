@@ -3483,18 +3483,21 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 />
             </div>
             <Separator />
-             <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
-                <Slider value={[element.payload.styles.zoom]} min={100} max={300} onValueChange={(v) => updateStyle('zoom', v[0])}/>
-            </div>
-            <div className="flex items-center gap-4">
-                <div className="flex-1 space-y-1">
-                    <Label className="flex items-center gap-1.5 text-xs"><ArrowLeftRight className="size-3"/> X</Label>
-                    <Slider value={[element.payload.styles.positionX]} onValueChange={(v) => updateStyle('positionX', v[0])}/>
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-foreground/80">Ajustes de la Imagen</h3>
+                <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
+                    <Slider value={[element.payload.styles.zoom]} min={100} max={300} onValueChange={(v) => updateStyle('zoom', v[0])}/>
                 </div>
-                <div className="flex-1 space-y-1">
-                    <Label className="flex items-center gap-1.5 text-xs"><ArrowUpDown className="size-3"/> Y</Label>
-                    <Slider value={[element.payload.styles.positionY]} onValueChange={(v) => updateStyle('positionY', v[0])}/>
+                <div className="flex items-center gap-4">
+                    <div className="flex-1 space-y-1">
+                        <Label className="flex items-center gap-1.5 text-xs"><ArrowLeftRight className="size-3"/> X</Label>
+                        <Slider value={[element.payload.styles.positionX]} onValueChange={(v) => updateStyle('positionX', v[0])}/>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                        <Label className="flex items-center gap-1.5 text-xs"><ArrowUpDown className="size-3"/> Y</Label>
+                        <Slider value={[element.payload.styles.positionY]} onValueChange={(v) => updateStyle('positionY', v[0])}/>
+                    </div>
                 </div>
             </div>
             <Separator/>
@@ -4258,16 +4261,19 @@ export default function CreateTemplatePage() {
                         width: '100%',
                         aspectRatio: '16/9',
                         overflow: 'hidden',
-                        position: 'relative'
+                        position: 'relative',
+                        borderRadius: `${borderRadius - border.width}px`
                     };
 
                     const imageStyle: React.CSSProperties = {
-                        width: '100%',
-                        height: '100%',
+                        width: `${zoom}%`,
+                        height: `${zoom}%`,
                         objectFit: 'cover',
-                        objectPosition: `${positionX}% ${positionY}%`,
-                        transform: `scale(${zoom / 100})`,
-                        transition: 'transform 0.2s, object-position 0.2s'
+                        position: 'absolute',
+                        top: `${positionY}%`,
+                        left: `${positionX}%`,
+                        transform: `translate(-${positionX}%, -${positionY}%)`,
+                        transition: 'transform 0.2s, object-position 0.2s',
                     };
                     
                     const imageElement = (
@@ -5556,15 +5562,6 @@ const LayerPanel = () => {
           </div>
         </DialogContent>
       </Dialog>
-      <FileManagerModal
-        open={isGalleryOpen}
-        onOpenChange={setIsGalleryOpen}
-      />
     </div>
   );
 }
-
-
-
-
-
