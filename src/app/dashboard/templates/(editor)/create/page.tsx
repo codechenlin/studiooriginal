@@ -116,6 +116,8 @@ import {
   Info,
   GalleryVertical,
   Star,
+  CheckCircle,
+  FolderOpen,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -3366,30 +3368,8 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 }) => {
     const { toast } = useToast();
     const [isUploading, setIsUploading] = useState(false);
-    const [activeSource, setActiveSource] = useState<BackgroundSource>('upload');
-    const [galleryFiles, setGalleryFiles] = useState<StorageFile[]>([]);
-    const [isGalleryLoading, setIsGalleryLoading] = useState(false);
-    const [supabaseUrl, setSupabaseUrl] = useState('');
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     
-    const fetchGalleryFiles = useCallback(async () => {
-        setIsGalleryLoading(true);
-        const result = await listFiles();
-        if (result.success && result.data) {
-            setGalleryFiles(result.data.files);
-            setSupabaseUrl(result.data.baseUrl);
-        } else {
-            toast({ title: "Error al cargar la galería", description: result.error, variant: 'destructive' });
-        }
-        setIsGalleryLoading(false);
-    }, [toast]);
-
-    useEffect(() => {
-        if(isGalleryOpen && galleryFiles.length === 0){
-            fetchGalleryFiles();
-        }
-    }, [isGalleryOpen, galleryFiles.length, fetchGalleryFiles, toast])
-
     if(selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'image') return null;
 
     const getElement = (): ImageBlock | null => {
@@ -3452,53 +3432,33 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }
     };
     
-    const handleGallerySelect = (file: StorageFile) => {
-        if (supabaseUrl) {
-            const publicUrl = `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
-            updatePayload('url', publicUrl);
-            setIsGalleryOpen(false);
-        }
+    const handleGallerySelect = (fileUrl: string) => {
+      updatePayload('url', fileUrl);
+      setIsGalleryOpen(false);
     };
-    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
+
     const setDirection = (direction: GradientDirection) => {
         updateBorder('direction', direction);
     };
+    
+    const { border, borderRadius, zoom, positionX, positionY } = element.payload.styles;
 
     return (
         <div className="space-y-4">
+            <ImageBlockGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIcon/>Gestionar Imagen</h3>
              <div className="space-y-2">
                 <Label>Fuente de la Imagen</Label>
                 <div className="space-y-2">
-                    <Input type="file" accept="image/*" onChange={handleFileChange} className="text-xs file:text-primary file:font-semibold" />
+                    <Input type="file" accept="image/*" onChange={handleFileChange} className="text-xs file:text-primary file:font-semibold" disabled={isUploading}/>
+                    {isUploading && <p className="text-xs text-muted-foreground">Subiendo...</p>}
                     <div>
                         <Label htmlFor="image-url-editor" className="text-xs text-muted-foreground">O añade una URL de imagen</Label>
                         <Input id="image-url-editor" value={element.payload.url} onChange={(e) => updatePayload('url', e.target.value)} placeholder="https://example.com/image.png" />
                     </div>
-                     <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full"><GalleryVertical className="mr-2"/>Abrir Galería</Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl h-[70vh]">
-                             <DialogHeader>
-                                <DialogTitle>Galería de Imágenes</DialogTitle>
-                                <DialogDescription>Selecciona una imagen subida previamente.</DialogDescription>
-                            </DialogHeader>
-                            {isGalleryLoading ? <p>Cargando...</p> : (
-                               <ScrollArea className="h-[calc(70vh-150px)]">
-                                 <div className="grid grid-cols-4 gap-2 pr-4">
-                                  {galleryFiles.map(file => (
-                                     <Card key={file.id} onClick={() => handleGallerySelect(file)} className="cursor-pointer hover:ring-2 hover:ring-primary">
-                                        <CardContent className="p-0">
-                                            <img src={getFileUrl(file)} alt={file.name} className="aspect-square object-cover rounded-md"/>
-                                        </CardContent>
-                                     </Card>
-                                  ))}
-                                </div>
-                               </ScrollArea>
-                            )}
-                        </DialogContent>
-                     </Dialog>
+                     <Button variant="outline" className="w-full" onClick={() => setIsGalleryOpen(true)}>
+                        <GalleryVertical className="mr-2"/>Abrir Galería
+                    </Button>
                 </div>
              </div>
             
@@ -3516,7 +3476,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
                     <Slider 
-                        value={[element.payload.styles.zoom]} 
+                        value={[zoom]} 
                         min={100} max={300} 
                         onValueChange={(v) => updateStyle('zoom', v[0], false)}
                         onValueCommit={(v) => updateStyle('zoom', v[0], true)}
@@ -3526,7 +3486,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     <div className="flex-1 space-y-1">
                         <Label className="flex items-center gap-1.5 text-xs"><ArrowLeftRight className="size-3"/> X</Label>
                         <Slider 
-                            value={[element.payload.styles.positionX]} 
+                            value={[positionX]} 
                             onValueChange={(v) => updateStyle('positionX', v[0], false)}
                             onValueCommit={(v) => updateStyle('positionX', v[0], true)}
                         />
@@ -3534,7 +3494,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     <div className="flex-1 space-y-1">
                         <Label className="flex items-center gap-1.5 text-xs"><ArrowUpDown className="size-3"/> Y</Label>
                         <Slider 
-                            value={[element.payload.styles.positionY]} 
+                            value={[positionY]} 
                             onValueChange={(v) => updateStyle('positionY', v[0], false)}
                             onValueCommit={(v) => updateStyle('positionY', v[0], true)}
                         />
@@ -3546,44 +3506,44 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <h3 className="text-sm font-medium text-foreground/80">Estilos del Borde</h3>
                 <div className="space-y-2">
                   <Label>Ancho del Borde</Label>
-                  <Slider value={[element.payload.styles.border.width]} max={20} onValueChange={(v) => updateBorder('width', v[0])} />
+                  <Slider value={[border.width]} max={20} onValueChange={(v) => updateBorder('width', v[0])} />
                 </div>
                 <div className="space-y-2">
                   <Label>Radio del Borde</Label>
-                  <Slider value={[element.payload.styles.borderRadius]} max={100} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
+                  <Slider value={[borderRadius]} max={100} onValueChange={(v) => updateStyle('borderRadius', v[0])} />
                 </div>
                 <div className="space-y-2">
                     <Label>Color del Borde</Label>
-                    <Tabs value={element.payload.styles.border.type} onValueChange={(v) => updateBorder('type', v as any)} className="w-full">
+                    <Tabs value={border.type} onValueChange={(v) => updateBorder('type', v as any)} className="w-full">
                         <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="solid">Sólido</TabsTrigger><TabsTrigger value="gradient">Degradado</TabsTrigger></TabsList>
                     </Tabs>
                     <div className="pt-2 space-y-2">
                         <Label>Color 1</Label>
-                        <ColorPickerAdvanced color={element.payload.styles.border.color1} setColor={c => updateBorder('color1', c)} />
+                        <ColorPickerAdvanced color={border.color1} setColor={c => updateBorder('color1', c)} />
                     </div>
-                    {element.payload.styles.border.type === 'gradient' && (
+                    {border.type === 'gradient' && (
                         <div className="pt-2 space-y-2">
                             <Label>Color 2</Label>
-                            <ColorPickerAdvanced color={element.payload.styles.border.color2 || '#3357FF'} setColor={c => updateBorder('color2', c)} />
+                            <ColorPickerAdvanced color={border.color2 || '#3357FF'} setColor={c => updateBorder('color2', c)} />
                              <div className="space-y-3">
                                 <Label>Dirección del Degradado</Label>
                                 <div className="grid grid-cols-3 gap-2">
                                      <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                               <Button variant={element.payload.styles.border.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button>
+                                               <Button variant={border.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button>
                                             </TooltipTrigger>
                                             <TooltipContent><p>Vertical</p></TooltipContent>
                                         </Tooltip>
                                          <Tooltip>
                                             <TooltipTrigger asChild>
-                                               <Button variant={element.payload.styles.border.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button>
+                                               <Button variant={border.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button>
                                             </TooltipTrigger>
                                             <TooltipContent><p>Horizontal</p></TooltipContent>
                                         </Tooltip>
                                          <Tooltip>
                                             <TooltipTrigger asChild>
-                                               <Button variant={element.payload.styles.border.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button>
+                                               <Button variant={border.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button>
                                             </TooltipTrigger>
                                             <TooltipContent><p>Radial</p></TooltipContent>
                                         </Tooltip>
@@ -3817,58 +3777,304 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
 
 const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
     const [files, setFiles] = useState<StorageFile[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
+    const [supabaseUrl, setSupabaseUrl] = useState('');
+    const [activeSource, setActiveSource] = useState<'gallery' | 'upload' | 'url'>('gallery');
+    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+    const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+    const [selectedFileForPreview, setSelectedFileForPreview] = useState<StorageFile | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isRenaming, setIsRenaming] = useState<string | null>(null);
+    const [tempName, setTempName] = useState("");
+
+    const fetchFiles = useCallback(async () => {
+        setIsLoading(true);
+        const result = await listFiles();
+        if (result.success && result.data) {
+            setFiles(result.data.files);
+            setSupabaseUrl(result.data.baseUrl);
+        } else {
+            toast({ title: 'Error al cargar archivos', description: result.error, variant: 'destructive' });
+        }
+        setIsLoading(false);
+    }, [toast]);
 
     useEffect(() => {
         if (open) {
-            const fetchFiles = async () => {
-                setIsLoading(true);
-                const result = await listFiles();
-                if (result.success && result.data) {
-                    setFiles(result.data.files);
-                } else {
-                    toast({ title: 'Error', description: result.error, variant: 'destructive' });
-                }
-                setIsLoading(false);
-            };
+            fetchFiles();
+        } else {
+            // Reset state when closing
+            setSelectedFiles([]);
+            setIsMultiSelectMode(false);
+            setSelectedFileForPreview(null);
+        }
+    }, [open, fetchFiles]);
+    
+     useEffect(() => {
+        if (files.length > 0 && !selectedFileForPreview) {
+            setSelectedFileForPreview(files[0]);
+        }
+        if (files.length === 0) {
+            setSelectedFileForPreview(null);
+        }
+    }, [files, selectedFileForPreview]);
+
+    const handleFileSelect = (file: StorageFile) => {
+        if (isMultiSelectMode) {
+            setSelectedFiles(prev => 
+                prev.includes(file.name) 
+                    ? prev.filter(name => name !== file.name) 
+                    : [...prev, file.name]
+            );
+        } else {
+            setSelectedFileForPreview(file);
+        }
+    };
+    
+    const handleUpload = async (uploadedFile: File) => {
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+        const result = await uploadFile(formData);
+        setIsUploading(false);
+        if (result.success) {
+            toast({ title: "Subida Exitosa", description: "Tu archivo ha sido subido.", className: "bg-green-500 text-white" });
+            fetchFiles(); // Refresh file list
+        } else {
+            toast({ title: "Error al Subir", description: result.error, variant: 'destructive' });
+        }
+    };
+
+    const handleUrlUpload = () => {
+        // Placeholder for future implementation
+        toast({ title: "Función no disponible", description: "Añadir desde URL se implementará pronto." });
+    };
+
+    const handleDelete = async () => {
+        const pathsToDelete = isMultiSelectMode ? selectedFiles : selectedFileForPreview ? [selectedFileForPreview.name] : [];
+        if (pathsToDelete.length === 0) return;
+
+        const result = await deleteFiles({ paths: pathsToDelete });
+        if (result.success) {
+            toast({ title: "Archivos Eliminados", description: `${pathsToDelete.length} archivo(s) han sido eliminados.` });
+            fetchFiles(); // Refresh
+            setSelectedFiles([]);
+            if(!isMultiSelectMode) setSelectedFileForPreview(null);
+        } else {
+            toast({ title: "Error al Eliminar", description: result.error, variant: 'destructive' });
+        }
+    };
+    
+    const startRename = (file: StorageFile) => {
+      setIsRenaming(file.name);
+      setTempName(file.name.split('/').pop() || "");
+    }
+    
+    const handleRename = async () => {
+        if (!isRenaming || !tempName) return;
+        
+        const oldPath = isRenaming;
+        const result = await renameFile({ oldPath, newName: tempName });
+
+        if (result.success) {
+            toast({ title: "Renombrado", description: "El archivo ha sido renombrado." });
+            fetchFiles();
+        } else {
+            toast({ title: "Error al Renombrar", description: result.error, variant: 'destructive' });
+        }
+        setIsRenaming(null);
+    }
+    
+    const getFileUrl = (filePath: string) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${filePath}`;
+    
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-6xl w-full h-[80vh] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
+                <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-2 text-base"><FolderOpen className="text-primary"/>Gestor de Archivos</DialogTitle>
+                    <DialogClose asChild><Button variant="ghost" size="icon" className="size-7"><XIcon/></Button></DialogClose>
+                </DialogHeader>
+                <div className="flex-1 grid grid-cols-12 overflow-hidden">
+                    <div className="col-span-8 flex flex-col bg-black/30 p-4 border-r border-zinc-800 overflow-y-auto custom-scrollbar">
+                        <div className="flex justify-between items-center mb-4">
+                             <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-zinc-700">
+                                 {(['gallery', 'upload', 'url'] as const).map((source) => (
+                                     <button
+                                        key={source}
+                                        onClick={() => setActiveSource(source)}
+                                        className={cn("led-button relative flex-1 py-2 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2", activeSource === source && "active")}
+                                    >
+                                        <span className="led-light"></span>
+                                        <span className="relative z-20 capitalize">
+                                            {source === 'upload' ? 'Subir' : (source === 'url' ? 'URL' : 'Galería')}
+                                        </span>
+                                    </button>
+                                 ))}
+                             </div>
+                             <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={cn("led-button", isMultiSelectMode && "active")}>
+                                     <span className="led-light"></span>
+                                     <span className="relative z-20">Seleccionar Varios</span>
+                                </Button>
+                                {(isMultiSelectMode ? selectedFiles.length > 0 : !!selectedFileForPreview) && (
+                                     <Button variant="destructive" size="sm" onClick={handleDelete}>
+                                        <Trash2 className="mr-2"/>
+                                        Eliminar
+                                    </Button>
+                                )}
+                             </div>
+                        </div>
+
+                        {activeSource === 'gallery' && (
+                            isLoading ? <div className="text-center p-8">Cargando...</div> :
+                            files.length === 0 ? <div className="text-center text-zinc-500 p-8">No hay archivos en tu galería.</div> :
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                                {files.map(file => (
+                                    <Card 
+                                        key={file.id} 
+                                        onClick={() => handleFileSelect(file)}
+                                        className={cn(
+                                            "relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800 border-2",
+                                            (isMultiSelectMode && selectedFiles.includes(file.name)) || (!isMultiSelectMode && selectedFileForPreview?.id === file.id) ? "border-primary" : "border-transparent hover:border-primary/50"
+                                        )}
+                                    >
+                                       <img src={getFileUrl(file.name)} alt={file.name} className="w-full h-full object-cover"/>
+                                       {isMultiSelectMode && selectedFiles.includes(file.name) && (
+                                          <div className="absolute top-1.5 right-1.5 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>
+                                       )}
+                                       <div className="absolute bottom-0 left-0 w-full p-1.5 bg-gradient-to-t from-black/80 to-transparent">
+                                          <p className="text-xs text-white truncate">{file.name.split('/').pop()}</p>
+                                       </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+                         {activeSource === 'upload' && (
+                            <div className="h-full flex items-center justify-center">
+                                <div className="p-8 border-2 border-dashed border-zinc-700 rounded-lg text-center w-full max-w-md">
+                                    <UploadCloud className="mx-auto size-12 text-zinc-500"/>
+                                    <h3 className="mt-4 text-lg font-semibold">Arrastra y suelta o haz clic para subir</h3>
+                                    <p className="text-xs text-zinc-400 mt-1">PNG, JPG, GIF hasta 10MB</p>
+                                    <Input id="file-upload-input" type="file" className="sr-only" onChange={(e) => e.target.files && handleUpload(e.target.files[0])} disabled={isUploading}/>
+                                    <Button asChild variant="primary" className="mt-4 bg-primary"><Label htmlFor="file-upload-input">{isUploading ? <RefreshCw className="animate-spin mr-2"/> : <Upload className="mr-2"/>}Seleccionar Archivo</Label></Button>
+                                </div>
+                            </div>
+                        )}
+                        {activeSource === 'url' && (
+                            <div className="h-full flex items-center justify-center">
+                                <div className="p-8 border border-zinc-800 rounded-lg text-center w-full max-w-md bg-black/20">
+                                     <LinkIcon className="mx-auto size-12 text-zinc-500"/>
+                                     <h3 className="mt-4 text-lg font-semibold">Añadir desde URL</h3>
+                                     <p className="text-xs text-zinc-400 mt-1">Pega una URL de imagen para subirla a tu galería.</p>
+                                     <div className="flex gap-2 mt-4">
+                                        <Input placeholder="https://..." className="bg-zinc-800 border-zinc-700"/>
+                                        <Button onClick={handleUrlUpload}>Añadir</Button>
+                                     </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="col-span-4 p-4 space-y-4 overflow-y-auto custom-scrollbar">
+                        {selectedFileForPreview ? (
+                            <>
+                                <div>
+                                    <h4 className="text-sm font-semibold mb-2">Vista Previa</h4>
+                                    <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                                        <img src={getFileUrl(selectedFileForPreview.name)} alt="Preview" className="w-full h-full object-contain"/>
+                                    </div>
+                                </div>
+                                <div className="space-y-3 text-sm">
+                                    <h4 className="text-sm font-semibold">Información</h4>
+                                    <div className="p-3 bg-black/20 rounded-lg border border-zinc-800 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            {isRenaming === selectedFileForPreview.name ? (
+                                                <Input value={tempName} onChange={e => setTempName(e.target.value)} onBlur={handleRename} onKeyDown={e => e.key === 'Enter' && handleRename()} autoFocus className="h-7 text-xs"/>
+                                            ) : (
+                                               <p className="font-mono text-xs truncate flex-1">{selectedFileForPreview.name.split('/').pop()}</p>
+                                            )}
+                                            <Button variant="ghost" size="icon" className="size-6 shrink-0" onClick={() => startRename(selectedFileForPreview)}><Pencil className="size-3.5"/></Button>
+                                        </div>
+                                        <p className="text-xs text-zinc-400">Tamaño: {(selectedFileForPreview.metadata.size / 1024).toFixed(2)} KB</p>
+                                        <p className="text-xs text-zinc-400">Subido: {format(new Date(selectedFileForPreview.created_at), 'dd MMM, yyyy')}</p>
+                                    </div>
+                                </div>
+                                 <div className="space-y-2">
+                                     <h4 className="text-sm font-semibold">Acciones</h4>
+                                     <Button variant="outline" className="w-full" onClick={() => navigator.clipboard.writeText(getFileUrl(selectedFileForPreview.name))}>
+                                        <ClipboardCheck className="mr-2"/>Copiar URL Pública
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-center text-zinc-500">
+                                <div>
+                                    <ImageIcon className="size-16 mx-auto"/>
+                                    <p className="mt-2 text-sm">Selecciona un archivo</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+const ImageBlockGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolean, onOpenChange: (open: boolean) => void, onSelect: (url: string) => void }) => {
+    const [files, setFiles] = useState<StorageFile[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+    const [supabaseUrl, setSupabaseUrl] = useState('');
+
+    const fetchFiles = useCallback(async () => {
+        setIsLoading(true);
+        const result = await listFiles();
+        if (result.success && result.data) {
+            setFiles(result.data.files);
+            setSupabaseUrl(result.data.baseUrl);
+        } else {
+            toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        }
+        setIsLoading(false);
+    }, [toast]);
+
+    useEffect(() => {
+        if (open) {
             fetchFiles();
         }
-    }, [open, toast]);
+    }, [open, fetchFiles]);
+    
+    const getFileUrl = (filePath: string) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${filePath}`;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+            <DialogContent className="max-w-4xl h-[70vh] bg-card/90 backdrop-blur-sm">
                 <DialogHeader>
-                    <DialogTitle>Gestor de Archivos</DialogTitle>
-                    <DialogDescription>
-                        Gestiona, sube y elimina tus archivos aquí.
-                    </DialogDescription>
+                    <DialogTitle>Galería de Imágenes</DialogTitle>
+                    <DialogDescription>Selecciona una imagen subida previamente para tu bloque de contenido.</DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-y-auto">
-                    {isLoading ? (
-                        <p>Cargando archivos...</p>
-                    ) : (
-                        <div className="grid grid-cols-4 gap-4">
-                            {files.map(file => (
-                                <Card key={file.id}>
-                                    <CardContent className="p-2">
-                                        <div className="aspect-square bg-muted rounded-md flex items-center justify-center">
-                                            <FileIcon className="size-8 text-muted-foreground" />
-                                        </div>
-                                        <p className="text-xs truncate mt-2">{file.name.split('/').pop()}</p>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </div>
-                 <DialogFooter>
-                    <Button onClick={() => onOpenChange(false)}>Cerrar</Button>
-                </DialogFooter>
+                {isLoading ? (
+                    <div className="flex items-center justify-center h-full"><p>Cargando archivos...</p></div>
+                ) : (
+                   <ScrollArea className="h-full">
+                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 pr-4">
+                      {files.map(file => (
+                         <Card key={file.id} onClick={() => onSelect(getFileUrl(file.name))} className="cursor-pointer hover:ring-2 hover:ring-primary overflow-hidden">
+                            <CardContent className="p-0 aspect-square">
+                                <img src={getFileUrl(file.name)} alt={file.name.split('/').pop()} className="w-full h-full object-cover"/>
+                            </CardContent>
+                            <CardFooter className="p-2">
+                               <p className="text-xs truncate">{file.name.split('/').pop()}</p>
+                            </CardFooter>
+                         </Card>
+                      ))}
+                    </div>
+                   </ScrollArea>
+                )}
             </DialogContent>
         </Dialog>
-    );
+    )
 };
 
 
@@ -4574,7 +4780,7 @@ export default function CreateTemplatePage() {
                         padding: '8px',
                         boxSizing: 'border-box',
                     };
-
+                    
                     const outerWrapperStyle: React.CSSProperties = {
                         width: '100%',
                         height: 'auto',
@@ -4584,36 +4790,47 @@ export default function CreateTemplatePage() {
                         borderRadius: `${borderRadius}px`,
                     };
 
+                    const borderGradient = border.type === 'gradient' 
+                        ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : '180deg'}, ${border.color1}, ${border.color2})` 
+                        : 'none';
+                    
+                    const borderImageSlice = border.type === 'gradient' ? 1 : undefined;
+
                     const borderStyle: React.CSSProperties = {
                         position: 'absolute',
                         inset: 0,
                         borderRadius: 'inherit',
-                        borderWidth: `${border.width}px`,
-                        borderStyle: 'solid',
-                        borderColor: border.type === 'solid' ? border.color1 : 'transparent',
-                        backgroundImage: border.type === 'gradient'
-                            ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : '180deg'}, ${border.color1}, ${border.color2})`
-                            : 'none',
-                        backgroundOrigin: 'border-box',
+                        border: `${border.width}px solid ${border.type === 'solid' ? border.color1 : 'transparent'}`,
+                        borderImage: border.type === 'gradient' ? borderGradient : undefined,
+                        borderImageSlice: borderImageSlice,
                         boxSizing: 'border-box',
+                    };
+                    
+                    const imageContainerStyle: React.CSSProperties = {
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        overflow: 'hidden',
+                        borderRadius: 'inherit'
                     };
 
                     const imageStyle: React.CSSProperties = {
-                        width: `${zoom}%`,
-                        height: 'auto',
-                        maxWidth: 'none',
-                        position: 'absolute',
-                        top: `${positionY}%`,
-                        left: `${positionX}%`,
-                        transform: `translate(-50%, -50%)`,
-                        transition: 'transform 0.2s',
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: `${positionX}% ${positionY}%`,
+                        transform: `scale(${zoom / 100})`,
+                        transition: 'transform 0.2s, object-position 0.2s',
                     };
+                    
 
                     const imageElement = (
                         <div style={containerStyle}>
                             <div style={outerWrapperStyle}>
+                                <div style={imageContainerStyle}>
+                                    <img src={url} alt={alt} style={imageStyle} />
+                                </div>
                                 <div style={borderStyle}></div>
-                                <img src={url} alt={alt} style={imageStyle} />
                             </div>
                         </div>
                     );
