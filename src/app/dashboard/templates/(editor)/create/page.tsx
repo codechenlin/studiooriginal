@@ -4,7 +4,7 @@
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -1862,7 +1862,7 @@ const InteractiveHeadingEditor = ({ selectedElement, canvasContent, setCanvasCon
           if (row.id !== selectedElement.wrapperId || row.type !== 'wrapper') return row;
           const newBlocks = row.payload.blocks.map(block => {
               if (block.id === selectedElement.primitiveId && block.type === 'heading-interactive') {
-                  return { ...block, payload: { ...block.payload, [key]: value }};
+                  return { ...block, payload: { ...block.payload, [key]: value } };
               }
               return block;
           })
@@ -1875,7 +1875,7 @@ const InteractiveHeadingEditor = ({ selectedElement, canvasContent, setCanvasCon
           if (row.id !== selectedElement.wrapperId || row.type !== 'wrapper') return row;
           const newBlocks = row.payload.blocks.map(block => {
               if (block.id === selectedElement.primitiveId && block.type === 'heading-interactive') {
-                  return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } }};
+                  return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } } };
               }
               return block;
           })
@@ -3155,7 +3155,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
     onApply: (state?: WrapperStyles['backgroundImage']) => void;
     initialValue?: WrapperStyles['backgroundImage'];
 }) => {
-    const [internalState, setInternalState] = useState<WrapperStyles['backgroundImage']>();
+    const [internalState, setInternalState] = useState(initialValue);
     const [activeSource, setActiveSource] = useState<BackgroundSource>('upload');
     const [isUploading, setIsUploading] = useState(false);
     const [galleryFiles, setGalleryFiles] = useState<StorageFile[]>([]);
@@ -3163,17 +3163,22 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
     const [supabaseUrl, setSupabaseUrl] = useState('');
     const { toast } = useToast();
 
+    const handleUpdateInternalState = (key: keyof NonNullable<typeof internalState>, value: any) => {
+      setInternalState(prevState => {
+        const defaultState: NonNullable<WrapperStyles['backgroundImage']> = {
+          url: '', fit: 'cover', positionX: 50, positionY: 50, zoom: 100,
+        };
+        const currentState = prevState || defaultState;
+        return { ...currentState, [key]: value };
+      });
+    };
+    
     useEffect(() => {
         const defaultState: NonNullable<WrapperStyles['backgroundImage']> = {
-            url: '',
-            fit: 'cover' as BackgroundFit,
-            positionX: 50,
-            positionY: 50,
-            zoom: 100,
+            url: '', fit: 'cover', positionX: 50, positionY: 50, zoom: 100,
         };
         const stateToSet = (initialValue && initialValue.url) ? { ...defaultState, ...initialValue } : defaultState;
         setInternalState(stateToSet);
-
         if (open) {
             setActiveSource(initialValue?.url ? 'gallery' : 'upload');
         }
@@ -3217,16 +3222,6 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
         }
     };
     
-    const handleUpdateInternalState = (key: keyof NonNullable<typeof internalState>, value: any) => {
-       setInternalState(prevState => {
-            const defaultState: NonNullable<WrapperStyles['backgroundImage']> = {
-                url: '', fit: 'cover', positionX: 50, positionY: 50, zoom: 100,
-            };
-            const currentState = prevState || defaultState;
-            return { ...currentState, [key]: value };
-        });
-    };
-
     const handleApply = () => {
         onApply(internalState?.url ? internalState : undefined);
         onOpenChange(false);
@@ -3827,6 +3822,63 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
         </div>
     );
 }
+
+const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
+    const [files, setFiles] = useState<StorageFile[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (open) {
+            const fetchFiles = async () => {
+                setIsLoading(true);
+                const result = await listFiles();
+                if (result.success && result.data) {
+                    setFiles(result.data.files);
+                } else {
+                    toast({ title: 'Error', description: result.error, variant: 'destructive' });
+                }
+                setIsLoading(false);
+            };
+            fetchFiles();
+        }
+    }, [open, toast]);
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Gestor de Archivos</DialogTitle>
+                    <DialogDescription>
+                        Gestiona, sube y elimina tus archivos aquí.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-y-auto">
+                    {isLoading ? (
+                        <p>Cargando archivos...</p>
+                    ) : (
+                        <div className="grid grid-cols-4 gap-4">
+                            {files.map(file => (
+                                <Card key={file.id}>
+                                    <CardContent className="p-2">
+                                        <div className="aspect-square bg-muted rounded-md flex items-center justify-center">
+                                            <FileIcon className="size-8 text-muted-foreground" />
+                                        </div>
+                                        <p className="text-xs truncate mt-2">{file.name.split('/').pop()}</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                 <DialogFooter>
+                    <Button onClick={() => onOpenChange(false)}>Cerrar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 
 export default function CreateTemplatePage() {
   const router = useRouter();
@@ -4524,51 +4576,54 @@ export default function CreateTemplatePage() {
                     const { border, borderRadius, zoom, positionX, positionY } = styles;
                 
                     const containerStyle: React.CSSProperties = {
-                      borderRadius: `${borderRadius}px`,
-                      padding: `${border.width}px`,
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      overflow: 'hidden',
-                      position: 'relative'
+                        width: '100%',
+                        padding: '8px',
+                        boxSizing: 'border-box'
                     };
-                    
-                    if (border.width > 0) {
-                      if (border.type === 'solid') {
-                        containerStyle.background = border.color1;
-                      } else if (border.type === 'gradient') {
-                        const { direction, color1, color2 } = border;
-                        if (direction === 'radial') {
-                          containerStyle.background = `radial-gradient(circle, ${color1}, ${color2})`;
-                        } else {
-                          const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
-                          containerStyle.background = `linear-gradient(${angle}, ${color1}, ${color2})`;
-                        }
-                      }
-                    }
-
+                
                     const imageWrapperStyle: React.CSSProperties = {
                         width: '100%',
                         paddingTop: '75%', // Aspect ratio 4:3
                         overflow: 'hidden',
                         position: 'relative',
-                        borderRadius: `${Math.max(0, borderRadius - border.width)}px`,
+                        borderRadius: `${borderRadius}px`,
                         background: 'hsl(var(--muted)/0.2)'
                     };
-
+                
                     const imageStyle: React.CSSProperties = {
+                        position: 'absolute',
                         width: `${zoom}%`,
                         height: 'auto',
-                        position: 'absolute',
-                        top: `${positionY}%`,
-                        left: `${positionX}%`,
-                        transform: `translate(-${positionX}%, -${positionY}%)`,
+                        top: '50%',
+                        left: '50%',
+                        transform: `translate(-${positionX}%, -${positionY}%) scale(${zoom / 100})`,
                         transition: 'transform 0.2s, top 0.2s, left 0.2s',
                     };
-                    
+                
                     const imageElement = (
                        <div style={containerStyle}>
-                         <div style={imageWrapperStyle}>
-                           <img src={url} alt={alt} style={imageStyle}/>
+                         <div style={{ ...imageWrapperStyle, position: 'relative' }}>
+                             <div style={{
+                                 position: 'absolute',
+                                 inset: 0,
+                                 borderRadius: `${borderRadius}px`,
+                                 border: `${border.width}px solid transparent`,
+                                 backgroundImage: border.type === 'gradient' 
+                                     ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : '180deg'}, ${border.color1}, ${border.color2})` 
+                                     : 'none',
+                                 backgroundColor: border.type === 'solid' ? border.color1 : 'transparent',
+                                 backgroundOrigin: 'border-box',
+                                 boxShadow: `inset 0 0 0 ${border.width}px transparent`,
+                             }}>
+                                <div style={{
+                                    ...imageWrapperStyle,
+                                    position: 'absolute',
+                                    inset: `${border.width}px`,
+                                    borderRadius: `${Math.max(0, borderRadius - border.width)}px`
+                                }}>
+                                    <img src={url} alt={alt} style={imageStyle}/>
+                                </div>
+                            </div>
                          </div>
                        </div>
                     );
@@ -5317,64 +5372,6 @@ const LayerPanel = () => {
     );
 };
 
-const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
-    // This is a placeholder for the full file manager.
-    // For now, it just shows a list of files.
-    const [files, setFiles] = useState<StorageFile[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if (open) {
-            const fetchFiles = async () => {
-                setIsLoading(true);
-                const result = await listFiles();
-                if (result.success && result.data) {
-                    setFiles(result.data.files);
-                } else {
-                    toast({ title: 'Error', description: result.error, variant: 'destructive' });
-                }
-                setIsLoading(false);
-            };
-            fetchFiles();
-        }
-    }, [open, toast]);
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
-                <DialogHeader>
-                    <DialogTitle>Gestor de Archivos</DialogTitle>
-                    <DialogDescription>
-                        Gestiona, sube y elimina tus archivos aquí.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="flex-1 overflow-y-auto">
-                    {isLoading ? (
-                        <p>Cargando archivos...</p>
-                    ) : (
-                        <div className="grid grid-cols-4 gap-4">
-                            {files.map(file => (
-                                <Card key={file.id}>
-                                    <CardContent className="p-2">
-                                        <div className="aspect-square bg-muted rounded-md flex items-center justify-center">
-                                            <FileIcon className="size-8 text-muted-foreground" />
-                                        </div>
-                                        <p className="text-xs truncate mt-2">{file.name.split('/').pop()}</p>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </div>
-                 <DialogFooter>
-                    <Button onClick={() => onOpenChange(false)}>Cerrar</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
       <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
@@ -5915,7 +5912,10 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
           </div>
         </DialogContent>
       </Dialog>
-      <FileManagerModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} />
+      <FileManagerModal
+        open={isGalleryOpen}
+        onOpenChange={setIsGalleryOpen}
+      />
     </div>
   );
 }
