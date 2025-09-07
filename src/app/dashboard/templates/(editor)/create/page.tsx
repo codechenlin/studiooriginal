@@ -4,7 +4,7 @@
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -175,7 +175,7 @@ const popularEmojis = Array.from(new Set([
     '🔴', '🔵', '⚫️', '⚪️', '🔶', '🔷', '▪️', '▫️', '▲', '▼',
     '←', '↑', '→', '↓', '↔️', '↕️', '↩️', '↪️', '➕', '➖',
     '➗', '✖️', '💲', '💶', '💷', '💴', '🔒', '🔓', '🔑', '🔔',
-    '🔕', '🔎', '💡', '💤', '🌍', '🌎', '🌏'
+    '🕕', '🔎', '💡', '💤', '🌍', '🌎', '🌏'
 ]));
   
 const googleFonts = [
@@ -465,8 +465,10 @@ interface RatingBlock extends BaseBlock {
     rating: number; // 0 to 5
     styles: {
       starSize: number;
-      cornerRadius: number; // For star points
+      cornerRadius: number;
       alignment: TextAlign;
+      paddingY: number;
+      spacing: number;
       filled: {
         type: 'solid' | 'gradient';
         color1: string;
@@ -3239,17 +3241,6 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
     return (
        <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl w-full h-[550px] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
-            <div className="absolute inset-0 z-0 opacity-5">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <div key={i} className="particle" style={{
-                  '--x-start': `${Math.random() * 100}%`,
-                  '--x-end': `${Math.random() * 100 - 50}%`,
-                  '--size': `${Math.random() * 3 + 1}px`,
-                  '--duration': `${Math.random() * 5 + 5}s`,
-                  '--delay': `-${Math.random() * 5}s`,
-                } as React.CSSProperties}/>
-              ))}
-            </div>
             <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10">
                 <DialogTitle className="flex items-center gap-2 text-base"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
             </DialogHeader>
@@ -3412,7 +3403,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     if(!element) return null;
 
-    const updatePayload = (key: keyof ImageBlock['payload'], value: any) => {
+    const updatePayload = (key: keyof ImageBlock['payload'], value: any, record: boolean = true) => {
         setCanvasContent(prev => prev.map(row => {
           if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
           return {
@@ -3431,30 +3422,11 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                   })
               }
           };
-        }), true);
+        }), record);
     };
   
     const updateStyle = (key: keyof ImageBlock['payload']['styles'], value: any, record: boolean = true) => {
-        const newPayload = { ...element.payload, styles: { ...element.payload.styles, [key]: value } };
-        setCanvasContent(prev => prev.map(row => {
-          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-           return {
-              ...row,
-              payload: {
-                  ...row.payload,
-                  columns: row.payload.columns.map(col => {
-                      if (col.id !== selectedElement.columnId) return col;
-                      return {
-                          ...col,
-                          blocks: col.blocks.map(block => {
-                              if (block.id !== selectedElement.primitiveId || block.type !== 'image') return block;
-                              return { ...block, payload: newPayload };
-                          })
-                      };
-                  })
-              }
-          };
-        }), record);
+        updatePayload('styles', { ...element.payload.styles, [key]: value }, record);
     };
 
     const updateBorder = (key: string, value: any) => {
@@ -3517,7 +3489,9 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                                  <div className="grid grid-cols-4 gap-2 pr-4">
                                   {galleryFiles.map(file => (
                                      <Card key={file.id} onClick={() => handleGallerySelect(file)} className="cursor-pointer hover:ring-2 hover:ring-primary">
-                                        <img src={getFileUrl(file)} alt={file.name} className="aspect-square object-cover rounded-md"/>
+                                        <CardContent className="p-0">
+                                            <img src={getFileUrl(file)} alt={file.name} className="aspect-square object-cover rounded-md"/>
+                                        </CardContent>
                                      </Card>
                                   ))}
                                 </div>
@@ -3538,14 +3512,14 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
             <Separator />
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-foreground/80">Ajustes de la Imagen</h3>
+                <h3 className="text-sm font-medium text-foreground/80">Ajustes de la Imagen</h3>
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
                     <Slider 
                         value={[element.payload.styles.zoom]} 
                         min={100} max={300} 
                         onValueChange={(v) => updateStyle('zoom', v[0], false)}
-                        onValueCommit={() => setCanvasContent(prev => [...prev], true)}
+                        onValueCommit={(v) => updateStyle('zoom', v[0], true)}
                     />
                 </div>
                 <div className="flex items-center gap-4">
@@ -3554,7 +3528,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         <Slider 
                             value={[element.payload.styles.positionX]} 
                             onValueChange={(v) => updateStyle('positionX', v[0], false)}
-                            onValueCommit={() => setCanvasContent(prev => [...prev], true)}
+                            onValueCommit={(v) => updateStyle('positionX', v[0], true)}
                         />
                     </div>
                     <div className="flex-1 space-y-1">
@@ -3562,7 +3536,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                         <Slider 
                             value={[element.payload.styles.positionY]} 
                             onValueChange={(v) => updateStyle('positionY', v[0], false)}
-                            onValueCommit={() => setCanvasContent(prev => [...prev], true)}
+                            onValueCommit={(v) => updateStyle('positionY', v[0], true)}
                         />
                     </div>
                 </div>
@@ -3691,7 +3665,15 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
             <div className="space-y-2">
                 <Label>Redondez de Esquinas</Label>
-                <Slider value={[element.payload.styles.cornerRadius]} min={0} max={10} onValueChange={v => updateStyle('cornerRadius', v[0])} />
+                <Slider value={[element.payload.styles.cornerRadius]} min={0} max={5} step={0.1} onValueChange={v => updateStyle('cornerRadius', v[0])} />
+            </div>
+            <div className="space-y-2">
+                <Label>Espaciado entre Estrellas</Label>
+                <Slider value={[element.payload.styles.spacing]} min={0} max={20} step={1} onValueChange={v => updateStyle('spacing', v[0])} />
+            </div>
+            <div className="space-y-2">
+                <Label>Relleno Vertical (Arriba/Abajo)</Label>
+                <Slider value={[element.payload.styles.paddingY]} min={0} max={50} step={1} onValueChange={v => updateStyle('paddingY', v[0])} />
             </div>
             <Separator />
             <h3 className="text-sm font-medium text-foreground/80">Relleno de Estrellas Llenas</h3>
@@ -3770,9 +3752,19 @@ const ColorEditor = ({ subStyle, styles, updateFunc }: {
 
 const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { rating, styles } = block.payload;
-    const { filled, unfilled, border, cornerRadius, starSize, alignment } = styles;
+    const { filled, unfilled, border, cornerRadius, starSize, alignment, paddingY, spacing } = styles;
 
-    const starPath = "M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279L12 19.413l-7.416 4.004L6.064 15.134 0 9.306l8.332-1.151z";
+    const starPath = React.useCallback((x: number, y: number, r: number, points: number = 5, inset: number = 0.5) => {
+        let path = '';
+        for (let i = 0; i < points * 2; i++) {
+            const radius = i % 2 === 0 ? r : r * inset;
+            const angle = (i * Math.PI) / points - Math.PI / 2;
+            const px = x + radius * Math.cos(angle);
+            const py = y + radius * Math.sin(angle);
+            path += (i === 0 ? 'M' : 'L') + `${px},${py} `;
+        }
+        return path + 'Z';
+    }, []);
 
     const renderStar = (index: number) => {
         const fillValue = Math.max(0, Math.min(1, rating - index));
@@ -3785,7 +3777,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
         };
         
         return (
-            <svg key={index} width={starSize} height={starSize} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+            <svg key={index} width={starSize} height={starSize} viewBox="-1 -1 26 26" style={{ flexShrink: 0 }}>
                  <defs>
                     {(['filled', 'unfilled', 'border'] as const).map(type => {
                         const config = styles[type];
@@ -3798,12 +3790,12 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                         return null;
                     })}
                     <clipPath id={`clip-${uniqueId}`}>
-                       <rect x="0" y="0" width={24 * fillValue} height="24" />
+                       <rect x="-1" y="-1" width={26 * fillValue} height="28" />
                     </clipPath>
                  </defs>
-                <path d={starPath} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" style={{ paintOrder: 'stroke' }} />
-                <path d={starPath} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} />
-                { border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" /> }
+                <path d={starPath(12, 12, 12)} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" strokeLinecap="round" style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }} rx={cornerRadius} ry={cornerRadius} />
+                <path d={starPath(12, 12, 12)} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} rx={cornerRadius} ry={cornerRadius} />
+                { border.width > 0 && <path d={starPath(12, 12, 12)} fill="none" stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" strokeLinecap="round" style={{ vectorEffect: 'non-scaling-stroke' }} rx={cornerRadius} ry={cornerRadius} /> }
             </svg>
         );
     };
@@ -3815,8 +3807,8 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     };
 
     return (
-        <div className={cn("flex w-full p-2", alignClass[alignment])}>
-            <div className="flex gap-1">
+        <div className={cn("flex w-full", alignClass[alignment])} style={{paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px`}}>
+            <div className="flex" style={{ gap: `${spacing}px`}}>
                 {Array.from({ length: 5 }).map((_, i) => renderStar(i))}
             </div>
         </div>
@@ -4224,8 +4216,10 @@ export default function CreateTemplatePage() {
                     rating: 4.5,
                     styles: {
                         starSize: 40,
-                        cornerRadius: 2,
+                        cornerRadius: 0,
                         alignment: 'center',
+                        paddingY: 10,
+                        spacing: 4,
                         filled: { type: 'solid', color1: '#FFD700', color2: '#FFA500', direction: 'horizontal' },
                         unfilled: { type: 'solid', color1: '#444444' },
                         border: { width: 1, type: 'solid', color1: '#666666' },
@@ -4570,70 +4564,66 @@ export default function CreateTemplatePage() {
                         })}
                     </p>
                 );
-              case 'image': {
+                case 'image': {
                     const imageBlock = block as ImageBlock;
                     const { url, alt, styles, link } = imageBlock.payload;
-                    const { border, borderRadius, zoom, positionX, positionY } = styles;
-                
+                    const { borderRadius, zoom, positionX, positionY, border } = styles;
+
                     const containerStyle: React.CSSProperties = {
                         width: '100%',
                         padding: '8px',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
                     };
-                
-                    const imageWrapperStyle: React.CSSProperties = {
+
+                    const outerWrapperStyle: React.CSSProperties = {
                         width: '100%',
-                        paddingTop: '75%', // Aspect ratio 4:3
-                        overflow: 'hidden',
+                        height: 'auto',
+                        aspectRatio: '16 / 9',
                         position: 'relative',
+                        overflow: 'hidden',
                         borderRadius: `${borderRadius}px`,
-                        background: 'hsl(var(--muted)/0.2)'
                     };
-                
-                    const imageStyle: React.CSSProperties = {
+
+                    const borderStyle: React.CSSProperties = {
                         position: 'absolute',
+                        inset: 0,
+                        borderRadius: 'inherit',
+                        borderWidth: `${border.width}px`,
+                        borderStyle: 'solid',
+                        borderColor: border.type === 'solid' ? border.color1 : 'transparent',
+                        backgroundImage: border.type === 'gradient'
+                            ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : '180deg'}, ${border.color1}, ${border.color2})`
+                            : 'none',
+                        backgroundOrigin: 'border-box',
+                        boxSizing: 'border-box',
+                    };
+
+                    const imageStyle: React.CSSProperties = {
                         width: `${zoom}%`,
                         height: 'auto',
-                        top: '50%',
-                        left: '50%',
-                        transform: `translate(-${positionX}%, -${positionY}%) scale(${zoom / 100})`,
-                        transition: 'transform 0.2s, top 0.2s, left 0.2s',
+                        maxWidth: 'none',
+                        position: 'absolute',
+                        top: `${positionY}%`,
+                        left: `${positionX}%`,
+                        transform: `translate(-50%, -50%)`,
+                        transition: 'transform 0.2s',
                     };
-                
-                    const imageElement = (
-                       <div style={containerStyle}>
-                         <div style={{ ...imageWrapperStyle, position: 'relative' }}>
-                             <div style={{
-                                 position: 'absolute',
-                                 inset: 0,
-                                 borderRadius: `${borderRadius}px`,
-                                 border: `${border.width}px solid transparent`,
-                                 backgroundImage: border.type === 'gradient' 
-                                     ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : '180deg'}, ${border.color1}, ${border.color2})` 
-                                     : 'none',
-                                 backgroundColor: border.type === 'solid' ? border.color1 : 'transparent',
-                                 backgroundOrigin: 'border-box',
-                                 boxShadow: `inset 0 0 0 ${border.width}px transparent`,
-                             }}>
-                                <div style={{
-                                    ...imageWrapperStyle,
-                                    position: 'absolute',
-                                    inset: `${border.width}px`,
-                                    borderRadius: `${Math.max(0, borderRadius - border.width)}px`
-                                }}>
-                                    <img src={url} alt={alt} style={imageStyle}/>
-                                </div>
-                            </div>
-                         </div>
-                       </div>
-                    );
 
+                    const imageElement = (
+                        <div style={containerStyle}>
+                            <div style={outerWrapperStyle}>
+                                <div style={borderStyle}></div>
+                                <img src={url} alt={alt} style={imageStyle} />
+                            </div>
+                        </div>
+                    );
+                
                     if (link && link.url && link.url !== '#') {
                         return (
                             <a href={link.url} target={link.openInNewTab ? '_blank' : '_self'} rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
                                 {imageElement}
                             </a>
-                        )
+                        );
                     }
                 
                     return imageElement;
