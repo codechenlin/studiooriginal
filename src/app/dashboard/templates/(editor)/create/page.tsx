@@ -127,7 +127,7 @@ import {
   Info,
   GalleryVertical,
   Star,
-  CheckCircle,
+  CheckCircle as CheckCircleIcon,
   FolderOpen,
   Image as LucideImage,
   Film,
@@ -180,7 +180,7 @@ const columnOptions = [
     { num: 1, icon: () => <div className="w-full h-8 bg-muted rounded-sm border border-border"></div> },
     { num: 2, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/2 h-full bg-muted rounded-sm border border-border"></div></div> },
     { num: 3, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/3 h-full bg-muted rounded-sm border border-border"></div></div> },
-    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
+    { num: 4, icon: () => <div className="flex w-full h-8 gap-1"><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div><div className="w-1/4 h-full bg-muted rounded-sm border border-border"></div></div> },
 ];
 
 const popularEmojis = Array.from(new Set([
@@ -3260,6 +3260,10 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
         <DialogContent className="max-w-4xl w-full h-[550px] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
             <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10">
                 <DialogTitle className="flex items-center gap-2 text-base"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
+                 <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+                    <XIcon className="h-4 w-4" />
+                    <span className="sr-only">Close</span>
+                </DialogClose>
             </DialogHeader>
             <div className="flex-1 grid grid-cols-12 overflow-hidden z-10">
                 <div className="col-span-7 flex flex-col bg-black/30 p-4 border-r border-zinc-800">
@@ -3745,9 +3749,10 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
         
         const starPath = starStyle === 'pointed' 
            ? "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-           : "M12 17.8c-1.3 0-2.6.5-3.8 1.5-1.1.9-2 2.2-2.3 3.6-.3 1.4.3 2.9 1.5 3.8.5.3 1.1.5 1.6.5.6 0 1.1-.2 1.6-.5l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0 .5-.3 1.1-.5 1.6-.5.6 0 1.1.2 1.6.5 1.2.9 1.8 2.3 1.5 3.8-.3 1.4-1.2 2.7-2.3 3.6-1.2 1-2.5 1.5-3.8 1.5-1.3 0-2.6-.5-3.8-1.5s-2-2.2-2.3-3.6c-.3-1.4.3-2.9 1.5-3.8.5-.3 1.1-.5 1.6-.5z";
-
+           : "M12,2.6l2.3,4.7l5.2,0.8l-3.8,3.7l0.9,5.2L12,14.3l-4.6,2.4l0.9-5.2L4.5,8.1l5.2-0.8L12,2.6z";
         
+        const strokeLineJoin = starStyle === 'pointed' ? 'miter' : 'round';
+
         return (
             <svg key={index} width={starSize} height={starSize} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
                  <defs>
@@ -3765,9 +3770,9 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                        <rect x="0" y="0" width={24 * fillValue} height="24" />
                     </clipPath>
                  </defs>
-                <path d={starPath} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={starStyle === 'rounded' ? 'round' : 'miter'} strokeLinecap="round" style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }} />
+                <path d={starPath} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={strokeLineJoin} strokeLinecap="round" style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }} />
                 <path d={starPath} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} />
-                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={starStyle === 'rounded' ? 'round' : 'miter'} strokeLinecap="round" style={{ vectorEffect: 'non-scaling-stroke' }} /> }
+                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={strokeLineJoin} strokeLinecap="round" style={{ vectorEffect: 'non-scaling-stroke' }} /> }
             </svg>
         );
     };
@@ -3922,16 +3927,16 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                                  ))}
                              </div>
                             <Separator orientation="vertical" className="h-6 bg-border/20 dark:bg-zinc-700"/>
-                             <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
-                                 <button onClick={() => setFilterType('images')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-muted-foreground", filterType === 'images' && "active text-foreground dark:text-white")}>
-                                    <span className="led-light"></span>
-                                    <span className="relative z-20 capitalize"><LucideImage className="inline-block mr-2 size-4"/>Imágenes</span>
-                                 </button>
-                                  <button onClick={() => setFilterType('gifs')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-muted-foreground", filterType === 'gifs' && "active text-foreground dark:text-white")}>
-                                    <span className="led-light"></span>
-                                    <span className="relative z-20 capitalize"><Film className="inline-block mr-2 size-4"/>GIFs</span>
-                                 </button>
-                             </div>
+                            <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
+                                <button onClick={() => setFilterType('images')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-muted-foreground", filterType === 'images' && "active text-foreground dark:text-white")}>
+                                   <span className="led-light"></span>
+                                   <span className="relative z-20 capitalize"><LucideImage className="inline-block mr-2 size-4"/>Imágenes</span>
+                                </button>
+                                 <button onClick={() => setFilterType('gifs')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-muted-foreground", filterType === 'gifs' && "active text-foreground dark:text-white")}>
+                                   <span className="led-light"></span>
+                                   <span className="relative z-20 capitalize"><Film className="inline-block mr-2 size-4"/>GIFs</span>
+                                </button>
+                            </div>
                              <div className="flex-grow"/>
                              <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={cn("led-button border-border/50 dark:border-zinc-600 hover:bg-muted dark:hover:bg-white/10 hover:border-border dark:hover:border-zinc-400", isMultiSelectMode && "active")}>
@@ -4814,60 +4819,41 @@ export default function CreateTemplatePage() {
                     };
                     
                     const borderWrapperStyle: React.CSSProperties = {
-                        borderRadius: `${borderRadius}px`,
-                        padding: `${border.width}px`,
-                        position: 'relative',
-                        boxSizing: 'border-box',
+                      position: 'relative',
+                      width: '100%',
+                      paddingBottom: '75%', // Aspect Ratio 4:3
+                      borderRadius: `${borderRadius}px`,
+                      overflow: 'hidden',
                     };
 
-                    if (border.type === 'solid') {
-                        borderWrapperStyle.backgroundColor = border.color1;
-                    } else if (border.type === 'gradient' && border.color1 && border.color2) {
-                        const angle = border.direction === 'horizontal' ? '90deg' : border.direction === 'radial' ? 'circle' : '180deg';
-                        borderWrapperStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
+                    if (border.width > 0) {
+                      if (border.type === 'solid') {
+                        borderWrapperStyle.border = `${border.width}px solid ${border.color1}`;
+                      } else if (border.type === 'gradient') {
+                        // This is tricky. We'll use a pseudo-element for the gradient border.
+                        // This is a simplified approach. A more robust one might need more divs.
+                        borderWrapperStyle.border = `${border.width}px solid transparent`;
+                        borderWrapperStyle.background = `linear-gradient(white, white) padding-box, linear-gradient(to right, ${border.color1}, ${border.color2}) border-box`;
+                      }
                     }
-
-                    const imageWrapperStyle: React.CSSProperties = {
-                        width: '100%',
-                        height: 0,
-                        paddingBottom: '75%', 
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderRadius: `${borderRadius}px`,
-                    };
 
                     const imageStyle: React.CSSProperties = {
                         position: 'absolute',
-                        width: `${zoom}%`,
-                        height: `${zoom}%`,
-                        top: '50%',
-                        left: '50%',
-                        transform: `translate(-${positionX}%, -${positionY}%) scale(${zoom / 100})`,
+                        width: '100%',
+                        height: '100%',
+                        top: 0,
+                        left: 0,
                         backgroundImage: `url(${url})`,
-                        backgroundPosition: `center center`,
-                        backgroundSize: 'cover',
+                        backgroundPosition: `${positionX}% ${positionY}%`,
+                        backgroundSize: `${zoom}%`,
                         backgroundRepeat: 'no-repeat',
-                        transition: 'transform 0.2s',
+                        transition: 'all 0.2s',
                     };
 
                     const imageElement = (
                         <div style={containerStyle}>
                             <div style={borderWrapperStyle}>
-                                <div style={imageWrapperStyle}>
-                                    <div style={{
-                                        position: 'absolute',
-                                        width: '100%',
-                                        height: '100%',
-                                        top: 0,
-                                        left: 0,
-                                        transform: `scale(${zoom / 100})`,
-                                        backgroundImage: `url(${url})`,
-                                        backgroundPosition: `${positionX}% ${positionY}%`,
-                                        backgroundSize: 'cover',
-                                        backgroundRepeat: 'no-repeat',
-                                        transition: 'all 0.2s',
-                                    }} title={alt} />
-                                </div>
+                                <div style={imageStyle} title={alt} />
                             </div>
                         </div>
                     );
@@ -6163,4 +6149,5 @@ const LayerPanel = () => {
     </div>
   );
 }
+
 
