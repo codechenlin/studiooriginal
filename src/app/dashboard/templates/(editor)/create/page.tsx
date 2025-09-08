@@ -4,7 +4,7 @@
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -136,6 +136,7 @@ import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CardContent } from '@/components/ui/card';
 
 
 const mainContentBlocks = [
@@ -3473,7 +3474,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             <Separator />
             <div className="space-y-4">
                 <h3 className="text-sm font-medium text-foreground/80">Ajustes de la Imagen</h3>
-                <div className="space-y-2">
+                 <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
                     <Slider 
                         value={[zoom]} 
@@ -3893,7 +3894,6 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
             <DialogContent className="max-w-6xl w-full h-[80vh] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
                 <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10 flex flex-row justify-between items-center">
                     <DialogTitle className="flex items-center gap-2 text-base"><FolderOpen className="text-primary"/>Gestor de Archivos</DialogTitle>
-                    <DialogClose asChild><Button variant="ghost" size="icon" className="size-7"><XIcon/></Button></DialogClose>
                 </DialogHeader>
                 <div className="flex-1 grid grid-cols-12 overflow-hidden">
                     <div className="col-span-8 flex flex-col bg-black/30 p-4 border-r border-zinc-800 overflow-y-auto custom-scrollbar">
@@ -4791,18 +4791,20 @@ export default function CreateTemplatePage() {
                     };
 
                     const borderGradient = border.type === 'gradient' 
-                        ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : '180deg'}, ${border.color1}, ${border.color2})` 
-                        : 'none';
-                    
-                    const borderImageSlice = border.type === 'gradient' ? 1 : undefined;
+                        ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : (border.direction === 'vertical' ? '180deg' : '45deg')}, ${border.color1}, ${border.color2})` 
+                        : undefined;
 
                     const borderStyle: React.CSSProperties = {
                         position: 'absolute',
                         inset: 0,
                         borderRadius: 'inherit',
-                        border: `${border.width}px solid ${border.type === 'solid' ? border.color1 : 'transparent'}`,
-                        borderImage: border.type === 'gradient' ? borderGradient : undefined,
-                        borderImageSlice: borderImageSlice,
+                        borderStyle: 'solid',
+                        borderWidth: `${border.width}px`,
+                        borderColor: border.type === 'solid' ? border.color1 : 'transparent',
+                        ...(border.type === 'gradient' && {
+                            borderImage: borderGradient,
+                            borderImageSlice: 1,
+                        }),
                         boxSizing: 'border-box',
                     };
                     
