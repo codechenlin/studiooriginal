@@ -119,7 +119,8 @@ import {
   CheckCircle,
   FolderOpen,
   Image as LucideImage,
-  Film
+  Film,
+  StarHalf,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -470,7 +471,7 @@ interface RatingBlock extends BaseBlock {
     rating: number; // 0 to 5
     styles: {
       starSize: number;
-      cornerRadius: number;
+      starStyle: 'pointed' | 'rounded';
       alignment: TextAlign;
       paddingY: number;
       spacing: number;
@@ -3450,7 +3451,6 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             <ImageBlockGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIcon/>Gestionar Imagen</h3>
              <div className="space-y-2">
-                <Label>Fuente de la Imagen</Label>
                 <div className="space-y-2">
                     <Input type="file" accept="image/*" onChange={handleFileChange} className="text-xs file:text-primary file:font-semibold" disabled={isUploading}/>
                     {isUploading && <p className="text-xs text-muted-foreground">Subiendo...</p>}
@@ -3473,9 +3473,9 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 />
             </div>
             <Separator />
-            <div className="space-y-4">
+             <div className="space-y-4">
                 <h3 className="text-sm font-medium text-foreground/80">Ajustes de la Imagen</h3>
-                 <div className="space-y-2">
+                <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Expand/>Zoom</Label>
                     <Slider 
                         value={[zoom]} 
@@ -3611,6 +3611,13 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     onValueChange={(v) => updatePayload('rating', v[0])}
                 />
             </div>
+             <div className="space-y-2">
+                <Label>Diseño de Estrella</Label>
+                <div className="grid grid-cols-2 gap-2">
+                    <Button variant={element.payload.styles.starStyle === 'pointed' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'pointed')}><Star className="mr-2"/> Puntiaguda</Button>
+                    <Button variant={element.payload.styles.starStyle === 'rounded' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'rounded')}><StarHalf className="mr-2"/> Redondeada</Button>
+                 </div>
+            </div>
             <div className="space-y-2">
                 <Label>Alineación</Label>
                 <div className="grid grid-cols-3 gap-2">
@@ -3624,10 +3631,6 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             <div className="space-y-2">
                 <Label>Tamaño de Estrella</Label>
                 <Slider value={[element.payload.styles.starSize]} min={10} max={100} onValueChange={v => updateStyle('starSize', v[0])} />
-            </div>
-            <div className="space-y-2">
-                <Label>Redondez de Esquinas</Label>
-                <Slider value={[element.payload.styles.cornerRadius]} min={0} max={5} step={0.1} onValueChange={v => updateStyle('cornerRadius', v[0])} />
             </div>
             <div className="space-y-2">
                 <Label>Espaciado entre Estrellas</Label>
@@ -3714,19 +3717,10 @@ const ColorEditor = ({ subStyle, styles, updateFunc }: {
 
 const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { rating, styles } = block.payload;
-    const { filled, unfilled, border, cornerRadius, starSize, alignment, paddingY, spacing } = styles;
+    const { filled, unfilled, border, starStyle, starSize, alignment, paddingY, spacing } = styles;
 
-    const starPath = React.useCallback((x: number, y: number, r: number, points: number = 5, inset: number = 0.5) => {
-        let path = '';
-        for (let i = 0; i < points * 2; i++) {
-            const radius = i % 2 === 0 ? r : r * inset;
-            const angle = (i * Math.PI) / points - Math.PI / 2;
-            const px = x + radius * Math.cos(angle);
-            const py = y + radius * Math.sin(angle);
-            path += (i === 0 ? 'M' : 'L') + `${px},${py} `;
-        }
-        return path + 'Z';
-    }, []);
+    const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
+    const roundedStarPath = "M12 17.8l-3.8 2.3c-.5.3-1.1-.1-1-.7l.7-4.2-3-2.9c-.4-.4-.2-1.1.4-1.2l4.2-.6L11.2 7c.2-.5.9-.5 1.1 0l1.9 3.8 4.2.6c.6.1.8.8.4 1.2l-3 2.9.7 4.2c.1.6-.5 1-1 .7L12 17.8z";
 
     const renderStar = (index: number) => {
         const fillValue = Math.max(0, Math.min(1, rating - index));
@@ -3738,8 +3732,10 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
             return config.color1;
         };
         
+        const starPath = starStyle === 'rounded' ? roundedStarPath : pointedStarPath;
+        
         return (
-            <svg key={index} width={starSize} height={starSize} viewBox="-1 -1 26 26" style={{ flexShrink: 0 }}>
+            <svg key={index} width={starSize} height={starSize} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
                  <defs>
                     {(['filled', 'unfilled', 'border'] as const).map(type => {
                         const config = styles[type];
@@ -3755,9 +3751,9 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                        <rect x="-1" y="-1" width={26 * fillValue} height="28" />
                     </clipPath>
                  </defs>
-                <path d={starPath(12, 12, 12)} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" strokeLinecap="round" style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }} rx={cornerRadius} ry={cornerRadius} />
-                <path d={starPath(12, 12, 12)} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} rx={cornerRadius} ry={cornerRadius} />
-                { border.width > 0 && <path d={starPath(12, 12, 12)} fill="none" stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" strokeLinecap="round" style={{ vectorEffect: 'non-scaling-stroke' }} rx={cornerRadius} ry={cornerRadius} /> }
+                <path d={starPath} fill={getFill('unfilled')} stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" strokeLinecap="round" style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }} />
+                <path d={starPath} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} />
+                { border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={border.width} strokeLinejoin="round" strokeLinecap="round" style={{ vectorEffect: 'non-scaling-stroke' }} /> }
             </svg>
         );
     };
@@ -3777,7 +3773,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     );
 }
 
-const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => {
+const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) => {
     const [files, setFiles] = useState<StorageFile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
@@ -3890,17 +3886,17 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white shadow-2xl shadow-primary/20">
-                 <DialogHeader className="p-3 border-b border-zinc-800 shrink-0 z-10 flex flex-row justify-between items-center">
+            <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0 bg-background/90 dark:bg-zinc-900/90 border-border/20 dark:border-zinc-700 backdrop-blur-xl text-foreground dark:text-white shadow-2xl shadow-primary/20">
+                 <DialogHeader className="p-3 border-b border-border/10 dark:border-zinc-800 shrink-0 z-10 flex flex-row justify-between items-center">
                     <DialogTitle className="flex items-center gap-2 text-base"><FolderOpen className="text-primary"/>Gestor de Archivos</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex-1 grid grid-cols-12 overflow-hidden">
                     {/* Main Content Area */}
-                    <div className="col-span-8 md:col-span-9 flex flex-col bg-black/30 border-r border-zinc-800">
+                    <div className="col-span-8 md:col-span-9 flex flex-col bg-background/50 dark:bg-black/30 border-r border-border/10 dark:border-zinc-800">
                         {/* Top Control Bar */}
-                        <div className="shrink-0 p-2.5 border-b border-zinc-800 flex flex-wrap items-center gap-4">
-                             <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-zinc-700">
+                        <div className="shrink-0 p-2.5 border-b border-border/10 dark:border-zinc-800 flex flex-wrap items-center gap-4">
+                             <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
                                  {(['gallery', 'upload', 'url'] as const).map((source) => (
                                      <button key={source} onClick={() => setActiveSource(source)} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2", activeSource === source && "active")}>
                                          <span className="led-light"></span>
@@ -3908,18 +3904,18 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
                                      </button>
                                  ))}
                              </div>
-                            <Separator orientation="vertical" className="h-6 bg-zinc-700"/>
-                             <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-zinc-700">
-                                <Button variant="ghost" size="sm" onClick={() => setFilterType('images')} className={cn("text-xs text-zinc-400 hover:text-white", filterType === 'images' && "text-white bg-white/5")}> <LucideImage className="mr-2"/>Imágenes</Button>
-                                <Button variant="ghost" size="sm" onClick={() => setFilterType('gifs')} className={cn("text-xs text-zinc-400 hover:text-white", filterType === 'gifs' && "text-white bg-white/5")}> <Film className="mr-2"/>GIFs</Button>
+                            <Separator orientation="vertical" className="h-6 bg-border/20 dark:bg-zinc-700"/>
+                             <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
+                                <Button variant="ghost" size="sm" onClick={() => setFilterType('images')} className={cn("text-xs text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white", filterType === 'images' && "text-foreground dark:text-white bg-background/50 dark:bg-white/5")}> <LucideImage className="mr-2"/>Imágenes</Button>
+                                <Button variant="ghost" size="sm" onClick={() => setFilterType('gifs')} className={cn("text-xs text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white", filterType === 'gifs' && "text-foreground dark:text-white bg-background/50 dark:bg-white/5")}> <Film className="mr-2"/>GIFs</Button>
                              </div>
                              <div className="flex-grow"/>
                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={cn("led-button border-zinc-600 hover:bg-white/10 hover:border-zinc-400", isMultiSelectMode && "active")}>
+                                <Button variant="outline" size="sm" onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={cn("led-button border-border/50 dark:border-zinc-600 hover:bg-muted dark:hover:bg-white/10 hover:border-border dark:hover:border-zinc-400", isMultiSelectMode && "active")}>
                                      <span className="led-light"></span><span className="relative z-20">Seleccionar Varios</span>
                                 </Button>
                                 {(isMultiSelectMode ? selectedFiles.length > 0 : !!selectedFileForPreview) && (
-                                     <Button variant="destructive" size="sm" onClick={handleDelete} className="bg-red-600/80 hover:bg-red-600 text-white border-red-500">
+                                     <Button variant="destructive" size="sm" onClick={handleDelete}>
                                         <Trash2 className="mr-2"/> Eliminar
                                     </Button>
                                 )}
@@ -3929,11 +3925,11 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
                         {/* Dynamic Content */}
                         <ScrollArea className="flex-1 p-4">
                             {activeSource === 'gallery' && (
-                                isLoading ? <div className="text-center p-8 text-zinc-400">Cargando...</div> :
-                                filteredFiles.length === 0 ? <div className="text-center text-zinc-500 p-8">No hay archivos en esta categoría.</div> :
+                                isLoading ? <div className="text-center p-8 text-muted-foreground">Cargando...</div> :
+                                filteredFiles.length === 0 ? <div className="text-center text-muted-foreground p-8">No hay archivos en esta categoría.</div> :
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                                     {filteredFiles.map(file => (
-                                        <Card key={file.id} onClick={() => handleFileSelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800 border-2", (isMultiSelectMode && selectedFiles.includes(file.name)) || (!isMultiSelectMode && selectedFileForPreview?.id === file.id) ? "border-primary" : "border-transparent hover:border-primary/50")}>
+                                        <Card key={file.id} onClick={() => handleFileSelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-muted/30 dark:bg-zinc-800 border-2", (isMultiSelectMode && selectedFiles.includes(file.name)) || (!isMultiSelectMode && selectedFileForPreview?.id === file.id) ? "border-primary" : "border-transparent hover:border-primary/50")}>
                                            <img src={getFileUrl(file.name)} alt={file.name} className="w-full h-full object-cover"/>
                                            {isMultiSelectMode && selectedFiles.includes(file.name) && <div className="absolute top-1.5 right-1.5 p-1 bg-primary rounded-full"><CheckIcon className="text-white size-4"/></div>}
                                            <div className="absolute bottom-0 left-0 w-full p-1.5 bg-gradient-to-t from-black/80 to-transparent"><p className="text-xs text-white truncate">{file.name.split('/').pop()}</p></div>
@@ -3943,10 +3939,10 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
                             )}
                             {activeSource === 'upload' && (
                                 <div className="h-full flex items-center justify-center p-4">
-                                    <div className="p-8 border-2 border-dashed border-zinc-700 rounded-lg text-center w-full max-w-lg">
-                                        <UploadCloud className="mx-auto size-12 text-zinc-500"/>
+                                    <div className="p-8 border-2 border-dashed border-border/50 dark:border-zinc-700 rounded-lg text-center w-full max-w-lg">
+                                        <UploadCloud className="mx-auto size-12 text-muted-foreground"/>
                                         <h3 className="mt-4 text-lg font-semibold">Arrastra y suelta o haz clic para subir</h3>
-                                        <p className="text-xs text-zinc-400 mt-1">PNG, JPG, GIF hasta 10MB</p>
+                                        <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF hasta 10MB</p>
                                         <Input id="file-upload-input" type="file" className="sr-only" onChange={(e) => e.target.files && handleUpload(e.target.files[0])} disabled={isUploading}/>
                                         <Button asChild variant="primary" className="mt-4 bg-primary"><Label htmlFor="file-upload-input">{isUploading ? <RefreshCw className="animate-spin mr-2"/> : <Upload className="mr-2"/>}Seleccionar Archivo</Label></Button>
                                     </div>
@@ -3954,12 +3950,12 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
                             )}
                             {activeSource === 'url' && (
                                 <div className="h-full flex items-center justify-center p-4">
-                                    <div className="p-8 border border-zinc-800 rounded-lg text-center w-full max-w-lg bg-black/20">
-                                         <LinkIcon className="mx-auto size-12 text-zinc-500"/>
+                                    <div className="p-8 border border-border/30 dark:border-zinc-800 rounded-lg text-center w-full max-w-lg bg-background dark:bg-black/20">
+                                         <LinkIcon className="mx-auto size-12 text-muted-foreground"/>
                                          <h3 className="mt-4 text-lg font-semibold">Añadir desde URL</h3>
-                                         <p className="text-xs text-zinc-400 mt-1">Pega una URL de imagen para subirla a tu galería.</p>
+                                         <p className="text-xs text-muted-foreground mt-1">Pega una URL de imagen para subirla a tu galería.</p>
                                          <div className="flex gap-2 mt-4">
-                                            <Input value={urlInputValue} onChange={e => setUrlInputValue(e.target.value)} placeholder="https://..." className="bg-zinc-800 border-zinc-700"/>
+                                            <Input value={urlInputValue} onChange={e => setUrlInputValue(e.target.value)} placeholder="https://..." className="bg-muted/50 dark:bg-zinc-800 border-border/50 dark:border-zinc-700"/>
                                             <Button>Añadir</Button>
                                          </div>
                                     </div>
@@ -3969,39 +3965,39 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
                     </div>
 
                     {/* Side Panel */}
-                    <div className="col-span-4 md:col-span-3 p-4 space-y-4 overflow-y-auto custom-scrollbar bg-black/20">
+                    <div className="col-span-4 md:col-span-3 p-4 space-y-4 overflow-y-auto custom-scrollbar bg-background/50 dark:bg-black/20">
                         {selectedFileForPreview ? (
                             <>
                                 <div>
-                                    <h4 className="text-sm font-semibold mb-2 text-zinc-300">Vista Previa</h4>
-                                    <div className="aspect-video bg-black rounded-lg overflow-hidden border border-zinc-700">
+                                    <h4 className="text-sm font-semibold mb-2 text-muted-foreground">Vista Previa</h4>
+                                    <div className="aspect-video bg-muted/20 dark:bg-black rounded-lg overflow-hidden border border-border/20 dark:border-zinc-700">
                                         <img src={getFileUrl(selectedFileForPreview.name)} alt="Preview" className="w-full h-full object-contain"/>
                                     </div>
                                 </div>
                                 <div className="space-y-3 text-sm">
-                                    <h4 className="text-sm font-semibold text-zinc-300">Información</h4>
-                                    <div className="p-3 bg-black/20 rounded-lg border border-zinc-800 space-y-2">
+                                    <h4 className="text-sm font-semibold text-muted-foreground">Información</h4>
+                                    <div className="p-3 bg-muted/50 dark:bg-black/20 rounded-lg border border-border/20 dark:border-zinc-800 space-y-2">
                                         <div className="flex items-center gap-2">
                                             {isRenaming === selectedFileForPreview.name ? (
-                                                <Input value={tempName} onChange={e => setTempName(e.target.value)} onBlur={handleRename} onKeyDown={e => e.key === 'Enter' && handleRename()} autoFocus className="h-7 text-xs bg-zinc-800 border-zinc-600"/>
+                                                <Input value={tempName} onChange={e => setTempName(e.target.value)} onBlur={handleRename} onKeyDown={e => e.key === 'Enter' && handleRename()} autoFocus className="h-7 text-xs bg-background dark:bg-zinc-800 border-border/50 dark:border-zinc-600"/>
                                             ) : (
-                                               <p className="font-mono text-xs truncate flex-1 text-zinc-400">{selectedFileForPreview.name.split('/').pop()}</p>
+                                               <p className="font-mono text-xs truncate flex-1 text-muted-foreground">{selectedFileForPreview.name.split('/').pop()}</p>
                                             )}
-                                            <Button variant="ghost" size="icon" className="size-6 shrink-0 text-zinc-400 hover:text-white" onClick={() => startRename(selectedFileForPreview)}><Pencil className="size-3.5"/></Button>
+                                            <Button variant="ghost" size="icon" className="size-6 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => startRename(selectedFileForPreview)}><Pencil className="size-3.5"/></Button>
                                         </div>
-                                        <p className="text-xs text-zinc-400">Tamaño: {(selectedFileForPreview.metadata.size / 1024).toFixed(2)} KB</p>
-                                        <p className="text-xs text-zinc-400">Subido: {format(new Date(selectedFileForPreview.created_at), 'dd MMM, yyyy')}</p>
+                                        <p className="text-xs text-muted-foreground">Tamaño: {(selectedFileForPreview.metadata.size / 1024).toFixed(2)} KB</p>
+                                        <p className="text-xs text-muted-foreground">Subido: {format(new Date(selectedFileForPreview.created_at), 'dd MMM, yyyy')}</p>
                                     </div>
                                 </div>
                                  <div className="space-y-2">
-                                     <h4 className="text-sm font-semibold text-zinc-300">Acciones</h4>
-                                     <Button variant="outline" className="w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white" onClick={() => window.open(getFileUrl(selectedFileForPreview.name), '_blank')}>
+                                     <h4 className="text-sm font-semibold text-muted-foreground">Acciones</h4>
+                                     <Button variant="outline" className="w-full border-border/50 dark:border-zinc-700 text-muted-foreground hover:text-foreground dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white" onClick={() => window.open(getFileUrl(selectedFileForPreview.name), '_blank')}>
                                         <Expand className="mr-2"/>Ver en Pantalla Completa
                                     </Button>
                                 </div>
                             </>
                         ) : (
-                            <div className="h-full flex items-center justify-center text-center text-zinc-500">
+                            <div className="h-full flex items-center justify-center text-center text-muted-foreground">
                                 <div>
                                     <ImageIcon className="size-16 mx-auto"/>
                                     <p className="mt-2 text-sm">Selecciona un archivo</p>
@@ -4010,8 +4006,8 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
                         )}
                     </div>
                 </div>
-                 <DialogFooter className="p-2.5 border-t border-zinc-800 shrink-0 bg-zinc-900/50 z-10">
-                    <Button type="button" onClick={() => onOpenChange(false)} className="bg-red-600/80 hover:bg-red-600 text-white border-red-500">Salir</Button>
+                 <DialogFooter className="p-2.5 border-t border-border/10 dark:border-zinc-800 shrink-0 bg-background/80 dark:bg-zinc-900/50 z-10">
+                    <Button type="button" onClick={() => onOpenChange(false)} variant="outline">Salir</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -4419,7 +4415,7 @@ export default function CreateTemplatePage() {
                     rating: 4.5,
                     styles: {
                         starSize: 40,
-                        cornerRadius: 0,
+                        starStyle: 'pointed',
                         alignment: 'center',
                         paddingY: 10,
                         spacing: 4,
@@ -4767,7 +4763,7 @@ export default function CreateTemplatePage() {
                         })}
                     </p>
                 );
-                case 'image': {
+              case 'image': {
                     const imageBlock = block as ImageBlock;
                     const { url, alt, styles, link } = imageBlock.payload;
                     const { borderRadius, zoom, positionX, positionY, border } = styles;
@@ -4775,30 +4771,35 @@ export default function CreateTemplatePage() {
                     const containerStyle: React.CSSProperties = {
                         padding: '8px',
                         width: '100%',
-                        height: 'auto',
-                        aspectRatio: '16/9',
+                    };
+
+                    const outerWrapperStyle: React.CSSProperties = {
+                        width: '100%',
+                        paddingBottom: '75%', // 4:3 aspect ratio
+                        position: 'relative',
+                        borderRadius: `${borderRadius}px`,
+                        boxSizing: 'border-box',
+                        overflow: 'hidden',
                     };
                     
                     const borderGradient = border.type === 'gradient' 
                         ? `linear-gradient(${border.direction === 'horizontal' ? '90deg' : (border.direction === 'vertical' ? '180deg' : '45deg')}, ${border.color1}, ${border.color2})` 
                         : undefined;
 
-                    const outerWrapperStyle: React.CSSProperties = {
-                        width: '100%',
-                        height: '100%',
-                        position: 'relative',
+                    const borderStyle: React.CSSProperties = {
+                        position: 'absolute',
+                        top: 0, right: 0, bottom: 0, left: 0,
+                        border: `${border.width}px solid ${border.type === 'solid' ? border.color1 : 'transparent'}`,
+                        borderImage: borderGradient,
+                        borderImageSlice: 1,
                         borderRadius: `${borderRadius}px`,
-                        padding: `${border.width}px`,
-                        boxSizing: 'border-box',
-                        background: borderGradient || (border.type === 'solid' ? border.color1 : 'transparent'),
+                        pointerEvents: 'none',
                     };
-                    
+
                     const imageContainerStyle: React.CSSProperties = {
-                        width: '100%',
-                        height: '100%',
-                        overflow: 'hidden',
-                        borderRadius: `${borderRadius - border.width}px`,
-                         backgroundImage: `url(${url})`,
+                        position: 'absolute',
+                        top: 0, right: 0, bottom: 0, left: 0,
+                        backgroundImage: `url(${url})`,
                         backgroundPosition: `${positionX}% ${positionY}%`,
                         backgroundSize: `${zoom}%`,
                         backgroundRepeat: 'no-repeat',
@@ -4809,6 +4810,7 @@ export default function CreateTemplatePage() {
                         <div style={containerStyle}>
                            <div style={outerWrapperStyle}>
                                <div style={imageContainerStyle} title={alt} />
+                               <div style={borderStyle}></div>
                            </div>
                         </div>
                     );
