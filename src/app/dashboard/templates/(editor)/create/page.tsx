@@ -4,7 +4,7 @@
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,6 +24,17 @@ import {
   DialogClose,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Toggle } from '@/components/ui/toggle';
 import {
   Square,
@@ -139,6 +150,7 @@ import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CardContent } from '@/components/ui/card';
 
 
 const mainContentBlocks = [
@@ -3719,7 +3731,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { starStyle, starSize, alignment, paddingY, spacing } = styles;
 
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-    const roundedStarPath = "M12 17.8l-3.8 2.3c-.5.3-1.1-.1-1-.7l.7-4.2-3-2.9c-.4-.4-.2-1.1.4-1.2l4.2-.6L11.2 7c.2-.5.9-.5 1.1 0l1.9 3.8 4.2.6c.6.1.8.8.4 1.2l-3 2.9.7 4.2c.1.6-.5 1-1 .7L12 17.8z";
+    const roundedStarPath = "M12 17.8c-1.3 0-2.6.5-3.8 1.5-1.1.9-2 2.2-2.3 3.6-.3 1.4.3 2.9 1.5 3.8.5.3 1.1.5 1.6.5.6 0 1.1-.2 1.6-.5l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0 .5-.3 1.1-.5 1.6-.5.6 0 1.1.2 1.6.5 1.2.9 1.8 2.3 1.5 3.8-.3 1.4-1.2 2.7-2.3 3.6-1.2 1-2.5 1.5-3.8 1.5-1.3 0-2.6-.5-3.8-1.5s-2-2.2-2.3-3.6c-.3-1.4.3-2.9 1.5-3.8.5-.3 1.1-.5 1.6-.5z";
 
     const renderStar = (index: number) => {
         const fillValue = Math.max(0, Math.min(1, rating - index));
@@ -3731,7 +3743,10 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
             return config.color1;
         };
         
-        const starPath = starStyle === 'rounded' ? roundedStarPath : pointedStarPath;
+        const starPath = starStyle === 'pointed' 
+           ? "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+           : "M12 17.8c-1.3 0-2.6.5-3.8 1.5-1.1.9-2 2.2-2.3 3.6-.3 1.4.3 2.9 1.5 3.8.5.3 1.1.5 1.6.5.6 0 1.1-.2 1.6-.5l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0l1.4-.9 1.4.9c1 .6 2.2.6 3.2 0 .5-.3 1.1-.5 1.6-.5.6 0 1.1.2 1.6.5 1.2.9 1.8 2.3 1.5 3.8-.3 1.4-1.2 2.7-2.3 3.6-1.2 1-2.5 1.5-3.8 1.5-1.3 0-2.6-.5-3.8-1.5s-2-2.2-2.3-3.6c-.3-1.4.3-2.9 1.5-3.8.5-.3 1.1-.5 1.6-.5z";
+
         
         return (
             <svg key={index} width={starSize} height={starSize} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
@@ -3786,6 +3801,8 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
     const [isRenaming, setIsRenaming] = useState<string | null>(null);
     const [tempName, setTempName] = useState("");
     const [urlInputValue, setUrlInputValue] = useState("");
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
 
     const fetchFiles = useCallback(async () => {
         setIsLoading(true);
@@ -3853,6 +3870,7 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
         } else {
             toast({ title: "Error al Eliminar", description: result.error, variant: 'destructive' });
         }
+        setIsDeleteDialogOpen(false);
     };
     
     const startRename = (file: StorageFile) => {
@@ -3905,8 +3923,14 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                              </div>
                             <Separator orientation="vertical" className="h-6 bg-border/20 dark:bg-zinc-700"/>
                              <div className="flex items-center gap-1 bg-muted/50 dark:bg-black/20 p-1 rounded-lg border border-border/20 dark:border-zinc-700">
-                                <Button variant="ghost" size="sm" onClick={() => setFilterType('images')} className={cn("text-xs text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white", filterType === 'images' && "text-foreground dark:text-white bg-background/50 dark:bg-white/5")}> <LucideImage className="mr-2"/>Imágenes</Button>
-                                <Button variant="ghost" size="sm" onClick={() => setFilterType('gifs')} className={cn("text-xs text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-white", filterType === 'gifs' && "text-foreground dark:text-white bg-background/50 dark:bg-white/5")}> <Film className="mr-2"/>GIFs</Button>
+                                 <button onClick={() => setFilterType('images')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-muted-foreground", filterType === 'images' && "active text-foreground dark:text-white")}>
+                                    <span className="led-light"></span>
+                                    <span className="relative z-20 capitalize"><LucideImage className="inline-block mr-2 size-4"/>Imágenes</span>
+                                 </button>
+                                  <button onClick={() => setFilterType('gifs')} className={cn("led-button relative py-1.5 px-3 text-sm font-semibold rounded-md transition-colors duration-300 z-10 flex items-center justify-center gap-2 text-muted-foreground", filterType === 'gifs' && "active text-foreground dark:text-white")}>
+                                    <span className="led-light"></span>
+                                    <span className="relative z-20 capitalize"><Film className="inline-block mr-2 size-4"/>GIFs</span>
+                                 </button>
                              </div>
                              <div className="flex-grow"/>
                              <div className="flex items-center gap-2">
@@ -3914,9 +3938,25 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                                      <span className="led-light"></span><span className="relative z-20">Seleccionar Varios</span>
                                 </Button>
                                 {(isMultiSelectMode ? selectedFiles.length > 0 : !!selectedFileForPreview) && (
-                                     <Button variant="destructive" size="sm" onClick={handleDelete}>
-                                        <Trash2 className="mr-2"/> Eliminar
-                                    </Button>
+                                    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                                      <AlertDialogTrigger asChild>
+                                         <Button variant="destructive" size="sm">
+                                            <Trash2 className="mr-2"/> Eliminar
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Esta acción no se puede deshacer. Se eliminarán permanentemente {isMultiSelectMode ? `${selectedFiles.length} archivos` : 'este archivo'}.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                          <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Sí, eliminar</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                 )}
                              </div>
                         </div>
@@ -4762,21 +4802,35 @@ export default function CreateTemplatePage() {
                         })}
                     </p>
                 );
-              case 'image': {
+            case 'image': {
                     const imageBlock = block as ImageBlock;
                     const { url, alt, styles, link } = imageBlock.payload;
                     const { borderRadius, zoom, positionX, positionY, border } = styles;
 
                     const containerStyle: React.CSSProperties = {
                         width: '100%',
-                        borderRadius: `${borderRadius}px`,
                         padding: '8px',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
                     };
+                    
+                    const borderWrapperStyle: React.CSSProperties = {
+                        borderRadius: `${borderRadius}px`,
+                        padding: `${border.width}px`,
+                        position: 'relative',
+                        boxSizing: 'border-box',
+                    };
+
+                    if (border.type === 'solid') {
+                        borderWrapperStyle.backgroundColor = border.color1;
+                    } else if (border.type === 'gradient' && border.color1 && border.color2) {
+                        const angle = border.direction === 'horizontal' ? '90deg' : border.direction === 'radial' ? 'circle' : '180deg';
+                        borderWrapperStyle.background = `linear-gradient(${angle}, ${border.color1}, ${border.color2})`;
+                    }
 
                     const imageWrapperStyle: React.CSSProperties = {
                         width: '100%',
-                        paddingBottom: '75%', // Aspect Ratio
+                        height: 0,
+                        paddingBottom: '75%', 
                         position: 'relative',
                         overflow: 'hidden',
                         borderRadius: `${borderRadius}px`,
@@ -4784,40 +4838,36 @@ export default function CreateTemplatePage() {
 
                     const imageStyle: React.CSSProperties = {
                         position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                        top: 0,
-                        left: 0,
+                        width: `${zoom}%`,
+                        height: `${zoom}%`,
+                        top: '50%',
+                        left: '50%',
+                        transform: `translate(-${positionX}%, -${positionY}%) scale(${zoom / 100})`,
                         backgroundImage: `url(${url})`,
-                        backgroundPosition: `${positionX}% ${positionY}%`,
-                        backgroundSize: `${zoom}%`,
+                        backgroundPosition: `center center`,
+                        backgroundSize: 'cover',
                         backgroundRepeat: 'no-repeat',
-                        transition: 'all 0.2s',
+                        transition: 'transform 0.2s',
                     };
-                    
-                    const borderStyle: React.CSSProperties = {
-                        position: 'absolute',
-                        top: 0, right: 0, bottom: 0, left: 0,
-                        borderRadius: `${borderRadius}px`,
-                        pointerEvents: 'none',
-                        borderStyle: 'solid',
-                        borderWidth: `${border.width}px`,
-                    };
-                    
-                    if (border.type === 'solid') {
-                        borderStyle.borderColor = border.color1;
-                    } else {
-                        const gradient = `linear-gradient(${border.direction === 'horizontal' ? '90deg' : (border.direction === 'vertical' ? '180deg' : '45deg')}, ${border.color1}, ${border.color2})`;
-                        borderStyle.borderImageSource = gradient;
-                        borderStyle.borderImageSlice = 1;
-                        borderStyle.borderColor = 'transparent';
-                    }
 
                     const imageElement = (
                         <div style={containerStyle}>
-                            <div style={imageWrapperStyle}>
-                                <div style={imageStyle} title={alt} />
-                                <div style={borderStyle}></div>
+                            <div style={borderWrapperStyle}>
+                                <div style={imageWrapperStyle}>
+                                    <div style={{
+                                        position: 'absolute',
+                                        width: '100%',
+                                        height: '100%',
+                                        top: 0,
+                                        left: 0,
+                                        transform: `scale(${zoom / 100})`,
+                                        backgroundImage: `url(${url})`,
+                                        backgroundPosition: `${positionX}% ${positionY}%`,
+                                        backgroundSize: 'cover',
+                                        backgroundRepeat: 'no-repeat',
+                                        transition: 'all 0.2s',
+                                    }} title={alt} />
+                                </div>
                             </div>
                         </div>
                     );
