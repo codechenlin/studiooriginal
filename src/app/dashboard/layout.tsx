@@ -83,7 +83,7 @@ const menuItems = [
   { href: "/dashboard/automation", label: "Automatización", icon: Zap },
   { href: "/dashboard/servers", label: "Servidores", icon: Server },
   { href: "/dashboard/integration", label: "Integración", icon: Plug },
-  { href: "/dashboard/borrar", label: "API Campaña", icon: Code },
+  { href: "/dashboard/api", label: "API Campaña", icon: Code },
 ];
 
 function FloatingActionButton() {
@@ -156,6 +156,35 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         <SidebarContent className="custom-scrollbar">
           <SidebarMenu>
             {menuItems.map((item) => {
+                if (item.href === '/dashboard/api') {
+                  return (
+                    <SidebarMenuItem key={item.href} asChild>
+                         <a href="https://github.com/Firebase-Studio-Apps/mailflow-ai-dev/blob/main/README.md" target="_blank" rel="noopener noreferrer">
+                          <div className={cn(
+                            "group/menu-item-wrapper relative rounded-lg p-1",
+                            "bg-transparent",
+                            "hover:bg-gradient-to-r hover:from-led-start hover:to-led-end"
+                          )}>
+                             <div className={cn("rounded-md p-0.5", "bg-sidebar")}>
+                              <SidebarMenuButton
+                                isActive={false}
+                                className={cn(
+                                  "w-full justify-start gap-2 bg-transparent hover:bg-transparent",
+                                  "text-black dark:text-white"
+                                )}
+                              >
+                                 <div className={cn("p-1.5 bg-zinc-700/60 rounded-full")}>
+                                  <item.icon className="shrink-0 text-white size-3"/>
+                                </div>
+                                <span className="text-sm">{item.label}</span>
+                              </SidebarMenuButton>
+                            </div>
+                          </div>
+                        </a>
+                    </SidebarMenuItem>
+                  );
+                }
+
                 const isActive = item.submenu ? isSubmenuActive(item.href) : pathname === item.href;
                 
                 return (
@@ -328,7 +357,8 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
 
-  if (pathname.startsWith('/dashboard/templates/(editor)/create') || pathname.startsWith('/dashboard/borrar')) {
+  // This prevents the main dashboard layout from wrapping the template editor
+  if (pathname.startsWith('/dashboard/templates/create')) {
     return <>{children}</>;
   }
   
