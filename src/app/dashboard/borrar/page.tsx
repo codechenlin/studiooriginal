@@ -13,11 +13,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 function Preloader1() {
   return (
     <div className="w-full h-full bg-background flex items-center justify-center relative overflow-hidden">
-      <style jsx>{`
+      <style>{`
         @keyframes rotate-back-and-forth {
-          0% { transform: rotate(0deg); }
-          50% { transform: rotate(360deg); }
-          100% { transform: rotate(0deg); }
+          0% {
+            transform: rotate(0deg);
+          }
+          50% {
+            transform: rotate(360deg);
+          }
+          100% {
+            transform: rotate(0deg);
+          }
         }
         .animate-rotate-back-and-forth {
           animation: rotate-back-and-forth 4s linear infinite;
