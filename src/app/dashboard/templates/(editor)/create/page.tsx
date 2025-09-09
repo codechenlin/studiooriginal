@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useTransition, useEffect, useRef, useCallback } from 'react';
@@ -273,6 +274,7 @@ type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 type SeparatorLineStyle = 'solid' | 'dotted' | 'dashed';
 type SeparatorShapeType = 'waves' | 'drops' | 'zigzag' | 'leaves' | 'scallops';
 type TimerEndAction = 'stop' | 'secondary_countdown' | 'message';
+type StarStyle = 'pointed' | 'universo' | 'moderno';
 
 interface BaseBlock {
   id: string;
@@ -482,7 +484,7 @@ interface RatingBlock extends BaseBlock {
   payload: {
     rating: number; // 0 to 5
     styles: {
-      starStyle: 'pointed' | 'rounded';
+      starStyle: StarStyle;
       starSize: number;
       alignment: TextAlign;
       paddingY: number;
@@ -3644,9 +3646,10 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
              <div className="space-y-2">
                 <Label>Diseño de Estrella</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                     <Button variant={element.payload.styles.starStyle === 'pointed' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'pointed')}><Star className="mr-2"/> Puntiaguda</Button>
-                    <Button variant={element.payload.styles.starStyle === 'rounded' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'rounded')}><StarHalf className="mr-2"/> Redondeada</Button>
+                    <Button variant={element.payload.styles.starStyle === 'universo' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'universo')}><StarHalf className="mr-2"/> Universo</Button>
+                    <Button variant={element.payload.styles.starStyle === 'moderno' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'moderno')}><Sparkles className="mr-2"/> Moderno</Button>
                  </div>
             </div>
             <div className="space-y-2">
@@ -3693,21 +3696,18 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { starSize, alignment, paddingY, spacing, starStyle } = styles;
     
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-    const roundedStarPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"; // This is a placeholder, will replace
+    const universoStarPath = "M12 0C11.34 6.03 6.03 11.34 0 12c6.03.66 11.34 5.97 12 12c.66-6.03 5.97-11.34 12-12C17.97 11.34 12.66 6.03 12 0z";
+    const modernStarPath = "M50,2.5L62.7,35.1L97.5,35.1L72.4,56.4L85.1,89L50,67.7L14.9,89L27.6,56.4L2.5,35.1L37.3,35.1Z";
+
+    const getStarPath = () => {
+        switch(starStyle) {
+            case 'pointed': return pointedStarPath;
+            case 'universo': return universoStarPath;
+            case 'moderno': return modernStarPath;
+            default: return pointedStarPath;
+        }
+    }
     
-    const newRoundedStarPath = "M12 2l2.35 7.18h7.65l-6.18 4.48 2.35 7.18-6.17-4.48-6.18 4.48 2.36-7.18-6.17-4.48h7.65z";
-
-    const starFourPointsPath = "M12 2l-2.83 6.83-6.83 2.83 6.83 2.83 2.83 6.83 2.83-6.83 6.83-2.83-6.83-2.83z";
-    const newRoundedStarPath2 = "M12 2c-1.1 0-2.1.2-3 .6.9.8 1.6 1.7 2.2 2.7.6-1 1.3-1.9 2.2-2.7-.9-.4-1.9-.6-3-.6zm0 20c1.1 0 2.1-.2 3-.6-.9-.8-1.6-1.7-2.2-2.7-.6 1-1.3 1.9-2.2 2.7.9.4 1.9.6 3 .6zM22 12c0 1.1-.2 2.1-.6 3-.8-.9-1.7-1.6-2.7-2.2 1 .6 1.9 1.3 2.7 2.2.4-.9.6-1.9.6-3zm-20 0c0-1.1.2-2.1.6-3 .8.9 1.7 1.6 2.7 2.2-1-.6-1.9-1.3-2.7-2.2-.4.9-.6 1.9-.6 3z";
-
-    const finalRoundedStarPath = "M12 2.88l1.88 5.8h6.12l-4.94 3.58 1.88 5.8-4.94-3.58-4.94 3.58 1.88-5.8-4.94-3.58h6.12l1.88-5.8z";
-    const anotherRoundedStar = "M12 2c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm6.5-6c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm0 3c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zm-13 0c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm0 3c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zm6.5 4.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm0 3c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5z";
-    const theRealRoundedStarPath = "M12,2c-0.55,0-1,0.45-1,1v0.09C6.9,3.58,3.58,6.9,3.09,11H3c-0.55,0-1,0.45-1,1s0.45,1,1,1h0.09c0.49,4.1,3.81,7.42,7.91,7.91V21c0,0.55,0.45,1,1,1s1-0.45,1-1v-0.09c4.1-0.49,7.42-3.81,7.91-7.91H21c0.55,0,1-0.45,1-1s-0.45-1-1-1h-0.09c-0.49-4.1-3.81-7.42-7.91-7.91V3C13,2.45,12.55,2,12,2z M12,18c-3.31,0-6-2.69-6-6s2.69-6,6-6s6,2.69,6,6S15.31,18,12,18z";
-    
-    // Path from user feedback. A four-pointed star with heavily rounded corners.
-    const feedbackInspiredRoundedStarPath = "M12 0C11.34 6.03 6.03 11.34 0 12c6.03.66 11.34 5.97 12 12c.66-6.03 5.97-11.34 12-12C17.97 11.34 12.66 6.03 12 0z";
-
-
     const renderStar = (index: number) => {
         const fillValue = Math.max(0, Math.min(1, rating - index));
         const uniqueId = `${block.id}-${index}`;
@@ -3718,10 +3718,11 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
             return config.color1;
         };
         
-        const starPath = starStyle === 'pointed' ? pointedStarPath : feedbackInspiredRoundedStarPath;
+        const starPath = getStarPath();
+        const viewBox = starStyle === 'moderno' ? "0 0 100 100" : "0 0 24 24";
 
         return (
-            <svg key={index} width={starSize} height={starSize} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+            <svg key={index} width={starSize} height={starSize} viewBox={viewBox} style={{ flexShrink: 0 }}>
                  <defs>
                     {(['filled', 'unfilled', 'border'] as const).map(type => {
                         const config = styles[type];
@@ -3734,12 +3735,12 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                         return null;
                     })}
                     <clipPath id={`clip-${uniqueId}`}>
-                       <rect x="0" y="0" width={24 * fillValue} height="24" />
+                       <rect x="0" y="0" width={starStyle === 'moderno' ? 100 * fillValue : 24 * fillValue} height={starStyle === 'moderno' ? 100 : 24} />
                     </clipPath>
                  </defs>
-                <path d={starPath} fill={getFill('unfilled')} stroke={styles.border.width > 0 ? getFill('border') : 'none'} strokeWidth={styles.border.width} strokeLinejoin={starStyle === 'rounded' ? 'round' : 'miter'} strokeLinecap="round" style={{ paintOrder: 'stroke' }} />
+                <path d={starPath} fill={getFill('unfilled')} stroke={styles.border.width > 0 ? getFill('border') : 'none'} strokeWidth={styles.border.width} strokeLinejoin="round" strokeLinecap="round" style={{ paintOrder: 'stroke' }} />
                 <path d={starPath} fill={getFill('filled')} stroke="none" clipPath={`url(#clip-${uniqueId})`} />
-                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin={starStyle === 'rounded' ? 'round' : 'miter'} strokeLinecap="round" /> }
+                { styles.border.width > 0 && <path d={starPath} fill="none" stroke={getFill('border')} strokeWidth={styles.border.width} strokeLinejoin="round" strokeLinecap="round" /> }
             </svg>
         );
     };
@@ -3882,7 +3883,7 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0 bg-background/90 dark:bg-zinc-900/90 border-border/20 dark:border-zinc-700 backdrop-blur-xl text-foreground dark:text-white shadow-2xl shadow-primary/20">
-                <DialogHeader className="p-2.5 border-b border-border/10 dark:border-zinc-800 shrink-0">
+                <DialogHeader className="p-4 border-b border-border/10 dark:border-zinc-800 shrink-0">
                   <DialogTitle>Gestor de Archivos</DialogTitle>
                   <DialogDescription>
                     Sube, gestiona y selecciona imágenes y GIFs para tus plantillas.
@@ -4186,7 +4187,6 @@ export default function CreateTemplatePage() {
         content: canvasContent,
         templateId: templateId ?? undefined,
       });
-      setLoadingAction(null);
 
       if (result.success && result.data) {
         if (!templateId) {
@@ -4205,6 +4205,7 @@ export default function CreateTemplatePage() {
           variant: "destructive",
         });
       }
+      setLoadingAction(null);
     });
   };
 
@@ -5726,7 +5727,13 @@ const LayerPanel = () => {
                 </TooltipProvider>
                 <ThemeToggle />
                 <Button 
-                    onClick={handlePublish}
+                    onClick={() => {
+                      if (!templateName || templateName === 'Mi Plantilla Increíble') {
+                        setIsEditNameModalOpen(true);
+                      } else {
+                        handlePublish();
+                      }
+                    }}
                     disabled={isSaving}
                     className="group relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-[#AD00EC] to-[#1700E6] px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]"
                 >
@@ -6078,7 +6085,7 @@ const LayerPanel = () => {
             <Button 
                 type="button" 
                 onClick={() => {
-                  handleSaveTemplateName();
+                    handleSaveTemplateName();
                 }}
                 className="bg-primary text-primary-foreground hover:bg-[#00CB07] hover:text-white"
             >
@@ -6135,3 +6142,4 @@ const LayerPanel = () => {
     </div>
   );
 }
+
