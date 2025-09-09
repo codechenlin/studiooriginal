@@ -83,7 +83,7 @@ const menuItems = [
   { href: "/dashboard/automation", label: "Automatización", icon: Zap },
   { href: "/dashboard/servers", label: "Servidores", icon: Server },
   { href: "/dashboard/integration", label: "Integración", icon: Plug },
-  { href: "/dashboard/campaign-api", label: "API Campaña", icon: Code },
+  { href: "/dashboard/borrar", label: "API Campaña", icon: Code },
 ];
 
 function FloatingActionButton() {
@@ -328,7 +328,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
 
-  if (pathname.startsWith('/dashboard/templates/create')) {
+  if (pathname.startsWith('/dashboard/templates/(editor)/create') || pathname.startsWith('/dashboard/borrar')) {
     return <>{children}</>;
   }
   
