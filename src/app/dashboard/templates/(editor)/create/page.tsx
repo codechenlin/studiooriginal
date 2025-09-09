@@ -3321,7 +3321,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
                                         <div className="grid grid-cols-4 gap-2">
                                             {galleryFiles.map(file => (
                                                 <Card key={file.id} onClick={() => handleGallerySelect(file)} className={cn("relative group overflow-hidden cursor-pointer aspect-square bg-zinc-800", internalState?.url === getFileUrl(file) && "ring-2 ring-primary ring-offset-2 ring-offset-zinc-900")}>
-                                                    <img src={getFileUrl(file.name)} alt={file.name} className="w-full h-full object-cover"/>
+                                                    <img src={getFileUrl(file)} alt={file.name} className="w-full h-full object-cover"/>
                                                     {internalState?.url === getFileUrl(file) && <div className="absolute top-1 right-1 p-0.5 bg-primary rounded-full"><CheckIcon className="text-white size-3"/></div>}
                                                 </Card>
                                             ))}
@@ -3379,7 +3379,6 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
-    const { toast } = useToast();
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     
     if(selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'image') return null;
@@ -3540,13 +3539,65 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
+const ColorEditor = ({ subStyle, styles, updateFunc }: {
+    subStyle: 'filled' | 'unfilled' | 'border',
+    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection },
+    updateFunc: (mainKey: 'filled' | 'unfilled' | 'border', subKey: string, value: any) => void
+}) => {
+    const setDirection = (direction: GradientDirection) => {
+        updateFunc(subStyle, 'direction', direction);
+    };
+
+    return (
+        <div className="space-y-4">
+            <Tabs value={styles.type} onValueChange={(v) => updateFunc(subStyle, 'type', v)} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="solid">Sólido</TabsTrigger>
+                    <TabsTrigger value="gradient">Degradado</TabsTrigger>
+                </TabsList>
+            </Tabs>
+            <div className="space-y-2">
+                <Label>Color 1</Label>
+                <ColorPickerAdvanced color={styles.color1} setColor={c => updateFunc(subStyle, 'color1', c)} />
+            </div>
+            {styles.type === 'gradient' && (
+                <>
+                    <div className="space-y-2">
+                        <Label>Color 2</Label>
+                        <ColorPickerAdvanced color={styles.color2 || '#ffffff'} setColor={c => updateFunc(subStyle, 'color2', c)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Dirección</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={styles.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button></TooltipTrigger>
+                                    <TooltipContent><p>Vertical</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={styles.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button></TooltipTrigger>
+                                    <TooltipContent><p>Horizontal</p></TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild><Button variant={styles.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button></TooltipTrigger>
+                                    <TooltipContent><p>Radial</p></TooltipContent>
+                                 </Tooltip>
+                             </TooltipProvider>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
 const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   selectedElement: SelectedElement;
   canvasContent: CanvasBlock[];
   setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'rating') {
-        return <div className="text-center text-muted-foreground p-4 text-sm">Selecciona un bloque de Estrellas para ver sus opciones.</div>;
+        return null;
     }
 
     const getElement = (): RatingBlock | null => {
@@ -3637,64 +3688,24 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     )
 }
 
-const ColorEditor = ({ subStyle, styles, updateFunc }: {
-    subStyle: 'filled' | 'unfilled' | 'border',
-    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection },
-    updateFunc: (mainKey: 'filled' | 'unfilled' | 'border', subKey: string, value: any) => void
-}) => {
-    const setDirection = (direction: GradientDirection) => {
-        updateFunc(subStyle, 'direction', direction);
-    };
-
-    return (
-        <div className="space-y-4">
-            <Tabs value={styles.type} onValueChange={(v) => updateFunc(subStyle, 'type', v)} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="solid">Sólido</TabsTrigger>
-                    <TabsTrigger value="gradient">Degradado</TabsTrigger>
-                </TabsList>
-            </Tabs>
-            <div className="space-y-2">
-                <Label>Color 1</Label>
-                <ColorPickerAdvanced color={styles.color1} setColor={c => updateFunc(subStyle, 'color1', c)} />
-            </div>
-            {styles.type === 'gradient' && (
-                <>
-                    <div className="space-y-2">
-                        <Label>Color 2</Label>
-                        <ColorPickerAdvanced color={styles.color2 || '#ffffff'} setColor={c => updateFunc(subStyle, 'color2', c)} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Dirección</Label>
-                        <div className="grid grid-cols-3 gap-2">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild><Button variant={styles.direction === 'vertical' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('vertical')}><ArrowDown/></Button></TooltipTrigger>
-                                    <TooltipContent><p>Vertical</p></TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                    <TooltipTrigger asChild><Button variant={styles.direction === 'horizontal' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('horizontal')}><ArrowRight/></Button></TooltipTrigger>
-                                    <TooltipContent><p>Horizontal</p></TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                    <TooltipTrigger asChild><Button variant={styles.direction === 'radial' ? 'secondary' : 'outline'} size="icon" onClick={() => setDirection('radial')}><Sun className="size-4"/></Button></TooltipTrigger>
-                                    <TooltipContent><p>Radial</p></TooltipContent>
-                                 </Tooltip>
-                             </TooltipProvider>
-                        </div>
-                    </div>
-                </>
-            )}
-        </div>
-    );
-};
-
 const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { rating, styles } = block.payload;
     const { starSize, alignment, paddingY, spacing, starStyle } = styles;
-
+    
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-    const roundedStarPath = "M12 2c-1.5 3-3.08 3.42-5.5 5.5s-2.5 4-5.5 5.5c-3-1.5-3.42-3.08-5.5-5.5s-4-2.5-5.5-5.5c1.5-3 3.08-3.42 5.5-5.5s2.5-4 5.5-5.5c3 1.5 3.42 3.08 5.5 5.5s4 2.5 5.5 5.5z";
+    const roundedStarPath = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"; // This is a placeholder, will replace
+    
+    const newRoundedStarPath = "M12 2l2.35 7.18h7.65l-6.18 4.48 2.35 7.18-6.17-4.48-6.18 4.48 2.36-7.18-6.17-4.48h7.65z";
+
+    const starFourPointsPath = "M12 2l-2.83 6.83-6.83 2.83 6.83 2.83 2.83 6.83 2.83-6.83 6.83-2.83-6.83-2.83z";
+    const newRoundedStarPath2 = "M12 2c-1.1 0-2.1.2-3 .6.9.8 1.6 1.7 2.2 2.7.6-1 1.3-1.9 2.2-2.7-.9-.4-1.9-.6-3-.6zm0 20c1.1 0 2.1-.2 3-.6-.9-.8-1.6-1.7-2.2-2.7-.6 1-1.3 1.9-2.2 2.7.9.4 1.9.6 3 .6zM22 12c0 1.1-.2 2.1-.6 3-.8-.9-1.7-1.6-2.7-2.2 1 .6 1.9 1.3 2.7 2.2.4-.9.6-1.9.6-3zm-20 0c0-1.1.2-2.1.6-3 .8.9 1.7 1.6 2.7 2.2-1-.6-1.9-1.3-2.7-2.2-.4.9-.6 1.9-.6 3z";
+
+    const finalRoundedStarPath = "M12 2.88l1.88 5.8h6.12l-4.94 3.58 1.88 5.8-4.94-3.58-4.94 3.58 1.88-5.8-4.94-3.58h6.12l1.88-5.8z";
+    const anotherRoundedStar = "M12 2c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm6.5-6c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm0 3c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zm-13 0c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm0 3c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zm6.5 4.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm0 3c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5z";
+    const theRealRoundedStarPath = "M12,2c-0.55,0-1,0.45-1,1v0.09C6.9,3.58,3.58,6.9,3.09,11H3c-0.55,0-1,0.45-1,1s0.45,1,1,1h0.09c0.49,4.1,3.81,7.42,7.91,7.91V21c0,0.55,0.45,1,1,1s1-0.45,1-1v-0.09c4.1-0.49,7.42-3.81,7.91-7.91H21c0.55,0,1-0.45,1-1s-0.45-1-1-1h-0.09c-0.49-4.1-3.81-7.42-7.91-7.91V3C13,2.45,12.55,2,12,2z M12,18c-3.31,0-6-2.69-6-6s2.69-6,6-6s6,2.69,6,6S15.31,18,12,18z";
+    
+    // Path from user feedback. A four-pointed star with heavily rounded corners.
+    const feedbackInspiredRoundedStarPath = "M12 0C11.34 6.03 6.03 11.34 0 12c6.03.66 11.34 5.97 12 12c.66-6.03 5.97-11.34 12-12C17.97 11.34 12.66 6.03 12 0z";
 
 
     const renderStar = (index: number) => {
@@ -3707,7 +3718,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
             return config.color1;
         };
         
-        const starPath = starStyle === 'pointed' ? pointedStarPath : roundedStarPath;
+        const starPath = starStyle === 'pointed' ? pointedStarPath : feedbackInspiredRoundedStarPath;
 
         return (
             <svg key={index} width={starSize} height={starSize} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
@@ -4045,7 +4056,7 @@ const ImageBlockGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolea
         }
     }, [open, fetchFiles]);
     
-    const getFileUrl = (filePath: string) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${filePath}`;
+    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -4060,9 +4071,9 @@ const ImageBlockGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolea
                    <ScrollArea className="h-full">
                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 pr-4">
                       {files.map(file => (
-                         <Card key={file.id} onClick={() => onSelect(getFileUrl(file.name))} className="cursor-pointer hover:ring-2 hover:ring-primary overflow-hidden">
+                         <Card key={file.id} onClick={() => onSelect(getFileUrl(file))} className="cursor-pointer hover:ring-2 hover:ring-primary overflow-hidden">
                             <CardContent className="p-0 aspect-square">
-                                <img src={getFileUrl(file.name)} alt={file.name.split('/').pop()} className="w-full h-full object-cover"/>
+                                <img src={getFileUrl(file)} alt={file.name.split('/').pop()} className="w-full h-full object-cover"/>
                             </CardContent>
                             <CardFooter className="p-2">
                                <p className="text-xs truncate">{file.name.split('/').pop()}</p>
