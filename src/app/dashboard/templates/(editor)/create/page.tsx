@@ -149,6 +149,8 @@ import { listFiles, renameFile, deleteFiles, uploadFile, type StorageFile } from
 import { createClient } from '@/lib/supabase/client';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Preloader } from '@/components/common/preloader';
+import { LoadingModal } from '@/components/common/loading-modal';
 
 
 const mainContentBlocks = [
@@ -3692,7 +3694,8 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     const { starSize, alignment, paddingY, spacing, starStyle } = styles;
 
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
-    const roundedStarPath = "M12 2c-1.5 3-3.08 3.42-5.5 5.5s-2.5 4-5.5 5.5 3 2.5 5.5 5.5 4-2.5 5.5-5.5-3-2.5-5.5-5.5-4 2.5-5.5 5.5z";
+    const roundedStarPath = "M12 2c-1.5 3-3.08 3.42-5.5 5.5s-2.5 4-5.5 5.5c-3-1.5-3.42-3.08-5.5-5.5s-4-2.5-5.5-5.5c1.5-3 3.08-3.42 5.5-5.5s2.5-4 5.5-5.5c3 1.5 3.42 3.08 5.5 5.5s4 2.5 5.5 5.5z";
+
 
     const renderStar = (index: number) => {
         const fillValue = Math.max(0, Math.min(1, rating - index));
@@ -3868,6 +3871,12 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0 bg-background/90 dark:bg-zinc-900/90 border-border/20 dark:border-zinc-700 backdrop-blur-xl text-foreground dark:text-white shadow-2xl shadow-primary/20">
+                <DialogHeader className="p-2.5 border-b border-border/10 dark:border-zinc-800 shrink-0">
+                  <DialogTitle>Gestor de Archivos</DialogTitle>
+                  <DialogDescription>
+                    Sube, gestiona y selecciona imágenes y GIFs para tus plantillas.
+                  </DialogDescription>
+                </DialogHeader>
                 <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -4115,11 +4124,13 @@ export default function CreateTemplatePage() {
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSaving, startSaving] = useTransition();
-  const [isUploading, setIsUploading] = useState(false);
   
   // Undo/Redo states
   const [history, setHistory] = useState<CanvasBlock[][]>([[]]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  
+  const [isLoading, setIsLoading] = useState(true); // For preloader
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
   
   const wrapperRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -4157,12 +4168,14 @@ export default function CreateTemplatePage() {
 
 
   const handlePublish = () => {
+    setLoadingAction('save');
     startSaving(async () => {
       const result = await saveTemplateAction({
         name: templateName,
         content: canvasContent,
         templateId: templateId ?? undefined,
       });
+      setLoadingAction(null);
 
       if (result.success && result.data) {
         if (!templateId) {
@@ -4190,7 +4203,14 @@ export default function CreateTemplatePage() {
   };
 
   useEffect(() => {
-    setIsInitialNameModalOpen(true);
+    // Show preloader for a bit
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+
+    // After preloader, show the initial name modal
+    if (!isLoading) {
+      setIsInitialNameModalOpen(true);
+    }
+    
     const getUserId = async () => {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
@@ -4199,7 +4219,9 @@ export default function CreateTemplatePage() {
         }
     };
     getUserId();
-  }, []);
+
+    return () => clearTimeout(timer);
+  }, [isLoading]);
   
   const ThemeToggle = () => (
     <TooltipProvider>
@@ -4767,21 +4789,23 @@ export default function CreateTemplatePage() {
                 const wrapperStyle: React.CSSProperties = {
                     width: '100%',
                     height: 'auto',
+                    padding: '8px'
+                };
+                
+                const borderWrapperStyle: React.CSSProperties = {
                     padding: `${border.width}px`,
                     borderRadius: `${borderRadius}px`,
                 };
                 
                 if (border.width > 0) {
                     if (border.type === 'solid') {
-                        wrapperStyle.backgroundColor = border.color1;
+                        borderWrapperStyle.backgroundColor = border.color1;
                     } else if (border.type === 'gradient') {
                         const { direction, color1, color2 } = border;
-                        if (direction === 'radial') {
-                            wrapperStyle.background = `radial-gradient(circle, ${color1}, ${color2})`;
-                        } else {
-                            const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
-                            wrapperStyle.background = `linear-gradient(${angle}, ${color1}, ${color2})`;
-                        }
+                        const angle = direction === 'horizontal' ? 'to right' : 'to bottom';
+                        borderWrapperStyle.background = direction === 'radial'
+                            ? `radial-gradient(circle, ${color1}, ${color2})`
+                            : `linear-gradient(${angle}, ${color1}, ${color2})`;
                     }
                 }
                 
@@ -4804,11 +4828,11 @@ export default function CreateTemplatePage() {
                 };
 
                 const imageElement = (
-                    <div style={{ padding: '8px' }}>
-                        <div style={wrapperStyle}>
-                            <div style={imageContainerStyle}>
-                                <img src={url} alt={alt} style={imageStyle} />
-                            </div>
+                    <div style={wrapperStyle}>
+                        <div style={borderWrapperStyle}>
+                           <div style={imageContainerStyle}>
+                               <img src={url} alt={alt} style={imageStyle} />
+                           </div>
                         </div>
                     </div>
                 );
@@ -5556,8 +5580,13 @@ const LayerPanel = () => {
     );
 };
 
+  if (isLoading) {
+      return <Preloader />
+  }
+
   return (
     <div className="flex h-screen max-h-screen bg-transparent text-foreground overflow-hidden">
+        <LoadingModal isOpen={!!loadingAction} variant={loadingAction as any} />
       <aside className="w-40 border-r border-r-black/10 dark:border-border/20 flex flex-col bg-card/5">
         <header className="flex items-center justify-between p-4 border-b bg-card/5 border-border/20 backdrop-blur-sm h-[61px] z-10 shrink-0">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -6095,4 +6124,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-
