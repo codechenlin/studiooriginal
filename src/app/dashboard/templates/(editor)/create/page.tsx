@@ -533,6 +533,8 @@ interface SwitchBlock extends BaseBlock {
     design: SwitchDesign;
     url: string;
     scale: number;
+    alignment: TextAlign;
+    paddingY: number;
     styles: {
       on: {
         type: 'solid' | 'gradient';
@@ -4242,6 +4244,23 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         </div>
 
         <div className="space-y-2">
+            <Label>Alineación</Label>
+            <div className="grid grid-cols-3 gap-2">
+                <Button variant={element.payload.alignment === 'left' ? 'secondary' : 'outline'} size="icon" onClick={() => updatePayload('alignment', 'left')}><AlignLeft/></Button>
+                <Button variant={element.payload.alignment === 'center' ? 'secondary' : 'outline'} size="icon" onClick={() => updatePayload('alignment', 'center')}><AlignCenter/></Button>
+                <Button variant={element.payload.alignment === 'right' ? 'secondary' : 'outline'} size="icon" onClick={() => updatePayload('alignment', 'right')}><AlignRight/></Button>
+            </div>
+        </div>
+
+        <div className="space-y-2">
+            <Label>Relleno Vertical (Arriba/Abajo)</Label>
+            <Slider 
+                value={[element.payload.paddingY]} min={0} max={50} step={1}
+                onValueChange={v => updatePayload('paddingY', v[0])}
+            />
+        </div>
+
+        <div className="space-y-2">
             <Label>Tamaño Global</Label>
             <Slider 
                 value={[element.payload.scale]} min={0.5} max={2} step={0.1}
@@ -4384,11 +4403,11 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
     return (
         <div className="space-y-4">
-            <ImageBlockGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
+            <GifGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Film/>Editor de GIF</h3>
              <div className="space-y-2">
                 <Button variant="outline" className="w-full" onClick={() => setIsGalleryOpen(true)}>
-                    <GalleryVertical className="mr-2"/>Abrir Galería
+                    <GalleryVertical className="mr-2"/>Abrir Galería de GIFs
                 </Button>
                 <Label htmlFor="gif-url" className="text-xs text-muted-foreground">O añade una URL de GIF</Label>
                 <Input id="gif-url" value={element.payload.url} onChange={e => updatePayload('url', e.target.value)} placeholder="https://example.com/image.gif"/>
@@ -4420,6 +4439,93 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 />
             </div>
         </div>
+    );
+};
+
+const GifGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolean; onOpenChange: (open: boolean) => void; onSelect: (url: string) => void; }) => {
+    const [files, setFiles] = useState<StorageFile[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+    const [supabaseUrl, setSupabaseUrl] = useState('');
+
+    const fetchFiles = useCallback(async () => {
+        setIsLoading(true);
+        const result = await listFiles();
+        if (result.success && result.data) {
+            // Filter for GIFs only
+            const gifFiles = result.data.files.filter(file => file.metadata.mimetype === 'image/gif');
+            setFiles(gifFiles);
+            setSupabaseUrl(result.data.baseUrl);
+        } else {
+            toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        }
+        setIsLoading(false);
+    }, [toast]);
+
+    useEffect(() => {
+        if (open) {
+            fetchFiles();
+        }
+    }, [open, fetchFiles]);
+
+    const getFileUrl = (file: StorageFile) => `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${file.name}`;
+    
+    const Particle = () => {
+      const style = {
+        '--size': `${Math.random() * 2 + 1}px`,
+        '--x-start': `${Math.random() * 100}%`,
+        '--x-end': `${Math.random() * 200 - 100}px`,
+        '--duration': `${Math.random() * 5 + 5}s`,
+        '--delay': `-${Math.random() * 10}s`,
+      } as React.CSSProperties;
+      return <div className="particle" style={style} />;
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-4xl w-full h-[80vh] flex flex-col p-0 gap-0 bg-zinc-900/90 border border-zinc-700 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                    {Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
+                </div>
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-96 h-96 bg-primary/10 rounded-full animate-pulse-slow filter blur-3xl" />
+                </div>
+                <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10 bg-zinc-900/50 backdrop-blur-sm">
+                    <DialogTitle className="flex items-center gap-2"><ImagePlay className="text-primary"/>Galería Futurista de GIFs</DialogTitle>
+                    <DialogDescription className="text-zinc-400">Analizando el repositorio de imágenes en movimiento...</DialogDescription>
+                </DialogHeader>
+                {isLoading ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 z-10">
+                        <div className="relative w-20 h-20">
+                           <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: '2s' }} />
+                           <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+                           <div className="absolute inset-0 flex items-center justify-center"><Film className="text-primary size-8" /></div>
+                        </div>
+                        <p className="font-semibold tracking-wider">CARGANDO...</p>
+                        <p className="text-sm text-zinc-400">Sincronizando con el servidor de archivos.</p>
+                    </div>
+                ) : files.length > 0 ? (
+                   <ScrollArea className="flex-1 z-10">
+                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-4">
+                      {files.map(file => (
+                         <Card key={file.id} onClick={() => onSelect(getFileUrl(file))} className="group relative cursor-pointer overflow-hidden aspect-square bg-black/50 border-zinc-800 hover:border-primary/50 hover:border-2 transition-all duration-300">
+                            <img src={getFileUrl(file)} alt={file.name.split('/').pop()} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                                <p className="text-xs text-white truncate font-mono">{file.name.split('/').pop()}</p>
+                            </div>
+                         </Card>
+                      ))}
+                    </div>
+                   </ScrollArea>
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 z-10">
+                         <FolderOpen className="size-12 text-zinc-600"/>
+                        <p className="font-semibold text-zinc-400">No se encontraron GIFs</p>
+                        <p className="text-sm text-zinc-500">Sube algunos archivos GIF para verlos aquí.</p>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
     );
 };
 
@@ -4797,6 +4903,8 @@ export default function CreateTemplatePage() {
                     design: 'classic',
                     url: '#',
                     scale: 1,
+                    alignment: 'center',
+                    paddingY: 10,
                     styles: {
                         on: { type: 'gradient', color1: '#00F260', color2: '#0575E6', direction: 'horizontal' },
                         off: { type: 'solid', color1: '#555555' }
@@ -5121,7 +5229,7 @@ export default function CreateTemplatePage() {
   };
 
   const SwitchComponent = ({ block }: { block: SwitchBlock }) => {
-    const { design, scale, styles, url } = block.payload;
+    const { design, scale, styles, url, paddingY, alignment } = block.payload;
     const [isOn, setIsOn] = useState(false);
 
     const onBg = styles.on.type === 'gradient' ? `linear-gradient(${styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.on.color1}, ${styles.on.color2})` : styles.on.color1;
@@ -5131,45 +5239,58 @@ export default function CreateTemplatePage() {
     const linkProps = url ? { href: url, target: '_blank', rel: 'noopener noreferrer' } : {};
     
     const Wrapper = url ? 'a' : 'div';
+    
+    const alignClass = {
+        left: 'justify-start',
+        center: 'justify-center',
+        right: 'justify-end'
+    };
 
-    if (design === 'classic') {
-        return (
-             <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
-                <div className={cn("relative w-16 h-8 rounded-full transition-all duration-300 cursor-pointer")} style={{ background: isOn ? onBg : offBg }}>
-                    <div className={cn("absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300", isOn && "translate-x-8")} />
-                </div>
-            </Wrapper>
-        );
+    const renderSwitch = () => {
+      if (design === 'classic') {
+          return (
+              <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
+                  <div className={cn("relative w-16 h-8 rounded-full transition-all duration-300 cursor-pointer")} style={{ background: isOn ? onBg : offBg }}>
+                      <div className={cn("absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300", isOn && "translate-x-8")} />
+                  </div>
+              </Wrapper>
+          );
+      }
+  
+      if (design === 'futuristic') {
+          return (
+              <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
+                  <div className={cn("relative w-20 h-6 rounded-full cursor-pointer p-1", isOn ? "bg-primary/30" : "bg-muted/30")}>
+                       <div className="absolute inset-0 rounded-full" style={{background: isOn ? onBg : 'transparent', filter: `blur(${isOn ? '10px' : '0px'})`, transition: 'all 0.5s' }} />
+                       <div className={cn("relative z-10 w-full h-full rounded-full transition-all", isOn ? "bg-transparent" : offBg)} />
+                       <div className={cn("absolute z-20 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full transition-all duration-300 flex items-center justify-center", isOn ? "left-[calc(100%-2.25rem)]" : "left-0.5")}>
+                          <div className={cn("w-2 h-2 rounded-full transition-all", isOn ? "bg-green-400 shadow-[0_0_5px_#39ff14]" : "bg-red-500")} />
+                      </div>
+                  </div>
+              </Wrapper>
+          )
+      }
+  
+      if (design === 'minimalist') {
+         return (
+              <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
+                  <div className="w-24 h-10 flex items-center justify-center cursor-pointer">
+                      <div className={cn("relative w-16 h-2 rounded-full")} style={{background: offBg}}>
+                          <div className="absolute top-1/2 -translate-y-1/2 w-full h-full rounded-full transition-all duration-300" style={{background: onBg, width: isOn ? '100%' : '0%'}}/>
+                          <div className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 border-2 rounded-full transition-all duration-300", isOn ? "left-full -translate-x-full border-white" : "left-0 border-gray-500")} style={{background: isOn ? onBg : 'white'}}/>
+                      </div>
+                  </div>
+              </Wrapper>
+         )
+      }
+      return null;
     }
-
-    if (design === 'futuristic') {
-        return (
-             <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
-                <div className={cn("relative w-20 h-6 rounded-full cursor-pointer p-1", isOn ? "bg-primary/30" : "bg-muted/30")}>
-                     <div className="absolute inset-0 rounded-full" style={{background: isOn ? onBg : 'transparent', filter: `blur(${isOn ? '10px' : '0px'})`, transition: 'all 0.5s' }} />
-                     <div className={cn("relative z-10 w-full h-full rounded-full transition-all", isOn ? "bg-transparent" : offBg)} />
-                     <div className={cn("absolute z-20 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full transition-all duration-300 flex items-center justify-center", isOn ? "left-[calc(100%-2.25rem)]" : "left-0.5")}>
-                        <div className={cn("w-2 h-2 rounded-full transition-all", isOn ? "bg-green-400 shadow-[0_0_5px_#39ff14]" : "bg-red-500")} />
-                    </div>
-                </div>
-            </Wrapper>
-        )
-    }
-
-    if (design === 'minimalist') {
-       return (
-            <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
-                <div className="w-24 h-10 flex items-center justify-center cursor-pointer">
-                    <div className={cn("relative w-16 h-2 rounded-full")} style={{background: offBg}}>
-                        <div className="absolute top-1/2 -translate-y-1/2 w-full h-full rounded-full transition-all duration-300" style={{background: onBg, width: isOn ? '100%' : '0%'}}/>
-                        <div className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 border-2 rounded-full transition-all duration-300", isOn ? "left-full -translate-x-full border-white" : "left-0 border-gray-500")} style={{background: isOn ? onBg : 'white'}}/>
-                    </div>
-                </div>
-            </Wrapper>
-       )
-    }
-
-    return null;
+    
+    return (
+        <div className={cn("w-full flex", alignClass[alignment])} style={{ paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px` }}>
+            {renderSwitch()}
+        </div>
+    );
   }
   SwitchComponent.displayName = 'SwitchComponent';
 
@@ -5198,22 +5319,36 @@ export default function CreateTemplatePage() {
       bgProps = { fill: `url(#${bgFillId})` };
     }
 
+    function hexToRgb(hex: string) {
+        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+    
+    function getShadowColor() {
+        const rgb = hexToRgb(shadow.color);
+        if(!rgb) return shadow.color;
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${shadow.opacity / 100})`;
+    }
+
     return (
-        <div style={{ filter: `blur(${blur}px) drop-shadow(0 4px 6px ${shadow.color})`, opacity: shadow.opacity / 100 }}>
+        <div style={{ filter: `blur(${blur}px) drop-shadow(0 4px 6px ${getShadowColor()})` }}>
              <svg viewBox="0 0 100 100" className="w-full h-full">
                 <defs>
-                    {background.type === 'gradient' && (
-                        <linearGradient id={bgFillId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
-                            <stop offset="0%" stopColor={background.color1} />
-                            <stop offset="100%" stopColor={background.color2} />
-                        </linearGradient>
-                    )}
-                    {background.type === 'gradient' && background.direction === 'radial' && (
+                    {background.type === 'gradient' && background.direction === 'radial' ? (
                         <radialGradient id={bgFillId}>
                             <stop offset="0%" stopColor={background.color1} />
                             <stop offset="100%" stopColor={background.color2} />
                         </radialGradient>
-                    )}
+                    ) : background.type === 'gradient' ? (
+                        <linearGradient id={bgFillId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                            <stop offset="0%" stopColor={background.color1} />
+                            <stop offset="100%" stopColor={background.color2} />
+                        </linearGradient>
+                    ) : null}
                 </defs>
                 <path d={shapePaths[shape]} {...bgProps} />
              </svg>
@@ -5230,8 +5365,10 @@ export default function CreateTemplatePage() {
         <img
           src={url}
           alt={alt}
+          className="max-w-full max-h-full object-contain"
           style={{
-            transform: `scale(${styles.scale}) translateX(${styles.positionX}%) translateY(${styles.positionY}%)`,
+            transform: `scale(${styles.scale})`,
+            objectPosition: `${styles.positionX}% ${styles.positionY}%`
           }}
         />
       </div>
@@ -6649,4 +6786,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-
