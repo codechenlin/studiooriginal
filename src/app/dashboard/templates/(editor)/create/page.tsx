@@ -142,6 +142,8 @@ import {
   Wind,
   GitCommit,
   Image as ImageIconType,
+  Eye,
+  Settings2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -290,6 +292,7 @@ type TimerEndAction = 'stop' | 'secondary_countdown' | 'message';
 type StarStyle = 'pointed' | 'universo' | 'moderno';
 type SwitchDesign = 'classic' | 'futuristic' | 'minimalist';
 type ShapeType = 'square' | 'circle' | 'triangle' | 'rhombus' | 'pentagon' | 'hexagon' | 'octagon' | 'heart' | 'diamond' | 'star';
+type ShadowPosition = 'around' | 'bottom' | 'top' | 'right' | 'left';
 
 
 interface BaseBlock {
@@ -531,7 +534,6 @@ interface SwitchBlock extends BaseBlock {
   type: 'switch';
   payload: {
     design: SwitchDesign;
-    url: string;
     scale: number;
     alignment: TextAlign;
     paddingY: number;
@@ -547,6 +549,11 @@ interface SwitchBlock extends BaseBlock {
         color1: string;
         color2?: string;
         direction?: GradientDirection;
+      },
+       theme: {
+        enabled: boolean;
+        background: string;
+        foreground: string;
       }
     }
   }
@@ -557,6 +564,7 @@ interface ShapesBlock extends BaseBlock {
   payload: {
     shape: ShapeType;
     styles: {
+      size: number;
       background: {
         type: 'solid' | 'gradient';
         color1: string;
@@ -567,6 +575,7 @@ interface ShapesBlock extends BaseBlock {
       shadow: {
         color: string;
         opacity: number;
+        position: ShadowPosition;
       }
     }
   }
@@ -579,6 +588,7 @@ interface GifBlock extends BaseBlock {
     alt: string;
     styles: {
       scale: number;
+      size: number;
       positionX: number;
       positionY: number;
     }
@@ -3615,14 +3625,68 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 }
 
 const ColorEditor = ({ subStyle, styles, updateFunc }: {
-    subStyle: 'filled' | 'unfilled' | 'border' | 'on' | 'off' | 'background' | 'shadow',
-    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection } | { color: string, opacity: number },
+    subStyle: 'filled' | 'unfilled' | 'border' | 'on' | 'off' | 'background' | 'shadow' | 'theme',
+    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection } | { color: string, opacity: number, position: ShadowPosition } | { enabled: boolean, background: string, foreground: string },
     updateFunc: (mainKey: any, subKey: string, value: any) => void
 }) => {
 
-    if ('color' in styles) { // Shadow Editor
+    if ('enabled' in styles) { // Theme Editor for Switch
+        return (
+            <div className="space-y-4">
+                 <div className="flex items-center justify-between">
+                    <Label>Habilitar Tema Alternativo</Label>
+                    <Switch
+                        checked={styles.enabled}
+                        onCheckedChange={(c) => updateFunc(subStyle, 'enabled', c)}
+                    />
+                </div>
+                {styles.enabled && (
+                    <>
+                        <div className="space-y-2">
+                            <Label>Color de Fondo (Tema)</Label>
+                            <ColorPickerAdvanced color={styles.background} setColor={c => updateFunc(subStyle, 'background', c)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Color de Texto (Tema)</Label>
+                            <ColorPickerAdvanced color={styles.foreground} setColor={c => updateFunc(subStyle, 'foreground', c)} />
+                        </div>
+                    </>
+                )}
+            </div>
+        )
+    }
+
+    if ('position' in styles) { // Shadow Editor
+        const shadowPositions: { name: ShadowPosition, icon: React.ElementType }[] = [
+            { name: 'around', icon: Square },
+            { name: 'bottom', icon: ArrowDown },
+            { name: 'top', icon: ArrowUp },
+            { name: 'right', icon: ArrowRight },
+            { name: 'left', icon: ArrowLeft },
+        ];
         return (
              <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label>Posición de la Sombra</Label>
+                     <div className="grid grid-cols-5 gap-1">
+                        {shadowPositions.map(({ name, icon: Icon }) => (
+                            <TooltipProvider key={name}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button 
+                                            size="icon" 
+                                            variant={styles.position === name ? 'secondary' : 'outline'}
+                                            onClick={() => updateFunc(subStyle, 'position', name)}
+                                        >
+                                            <Icon />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p className="capitalize">{name === 'around' ? 'Alrededor' : name}</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        ))}
+                    </div>
+                </div>
                 <div className="space-y-2">
                     <Label>Color de Sombra</Label>
                     <ColorPickerAdvanced color={styles.color} setColor={c => updateFunc(subStyle, 'color', c)} />
@@ -3768,17 +3832,17 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
             <Separator />
             <h3 className="text-sm font-medium text-foreground/80">Relleno de Estrellas Llenas</h3>
-            <ColorEditor subStyle="filled" styles={element.payload.styles.filled} updateFunc={updateSubStyle} />
+            <ColorEditor subStyle="filled" styles={element.payload.styles.filled} updateFunc={updateSubStyle as any} />
             <Separator />
             <h3 className="text-sm font-medium text-foreground/80">Relleno de Estrellas Vacías</h3>
-            <ColorEditor subStyle="unfilled" styles={element.payload.styles.unfilled} updateFunc={updateSubStyle} />
+            <ColorEditor subStyle="unfilled" styles={element.payload.styles.unfilled} updateFunc={updateSubStyle as any} />
             <Separator />
             <h3 className="text-sm font-medium text-foreground/80">Borde de Estrellas</h3>
             <div className="space-y-2">
                 <Label>Ancho del Borde</Label>
                 <Slider value={[element.payload.styles.border.width]} min={0} max={10} onValueChange={v => updateSubStyle('border', 'width', v[0])}/>
             </div>
-            <ColorEditor subStyle="border" styles={element.payload.styles.border} updateFunc={updateSubStyle} />
+            <ColorEditor subStyle="border" styles={element.payload.styles.border} updateFunc={updateSubStyle as any} />
         </div>
     )
 }
@@ -4189,6 +4253,7 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'switch') return null;
+    const [isOn, setIsOn] = useState(false);
 
     const getElement = (): SwitchBlock | null => {
         const row = canvasContent.find(r => r.id === selectedElement.rowId);
@@ -4213,9 +4278,32 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }), true);
     };
     
-    const updateStyle = (mainKey: 'on' | 'off', subKey: string, value: any) => {
-        const currentStyles = element.payload.styles[mainKey];
-        updatePayload('styles', { ...element.payload.styles, [mainKey]: { ...currentStyles, [subKey]: value }});
+    const updateStyle = (mainKey: 'on' | 'off' | 'theme', subKey: string, value: any) => {
+      const currentStyles = element.payload.styles;
+      const mainKeyStyles = currentStyles[mainKey];
+      
+      const newSubStyles = { ...mainKeyStyles, [subKey]: value };
+      const newStyles = { ...currentStyles, [mainKey]: newSubStyles };
+      
+      setCanvasContent(prev => prev.map(row => {
+        if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+        return {
+          ...row,
+          payload: {
+            ...row.payload,
+            columns: row.payload.columns.map(col => {
+              if (col.id !== selectedElement.columnId) return col;
+              return {
+                ...col,
+                blocks: col.blocks.map(block => {
+                  if (block.id !== selectedElement.primitiveId || block.type !== 'switch') return block;
+                  return { ...block, payload: { ...block.payload, styles: newStyles } };
+                })
+              };
+            })
+          }
+        };
+      }), true);
     };
 
     return (
@@ -4232,15 +4320,6 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
               <SelectItem value="minimalist">Minimalista</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="space-y-2">
-            <Label>URL</Label>
-            <Input 
-                value={element.payload.url}
-                onChange={(e) => updatePayload('url', e.target.value)}
-                placeholder="https://ejemplo.com"
-            />
         </div>
 
         <div className="space-y-2">
@@ -4275,6 +4354,13 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         
         <h3 className="text-sm font-medium text-foreground/80">Color Apagado</h3>
         <ColorEditor subStyle="off" styles={element.payload.styles.off} updateFunc={updateStyle as any} />
+        <Separator />
+
+        <div className="space-y-2">
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Settings2 />Alternancia de Tema (Interactivo)</h3>
+            <p className="text-xs text-muted-foreground">Esta función permite al destinatario cambiar entre dos temas de color en el correo electrónico.</p>
+        </div>
+        <ColorEditor subStyle="theme" styles={element.payload.styles.theme} updateFunc={updateStyle as any} />
       </div>
     );
 }
@@ -4342,6 +4428,10 @@ const ShapesEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     </SelectContent>
                 </Select>
             </div>
+            <div className="space-y-2">
+                <Label>Tamaño Global</Label>
+                <Slider value={[element.payload.styles.size]} min={10} max={100} onValueChange={v => updateStyle('size', v[0])} />
+            </div>
             <Separator />
             <h3 className="text-sm font-medium text-foreground/80">Color de Fondo</h3>
             <ColorEditor subStyle="background" styles={element.payload.styles.background} updateFunc={updateSubStyle as any} />
@@ -4366,6 +4456,7 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
   setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
 }) => {
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+    const { toast } = useToast();
 
     if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'gif') return null;
     
@@ -4401,11 +4492,38 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
       setIsGalleryOpen(false);
     };
 
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        if (file.type !== 'image/gif') {
+            toast({
+                title: 'Archivo no válido',
+                description: 'Por favor, selecciona un archivo GIF.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const url = e.target?.result as string;
+          updatePayload('url', url);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+
     return (
         <div className="space-y-4">
             <GifGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Film/>Editor de GIF</h3>
              <div className="space-y-2">
+                 <Label htmlFor="gif-upload" className="w-full">
+                    <Button asChild variant="outline" className="w-full cursor-pointer">
+                        <span><UploadCloud className="mr-2"/>Subir GIF local</span>
+                    </Button>
+                    <Input id="gif-upload" type="file" accept="image/gif" className="sr-only" onChange={handleFileUpload} />
+                 </Label>
                 <Button variant="outline" className="w-full" onClick={() => setIsGalleryOpen(true)}>
                     <GalleryVertical className="mr-2"/>Abrir Galería de GIFs
                 </Button>
@@ -4417,6 +4535,12 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Input value={element.payload.alt} onChange={e => updatePayload('alt', e.target.value)} placeholder="Describe el GIF"/>
             </div>
             <Separator/>
+             <div className="space-y-2">
+                <Label>Tamaño Global</Label>
+                <Slider value={[element.payload.styles.size]} min={10} max={100} 
+                    onValueChange={v => updateStyle('size', v[0])}
+                />
+            </div>
             <div className="space-y-2">
                 <Label>Escala (Zoom)</Label>
                 <Slider value={[element.payload.styles.scale]} min={0.1} max={2} step={0.1} 
@@ -4901,13 +5025,13 @@ export default function CreateTemplatePage() {
                 type: 'switch',
                 payload: {
                     design: 'classic',
-                    url: '#',
                     scale: 1,
                     alignment: 'center',
                     paddingY: 10,
                     styles: {
                         on: { type: 'gradient', color1: '#00F260', color2: '#0575E6', direction: 'horizontal' },
-                        off: { type: 'solid', color1: '#555555' }
+                        off: { type: 'solid', color1: '#555555' },
+                        theme: { enabled: false, background: 'hsl(var(--switch-theme-bg))', foreground: 'hsl(var(--switch-theme-fg))' }
                     }
                 }
             };
@@ -4919,9 +5043,10 @@ export default function CreateTemplatePage() {
                 payload: {
                     shape: 'circle',
                     styles: {
+                        size: 100,
                         background: { type: 'gradient', color1: '#DA4453', color2: '#89216B', direction: 'radial' },
                         blur: 0,
-                        shadow: { color: 'rgba(0,0,0,0.5)', opacity: 50 }
+                        shadow: { color: 'rgba(0,0,0,0.5)', opacity: 50, position: 'around' }
                     }
                 }
             };
@@ -4933,7 +5058,7 @@ export default function CreateTemplatePage() {
                 payload: {
                     url: 'https://placehold.co/300x200.gif?text=Añadir+GIF',
                     alt: 'Placeholder GIF',
-                    styles: { scale: 1, positionX: 50, positionY: 50 }
+                    styles: { scale: 1, size: 100, positionX: 50, positionY: 50 }
                 }
             };
             break;
@@ -5229,27 +5354,39 @@ export default function CreateTemplatePage() {
   };
 
   const SwitchComponent = ({ block }: { block: SwitchBlock }) => {
-    const { design, scale, styles, url, paddingY, alignment } = block.payload;
+    const { design, scale, styles, paddingY, alignment } = block.payload;
     const [isOn, setIsOn] = useState(false);
 
     const onBg = styles.on.type === 'gradient' ? `linear-gradient(${styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.on.color1}, ${styles.on.color2})` : styles.on.color1;
     const offBg = styles.off.type === 'gradient' ? `linear-gradient(${styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.off.color1}, ${styles.off.color2})` : styles.off.color1;
 
     const baseWrapperStyle = { transform: `scale(${scale})` };
-    const linkProps = url ? { href: url, target: '_blank', rel: 'noopener noreferrer' } : {};
-    
-    const Wrapper = url ? 'a' : 'div';
+    const Wrapper = 'div';
     
     const alignClass = {
         left: 'justify-start',
         center: 'justify-center',
         right: 'justify-end'
     };
+    
+    const clickHandler = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsOn(!isOn);
+    }
+    
+    const themeStyles = `
+        <style>
+            .container-${block.id} { background-color: var(--initial-bg); color: var(--initial-fg); }
+            #switch-${block.id}:checked ~ .container-${block.id} { background-color: var(--themed-bg); color: var(--themed-fg); }
+        </style>
+    `;
+    const themeVariables = `<div class="container-${block.id}" style="--initial-bg: white; --initial-fg: black; --themed-bg: ${styles.theme.background}; --themed-fg: ${styles.theme.foreground};">`;
+    const checkbox = `<input type="checkbox" id="switch-${block.id}" class="hidden-checkbox" />`;
 
     const renderSwitch = () => {
       if (design === 'classic') {
           return (
-              <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
+              <Wrapper style={baseWrapperStyle} className="inline-block" onClick={clickHandler}>
                   <div className={cn("relative w-16 h-8 rounded-full transition-all duration-300 cursor-pointer")} style={{ background: isOn ? onBg : offBg }}>
                       <div className={cn("absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300", isOn && "translate-x-8")} />
                   </div>
@@ -5259,10 +5396,10 @@ export default function CreateTemplatePage() {
   
       if (design === 'futuristic') {
           return (
-              <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
+              <Wrapper style={baseWrapperStyle} className="inline-block" onClick={clickHandler}>
                   <div className={cn("relative w-20 h-6 rounded-full cursor-pointer p-1", isOn ? "bg-primary/30" : "bg-muted/30")}>
                        <div className="absolute inset-0 rounded-full" style={{background: isOn ? onBg : 'transparent', filter: `blur(${isOn ? '10px' : '0px'})`, transition: 'all 0.5s' }} />
-                       <div className={cn("relative z-10 w-full h-full rounded-full transition-all", isOn ? "bg-transparent" : offBg)} />
+                       <div className={cn("relative z-10 w-full h-full rounded-full transition-all")} style={{ background: isOn ? 'transparent' : offBg }} />
                        <div className={cn("absolute z-20 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full transition-all duration-300 flex items-center justify-center", isOn ? "left-[calc(100%-2.25rem)]" : "left-0.5")}>
                           <div className={cn("w-2 h-2 rounded-full transition-all", isOn ? "bg-green-400 shadow-[0_0_5px_#39ff14]" : "bg-red-500")} />
                       </div>
@@ -5273,7 +5410,7 @@ export default function CreateTemplatePage() {
   
       if (design === 'minimalist') {
          return (
-              <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
+              <Wrapper style={baseWrapperStyle} className="inline-block" onClick={clickHandler}>
                   <div className="w-24 h-10 flex items-center justify-center cursor-pointer">
                       <div className={cn("relative w-16 h-2 rounded-full")} style={{background: offBg}}>
                           <div className="absolute top-1/2 -translate-y-1/2 w-full h-full rounded-full transition-all duration-300" style={{background: onBg, width: isOn ? '100%' : '0%'}}/>
@@ -5296,7 +5433,7 @@ export default function CreateTemplatePage() {
 
   const ShapesComponent = ({ block }: { block: ShapesBlock }) => {
     const { shape, styles } = block.payload;
-    const { background, blur, shadow } = styles;
+    const { background, blur, shadow, size } = styles;
 
     const shapePaths = {
         square: "M10,10 H90 V90 H10 Z",
@@ -5319,24 +5456,32 @@ export default function CreateTemplatePage() {
       bgProps = { fill: `url(#${bgFillId})` };
     }
 
-    function hexToRgb(hex: string) {
+    function hexToRgba(hex: string, opacity: number) {
         let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : null;
+        return result ? `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${opacity / 100})` : hex;
     }
     
-    function getShadowColor() {
-        const rgb = hexToRgb(shadow.color);
-        if(!rgb) return shadow.color;
-        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${shadow.opacity / 100})`;
+    function getShadowFilter() {
+        const color = hexToRgba(shadow.color, shadow.opacity);
+        let offsets = { x: 0, y: 0 };
+        switch (shadow.position) {
+            case 'bottom': offsets = { x: 0, y: 4 }; break;
+            case 'top': offsets = { x: 0, y: -4 }; break;
+            case 'right': offsets = { x: 4, y: 0 }; break;
+            case 'left': offsets = { x: -4, y: 0 }; break;
+            case 'around': offsets = { x: 0, y: 2 }; break;
+        }
+        
+        let filterValue = `drop-shadow(${offsets.x}px ${offsets.y}px 6px ${color})`;
+        if (shadow.position === 'around') {
+          filterValue += ` drop-shadow(0 -2px 6px ${color}) drop-shadow(2px 0 6px ${color}) drop-shadow(-2px 0 6px ${color})`;
+        }
+        return filterValue;
     }
 
     return (
-        <div style={{ filter: `blur(${blur}px) drop-shadow(0 4px 6px ${getShadowColor()})` }}>
-             <svg viewBox="0 0 100 100" className="w-full h-full">
+        <div style={{ width: `${size}%`, margin: 'auto' }}>
+             <svg viewBox="0 0 100 100" className="w-full h-full" style={{ filter: `blur(${blur}px) ${getShadowFilter()}` }}>
                 <defs>
                     {background.type === 'gradient' && background.direction === 'radial' ? (
                         <radialGradient id={bgFillId}>
@@ -5360,17 +5505,34 @@ export default function CreateTemplatePage() {
   const GifComponent = ({ block }: { block: GifBlock }) => {
     const { url, alt, styles } = block.payload;
     
+    const wrapperStyle: React.CSSProperties = {
+        width: `${styles.size}%`,
+        paddingBottom: `${styles.size}%`,
+        margin: 'auto',
+        position: 'relative',
+        overflow: 'hidden'
+    };
+
+    const imageStyle: React.CSSProperties = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: `${styles.scale * 100}%`,
+        height: `${styles.scale * 100}%`,
+        objectFit: 'cover',
+        objectPosition: `${styles.positionX}% ${styles.positionY}%`,
+        transform: `translate(-50%, -50%)`,
+    };
+
     return (
-      <div className="p-2 w-full h-full flex items-center justify-center overflow-hidden">
-        <img
-          src={url}
-          alt={alt}
-          className="max-w-full max-h-full object-contain"
-          style={{
-            transform: `scale(${styles.scale})`,
-            objectPosition: `${styles.positionX}% ${styles.positionY}%`
-          }}
-        />
+      <div className="p-2 w-full h-full flex items-center justify-center">
+         <div style={wrapperStyle}>
+            <img
+              src={url}
+              alt={alt}
+              style={imageStyle}
+            />
+         </div>
       </div>
     );
   };

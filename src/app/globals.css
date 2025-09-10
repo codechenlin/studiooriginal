@@ -43,6 +43,8 @@ body {
     --sidebar-accent-foreground: 275 10% 10%;
     --sidebar-border: 275 20% 90%;
     --sidebar-ring: 283 100% 41%;
+    --switch-theme-bg: 232 50% 6%; 
+    --switch-theme-fg: 275 20% 95%;
 
     --editor-dark-bg-start: 0 0% 0%;
     --editor-dark-bg-end: 240 50% 5%;
@@ -86,6 +88,8 @@ body {
     --sidebar-accent-foreground: 275 20% 98%;
     --sidebar-border: 275 100% 25%;
     --sidebar-ring: 283 100% 55%;
+    --switch-theme-bg: 275 100% 98%;
+    --switch-theme-fg: 275 10% 10%;
 
     --ai-track: 240 4% 15%;
     --ai-glow-start: 180 100% 50%;
