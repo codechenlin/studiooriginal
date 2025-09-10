@@ -3614,9 +3614,25 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
 const ColorEditor = ({ subStyle, styles, updateFunc }: {
     subStyle: 'filled' | 'unfilled' | 'border' | 'on' | 'off' | 'background' | 'shadow',
-    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection },
+    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection } | { color: string, opacity: number },
     updateFunc: (mainKey: any, subKey: string, value: any) => void
 }) => {
+
+    if ('color' in styles) { // Shadow Editor
+        return (
+             <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label>Color de Sombra</Label>
+                    <ColorPickerAdvanced color={styles.color} setColor={c => updateFunc(subStyle, 'color', c)} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Opacidad de Sombra</Label>
+                    <Slider value={[styles.opacity]} max={100} onValueChange={v => updateFunc(subStyle, 'opacity', v[0])} />
+                </div>
+            </div>
+        )
+    }
+
     const setDirection = (direction: GradientDirection) => {
         updateFunc(subStyle, 'direction', direction);
     };
@@ -3721,7 +3737,7 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                     <Button variant={element.payload.styles.starStyle === 'pointed' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'pointed')}><Star className="mr-2"/> Puntiaguda</Button>
                     <Button variant={element.payload.styles.starStyle === 'universo' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'universo')}><StarHalf className="mr-2"/> Universo</Button>
                     <Button variant={element.payload.styles.starStyle === 'moderno' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'moderno')}>
-                        <svg viewBox="0 0 19 18" className="mr-2 size-4"><path d="M9.5 14.25l-5.584 2.936 1.066-6.218L.465 6.564l6.243-.907L9.5 0l2.792 5.657 6.243.907-4.517 4.404 1.066 6.218z" /></svg>
+                        <svg viewBox="0 0 19 18" className="mr-2 size-4 fill-current"><path d="M9.5 14.25l-5.584 2.936 1.066-6.218L.465 6.564l6.243-.907L9.5 0l2.792 5.657 6.243.907-4.517 4.404 1.066 6.218z" /></svg>
                         Moderno
                     </Button>
                  </div>
@@ -4235,11 +4251,11 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         <Separator />
         
         <h3 className="text-sm font-medium text-foreground/80">Color Encendido</h3>
-        <ColorEditor subStyle="on" styles={element.payload.styles.on} updateFunc={updateStyle} />
+        <ColorEditor subStyle="on" styles={element.payload.styles.on} updateFunc={updateStyle as any} />
         <Separator />
         
         <h3 className="text-sm font-medium text-foreground/80">Color Apagado</h3>
-        <ColorEditor subStyle="off" styles={element.payload.styles.off} updateFunc={updateStyle} />
+        <ColorEditor subStyle="off" styles={element.payload.styles.off} updateFunc={updateStyle as any} />
       </div>
     );
 }
@@ -4309,7 +4325,7 @@ const ShapesEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
             <Separator />
             <h3 className="text-sm font-medium text-foreground/80">Color de Fondo</h3>
-            <ColorEditor subStyle="background" styles={element.payload.styles.background} updateFunc={updateSubStyle} />
+            <ColorEditor subStyle="background" styles={element.payload.styles.background} updateFunc={updateSubStyle as any} />
             <Separator />
             <div className="space-y-2">
                 <Label className="flex items-center gap-2"><Wind/>Desenfoque</Label>
@@ -4320,14 +4336,7 @@ const ShapesEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
             <Separator />
             <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Layers/>Sombra</h3>
-            <div className="space-y-2">
-                <Label>Color de Sombra</Label>
-                <ColorPickerAdvanced color={element.payload.styles.shadow.color} setColor={c => updateSubStyle('shadow', 'color', c)} />
-            </div>
-            <div className="space-y-2">
-                <Label>Opacidad de Sombra</Label>
-                <Slider value={[element.payload.styles.shadow.opacity]} max={100} onValueChange={v => updateSubStyle('shadow', 'opacity', v[0])} />
-            </div>
+            <ColorEditor subStyle="shadow" styles={element.payload.styles.shadow} updateFunc={updateSubStyle as any} />
         </div>
     );
 };
@@ -5110,6 +5119,125 @@ export default function CreateTemplatePage() {
         </svg>
     )
   };
+
+  const SwitchComponent = ({ block }: { block: SwitchBlock }) => {
+    const { design, scale, styles, url } = block.payload;
+    const [isOn, setIsOn] = useState(false);
+
+    const onBg = styles.on.type === 'gradient' ? `linear-gradient(${styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.on.color1}, ${styles.on.color2})` : styles.on.color1;
+    const offBg = styles.off.type === 'gradient' ? `linear-gradient(${styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.off.color1}, ${styles.off.color2})` : styles.off.color1;
+
+    const baseWrapperStyle = { transform: `scale(${scale})` };
+    const linkProps = url ? { href: url, target: '_blank', rel: 'noopener noreferrer' } : {};
+    
+    const Wrapper = url ? 'a' : 'div';
+
+    if (design === 'classic') {
+        return (
+             <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
+                <div className={cn("relative w-16 h-8 rounded-full transition-all duration-300 cursor-pointer")} style={{ background: isOn ? onBg : offBg }}>
+                    <div className={cn("absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300", isOn && "translate-x-8")} />
+                </div>
+            </Wrapper>
+        );
+    }
+
+    if (design === 'futuristic') {
+        return (
+             <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
+                <div className={cn("relative w-20 h-6 rounded-full cursor-pointer p-1", isOn ? "bg-primary/30" : "bg-muted/30")}>
+                     <div className="absolute inset-0 rounded-full" style={{background: isOn ? onBg : 'transparent', filter: `blur(${isOn ? '10px' : '0px'})`, transition: 'all 0.5s' }} />
+                     <div className={cn("relative z-10 w-full h-full rounded-full transition-all", isOn ? "bg-transparent" : offBg)} />
+                     <div className={cn("absolute z-20 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full transition-all duration-300 flex items-center justify-center", isOn ? "left-[calc(100%-2.25rem)]" : "left-0.5")}>
+                        <div className={cn("w-2 h-2 rounded-full transition-all", isOn ? "bg-green-400 shadow-[0_0_5px_#39ff14]" : "bg-red-500")} />
+                    </div>
+                </div>
+            </Wrapper>
+        )
+    }
+
+    if (design === 'minimalist') {
+       return (
+            <Wrapper {...linkProps} style={baseWrapperStyle} className="inline-block" onClick={() => setIsOn(!isOn)}>
+                <div className="w-24 h-10 flex items-center justify-center cursor-pointer">
+                    <div className={cn("relative w-16 h-2 rounded-full")} style={{background: offBg}}>
+                        <div className="absolute top-1/2 -translate-y-1/2 w-full h-full rounded-full transition-all duration-300" style={{background: onBg, width: isOn ? '100%' : '0%'}}/>
+                        <div className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 border-2 rounded-full transition-all duration-300", isOn ? "left-full -translate-x-full border-white" : "left-0 border-gray-500")} style={{background: isOn ? onBg : 'white'}}/>
+                    </div>
+                </div>
+            </Wrapper>
+       )
+    }
+
+    return null;
+  }
+  SwitchComponent.displayName = 'SwitchComponent';
+
+  const ShapesComponent = ({ block }: { block: ShapesBlock }) => {
+    const { shape, styles } = block.payload;
+    const { background, blur, shadow } = styles;
+
+    const shapePaths = {
+        square: "M10,10 H90 V90 H10 Z",
+        circle: "M50,10 a40,40 0 1,1 0,80 a40,40 0 1,1 0,-80",
+        triangle: "M10,90 L50,10 L90,90 Z",
+        rhombus: "M50,5 L95,50 L50,95 L5,50 Z",
+        pentagon: "M50,5 L95,38 L78,95 L22,95 L5,38 Z",
+        hexagon: "M25,10 L75,10 L95,50 L75,90 L25,90 L5,50 Z",
+        octagon: "M30,10 L70,10 L90,30 L90,70 L70,90 L30,90 L10,70 L10,30 Z",
+        heart: "M50,30 A20,20 0 0,1 90,30 Q90,60 50,90 Q10,60 10,30 A20,20 0 0,1 50,30 Z",
+        diamond: "M50,5 L95,50 L50,95 L5,50 Z",
+        star: "M50,5 L61,35 L95,35 L68,55 L78,90 L50,70 L22,90 L32,55 L5,35 L39,35 Z"
+    };
+
+    const bgFillId = `shape-bg-${block.id}`;
+    let bgProps = {};
+    if (background.type === 'solid') {
+      bgProps = { fill: background.color1 };
+    } else {
+      bgProps = { fill: `url(#${bgFillId})` };
+    }
+
+    return (
+        <div style={{ filter: `blur(${blur}px) drop-shadow(0 4px 6px ${shadow.color})`, opacity: shadow.opacity / 100 }}>
+             <svg viewBox="0 0 100 100" className="w-full h-full">
+                <defs>
+                    {background.type === 'gradient' && (
+                        <linearGradient id={bgFillId} gradientTransform={background.direction === 'horizontal' ? 'rotate(90)' : 'rotate(0)'}>
+                            <stop offset="0%" stopColor={background.color1} />
+                            <stop offset="100%" stopColor={background.color2} />
+                        </linearGradient>
+                    )}
+                    {background.type === 'gradient' && background.direction === 'radial' && (
+                        <radialGradient id={bgFillId}>
+                            <stop offset="0%" stopColor={background.color1} />
+                            <stop offset="100%" stopColor={background.color2} />
+                        </radialGradient>
+                    )}
+                </defs>
+                <path d={shapePaths[shape]} {...bgProps} />
+             </svg>
+        </div>
+    );
+  };
+  ShapesComponent.displayName = 'ShapesComponent';
+
+  const GifComponent = ({ block }: { block: GifBlock }) => {
+    const { url, alt, styles } = block.payload;
+    
+    return (
+      <div className="p-2 w-full h-full flex items-center justify-center overflow-hidden">
+        <img
+          src={url}
+          alt={alt}
+          style={{
+            transform: `scale(${styles.scale}) translateX(${styles.positionX}%) translateY(${styles.positionY}%)`,
+          }}
+        />
+      </div>
+    );
+  };
+  GifComponent.displayName = 'GifComponent';
   
   const renderPrimitiveBlock = (block: PrimitiveBlock, rowId: string, colId: string, colCount: number) => {
      const isSelected = selectedElement?.type === 'primitive' && selectedElement.primitiveId === block.id;
@@ -5382,6 +5510,12 @@ export default function CreateTemplatePage() {
               case 'rating': {
                 return <RatingComponent block={block as RatingBlock} />;
               }
+               case 'switch':
+                return <SwitchComponent block={block as SwitchBlock} />;
+              case 'shapes':
+                return <ShapesComponent block={block as ShapesBlock} />;
+              case 'gif':
+                return <GifComponent block={block as GifBlock} />;
               default:
                 return (
                   <div className="p-2 border border-dashed rounded-md text-xs text-muted-foreground">
@@ -6515,3 +6649,4 @@ const LayerPanel = () => {
     </div>
   );
 }
+
