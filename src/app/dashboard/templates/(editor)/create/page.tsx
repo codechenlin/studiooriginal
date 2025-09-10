@@ -165,6 +165,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/compon
 import { Skeleton } from '@/components/ui/skeleton';
 import { Preloader } from '@/components/common/preloader';
 import { LoadingModal } from '@/components/common/loading-modal';
+import { FileManagerModal } from '@/components/dashboard/file-manager-modal';
 
 
 const mainContentBlocks = [
