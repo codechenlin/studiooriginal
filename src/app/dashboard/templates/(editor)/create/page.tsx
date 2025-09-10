@@ -132,6 +132,17 @@ import {
   Image as LucideImage,
   Film,
   StarHalf,
+  ToggleLeft,
+  Pentagon,
+  Heart,
+  Hexagon,
+  Octagon,
+  Diamond,
+  Triangle,
+  Wind,
+  Shadow,
+  GitCommit,
+  Image as ImageIconType,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -162,13 +173,16 @@ const mainContentBlocks = [
 const columnContentBlocks = [
   { name: "Titulo", icon: Heading1, id: 'heading' },
   { name: "Texto", icon: Type, id: 'text' },
-  { name: "Imagen", icon: ImageIcon, id: 'image' },
+  { name: "Imagen", icon: ImageIconType, id: 'image' },
   { name: "Botón", icon: Square, id: 'button' },
   { name: "Separador", icon: Minus, id: 'separator' },
   { name: "Video Youtube", icon: Youtube, id: 'youtube' },
   { name: "Contador", icon: Timer, id: 'timer' },
   { name: "Emoji", icon: Smile, id: 'emoji-static' },
   { name: "Estrellas", icon: Star, id: 'rating' },
+  { name: "Interruptor", icon: ToggleLeft, id: 'switch' },
+  { name: "Formas", icon: Pentagon, id: 'shapes' },
+  { name: "GIF", icon: Film, id: 'gif' },
 ];
 
 const wrapperContentBlocks = [
@@ -263,7 +277,7 @@ const timezones = [
 
 // --- STATE MANAGEMENT TYPES ---
 type BackgroundSource = 'upload' | 'url' | 'gallery';
-type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static' | 'rating';
+type StaticPrimitiveBlockType = 'heading' | 'text' | 'image' | 'button' | 'separator' | 'youtube' | 'timer' | 'emoji-static' | 'rating' | 'switch' | 'shapes' | 'gif';
 type InteractiveBlockType = 'emoji-interactive' | 'heading-interactive';
 
 type BlockType = StaticPrimitiveBlockType | InteractiveBlockType | 'columns' | 'wrapper';
@@ -274,7 +288,10 @@ type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 type SeparatorLineStyle = 'solid' | 'dotted' | 'dashed';
 type SeparatorShapeType = 'waves' | 'drops' | 'zigzag' | 'leaves' | 'scallops';
 type TimerEndAction = 'stop' | 'secondary_countdown' | 'message';
-type StarStyle = 'pointed' | 'universo' | 'moderno';
+type StarStyle = 'pointed' | 'universo';
+type SwitchDesign = 'classic' | 'futuristic' | 'minimalist';
+type ShapeType = 'square' | 'circle' | 'triangle' | 'rhombus' | 'pentagon' | 'hexagon' | 'octagon' | 'heart' | 'diamond' | 'star';
+
 
 interface BaseBlock {
   id: string;
@@ -478,7 +495,6 @@ interface ImageBlock extends BaseBlock {
   };
 }
 
-
 interface RatingBlock extends BaseBlock {
   type: 'rating';
   payload: {
@@ -508,6 +524,62 @@ interface RatingBlock extends BaseBlock {
         color2?: string;
         direction?: GradientDirection;
       }
+    }
+  }
+}
+
+interface SwitchBlock extends BaseBlock {
+  type: 'switch';
+  payload: {
+    design: SwitchDesign;
+    url: string;
+    scale: number;
+    styles: {
+      on: {
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2?: string;
+        direction?: GradientDirection;
+      },
+      off: {
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2?: string;
+        direction?: GradientDirection;
+      }
+    }
+  }
+}
+
+interface ShapesBlock extends BaseBlock {
+  type: 'shapes';
+  payload: {
+    shape: ShapeType;
+    styles: {
+      background: {
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2?: string;
+        direction?: GradientDirection;
+      },
+      blur: number;
+      shadow: {
+        color: string;
+        opacity: number;
+      }
+    }
+  }
+}
+
+interface GifBlock extends BaseBlock {
+  type: 'gif';
+  payload: {
+    url: string;
+    alt: string;
+    styles: {
+      scale: number;
+      positionX: number;
+      positionY: number;
     }
   }
 }
@@ -544,7 +616,7 @@ interface InteractiveHeadingBlock extends BaseBlock {
     }
 }
 
-type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock | ImageBlock | RatingBlock;
+type PrimitiveBlock = BaseBlock | ButtonBlock | HeadingBlock | TextBlock | StaticEmojiBlock | SeparatorBlock | YouTubeBlock | TimerBlock | ImageBlock | RatingBlock | SwitchBlock | ShapesBlock | GifBlock;
 type InteractivePrimitiveBlock = InteractiveEmojiBlock | InteractiveHeadingBlock;
 
 
@@ -3260,7 +3332,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
        <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl w-full h-[550px] flex flex-col p-0 gap-0 bg-zinc-900/90 border-zinc-700 backdrop-blur-xl text-white">
             <DialogHeader className="p-4 border-b border-zinc-800 shrink-0 z-10">
-                <DialogTitle className="flex items-center gap-2 text-base"><ImageIcon className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
+                <DialogTitle className="flex items-center gap-2 text-base"><ImageIconType className="text-primary"/>Gestionar Imagen de Fondo</DialogTitle>
             </DialogHeader>
             <div className="flex-1 grid grid-cols-12 overflow-hidden z-10">
                 <div className="col-span-7 flex flex-col bg-black/30 p-4 border-r border-zinc-800">
@@ -3275,7 +3347,7 @@ const BackgroundManagerModal = React.memo(({ open, onOpenChange, onApply, initia
                             }} />
                         ) : (
                             <div className="text-center text-zinc-500 p-8 flex flex-col items-center justify-center h-full">
-                                <ImageIcon className="mx-auto size-12" />
+                                <ImageIconType className="mx-auto size-12" />
                                 <p className="mt-2 text-sm">Vista previa de la imagen</p>
                             </div>
                         )}
@@ -3440,7 +3512,7 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     return (
         <div className="space-y-4">
             <ImageBlockGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
-            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIcon/>Gestionar Imagen</h3>
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ImageIconType/>Gestionar Imagen</h3>
              <div className="space-y-2">
                 <div>
                   <Label htmlFor="image-url-editor" className="text-xs text-muted-foreground">O añade una URL de imagen</Label>
@@ -3542,9 +3614,9 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 }
 
 const ColorEditor = ({ subStyle, styles, updateFunc }: {
-    subStyle: 'filled' | 'unfilled' | 'border',
+    subStyle: 'filled' | 'unfilled' | 'border' | 'on' | 'off' | 'background' | 'shadow',
     styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection },
-    updateFunc: (mainKey: 'filled' | 'unfilled' | 'border', subKey: string, value: any) => void
+    updateFunc: (mainKey: any, subKey: string, value: any) => void
 }) => {
     const setDirection = (direction: GradientDirection) => {
         updateFunc(subStyle, 'direction', direction);
@@ -3646,10 +3718,9 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
             </div>
              <div className="space-y-2">
                 <Label>Diseño de Estrella</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                     <Button variant={element.payload.styles.starStyle === 'pointed' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'pointed')}><Star className="mr-2"/> Puntiaguda</Button>
                     <Button variant={element.payload.styles.starStyle === 'universo' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'universo')}><StarHalf className="mr-2"/> Universo</Button>
-                    <Button variant={element.payload.styles.starStyle === 'moderno' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'moderno')}><Sparkles className="mr-2"/> Moderno</Button>
                  </div>
             </div>
             <div className="space-y-2">
@@ -3697,13 +3768,11 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
     const universoStarPath = "M12 0C11.34 6.03 6.03 11.34 0 12c6.03.66 11.34 5.97 12 12c.66-6.03 5.97-11.34 12-12C17.97 11.34 12.66 6.03 12 0z";
-    const modernStarPath = "M50,2.5L62.7,35.1L97.5,35.1L72.4,56.4L85.1,89L50,67.7L14.9,89L27.6,56.4L2.5,35.1L37.3,35.1Z";
 
     const getStarPath = () => {
         switch(starStyle) {
             case 'pointed': return pointedStarPath;
             case 'universo': return universoStarPath;
-            case 'moderno': return modernStarPath;
             default: return pointedStarPath;
         }
     }
@@ -3719,7 +3788,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
         };
         
         const starPath = getStarPath();
-        const viewBox = starStyle === 'moderno' ? "0 0 100 100" : "0 0 24 24";
+        const viewBox = "0 0 24 24";
 
         return (
             <svg key={index} width={starSize} height={starSize} viewBox={viewBox} style={{ flexShrink: 0 }}>
@@ -3735,7 +3804,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                         return null;
                     })}
                     <clipPath id={`clip-${uniqueId}`}>
-                       <rect x="0" y="0" width={starStyle === 'moderno' ? 100 * fillValue : 24 * fillValue} height={starStyle === 'moderno' ? 100 : 24} />
+                       <rect x="0" y="0" width={24 * fillValue} height={24} />
                     </clipPath>
                  </defs>
                 <path d={starPath} fill={getFill('unfilled')} stroke={styles.border.width > 0 ? getFill('border') : 'none'} strokeWidth={styles.border.width} strokeLinejoin="round" strokeLinecap="round" style={{ paintOrder: 'stroke' }} />
@@ -4018,7 +4087,7 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                         ) : (
                             <div className="h-full flex items-center justify-center text-center text-muted-foreground">
                                 <div>
-                                    <ImageIcon className="size-16 mx-auto"/>
+                                    <ImageIconType className="size-16 mx-auto"/>
                                     <p className="mt-2 text-sm">Selecciona un archivo</p>
                                 </div>
                             </div>
@@ -6142,4 +6211,3 @@ const LayerPanel = () => {
     </div>
   );
 }
-
