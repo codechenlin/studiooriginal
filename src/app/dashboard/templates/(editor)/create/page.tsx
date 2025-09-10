@@ -4162,6 +4162,254 @@ const ImageBlockGalleryModal = ({ open, onOpenChange, onSelect }: { open: boolea
     )
 };
 
+const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
+}) => {
+    if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'switch') return null;
+
+    const getElement = (): SwitchBlock | null => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'switch' ? block as SwitchBlock : null;
+    }
+    const element = getElement();
+    if (!element) return null;
+    
+    const updatePayload = (key: keyof SwitchBlock['payload'], value: any) => {
+        setCanvasContent(prev => prev.map(row => {
+          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+          return { ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
+            if (col.id !== selectedElement.columnId) return col;
+            return { ...col, blocks: col.blocks.map(block => {
+              if (block.id !== selectedElement.primitiveId || block.type !== 'switch') return block;
+              return { ...block, payload: { ...block.payload, [key]: value } };
+            })};
+          })}};
+        }), true);
+    };
+    
+    const updateStyle = (mainKey: 'on' | 'off', subKey: string, value: any) => {
+        const currentStyles = element.payload.styles[mainKey];
+        updatePayload('styles', { ...element.payload.styles, [mainKey]: { ...currentStyles, [subKey]: value }});
+    };
+
+    return (
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ToggleLeft/>Editor de Interruptor</h3>
+        
+        <div className="space-y-2">
+          <Label>Diseño</Label>
+          <Select value={element.payload.design} onValueChange={(v: SwitchDesign) => updatePayload('design', v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="classic">Clásico</SelectItem>
+              <SelectItem value="futuristic">Futurista</SelectItem>
+              <SelectItem value="minimalist">Minimalista</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+            <Label>URL</Label>
+            <Input 
+                value={element.payload.url}
+                onChange={(e) => updatePayload('url', e.target.value)}
+                placeholder="https://ejemplo.com"
+            />
+        </div>
+
+        <div className="space-y-2">
+            <Label>Tamaño Global</Label>
+            <Slider 
+                value={[element.payload.scale]} min={0.5} max={2} step={0.1}
+                onValueChange={v => updatePayload('scale', v[0])}
+            />
+        </div>
+        <Separator />
+        
+        <h3 className="text-sm font-medium text-foreground/80">Color Encendido</h3>
+        <ColorEditor subStyle="on" styles={element.payload.styles.on} updateFunc={updateStyle} />
+        <Separator />
+        
+        <h3 className="text-sm font-medium text-foreground/80">Color Apagado</h3>
+        <ColorEditor subStyle="off" styles={element.payload.styles.off} updateFunc={updateStyle} />
+      </div>
+    );
+}
+
+const ShapesEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
+}) => {
+    if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'shapes') return null;
+
+    const getElement = (): ShapesBlock | null => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'shapes' ? block as ShapesBlock : null;
+    }
+    const element = getElement();
+    if (!element) return null;
+    
+    const updateStyle = (key: keyof ShapesBlock['payload']['styles'], value: any) => {
+        setCanvasContent(prev => prev.map(row => {
+          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+          return { ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
+            if (col.id !== selectedElement.columnId) return col;
+            return { ...col, blocks: col.blocks.map(block => {
+              if (block.id !== selectedElement.primitiveId || block.type !== 'shapes') return block;
+              return { ...block, payload: { ...block.payload, styles: { ...block.payload.styles, [key]: value } } };
+            })};
+          })}};
+        }), true);
+    };
+
+    const updatePayload = (key: keyof ShapesBlock['payload'], value: any) => {
+        setCanvasContent(prev => prev.map(row => {
+          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+          return { ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
+            if (col.id !== selectedElement.columnId) return col;
+            return { ...col, blocks: col.blocks.map(block => {
+              if (block.id !== selectedElement.primitiveId || block.type !== 'shapes') return block;
+              return { ...block, payload: { ...block.payload, [key]: value } };
+            })};
+          })}};
+        }), true);
+    }
+    
+    const updateSubStyle = (mainKey: 'background' | 'shadow', subKey: string, value: any) => {
+        updateStyle(mainKey, { ...element.payload.styles[mainKey], [subKey]: value });
+    };
+
+    const shapeIcons = { square: Square, circle: Circle, triangle: Triangle, rhombus: Diamond, pentagon: Pentagon, hexagon: Hexagon, octagon: Octagon, heart: Heart, diamond: Diamond, star: Star };
+
+    return (
+        <div className="space-y-4">
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Pentagon/>Editor de Formas</h3>
+            <div className="space-y-2">
+                <Label>Forma</Label>
+                <Select value={element.payload.shape} onValueChange={(v: ShapeType) => updatePayload('shape', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        {Object.entries(shapeIcons).map(([name, Icon]) => (
+                            <SelectItem key={name} value={name}><Icon className="inline-block mr-2" />{name.charAt(0).toUpperCase() + name.slice(1)}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <Separator />
+            <h3 className="text-sm font-medium text-foreground/80">Color de Fondo</h3>
+            <ColorEditor subStyle="background" styles={element.payload.styles.background} updateFunc={updateSubStyle} />
+            <Separator />
+            <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Wind/>Desenfoque</Label>
+                <div className="flex items-center gap-2">
+                    <Slider value={[element.payload.styles.blur]} max={50} onValueChange={v => updateStyle('blur', v[0])} />
+                    <span className="text-xs w-12 text-right">{element.payload.styles.blur}px</span>
+                </div>
+            </div>
+            <Separator />
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Shadow/>Sombra</h3>
+            <div className="space-y-2">
+                <Label>Color de Sombra</Label>
+                <ColorPickerAdvanced color={element.payload.styles.shadow.color} setColor={c => updateSubStyle('shadow', 'color', c)} />
+            </div>
+            <div className="space-y-2">
+                <Label>Opacidad de Sombra</Label>
+                <Slider value={[element.payload.styles.shadow.opacity]} max={100} onValueChange={v => updateSubStyle('shadow', 'opacity', v[0])} />
+            </div>
+        </div>
+    );
+};
+
+const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
+  selectedElement: SelectedElement;
+  canvasContent: CanvasBlock[];
+  setCanvasContent: (content: CanvasBlock[], recordHistory: boolean) => void;
+}) => {
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+
+    if (selectedElement?.type !== 'primitive' || getSelectedBlockType(selectedElement, canvasContent) !== 'gif') return null;
+    
+    const getElement = (): GifBlock | null => {
+        const row = canvasContent.find(r => r.id === selectedElement.rowId);
+        if (row?.type !== 'columns') return null;
+        const col = row.payload.columns.find(c => c.id === selectedElement.columnId);
+        const block = col?.blocks.find(b => b.id === selectedElement.primitiveId);
+        return block?.type === 'gif' ? block as GifBlock : null;
+    }
+    const element = getElement();
+    if (!element) return null;
+    
+    const updatePayload = (key: keyof GifBlock['payload'], value: any, record: boolean = true) => {
+        setCanvasContent(prev => prev.map(row => {
+          if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
+          return { ...row, payload: { ...row.payload, columns: row.payload.columns.map(col => {
+            if (col.id !== selectedElement.columnId) return col;
+            return { ...col, blocks: col.blocks.map(block => {
+              if (block.id !== selectedElement.primitiveId || block.type !== 'gif') return block;
+              return { ...block, payload: { ...block.payload, [key]: value } };
+            })};
+          })}};
+        }), record);
+    };
+
+    const updateStyle = (key: keyof GifBlock['payload']['styles'], value: any, record: boolean = true) => {
+        updatePayload('styles', { ...element.payload.styles, [key]: value }, record);
+    };
+    
+    const handleGallerySelect = (fileUrl: string) => {
+      updatePayload('url', fileUrl);
+      setIsGalleryOpen(false);
+    };
+
+    return (
+        <div className="space-y-4">
+            <ImageBlockGalleryModal open={isGalleryOpen} onOpenChange={setIsGalleryOpen} onSelect={handleGallerySelect} />
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Film/>Editor de GIF</h3>
+             <div className="space-y-2">
+                <Button variant="outline" className="w-full" onClick={() => setIsGalleryOpen(true)}>
+                    <GalleryVertical className="mr-2"/>Abrir Galería
+                </Button>
+                <Label htmlFor="gif-url" className="text-xs text-muted-foreground">O añade una URL de GIF</Label>
+                <Input id="gif-url" value={element.payload.url} onChange={e => updatePayload('url', e.target.value)} placeholder="https://example.com/image.gif"/>
+            </div>
+            <div className="space-y-2">
+                <Label>Texto Alternativo</Label>
+                <Input value={element.payload.alt} onChange={e => updatePayload('alt', e.target.value)} placeholder="Describe el GIF"/>
+            </div>
+            <Separator/>
+            <div className="space-y-2">
+                <Label>Escala (Zoom)</Label>
+                <Slider value={[element.payload.styles.scale]} min={0.1} max={2} step={0.1} 
+                    onValueChange={v => updateStyle('scale', v[0], false)}
+                    onValueCommit={v => updateStyle('scale', v[0], true)}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Posición Horizontal (X)</Label>
+                <Slider value={[element.payload.styles.positionX]} 
+                    onValueChange={v => updateStyle('positionX', v[0], false)}
+                    onValueCommit={v => updateStyle('positionX', v[0], true)}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Posición Vertical (Y)</Label>
+                <Slider value={[element.payload.styles.positionY]} 
+                    onValueChange={v => updateStyle('positionY', v[0], false)}
+                    onValueCommit={v => updateStyle('positionY', v[0], true)}
+                />
+            </div>
+        </div>
+    );
+};
 
 export default function CreateTemplatePage() {
   const router = useRouter();
@@ -5942,6 +6190,15 @@ const LayerPanel = () => {
                         )}
                          { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'rating' && (
                             <RatingEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'switch' && (
+                            <SwitchEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'shapes' && (
+                            <ShapesEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
+                        )}
+                         { selectedElement?.type === 'primitive' && getSelectedBlockType(selectedElement, canvasContent) === 'gif' && (
+                            <GifEditor selectedElement={selectedElement} canvasContent={canvasContent} setCanvasContent={setCanvasContent} />
                         )}
                         
                         { !selectedElement && (
