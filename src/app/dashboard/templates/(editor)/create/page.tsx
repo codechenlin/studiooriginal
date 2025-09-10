@@ -140,7 +140,6 @@ import {
   Diamond,
   Triangle,
   Wind,
-  Shadow,
   GitCommit,
   Image as ImageIconType,
 } from 'lucide-react';
@@ -3721,6 +3720,10 @@ const RatingEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <div className="grid grid-cols-2 gap-2">
                     <Button variant={element.payload.styles.starStyle === 'pointed' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'pointed')}><Star className="mr-2"/> Puntiaguda</Button>
                     <Button variant={element.payload.styles.starStyle === 'universo' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'universo')}><StarHalf className="mr-2"/> Universo</Button>
+                    <Button variant={element.payload.styles.starStyle === 'moderno' ? 'secondary' : 'outline'} onClick={() => updateStyle('starStyle', 'moderno')}>
+                        <svg viewBox="0 0 19 18" className="mr-2 size-4"><path d="M9.5 14.25l-5.584 2.936 1.066-6.218L.465 6.564l6.243-.907L9.5 0l2.792 5.657 6.243.907-4.517 4.404 1.066 6.218z" /></svg>
+                        Moderno
+                    </Button>
                  </div>
             </div>
             <div className="space-y-2">
@@ -3768,7 +3771,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
     const universoStarPath = "M12 0C11.34 6.03 6.03 11.34 0 12c6.03.66 11.34 5.97 12 12c.66-6.03 5.97-11.34 12-12C17.97 11.34 12.66 6.03 12 0z";
-    const modernoStarPath = `M25,0.052c3.238,0,5.864,2.626,5.864,5.864l0,0c0,3.238-2.626,5.864-5.864,5.864l-7.23,0 c-1.04,0-1.883,0.844-1.883,1.883l0,7.23c0,1.04-0.844,1.883-1.883,1.883l0,0c-1.04,0-1.883-0.844-1.883-1.883l0-7.23 c0-1.04-0.844-1.883-1.883-1.883l-7.23,0c-3.238,0-5.864-2.626-5.864-5.864l0,0C0.052,2.678,2.678,0.052,5.864,0.052l7.23,0 c1.04,0,1.883-0.844,1.883-1.883l0,0`;
+    const modernoStarPath = "M9.5 14.25l-5.584 2.936 1.066-6.218L.465 6.564l6.243-.907L9.5 0l2.792 5.657 6.243.907-4.517 4.404 1.066 6.218z";
 
     const getStarPath = () => {
         switch(starStyle) {
@@ -3790,7 +3793,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
         };
         
         const starPath = getStarPath();
-        const viewBox = starStyle === 'moderno' ? "0 0 32 32" : "0 0 24 24";
+        const viewBox = starStyle === 'moderno' ? "0 0 19 18" : "0 0 24 24";
 
         return (
             <svg key={index} width={starSize} height={starSize} viewBox={viewBox} style={{ flexShrink: 0 }}>
@@ -3806,7 +3809,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                         return null;
                     })}
                     <clipPath id={`clip-${uniqueId}`}>
-                       <rect x="0" y="0" width={starStyle === 'moderno' ? 32 * fillValue : 24 * fillValue} height={starStyle === 'moderno' ? 32 : 24} />
+                       <rect x="0" y="0" width={starStyle === 'moderno' ? 19 * fillValue : 24 * fillValue} height={starStyle === 'moderno' ? 18 : 24} />
                     </clipPath>
                  </defs>
                 <path d={starPath} fill={getFill('unfilled')} stroke={styles.border.width > 0 ? getFill('border') : 'none'} strokeWidth={styles.border.width} strokeLinejoin="round" strokeLinecap="round" style={{ paintOrder: 'stroke' }} />
@@ -3955,10 +3958,10 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0 bg-background/90 dark:bg-zinc-900/90 border-border/20 dark:border-zinc-700 backdrop-blur-xl text-foreground dark:text-white shadow-2xl shadow-primary/20">
                 <DialogHeader className="p-4 border-b border-border/10 dark:border-zinc-800 shrink-0">
-                  <DialogTitle>Gestor de Archivos</DialogTitle>
-                  <DialogDescription>
+                    <DialogTitle>Gestor de Archivos</DialogTitle>
+                    <DialogDescription>
                     Sube, gestiona y selecciona imágenes y GIFs para tus plantillas.
-                  </DialogDescription>
+                    </DialogDescription>
                 </DialogHeader>
                 <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                     <AlertDialogContent>
@@ -4316,7 +4319,7 @@ const ShapesEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 </div>
             </div>
             <Separator />
-            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Shadow/>Sombra</h3>
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Layers/>Sombra</h3>
             <div className="space-y-2">
                 <Label>Color de Sombra</Label>
                 <ColorPickerAdvanced color={element.payload.styles.shadow.color} setColor={c => updateSubStyle('shadow', 'color', c)} />
@@ -4818,7 +4821,7 @@ export default function CreateTemplatePage() {
             };
             break;
         default:
-            newBlock = { ...basePayload, type: 'text', payload: {} }; // Fallback
+            newBlock = { ...basePayload, type: 'text', payload: { fragments: [] } }; // Fallback
       }
 
       setCanvasContent(prev => prev.map(row => {
