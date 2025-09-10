@@ -288,7 +288,7 @@ type GradientDirection = 'vertical' | 'horizontal' | 'radial';
 type SeparatorLineStyle = 'solid' | 'dotted' | 'dashed';
 type SeparatorShapeType = 'waves' | 'drops' | 'zigzag' | 'leaves' | 'scallops';
 type TimerEndAction = 'stop' | 'secondary_countdown' | 'message';
-type StarStyle = 'pointed' | 'universo';
+type StarStyle = 'pointed' | 'universo' | 'moderno';
 type SwitchDesign = 'classic' | 'futuristic' | 'minimalist';
 type ShapeType = 'square' | 'circle' | 'triangle' | 'rhombus' | 'pentagon' | 'hexagon' | 'octagon' | 'heart' | 'diamond' | 'star';
 
@@ -3768,11 +3768,13 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
     
     const pointedStarPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
     const universoStarPath = "M12 0C11.34 6.03 6.03 11.34 0 12c6.03.66 11.34 5.97 12 12c.66-6.03 5.97-11.34 12-12C17.97 11.34 12.66 6.03 12 0z";
+    const modernoStarPath = `M25,0.052c3.238,0,5.864,2.626,5.864,5.864l0,0c0,3.238-2.626,5.864-5.864,5.864l-7.23,0 c-1.04,0-1.883,0.844-1.883,1.883l0,7.23c0,1.04-0.844,1.883-1.883,1.883l0,0c-1.04,0-1.883-0.844-1.883-1.883l0-7.23 c0-1.04-0.844-1.883-1.883-1.883l-7.23,0c-3.238,0-5.864-2.626-5.864-5.864l0,0C0.052,2.678,2.678,0.052,5.864,0.052l7.23,0 c1.04,0,1.883-0.844,1.883-1.883l0,0`;
 
     const getStarPath = () => {
         switch(starStyle) {
             case 'pointed': return pointedStarPath;
             case 'universo': return universoStarPath;
+            case 'moderno': return modernoStarPath;
             default: return pointedStarPath;
         }
     }
@@ -3788,7 +3790,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
         };
         
         const starPath = getStarPath();
-        const viewBox = "0 0 24 24";
+        const viewBox = starStyle === 'moderno' ? "0 0 32 32" : "0 0 24 24";
 
         return (
             <svg key={index} width={starSize} height={starSize} viewBox={viewBox} style={{ flexShrink: 0 }}>
@@ -3804,7 +3806,7 @@ const RatingComponent = ({ block }: { block: RatingBlock }) => {
                         return null;
                     })}
                     <clipPath id={`clip-${uniqueId}`}>
-                       <rect x="0" y="0" width={24 * fillValue} height={24} />
+                       <rect x="0" y="0" width={starStyle === 'moderno' ? 32 * fillValue : 24 * fillValue} height={starStyle === 'moderno' ? 32 : 24} />
                     </clipPath>
                  </defs>
                 <path d={starPath} fill={getFill('unfilled')} stroke={styles.border.width > 0 ? getFill('border') : 'none'} strokeWidth={styles.border.width} strokeLinejoin="round" strokeLinecap="round" style={{ paintOrder: 'stroke' }} />
@@ -4095,7 +4097,9 @@ const FileManagerModal = ({ open, onOpenChange }: { open: boolean; onOpenChange:
                     </div>
                 </div>
                  <DialogFooter className="p-2.5 border-t border-border/10 dark:border-zinc-800 shrink-0 bg-background/80 dark:bg-zinc-900/50 z-10">
-                    <Button type="button" onClick={() => onOpenChange(false)} variant="outline" className="dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700">Salir</Button>
+                    <DialogClose asChild>
+                      <Button type="button" variant="outline" className="dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700">Salir</Button>
+                    </DialogClose>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -4525,8 +4529,48 @@ export default function CreateTemplatePage() {
                 }
             };
             break;
-          default:
-              newBlock = { ...basePayload, type: 'text', payload: { text: `Contenido para ${type}` } };
+          case 'switch':
+            newBlock = {
+                ...basePayload,
+                type: 'switch',
+                payload: {
+                    design: 'classic',
+                    url: '#',
+                    scale: 1,
+                    styles: {
+                        on: { type: 'gradient', color1: '#00F260', color2: '#0575E6', direction: 'horizontal' },
+                        off: { type: 'solid', color1: '#555555' }
+                    }
+                }
+            };
+            break;
+        case 'shapes':
+            newBlock = {
+                ...basePayload,
+                type: 'shapes',
+                payload: {
+                    shape: 'circle',
+                    styles: {
+                        background: { type: 'gradient', color1: '#DA4453', color2: '#89216B', direction: 'radial' },
+                        blur: 0,
+                        shadow: { color: 'rgba(0,0,0,0.5)', opacity: 50 }
+                    }
+                }
+            };
+            break;
+        case 'gif':
+            newBlock = {
+                ...basePayload,
+                type: 'gif',
+                payload: {
+                    url: 'https://placehold.co/300x200.gif?text=Añadir+GIF',
+                    alt: 'Placeholder GIF',
+                    styles: { scale: 1, positionX: 50, positionY: 50 }
+                }
+            };
+            break;
+        default:
+            newBlock = { ...basePayload, type: 'text', payload: {} }; // Fallback
       }
 
       setCanvasContent(prev => prev.map(row => {
@@ -4846,7 +4890,7 @@ export default function CreateTemplatePage() {
                 const safeGlobalStyles = textBlock.payload.globalStyles || { textAlign: 'left', fontSize: 16 };
                 return (
                     <p style={{ padding: '8px', wordBreak: 'break-word', whiteSpace: 'pre-wrap', textAlign: safeGlobalStyles.textAlign, fontSize: `${safeGlobalStyles.fontSize}px` }}>
-                        {textBlock.payload.fragments.map(fragment => {
+                        {textBlock.payload.fragments?.map(fragment => {
                             const El = fragment.link ? 'a' : 'span';
                              const props = fragment.link ? { 
                                 href: fragment.link.url, 
