@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Eye, EyeOff } from "lucide-react";
 import React from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/context/language-context";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -38,6 +39,7 @@ const formSchema = z.object({
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -63,14 +65,14 @@ export default function SignupPage() {
 
     if (error) {
       toast({
-        title: "Error al registrarse",
+        title: t('signup_error_title'),
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Cuenta Creada",
-        description: "¡Bienvenido! Revisa tu correo para verificar tu cuenta.",
+        title: t('signup_success_title'),
+        description: t('signup_success_desc'),
         className: 'bg-gradient-to-r from-[#E18700] to-[#FFAB00] border-none text-white',
       });
       router.push("/login?new_user=true");
@@ -80,9 +82,9 @@ export default function SignupPage() {
   return (
     <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl">Create an Account</CardTitle>
+        <CardTitle className="text-2xl">{t('signup_create_account')}</CardTitle>
         <CardDescription>
-          Join Mailflow AI and revolutionize your email marketing.
+          {t('signup_description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -93,12 +95,12 @@ export default function SignupPage() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>{t('full_name')}</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                       <Input
-                        placeholder="Your Name"
+                        placeholder={t('your_name_placeholder')}
                         {...field}
                         className="pl-10"
                       />
@@ -113,7 +115,7 @@ export default function SignupPage() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('email')}</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -133,7 +135,7 @@ export default function SignupPage() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t('password')}</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -152,19 +154,19 @@ export default function SignupPage() {
               )}
             />
             <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Creando cuenta..." : "Create Account"}
+              {form.formState.isSubmitting ? t('signup_creating_account') : t('signup_create_account_button')}
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="text-sm">
         <p className="text-muted-foreground">
-          Already have an account?{" "}
+          {t('signup_already_account')}{" "}
           <Link
             href="/login"
             className="font-medium text-primary hover:underline"
           >
-            Sign In
+            {t('sign_in_link')}
           </Link>
         </p>
       </CardFooter>

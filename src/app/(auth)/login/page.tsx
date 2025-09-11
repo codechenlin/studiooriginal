@@ -29,6 +29,8 @@ import { Eye, EyeOff, Mail } from "lucide-react";
 import React, { useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingModal } from "@/components/common/loading-modal";
+import { useLanguage } from "@/context/language-context";
+import { SphereAnimation } from "@/components/login/sphere-animation";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -38,6 +40,7 @@ const formSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -61,14 +64,14 @@ export default function LoginPage() {
         if (error) {
             if (error.message === "Email not confirmed") {
                 toast({
-                    title: "Aun no puedes iniciar sesion",
-                    description: "Confirma tu correo electrónico para activar tu cuenta.",
+                    title: t('login_not_confirmed_title'),
+                    description: t('login_not_confirmed_desc'),
                     variant: "destructive",
                 });
             } else {
                 toast({
-                    title: "Inicio de sesión incorrecto",
-                    description: "Correo electrónico o contraseña nos son validas, intenta nuevamente",
+                    title: t('login_error_title'),
+                    description: t('login_error_desc'),
                     variant: "destructive",
                 });
             }
@@ -76,27 +79,28 @@ export default function LoginPage() {
         } else {
             if (!isNewUser) {
                 toast({
-                    title: "¡Qué bueno verte de nuevo!",
-                    description: "Tu espacio de trabajo te estaba esperando.",
+                    title: t('login_success_title'),
+                    description: t('login_success_desc'),
                     className: 'bg-success-login border-none text-white',
                 });
             }
             const redirectPath = isNewUser ? "/dashboard?welcome=true" : "/dashboard";
             router.push(redirectPath);
-            // No necesitas router.refresh() aquí, el redirect se encargará.
         }
-        // No apagues isLoading aquí para que la modal permanezca hasta que la nueva página cargue
     });
   }
 
   return (
     <>
+      <div className="absolute inset-0 z-[-1]">
+        <SphereAnimation />
+      </div>
       <LoadingModal isOpen={isLoading} variant="login" />
-      <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-xl">
+      <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-xl w-full">
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome Back</CardTitle>
+          <CardTitle className="text-2xl">{t('login_welcome_back')}</CardTitle>
           <CardDescription>
-            Enter your credentials to access your account.
+            {t('login_enter_credentials')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -107,7 +111,7 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('email')}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -128,12 +132,12 @@ export default function LoginPage() {
                 render={({ field }) => (
                   <FormItem>
                     <div className="flex items-center justify-between">
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>{t('password')}</FormLabel>
                       <Link
                         href="/forgot-password"
                         className="text-sm font-medium text-primary hover:underline"
                       >
-                        Forgot Password?
+                        {t('forgot_password_link')}
                       </Link>
                     </div>
                     <FormControl>
@@ -154,19 +158,19 @@ export default function LoginPage() {
                 )}
               />
               <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" disabled={isPending}>
-                {isPending ? "Iniciando sesión..." : "Sign In"}
+                {isPending ? t('login_signing_in') : t('login_sign_in_button')}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="text-sm">
           <p className="text-muted-foreground">
-            Don't have an account?{" "}
+            {t('login_no_account')}{" "}
             <Link
               href="/signup"
               className="font-medium text-primary hover:underline"
             >
-              Sign Up
+              {t('sign_up_link')}
             </Link>
           </p>
         </CardFooter>
