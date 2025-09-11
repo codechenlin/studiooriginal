@@ -145,6 +145,7 @@ import {
   Eye,
   Settings2,
   Crop,
+  Gift,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -484,6 +485,7 @@ interface ImageBlock extends BaseBlock {
       openInNewTab: boolean;
     };
     styles: {
+      size: number;
       positionX: number;
       positionY: number;
       zoom: number;
@@ -539,6 +541,8 @@ interface SwitchBlock extends BaseBlock {
     scale: number;
     alignment: TextAlign;
     paddingY: number;
+    hookText: string;
+    secretContent: string;
     styles: {
       on: {
         type: 'solid' | 'gradient';
@@ -552,11 +556,6 @@ interface SwitchBlock extends BaseBlock {
         color2?: string;
         direction?: GradientDirection;
       },
-       theme: {
-        enabled: boolean;
-        background: string;
-        foreground: string;
-      }
     }
   }
 }
@@ -3727,7 +3726,6 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
     
     const handleCropSave = (newStyles: { zoom: number, positionX: number, positionY: number }) => {
         updatePayload('styles', { ...element.payload.styles, ...newStyles });
-        setIsCropModalOpen(false);
     };
 
     const setDirection = (direction: GradientDirection) => {
@@ -3765,6 +3763,16 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                   value={element.payload.alt}
                   onChange={(e) => updatePayload('alt', e.target.value)}
                   placeholder="Describe la imagen"
+                />
+            </div>
+             <div className="space-y-2">
+                <Label>Tamaño Global</Label>
+                <Slider 
+                    value={[element.payload.styles.size]} 
+                    min={10} 
+                    max={100} 
+                    step={1}
+                    onValueChange={v => updateStyle('size', v[0])}
                 />
             </div>
             <Separator />
@@ -3825,36 +3833,10 @@ const ImageEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 };
 
 const ColorEditor = ({ subStyle, styles, updateFunc }: {
-    subStyle: 'filled' | 'unfilled' | 'border' | 'on' | 'off' | 'background' | 'shadow' | 'theme',
-    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection } | { color: string, opacity: number, position: ShadowPosition } | { enabled: boolean, background: string, foreground: string },
+    subStyle: 'filled' | 'unfilled' | 'border' | 'on' | 'off' | 'background' | 'shadow',
+    styles: { type: 'solid' | 'gradient', color1: string, color2?: string, direction?: GradientDirection } | { color: string, opacity: number, position: ShadowPosition },
     updateFunc: (mainKey: any, subKey: string, value: any) => void
 }) => {
-
-    if ('enabled' in styles) { // Theme Editor for Switch
-        return (
-            <div className="space-y-4">
-                 <div className="flex items-center justify-between">
-                    <Label>Habilitar Tema Alternativo</Label>
-                    <Switch
-                        checked={styles.enabled}
-                        onCheckedChange={(c) => updateFunc(subStyle, 'enabled', c)}
-                    />
-                </div>
-                {styles.enabled && (
-                    <>
-                        <div className="space-y-2">
-                            <Label>Color de Fondo (Tema)</Label>
-                            <ColorPickerAdvanced color={styles.background} setColor={c => updateFunc(subStyle, 'background', c)} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Color de Texto (Tema)</Label>
-                            <ColorPickerAdvanced color={styles.foreground} setColor={c => updateFunc(subStyle, 'foreground', c)} />
-                        </div>
-                    </>
-                )}
-            </div>
-        )
-    }
 
     if ('position' in styles) { // Shadow Editor
         const shadowPositions: { name: ShadowPosition, icon: React.ElementType }[] = [
@@ -4147,40 +4129,22 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         }), true);
     };
     
-    const updateStyle = (mainKey: 'on' | 'off' | 'theme', subKey: string, value: any) => {
-      const currentStyles = element.payload.styles;
-      const mainKeyStyles = currentStyles[mainKey];
+    const updateStyle = (mainKey: 'on' | 'off', subKey: string, value: any) => {
+        const currentStyles = element.payload.styles;
+        const mainKeyStyles = currentStyles[mainKey];
       
-      const newSubStyles = { ...mainKeyStyles, [subKey]: value };
-      const newStyles = { ...currentStyles, [mainKey]: newSubStyles };
+        const newSubStyles = { ...mainKeyStyles, [subKey]: value };
+        const newStyles = { ...currentStyles, [mainKey]: newSubStyles };
       
-      setCanvasContent(prev => prev.map(row => {
-        if (row.id !== selectedElement.rowId || row.type !== 'columns') return row;
-        return {
-          ...row,
-          payload: {
-            ...row.payload,
-            columns: row.payload.columns.map(col => {
-              if (col.id !== selectedElement.columnId) return col;
-              return {
-                ...col,
-                blocks: col.blocks.map(block => {
-                  if (block.id !== selectedElement.primitiveId || block.type !== 'switch') return block;
-                  return { ...block, payload: { ...block.payload, styles: newStyles } };
-                })
-              };
-            })
-          }
-        };
-      }), true);
+        updatePayload('styles', newStyles);
     };
 
     return (
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><ToggleLeft/>Editor de Interruptor</h3>
+        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Gift/>Editor de Contenido Secreto</h3>
         
         <div className="space-y-2">
-          <Label>Diseño</Label>
+          <Label>Diseño del Interruptor</Label>
           <Select value={element.payload.design} onValueChange={(v: SwitchDesign) => updatePayload('design', v)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -4217,19 +4181,30 @@ const SwitchEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         </div>
         <Separator />
         
+        <div className="space-y-2">
+          <Label>Texto de Gancho (Visible)</Label>
+          <Input 
+            value={element.payload.hookText}
+            onChange={e => updatePayload('hookText', e.target.value)}
+            placeholder="Ej: Revela tu descuento..."
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Contenido Secreto (Oculto)</Label>
+          <Input 
+            value={element.payload.secretContent}
+            onChange={e => updatePayload('secretContent', e.target.value)}
+            placeholder="Ej: CÓDIGO: VERANO25"
+          />
+        </div>
+        <Separator />
+
         <h3 className="text-sm font-medium text-foreground/80">Color Encendido</h3>
         <ColorEditor subStyle="on" styles={element.payload.styles.on} updateFunc={updateStyle as any} />
         <Separator />
         
         <h3 className="text-sm font-medium text-foreground/80">Color Apagado</h3>
         <ColorEditor subStyle="off" styles={element.payload.styles.off} updateFunc={updateStyle as any} />
-        <Separator />
-
-        <div className="space-y-2">
-            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Settings2 />Alternancia de Tema (Interactivo)</h3>
-            <p className="text-xs text-muted-foreground">Esta función permite al destinatario cambiar entre dos temas de color en el correo electrónico.</p>
-        </div>
-        <ColorEditor subStyle="theme" styles={element.payload.styles.theme} updateFunc={updateStyle as any} />
       </div>
     );
 }
@@ -4423,13 +4398,13 @@ const GifEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <Label>Texto Alternativo</Label>
                 <Input value={element.payload.alt} onChange={e => updatePayload('alt', e.target.value)} placeholder="Describe el GIF"/>
             </div>
-            <Separator/>
             <div className="space-y-2">
                 <Label>Tamaño Global</Label>
                 <Slider value={[element.payload.styles.size]} min={10} max={100} 
                     onValueChange={v => updateStyle('size', v[0])}
                 />
             </div>
+            <Separator/>
             <div className="space-y-2">
                 <Button variant="outline" className="w-full" onClick={() => setIsCropModalOpen(true)}>
                     <Crop className="mr-2"/>Ajustar Zoom y Posición
@@ -4595,6 +4570,7 @@ const CropAndZoomModal = ({ isOpen, onOpenChange, imageUrl, initialStyles, onSav
     
     const handleSave = () => {
         onSave({ scale, positionX: position.x, positionY: position.y });
+        onOpenChange(false);
     };
 
     const containerStyle: React.CSSProperties = {
@@ -4920,6 +4896,7 @@ export default function CreateTemplatePage() {
               alt: 'Placeholder image',
               link: { url: '#', openInNewTab: false },
               styles: {
+                size: 100,
                 positionX: 50,
                 positionY: 50,
                 zoom: 100,
@@ -4972,7 +4949,7 @@ export default function CreateTemplatePage() {
                 type: 'separator',
                 payload: {
                     height: 20,
-                    style: 'invisible',
+                    style: 'dots',
                     line: { thickness: 1, color: '#CCCCCC', style: 'solid', borderRadius: 0 },
                     shapes: { type: 'waves', background: { type: 'solid', color1: '#A020F0' }, frequency: 20 },
                     dots: { size: 4, count: 10, color: '#CCCCCC' }
@@ -5038,10 +5015,11 @@ export default function CreateTemplatePage() {
                     scale: 1,
                     alignment: 'center',
                     paddingY: 10,
+                    hookText: 'Haz clic para revelar tu premio',
+                    secretContent: 'CÓDIGO: VERANO25',
                     styles: {
                         on: { type: 'gradient', color1: '#00F260', color2: '#0575E6', direction: 'horizontal' },
                         off: { type: 'solid', color1: '#555555' },
-                        theme: { enabled: false, background: 'hsl(var(--switch-theme-bg))', foreground: 'hsl(var(--switch-theme-fg))' }
                     }
                 }
             };
@@ -5377,20 +5355,20 @@ export default function CreateTemplatePage() {
   };
 
   const SwitchComponent = ({ block }: { block: SwitchBlock }) => {
-    const { design, scale, styles, paddingY, alignment } = block.payload;
+    const { design, scale, alignment, paddingY } = block.payload;
     const [isOn, setIsOn] = useState(false);
 
-    const onBg = styles.on.type === 'gradient'
-      ? (styles.on.direction === 'radial'
-          ? `radial-gradient(circle, ${styles.on.color1}, ${styles.on.color2})`
-          : `linear-gradient(${styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.on.color1}, ${styles.on.color2})`)
-      : styles.on.color1;
+    const onBg = block.payload.styles.on.type === 'gradient'
+      ? (block.payload.styles.on.direction === 'radial'
+          ? `radial-gradient(circle, ${block.payload.styles.on.color1}, ${block.payload.styles.on.color2})`
+          : `linear-gradient(${block.payload.styles.on.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${block.payload.styles.on.color1}, ${block.payload.styles.on.color2})`)
+      : block.payload.styles.on.color1;
 
-    const offBg = styles.off.type === 'gradient'
-      ? (styles.off.direction === 'radial'
-          ? `radial-gradient(circle, ${styles.off.color1}, ${styles.off.color2})`
-          : `linear-gradient(${styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${styles.off.color1}, ${styles.off.color2})`)
-      : styles.off.color1;
+    const offBg = block.payload.styles.off.type === 'gradient'
+      ? (block.payload.styles.off.direction === 'radial'
+          ? `radial-gradient(circle, ${block.payload.styles.off.color1}, ${block.payload.styles.off.color2})`
+          : `linear-gradient(${block.payload.styles.off.direction === 'horizontal' ? 'to right' : 'to bottom'}, ${block.payload.styles.off.color1}, ${block.payload.styles.off.color2})`)
+      : block.payload.styles.off.color1;
 
     const alignClass = {
         left: 'justify-start',
@@ -5445,9 +5423,13 @@ export default function CreateTemplatePage() {
     }
     
     return (
-        <div className={cn("w-full flex", alignClass[alignment])} style={{ paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px` }}>
+      <div className={cn("w-full flex", alignClass[alignment])} style={{ paddingTop: `${paddingY}px`, paddingBottom: `${paddingY}px` }}>
+        <div className="flex flex-col items-center gap-2">
             {renderSwitch()}
+            <p className={cn("text-sm transition-opacity duration-300", isOn ? 'opacity-0 h-0' : 'opacity-100')}>{block.payload.hookText}</p>
+            <p className={cn("text-sm font-bold transition-opacity duration-300", isOn ? 'opacity-100' : 'opacity-0 h-0')}>{block.payload.secretContent}</p>
         </div>
+      </div>
     );
   }
   SwitchComponent.displayName = 'SwitchComponent';
@@ -5649,12 +5631,12 @@ export default function CreateTemplatePage() {
               case 'image': {
                 const imageBlock = block as ImageBlock;
                 const { url, alt, styles, link } = imageBlock.payload;
-                const { borderRadius, zoom, positionX, positionY, border } = styles;
+                const { size, borderRadius, zoom, positionX, positionY, border } = styles;
 
-                const wrapperStyle: React.CSSProperties = {
-                    width: '100%',
-                    height: 'auto',
-                    padding: '8px'
+                const outerWrapperStyle: React.CSSProperties = {
+                    width: `${size}%`,
+                    margin: 'auto',
+                    padding: '8px',
                 };
                 
                 const borderWrapperStyle: React.CSSProperties = {
@@ -5694,7 +5676,7 @@ export default function CreateTemplatePage() {
                 };
 
                 const imageElement = (
-                    <div style={wrapperStyle}>
+                    <div style={outerWrapperStyle}>
                         <div style={borderWrapperStyle}>
                            <div style={imageContainerStyle}>
                                <img src={url} alt={alt} style={imageStyle} />
@@ -7013,5 +6995,4 @@ const LayerPanel = () => {
 }
 
     
-
 
