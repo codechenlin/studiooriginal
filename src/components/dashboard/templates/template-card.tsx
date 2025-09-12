@@ -113,7 +113,7 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                           <TemplateRenderer content={template.content} />
                         </div>
                         <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 sm:gap-4">
-                           <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => router.push(`/dashboard/templates/preview/${template.id}`, '_blank')}>
+                           <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => window.open(`/dashboard/templates/preview/${template.id}`, '_blank')}>
                                 <Eye className="text-white"/>
                             </Button>
                             <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => setIsConfirmingEdit(true)}>
@@ -153,7 +153,7 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                      <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="absolute bottom-2 right-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        className="absolute bottom-2 right-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive border border-transparent hover:border-destructive/50"
                         onClick={() => setIsDeleting(true)}
                       >
                         <Trash2 className="size-5"/>
