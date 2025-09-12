@@ -4,11 +4,10 @@
 import React, { useState, useTransition } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Brush, AlertTriangle, User, Calendar, Tags, Check } from 'lucide-react';
+import { Brush, AlertTriangle, User, Calendar, Tags, Check, FileSignature, Eye } from 'lucide-react';
 import { type TemplateWithAuthor, renameTemplate } from '@/app/dashboard/templates/actions';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -24,7 +23,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CategoryManagerModal } from './category-manager-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { TemplateRenderer } from './template-renderer';
+import { TemplatePreviewModal } from './template-preview-modal';
 
 interface TemplateCardProps {
     template: TemplateWithAuthor;
@@ -37,6 +37,7 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
     const [isRenaming, setIsRenaming] = useState(false);
     const [isConfirmingEdit, setIsConfirmingEdit] = useState(false);
     const [isManagingCategories, setIsManagingCategories] = useState(false);
+    const [isPreviewing, setIsPreviewing] = useState(false);
     const [newName, setNewName] = useState(template.name);
     const [isSaving, startSaving] = useTransition();
 
@@ -74,32 +75,31 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
 
     return (
         <>
-            <Card className="overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:border-primary/50 hover:-translate-y-1">
+            <Card className="overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:border-primary/50 hover:-translate-y-1 flex flex-col">
                 <CardContent className="p-0">
                     <div className="aspect-video bg-muted/30 relative flex items-center justify-center overflow-hidden">
-                        {/* Placeholder for template preview */}
-                        <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 p-4">
-                            <div className="w-full h-full border-2 border-dashed border-zinc-700 rounded-lg flex items-center justify-center text-zinc-600">
-                                Vista Previa
-                            </div>
+                        <div className="w-full h-full transform scale-[0.25] origin-top-left pointer-events-none">
+                          <TemplateRenderer content={template.content} />
                         </div>
-
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
-                            <Button size="icon" className="rounded-full h-12 w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => setIsConfirmingEdit(true)}>
+                        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 sm:gap-4">
+                           <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => setIsPreviewing(true)}>
+                                <Eye className="text-white"/>
+                            </Button>
+                            <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => setIsConfirmingEdit(true)}>
                                 <Brush className="text-white"/>
                             </Button>
-                            <Button size="icon" className="rounded-full h-12 w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => setIsRenaming(true)}>
-                                <Pencil className="text-white"/>
+                            <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => setIsRenaming(true)}>
+                                <FileSignature className="text-white"/>
                             </Button>
                         </div>
                     </div>
                 </CardContent>
                 <CardFooter 
-                    className="p-4 flex flex-col items-start gap-3 bg-card/50 cursor-pointer"
+                    className="p-4 flex flex-col items-start gap-3 bg-card/50 cursor-pointer flex-grow"
                     onClick={() => setIsManagingCategories(true)}
                 >
                     <p className="font-semibold text-lg truncate w-full">{template.name}</p>
-                    <div className="w-full text-xs text-muted-foreground space-y-2">
+                    <div className="w-full text-xs text-muted-foreground space-y-2 mt-auto">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-5 w-5">
                                 <AvatarImage src={authorAvatar || ''} alt={authorName} />
@@ -115,7 +115,7 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                         </div>
                          <div className="flex items-center gap-2 flex-wrap">
                             <Tags className="size-4"/>
-                             {template.categories.length > 0 ? (
+                             {template.categories && template.categories.length > 0 ? (
                                 template.categories.map(cat => <Badge key={cat} variant="secondary">{cat}</Badge>)
                              ) : (
                                 <span>Sin categoría</span>
@@ -170,6 +170,13 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                 onOpenChange={setIsManagingCategories}
                 template={template}
                 onTemplateUpdate={onTemplateUpdate}
+            />
+
+            {/* Preview Modal */}
+            <TemplatePreviewModal 
+              isOpen={isPreviewing}
+              onOpenChange={setIsPreviewing}
+              template={template}
             />
         </>
     );

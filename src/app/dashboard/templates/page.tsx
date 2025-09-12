@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { TemplateCard, TemplateCardSkeleton } from '@/components/dashboard/templates/template-card';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { CategoryFilter, CategoryFilterSkeleton } from '@/components/dashboard/templates/category-filter';
+import { TemplateListItem, TemplateListItemSkeleton } from '@/components/dashboard/templates/template-list-item';
+import { Table, TableHeader, TableRow, TableHead, TableBody } from '@/components/ui/table';
 
 export default function TemplatesPage() {
     const [templates, setTemplates] = useState<TemplateWithAuthor[]>([]);
@@ -94,9 +96,27 @@ export default function TemplatesPage() {
 
             <div className="flex-1">
                 {isLoading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {Array.from({ length: 3 }).map((_, i) => <TemplateCardSkeleton key={i}/>)}
-                    </div>
+                     layout === 'grid' ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {Array.from({ length: 3 }).map((_, i) => <TemplateCardSkeleton key={i}/>)}
+                        </div>
+                    ) : (
+                        <div className="border rounded-lg">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Nombre</TableHead>
+                                        <TableHead>Autor</TableHead>
+                                        <TableHead>Última Modificación</TableHead>
+                                        <TableHead className="text-right">Acciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {Array.from({ length: 3 }).map((_, i) => <TemplateListItemSkeleton key={i} />)}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )
                 ) : filteredTemplates.length === 0 ? (
                     <div className="text-center py-20 text-muted-foreground flex flex-col items-center justify-center border-2 border-dashed border-border/60 rounded-lg h-full">
                         <FolderOpen className="size-16 mb-4 text-primary/50" />
@@ -109,11 +129,29 @@ export default function TemplatesPage() {
                             </Button>
                         </Link>
                     </div>
-                ) : (
+                ) : layout === 'grid' ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTemplates.map(template => (
                            <TemplateCard key={template.id} template={template} onTemplateUpdate={fetchTemplatesData} />
                         ))}
+                    </div>
+                ) : (
+                    <div className="border rounded-lg">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nombre</TableHead>
+                                    <TableHead>Autor</TableHead>
+                                    <TableHead>Última Modificación</TableHead>
+                                    <TableHead className="text-right">Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredTemplates.map(template => (
+                                    <TemplateListItem key={template.id} template={template} onTemplateUpdate={fetchTemplatesData} />
+                                ))}
+                            </TableBody>
+                        </Table>
                     </div>
                 )}
             </div>
