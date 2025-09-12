@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { Button } from "@/components/ui/button";
-import { History, PlusCircle, Search, LayoutGrid, List } from "lucide-react";
+import { History, PlusCircle, Search, LayoutGrid, List, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { getTemplates, type TemplateWithAuthor } from './actions';
@@ -26,7 +26,7 @@ export default function TemplatesPage() {
             const result = await getTemplates();
             if (result.success && result.data) {
                 setTemplates(result.data);
-                const categories = new Set(result.data.flatMap(t => t.categories));
+                const categories = new Set(result.data.flatMap(t => t.categories || []));
                 setAllCategories(Array.from(categories));
             } else {
                 toast({
@@ -46,7 +46,7 @@ export default function TemplatesPage() {
       .filter(template => template.name.toLowerCase().includes(searchTerm.toLowerCase()))
       .filter(template => 
           selectedCategories.length === 0 ||
-          selectedCategories.some(cat => template.categories.includes(cat))
+          (template.categories && selectedCategories.some(cat => template.categories.includes(cat)))
       );
 
     return (
@@ -96,6 +96,18 @@ export default function TemplatesPage() {
                 {isLoading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {Array.from({ length: 3 }).map((_, i) => <TemplateCardSkeleton key={i}/>)}
+                    </div>
+                ) : filteredTemplates.length === 0 ? (
+                    <div className="text-center py-20 text-muted-foreground flex flex-col items-center justify-center border-2 border-dashed border-border/60 rounded-lg h-full">
+                        <FolderOpen className="size-16 mb-4 text-primary/50" />
+                        <h3 className="text-xl font-semibold text-foreground">Aún no hay plantillas</h3>
+                        <p className="mt-2 max-w-md">Parece que tu lienzo está en blanco. ¡Haz clic en "Crear Nueva Plantilla" para empezar a diseñar tu primera obra maestra!</p>
+                         <Link href="/dashboard/templates/create" className="mt-6">
+                            <Button className="bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity">
+                                <PlusCircle className="mr-2"/>
+                                Crear mi Primera Plantilla
+                            </Button>
+                        </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

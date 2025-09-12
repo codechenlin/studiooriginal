@@ -43,7 +43,34 @@ export async function getTemplates(): Promise<{ success: boolean; data?: Templat
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+        // Fallback for schema cache issues.
+        if (error.message.includes('relationship')) {
+             console.warn('Relationship not found, falling back to separate queries.');
+             const { data: templatesData, error: templatesError } = await supabase
+                .from('templates')
+                .select('*')
+                .eq('user_id', user.id);
+             if(templatesError) throw templatesError;
+
+             const userIds = templatesData.map(t => t.user_id);
+             const { data: profilesData, error: profilesError } = await supabase
+                .from('profiles')
+                .select('*')
+                .in('id', userIds);
+             if(profilesError) throw profilesError;
+
+             const profilesMap = new Map(profilesData.map(p => [p.id, p]));
+
+             const combinedData = templatesData.map(t => ({
+                ...t,
+                profiles: profilesMap.get(t.user_id) || null
+             }));
+             
+             return { success: true, data: combinedData as TemplateWithAuthor[] };
+        }
+      throw error;
+    }
     
     return { success: true, data: data as TemplateWithAuthor[] };
   } catch (error: any) {
@@ -93,4 +120,3 @@ export async function updateTemplateCategories(templateId: string, categories: s
         return { success: false, error: error.message };
     }
 }
-
