@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { revalidatePath } from 'next/cache';
 
 async function getTemplates() {
   const supabase = createClient();
@@ -29,7 +28,6 @@ async function getTemplates() {
     return [];
   }
   
-  revalidatePath('/dashboard/templates');
   return data;
 }
 
