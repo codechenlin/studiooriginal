@@ -40,6 +40,9 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
     const [newName, setNewName] = useState(template.name);
     const [isSaving, startSaving] = useTransition();
 
+    const authorName = template.profiles?.full_name || 'Desconocido';
+    const authorAvatar = template.profiles?.avatar_url;
+
     const handleRename = async () => {
         if (!newName.trim() || newName === template.name) {
             setIsRenaming(false);
@@ -66,7 +69,7 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
     }
 
     const handleEdit = () => {
-        router.push(`/dashboard/templates/edit/${template.id}`);
+        router.push(`/dashboard/templates/create?id=${template.id}`);
     }
 
     return (
@@ -99,10 +102,10 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                     <div className="w-full text-xs text-muted-foreground space-y-2">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-5 w-5">
-                                <AvatarImage src={template.author?.avatar_url || ''} alt={template.author?.name || 'Autor'} />
+                                <AvatarImage src={authorAvatar || ''} alt={authorName} />
                                 <AvatarFallback><User className="size-3"/></AvatarFallback>
                             </Avatar>
-                            <span>{template.author?.name || 'Desconocido'}</span>
+                            <span>{authorName}</span>
                         </div>
                          <div className="flex items-center gap-2">
                             <Calendar className="size-4"/>

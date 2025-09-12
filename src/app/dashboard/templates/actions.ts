@@ -11,8 +11,8 @@ export type TemplateWithAuthor = {
   content: any;
   user_id: string;
   categories: string[];
-  author: {
-    name: string | null;
+  profiles: {
+    full_name: string | null;
     avatar_url: string | null;
   } | null;
 };
@@ -35,7 +35,7 @@ export async function getTemplates(): Promise<{ success: boolean; data?: Templat
         content,
         user_id,
         categories,
-        author:profiles (
+        profiles (
           full_name,
           avatar_url
         )
@@ -93,3 +93,4 @@ export async function updateTemplateCategories(templateId: string, categories: s
         return { success: false, error: error.message };
     }
 }
+
