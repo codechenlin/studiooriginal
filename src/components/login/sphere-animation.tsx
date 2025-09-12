@@ -3,11 +3,25 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 
 export function SphereAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDarkMode, setIsDarkMode] = React.useState(true);
+  const [mounted, setMounted] = React.useState(false);
 
-  const colors = useMemo(() => ['#AD00EC', '#1700E6', '#00ADEC'], []);
+  React.useEffect(() => {
+    setMounted(true);
+    const storedTheme = localStorage.getItem("theme");
+    setIsDarkMode(storedTheme === "dark");
+  }, []);
+
+  const colors = useMemo(() => {
+    if (!mounted) return [];
+    return isDarkMode 
+      ? ['#C0C0C0', '#F5F5F5', '#E5E4E2'] // Dark mode colors
+      : ['#009AFF', '#AD00EC', '#00ADEC']; // Light mode colors
+  }, [isDarkMode, mounted]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

@@ -34,7 +34,6 @@ import { CategoryManagerModal } from './category-manager-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { TemplateRenderer } from './template-renderer';
-import { TemplatePreviewModal } from './template-preview-modal';
 
 interface TemplateCardProps {
     template: TemplateWithAuthor;
@@ -47,7 +46,6 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
     const [isRenaming, setIsRenaming] = useState(false);
     const [isConfirmingEdit, setIsConfirmingEdit] = useState(false);
     const [isManagingCategories, setIsManagingCategories] = useState(false);
-    const [isPreviewing, setIsPreviewing] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [newName, setNewName] = useState(template.name);
     const [isSaving, startSaving] = useTransition();
@@ -153,7 +151,7 @@ export function TemplateCard({ template, onTemplateUpdate }: TemplateCardProps) 
                      <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="absolute bottom-2 right-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive border border-transparent hover:border-destructive/50"
+                        className="absolute bottom-2 right-2 text-[#F00000] border border-[#F00000] hover:bg-destructive/10"
                         onClick={() => setIsDeleting(true)}
                       >
                         <Trash2 className="size-5"/>
