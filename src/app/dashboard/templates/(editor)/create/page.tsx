@@ -448,31 +448,31 @@ interface YouTubeBlock extends BaseBlock {
 }
 
 interface TimerBlock extends BaseBlock {
-    type: 'timer';
-    payload: {
-        values: {
-            days: string;
-            hours: string;
-            minutes: string;
-            seconds: string;
-        };
-        design: 'digital' | 'analog' | 'minimalist';
-        styles: {
-            fontFamily: string;
-            numberColor: string;
-            labelColor: string;
-            borderRadius: number;
-            background: {
-                type: 'solid' | 'gradient';
-                color1: string;
-                color2: string;
-                direction: GradientDirection;
-            };
-            strokeWidth: number;
-            scale: number;
-            minimalistLabelSize: number;
-        }
-    }
+  type: 'timer';
+  payload: {
+    values: {
+      days: string;
+      hours: string;
+      minutes: string;
+      seconds: string;
+    };
+    design: 'digital' | 'analog' | 'minimalist';
+    styles: {
+      fontFamily: string;
+      numberColor: string;
+      labelColor: string;
+      borderRadius: number;
+      background: {
+        type: 'solid' | 'gradient';
+        color1: string;
+        color2: string;
+        direction: GradientDirection;
+      };
+      strokeWidth: number;
+      scale: number;
+      minimalistLabelSize: number;
+    };
+  };
 }
 
 interface ImageBlock extends BaseBlock {
@@ -6648,76 +6648,82 @@ const LayerPanel = () => {
       </Dialog>
       
        {/* Initial Name Modal */}
-      <Dialog open={isInitialNameModalOpen} onOpenChange={setIsInitialNameModalOpen}>
-        <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
-          <DialogHeader>
-            <div className="flex justify-center pb-4">
-              <FileSignature className="size-12 text-primary" />
-            </div>
-            <DialogTitle className="text-center text-xl">¡Inicia tu Obra Maestra!</DialogTitle>
-            <DialogDescription className="text-center">
-              Dale un nombre y asigna categorías a tu nueva plantilla para empezar a dar vida a tus ideas.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div>
-              <Label>Nombre de la Plantilla</Label>
-              <Input
-                value={tempTemplateName}
-                onChange={(e) => setTempTemplateName(e.target.value)}
-                placeholder="Ej: Newsletter de Bienvenida"
-                autoFocus
-                maxLength={20}
-              />
-            </div>
-            <div>
-              <Label>Categorías</Label>
-              <div className="mt-2 space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
-                {allCategories.map((category) => (
-                  <div key={category} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`initial-cat-${category}`}
-                      checked={selectedCategories.includes(category)}
-                      onCheckedChange={(checked) => handleCategoryToggle(category, !!checked)}
-                    />
-                    <label htmlFor={`initial-cat-${category}`} className="text-sm font-medium leading-none">
-                      {category}
-                    </label>
+      <Dialog open={isInitialNameModalOpen} onOpenChange={(open) => { if (!open) router.push('/dashboard/templates'); }}>
+          <DialogContent className="max-w-3xl bg-card/80 backdrop-blur-sm border-border/20" showCloseButton={false}>
+              <div className="grid grid-cols-1 md:grid-cols-2">
+                  <div className="p-8 flex flex-col justify-center">
+                      <div className="flex justify-center md:justify-start pb-4">
+                          <div className="p-3 bg-primary/10 rounded-full border-2 border-primary/20">
+                            <FileSignature className="size-10 text-primary" />
+                          </div>
+                      </div>
+                      <DialogHeader>
+                          <DialogTitle className="text-2xl font-bold">¡Inicia tu Obra Maestra!</DialogTitle>
+                          <DialogDescription>
+                              Dale un nombre y asigna categorías a tu nueva plantilla para empezar a dar vida a tus ideas.
+                          </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-4">
+                          <div>
+                              <Label>Nombre de la Plantilla</Label>
+                              <Input
+                                  value={tempTemplateName}
+                                  onChange={(e) => setTempTemplateName(e.target.value)}
+                                  placeholder="Ej: Newsletter de Bienvenida"
+                                  autoFocus
+                                  maxLength={20}
+                              />
+                          </div>
+                      </div>
                   </div>
-                ))}
+                  <div className="p-8 bg-black/10 dark:bg-black/20 rounded-r-lg">
+                       <h3 className="font-semibold mb-4">Categorías</h3>
+                       <ScrollArea className="h-48">
+                          <div className="space-y-2">
+                              {allCategories.map((category) => (
+                                  <div key={category} className="flex items-center space-x-2">
+                                      <Checkbox
+                                          id={`initial-cat-${category}`}
+                                          checked={selectedCategories.includes(category)}
+                                          onCheckedChange={(checked) => handleCategoryToggle(category, !!checked)}
+                                      />
+                                      <label htmlFor={`initial-cat-${category}`} className="text-sm font-medium leading-none">
+                                          {category}
+                                      </label>
+                                  </div>
+                              ))}
+                          </div>
+                       </ScrollArea>
+                       <div className="flex gap-2 mt-4">
+                          <Input
+                              value={newCategory}
+                              onChange={(e) => setNewCategory(e.target.value)}
+                              placeholder="Crear nueva categoría"
+                              onKeyDown={(e) => e.key === 'Enter' && handleAddNewCategory()}
+                          />
+                          <Button onClick={handleAddNewCategory} size="icon" variant="outline">
+                              <PlusCircle className="size-4" />
+                          </Button>
+                      </div>
+                  </div>
               </div>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  placeholder="Crear nueva categoría"
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddNewCategory()}
-                />
-                <Button onClick={handleAddNewCategory} size="icon" variant="outline">
-                  <PlusCircle className="size-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="sm:justify-between">
-            <Button
-              type="button"
-              onClick={() => router.push('/dashboard')}
-              className="text-white bg-[#A11C00] hover:bg-[#F00000]"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                handleSaveTemplateName();
-              }}
-              className="bg-primary text-primary-foreground hover:bg-[#00CB07] hover:text-white"
-            >
-              Guardar y Empezar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+              <DialogFooter className="px-8 pb-8 pt-4 flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <Button
+                      type="button"
+                      onClick={() => router.push('/dashboard/templates')}
+                      className="text-white bg-[#A11C00] hover:bg-[#F00000] w-full sm:w-auto"
+                  >
+                      Cancelar y Salir
+                  </Button>
+                  <Button
+                      type="button"
+                      onClick={handleSaveTemplateName}
+                      className="bg-primary text-primary-foreground hover:bg-[#00CB07] hover:text-white w-full sm:w-auto"
+                  >
+                      Guardar y Empezar a Diseñar
+                  </Button>
+              </DialogFooter>
+          </DialogContent>
       </Dialog>
 
 
