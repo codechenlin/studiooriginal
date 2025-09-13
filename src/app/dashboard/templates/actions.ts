@@ -88,23 +88,33 @@ export async function getTemplateById(templateId: string): Promise<{ success: bo
   }
 
   try {
-    const { data, error } = await supabase
+    const { data: templateData, error: templateError } = await supabase
       .from('templates')
-      .select(`
-        *,
-        profiles (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('id', templateId)
       .eq('user_id', user.id)
       .single();
 
-    if (error) throw error;
-    if (!data) return { success: false, error: 'Plantilla no encontrada.' };
+    if (templateError) throw templateError;
+    if (!templateData) return { success: false, error: 'Plantilla no encontrada.' };
 
-    return { success: true, data: data as TemplateWithAuthor };
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', templateData.user_id)
+      .single();
+    
+    // Non-fatal error, we can proceed without profile info
+    if (profileError) {
+      console.warn(`Could not fetch profile for template ${templateId}:`, profileError.message);
+    }
+    
+    const combinedData = {
+        ...templateData,
+        profiles: profileData || null
+    };
+
+    return { success: true, data: combinedData as TemplateWithAuthor };
   } catch (error: any) {
     console.error(`Error fetching template ${templateId}:`, error);
     return { success: false, error: error.message };
