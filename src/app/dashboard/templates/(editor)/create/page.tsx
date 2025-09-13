@@ -450,11 +450,11 @@ interface YouTubeBlock extends BaseBlock {
 interface TimerBlock extends BaseBlock {
     type: 'timer';
     payload: {
-        duration: {
-            days: number;
-            hours: number;
-            minutes: number;
-            seconds: number;
+        values: {
+            days: string;
+            hours: string;
+            minutes: string;
+            seconds: string;
         };
         design: 'digital' | 'analog' | 'minimalist';
         styles: {
@@ -2615,20 +2615,16 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
         updatePayload('styles', { ...element.payload.styles, [key]: value });
     }
     
-    const updateDuration = (unit: 'days' | 'hours' | 'minutes' | 'seconds', value: string) => {
-        const numericValue = Math.max(0, parseInt(value, 10) || 0);
-        let cappedValue = numericValue;
-        if (unit === 'hours') cappedValue = Math.min(23, numericValue);
-        if (unit === 'minutes' || unit === 'seconds') cappedValue = Math.min(59, numericValue);
-
-        updatePayload('duration', { ...element.payload.duration, [unit]: cappedValue });
+    const updateValues = (unit: 'days' | 'hours' | 'minutes' | 'seconds', value: string) => {
+        const numericValue = value.replace(/[^0-9]/g, '');
+        updatePayload('values', { ...element.payload.values, [unit]: numericValue });
     };
     
     const updateBackground = (key: string, value: any) => {
         updateStyle('background', { ...element.payload.styles.background, [key]: value });
     }
 
-    const { styles, duration, design } = element.payload;
+    const { styles, values, design } = element.payload;
 
     return (
         <div className="space-y-4">
@@ -2636,12 +2632,12 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
                 <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2"><Timer/>Configuración del Contador</h3>
             </div>
              <div className="space-y-2">
-                <Label>Duración Fija</Label>
+                <Label>Valores Fijos</Label>
                 <div className="grid grid-cols-4 gap-2">
-                    <Input type="number" placeholder="Días" value={duration.days} onChange={e => updateDuration('days', e.target.value)} className="w-full text-center"/>
-                    <Input type="number" placeholder="HH" max="23" value={duration.hours} onChange={e => updateDuration('hours', e.target.value)} className="w-full text-center"/>
-                    <Input type="number" placeholder="MM" max="59" value={duration.minutes} onChange={e => updateDuration('minutes', e.target.value)} className="w-full text-center"/>
-                    <Input type="number" placeholder="SS" max="59" value={duration.seconds} onChange={e => updateDuration('seconds', e.target.value)} className="w-full text-center"/>
+                    <Input type="text" placeholder="Días" value={values.days} onChange={e => updateValues('days', e.target.value)} className="w-full text-center"/>
+                    <Input type="text" placeholder="HH" value={values.hours} onChange={e => updateValues('hours', e.target.value)} className="w-full text-center"/>
+                    <Input type="text" placeholder="MM" value={values.minutes} onChange={e => updateValues('minutes', e.target.value)} className="w-full text-center"/>
+                    <Input type="text" placeholder="SS" value={values.seconds} onChange={e => updateValues('seconds', e.target.value)} className="w-full text-center"/>
                 </div>
             </div>
             <div className="space-y-2">
@@ -2748,13 +2744,14 @@ const TimerEditor = ({ selectedElement, canvasContent, setCanvasContent }: {
 
 
 const TimerComponent = React.memo(({ block }: { block: TimerBlock }) => {
-  const { duration, design, styles } = block.payload;
+  const { values, design, styles } = block.payload;
+  const safeValues = values || { days: '0', hours: '0', minutes: '0', seconds: '0' };
 
   const timeData = [
-    { label: 'Días', value: duration.days, max: 31 },
-    { label: 'Horas', value: duration.hours, max: 24 },
-    { label: 'Minutos', value: duration.minutes, max: 60 },
-    { label: 'Segundos', value: duration.seconds, max: 60 },
+    { label: 'Días', value: parseInt(safeValues.days || '0', 10), max: 31 },
+    { label: 'Horas', value: parseInt(safeValues.hours || '0', 10), max: 24 },
+    { label: 'Minutos', value: parseInt(safeValues.minutes || '0', 10), max: 60 },
+    { label: 'Segundos', value: parseInt(safeValues.seconds || '0', 10), max: 60 },
   ];
   
   const getProgress = (value: number, max: number) => {
@@ -4688,7 +4685,7 @@ export default function CreateTemplatePage() {
                 ...basePayload,
                 type: 'timer',
                 payload: {
-                    duration: { days: 7, hours: 0, minutes: 0, seconds: 0 },
+                    values: { days: '07', hours: '00', minutes: '00', seconds: '00' },
                     design: 'minimalist',
                     styles: {
                         fontFamily: 'Roboto', numberColor: defaultTextColor, labelColor: isDarkMode ? '#999999' : '#666666',
@@ -6708,3 +6705,4 @@ const LayerPanel = () => {
     </div>
   );
 }
+
