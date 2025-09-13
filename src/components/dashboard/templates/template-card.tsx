@@ -109,8 +109,8 @@ export function TemplateCard({ template, onTemplateUpdate, onPreview }: Template
             <Card className="overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:border-primary/50 hover:-translate-y-1 flex flex-col">
                 <CardContent className="p-0">
                     <div className="aspect-video bg-muted/30 relative flex items-center justify-center overflow-hidden">
-                        <div className="w-full h-full transform scale-[0.25] origin-top-left pointer-events-none">
-                          <TemplateRenderer content={template.content} />
+                        <div className="w-full h-full transform scale-[0.4] origin-center pointer-events-none">
+                          <TemplateRenderer content={template.content.slice(0, 1)} />
                         </div>
                         <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 sm:gap-4">
                            <Button size="icon" className="rounded-full h-10 w-10 sm:h-12 sm:w-12 bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={onPreview}>
@@ -151,18 +151,17 @@ export function TemplateCard({ template, onTemplateUpdate, onPreview }: Template
                         </div>
                     </div>
                     <Button
-                      variant="outline"
-                      size="icon"
-                      className={cn(
-                        "absolute bottom-2 right-2 size-8",
-                        "border bg-transparent text-foreground border-border transition-colors",
-                        "hover:bg-transparent hover:text-[#F00000] hover:border-[#F00000]",
-                        "dark:text-white dark:hover:text-[#F00000]",
-                        "border-[#F00000] dark:border-[#F00000]"
-                      )}
-                      onClick={() => setIsDeleting(true)}
-                    >
-                      <Trash2 className="size-5" />
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "absolute bottom-4 right-4 size-8",
+                          "bg-transparent border border-[#F00000] text-white",
+                          "hover:bg-transparent hover:border-[#00CB07] hover:text-[#00CB07]",
+                          "transition-colors"
+                        )}
+                        onClick={() => setIsDeleting(true)}
+                      >
+                        <Trash2 className="size-4" />
                     </Button>
                 </div>
             </Card>
