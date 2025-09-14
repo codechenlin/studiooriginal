@@ -78,7 +78,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     },
   });
 
-  const txtRecordValue = `${domain},code=${verificationCode}`;
+  const txtRecordValue = `foxmiu-verification=${verificationCode}`;
 
   const handleStartVerification = () => {
     if (!domain || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
@@ -100,7 +100,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     const result = await verifyDnsAction({
       domain,
       recordType: 'TXT',
-      name: '_foxmiu-verification',
+      name: '@',
       expectedValue: txtRecordValue,
     });
     
@@ -233,7 +233,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         dmarc: {
           title: "Registro DMARC (Domain-based Message Authentication...)",
           description: "DMARC unifica los protocolos SPF y DKIM en un marco común y permite al propietario del dominio especificar cómo tratar los correos electrónicos que no superan las comprobaciones SPF o DKIM (por ejemplo, ponerlos en cuarentena o rechazarlos).",
-          recommendation: `v=DMARC1; p=quarantine; rua=mailto:dmarc@dominio.com`
+          recommendation: `v=DMARC1; p=quarantine; rua=mailto:dmarc@${domain}`
         },
         mx: {
           title: "Registro MX (Mail Exchange)",
@@ -242,13 +242,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         },
         bimi: {
           title: "Registro BIMI (Brand Indicators for Message Identification)",
-          description: "BIMI es un estándar emergente que permite mostrar el logotipo de tu marca junto a tus correos electrónicos en las bandejas de entrada de los proveedores compatibles. Para implementarlo, necesitas tener DMARC configurado con una política estricta ('quarantine' o 'reject') y tu logotipo debe estar en formato SVG alojado en una URL pública.",
-          recommendation: `v=BIMI1; l=https://media.dominio.com/logo.svg;`
+          description: "BIMI es un estándar emergente que permite mostrar el logotipo de tu marca junto a tus correos electrónicos en las bandejas de entrada de los proveedores compatibles. Para implementarlo, necesitas tener DMARC configurado con una política estricta ('quarantine' o 'reject') y tu logotipo debe estar en formato SVG Tiny 1.2 alojado en una URL pública (HTTPS).",
+          recommendation: `v=BIMI1; l=https://media.${domain}/logo.svg;`
         },
         vmc: {
           title: "Certificado VMC (Verified Mark Certificate)",
-          description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo de tu marca que estás usando te pertenece legalmente como marca registrada. Es emitido por Autoridades Certificadoras externas y tiene un costo. Prerrequisitos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
-          recommendation: `El registro VMC se añade a tu registro BIMI. Ejemplo: v=BIMI1; l=https://media.dominio.com/logo.svg; a=https://certs.entidad.com/vmc.pem;`
+          description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando te pertenece legalmente como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
+          recommendation: `El registro VMC se añade a tu registro BIMI. Ejemplo: v=BIMI1; l=https://media.${domain}/logo.svg; a=https://certs.entidad.com/vmc.pem;`
         },
     };
 
@@ -304,7 +304,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
           <span className='font-semibold'>{name}</span>
           <div className="flex items-center gap-2">
             {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>)}
-            <Button size="sm" variant="outline" className="h-7" onClick={() => setInfoViewRecord(recordKey)}>Detalles</Button>
+            <Button size="sm" variant="outline" className="h-7" onClick={() => { setInfoViewRecord(recordKey); setShowRecommendation(false); }}>Detalles</Button>
           </div>
       </div>
   );
@@ -346,8 +346,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     </p>
                     <div className="space-y-3 pt-4">
                         <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                            <Label className="text-xs font-sans text-muted-foreground">REGISTRO</Label>
-                            <p className="flex justify-between items-center">_foxmiu-verification <Copy className="size-4 cursor-pointer" onClick={() => handleCopy('_foxmiu-verification')}/></p>
+                            <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
+                            <p className="flex justify-between items-center">@ <Copy className="size-4 cursor-pointer" onClick={() => handleCopy('@')}/></p>
                         </div>
                          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
                             <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
@@ -362,18 +362,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                  return (
                     <div className="h-full flex flex-col justify-start pt-8">
                         <h3 className="text-lg font-semibold mb-2">{infoContent[infoViewRecord].title}</h3>
-                        <p className="text-sm text-muted-foreground flex-grow">{infoContent[infoViewRecord].description}</p>
+                        <p className="text-sm text-muted-foreground whitespace-pre-line">{infoContent[infoViewRecord].description}</p>
                         
                         <AnimatePresence>
                         {showRecommendation && (
-                            <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="mt-4 text-left p-3 bg-muted/50 rounded-md font-mono text-xs border">
+                            <motion.div 
+                              initial={{opacity: 0, height: 0, marginTop: 0}} 
+                              animate={{opacity: 1, height: 'auto', marginTop: '1rem'}} 
+                              exit={{opacity: 0, height: 0, marginTop: 0}}
+                              transition={{ duration: 0.3 }}
+                              className="text-left p-3 bg-muted/50 rounded-md font-mono text-xs border overflow-hidden"
+                            >
                                 <p className="font-sans font-semibold text-foreground mb-1">Ejemplo de registro:</p>
                                 <code className='whitespace-pre-wrap'>{infoContent[infoViewRecord].recommendation}</code>
                             </motion.div>
                         )}
                         </AnimatePresence>
                         
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex gap-2 mt-auto">
                            <Button variant="outline" className="w-full" onClick={() => { setInfoViewRecord(null); setShowRecommendation(false); }}>Atrás</Button>
                            <Button className="w-full" onClick={() => setShowRecommendation(!showRecommendation)}>{showRecommendation ? 'Ocultar' : 'Ver'} Ejemplo</Button>
                         </div>
@@ -709,11 +715,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="h-full"
                 >
-                  <Form {...form}>
-                    <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="flex flex-col h-full">
-                        {renderCenterPanelContent()}
-                    </form>
-                  </Form>
+                    {renderCenterPanelContent()}
                 </motion.div>
               </AnimatePresence>
             </div>

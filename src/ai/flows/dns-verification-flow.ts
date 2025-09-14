@@ -41,7 +41,12 @@ const dnsVerificationFlow = ai.defineFlow(
   },
   async ({ domain, recordType, name, expectedValue }) => {
     try {
-      const fqdn = name.endsWith(domain) ? name : `${name}.${domain}`;
+      let fqdn = name;
+      if (name === '@' || name === domain) {
+        fqdn = domain;
+      } else if (!name.endsWith(domain)) {
+        fqdn = `${name}.${domain}`;
+      }
       
       let records: string[] | dns.MxRecord[] | dns.SoaRecord | undefined;
       
@@ -88,7 +93,7 @@ const dnsVerificationFlow = ai.defineFlow(
       if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
         return {
           isVerified: false,
-          reason: `No se encontraron registros ${recordType} para ${name}.${domain}. Verifique el nombre del registro.`,
+          reason: `No se encontraron registros ${recordType} para el nombre especificado.`,
         };
       }
       console.error('DNS lookup error:', error);
