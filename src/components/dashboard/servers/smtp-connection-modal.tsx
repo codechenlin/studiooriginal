@@ -318,7 +318,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <p className="text-sm text-muted-foreground">
                     Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
                     </p>
-                    <div className="space-y-2 pt-4">
+                    <div className="space-y-2 pt-4 flex-grow">
                       <Label htmlFor="domain">Tu Dominio</Label>
                       <div className="relative">
                           <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -331,7 +331,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           />
                       </div>
                     </div>
-                     <Button className="w-full h-12 text-base mt-4" onClick={handleStartVerification}>
+                     <Button className="w-full h-12 text-base mt-auto" onClick={handleStartVerification}>
                       Siguiente <ArrowRight className="ml-2"/>
                     </Button>
                 </div>
@@ -364,12 +364,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         <h3 className="text-lg font-semibold mb-2">{infoContent[infoViewRecord].title}</h3>
                         <p className="text-sm text-muted-foreground flex-grow">{infoContent[infoViewRecord].description}</p>
                         
+                        <AnimatePresence>
                         {showRecommendation && (
-                            <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} className="mt-4 text-left p-3 bg-muted/50 rounded-md font-mono text-xs border">
+                            <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="mt-4 text-left p-3 bg-muted/50 rounded-md font-mono text-xs border">
                                 <p className="font-sans font-semibold text-foreground mb-1">Ejemplo de registro:</p>
                                 <code className='whitespace-pre-wrap'>{infoContent[infoViewRecord].recommendation}</code>
                             </motion.div>
                         )}
+                        </AnimatePresence>
                         
                         <div className="flex gap-2 mt-4">
                            <Button variant="outline" className="w-full" onClick={() => { setInfoViewRecord(null); setShowRecommendation(false); }}>Atrás</Button>
@@ -412,14 +414,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <div className="space-y-4 flex-grow pt-4">
                         <FormField control={form.control} name="host" render={({ field }) => (
                             <FormItem>
-                                <Label>Host</Label>
+                                <Label className='text-left w-full'>Host</Label>
                                 <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}/>
                          <FormField control={form.control} name="port" render={({ field }) => (
                             <FormItem>
-                                <Label>Puerto</Label>
+                                <Label className='text-left w-full'>Puerto</Label>
                                 <FormControl><div className="relative"><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></div></FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -499,8 +501,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       error: 'bg-red-500',
     }[status];
 
-    const animation = status === 'processing' ? 'animate-spin' : 'animate-pulse';
-
     return (
       <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
         <div className="relative flex items-center justify-center w-4 h-4">
@@ -540,42 +540,50 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             )}
             {currentStep === 2 && (
               <div className="text-center h-full flex flex-col justify-between w-full">
-                <div className="relative flex-grow flex flex-col justify-center overflow-hidden">
-                  <div className={cn("absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full transition-all duration-500", verificationStatus === 'verifying' ? "border-2 border-primary/20 animate-ping" : "bg-primary/5")}/>
-                  <div className="z-10">
-                    {verificationStatus === 'pending' && (
-                      <div className="text-center flex-grow flex flex-col justify-center">
-                        <div className="flex justify-center mb-4"><Dna className="size-16 text-primary/30" /></div>
-                        <h4 className="font-bold">Acción Requerida</h4>
-                        <p className="text-sm text-muted-foreground">Añade el registro TXT a tu proveedor de DNS y luego verifica.</p>
-                      </div>
-                    )}
+                <div className="relative flex-grow flex flex-col justify-center overflow-hidden items-center">
+                    <style>{`
+                        @keyframes pulse-radar {
+                            0% { transform: scale(0.5); opacity: 0; }
+                            50% { opacity: 1; }
+                            100% { transform: scale(1.2); opacity: 0; }
+                        }
+                    `}</style>
                     {verificationStatus === 'verifying' && (
-                      <div className="flex flex-col items-center gap-3 flex-grow justify-center">
-                        <div className="relative size-20">
-                          <div className="absolute inset-0 border-2 border-blue-400/30 rounded-full"/>
-                          <div className="absolute inset-0 border-t-2 border-blue-400 rounded-full animate-spin"/>
-                          <Search className="absolute inset-0 m-auto size-8 text-blue-400"/>
-                        </div>
-                        <h4 className="font-bold text-lg">Verificando...</h4>
-                        <p className="text-sm text-muted-foreground">Buscando el registro DNS en el dominio.</p>
-                      </div>
+                        <>
+                            <div className="absolute size-48 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
+                            <div className="absolute size-48 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1s' }} />
+                        </>
                     )}
-                    {verificationStatus === 'verified' && (
-                      <div className="flex flex-col items-center gap-3 flex-grow justify-center">
-                        <ShieldCheck className="size-20 text-green-400" />
-                        <h4 className="font-bold text-lg">¡Dominio Verificado!</h4>
-                        <p className="text-sm text-muted-foreground">El registro TXT se encontró correctamente.</p>
-                      </div>
-                    )}
-                    {verificationStatus === 'failed' && (
-                      <div className="flex flex-col items-center gap-3 text-center flex-grow justify-center">
-                        <AlertTriangle className="size-16 text-red-400" />
-                        <h4 className="font-bold text-lg">Verificación Fallida</h4>
-                        <p className="text-sm text-muted-foreground">No pudimos encontrar el registro. La propagación de DNS puede tardar.</p>
-                      </div>
-                    )}
-                  </div>
+                    <div className="z-10 flex flex-col items-center gap-3">
+                        {verificationStatus === 'pending' && (
+                            <>
+                                <div className="flex justify-center mb-4"><Dna className="size-16 text-primary/30" /></div>
+                                <h4 className="font-bold">Acción Requerida</h4>
+                                <p className="text-sm text-muted-foreground">Añade el registro TXT y luego verifica.</p>
+                            </>
+                        )}
+                        {verificationStatus === 'verifying' && (
+                            <>
+                                <Search className="size-16 text-primary"/>
+                                <h4 className="font-bold text-lg">Verificando...</h4>
+                                <p className="text-sm text-muted-foreground">Buscando el registro DNS.</p>
+                            </>
+                        )}
+                        {verificationStatus === 'verified' && (
+                            <>
+                                <ShieldCheck className="size-20 text-green-400" />
+                                <h4 className="font-bold text-lg">¡Dominio Verificado!</h4>
+                                <p className="text-sm text-muted-foreground">El registro TXT se encontró correctamente.</p>
+                            </>
+                        )}
+                        {verificationStatus === 'failed' && (
+                            <>
+                                <AlertTriangle className="size-16 text-red-400" />
+                                <h4 className="font-bold text-lg">Verificación Fallida</h4>
+                                <p className="text-sm text-muted-foreground">No pudimos encontrar el registro.</p>
+                            </>
+                        )}
+                    </div>
                 </div>
                 <div className="flex flex-col gap-2 mt-auto">
                   {(verificationStatus === 'pending' || verificationStatus === 'failed') &&
@@ -628,50 +636,52 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
               </div>
             )}
             {currentStep === 4 && (
-              <div className="w-full h-full flex flex-col justify-between">
-                  <div className="p-4 border rounded-lg bg-muted/30 flex-grow flex flex-col">
-                    <p className="text-sm font-semibold mb-2">Verifica tu conexión</p>
-                    <p className="text-xs text-muted-foreground mb-3 flex-grow">Enviaremos un correo para asegurar que todo esté configurado correctamente.</p>
-                    <FormField control={form.control} name="testEmail" render={({ field }) => (
-                        <FormItem>
-                            <Label className="text-left">Enviar correo de prueba a:</Label>
-                            <FormControl><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="receptor@ejemplo.com" {...field} /></div></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}/>
-                  </div>
-                  {testStatus === 'success' && deliveryStatus !== 'bounced' && (
-                      <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
-                        <Button variant="outline" className="w-full" onClick={handleCheckDelivery} disabled={deliveryStatus === 'checking'}>
-                          {deliveryStatus === 'checking' ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
-                          Verificar Entrega
-                        </Button>
-                        <p className="text-xs text-muted-foreground">Haz clic aquí para comprobar si el correo rebotó. Esto puede tardar unos segundos.</p>
-                        {deliveryStatus === 'delivered' && 
-                            <p className="text-sm font-bold text-green-400">¡Confirmado! El correo fue entregado con éxito.</p>
-                        }
-                      </motion.div>
-                  )}
-                  <AnimatePresence>
-                    {testStatus === 'failed' && (
-                        <motion.div key="failed-smtp" {...cardAnimation} className="p-2 mt-4 bg-red-500/10 text-red-400 rounded-lg text-center text-xs">
-                            <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
-                            <p>{testError}</p>
+              <Form {...form}>
+                <div className="w-full h-full flex flex-col justify-between">
+                    <div className="p-4 border rounded-lg bg-muted/30 flex-grow flex flex-col">
+                      <p className="text-sm font-semibold mb-2">Verifica tu conexión</p>
+                      <p className="text-xs text-muted-foreground mb-3 flex-grow">Enviaremos un correo para asegurar que todo esté configurado correctamente.</p>
+                      <FormField control={form.control} name="testEmail" render={({ field }) => (
+                          <FormItem>
+                              <Label className="text-left">Enviar correo de prueba a:</Label>
+                              <FormControl><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="receptor@ejemplo.com" {...field} /></div></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}/>
+                    </div>
+                    {testStatus === 'success' && deliveryStatus !== 'bounced' && (
+                        <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
+                          <Button variant="outline" className="w-full" onClick={handleCheckDelivery} disabled={deliveryStatus === 'checking'}>
+                            {deliveryStatus === 'checking' ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
+                            Verificar Entrega
+                          </Button>
+                          <p className="text-xs text-muted-foreground">Haz clic aquí para comprobar si el correo rebotó. Esto puede tardar unos segundos.</p>
+                          {deliveryStatus === 'delivered' && 
+                              <p className="text-sm font-bold text-green-400">¡Confirmado! El correo fue entregado con éxito.</p>
+                          }
                         </motion.div>
                     )}
-                  </AnimatePresence>
-                <div className="mt-auto pt-4 flex flex-col gap-2">
-                    {(testStatus === 'success' && deliveryStatus === 'delivered') ? (
-                        <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
-                            Finalizar y Guardar
-                        </Button>
-                    ) : (
-                        <Button type="submit" form="smtp-form" className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
-                            {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
-                        </Button>
-                    )}
+                    <AnimatePresence>
+                      {testStatus === 'failed' && (
+                          <motion.div key="failed-smtp" {...cardAnimation} className="p-2 mt-4 bg-red-500/10 text-red-400 rounded-lg text-center text-xs">
+                              <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
+                              <p>{testError}</p>
+                          </motion.div>
+                      )}
+                    </AnimatePresence>
+                  <div className="mt-auto pt-4 flex flex-col gap-2">
+                      {(testStatus === 'success' && deliveryStatus === 'delivered') ? (
+                          <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
+                              Finalizar y Guardar
+                          </Button>
+                      ) : (
+                          <Button type="submit" form="smtp-form" className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
+                              {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
+                          </Button>
+                      )}
+                  </div>
                 </div>
-              </div>
+              </Form>
             )}
             </motion.div>
         </AnimatePresence>
@@ -683,23 +693,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   }
 
   const renderContent = () => {
-    if (currentStep === 4) {
-      return (
-         <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-2 gap-0 h-[600px]" showCloseButton={false}>
-            <Form {...form}>
-               <div className="h-full">
-                <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="flex flex-col h-full">
-                    {renderCenterPanelContent()}
-                </form>
-               </div>
-               <div className="h-full">
-                 {renderRightPanelContent()}
-               </div>
-            </Form>
-        </DialogContent>
-      )
-    }
-
     return (
        <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
           <div className="hidden md:block md:col-span-1 h-full">
@@ -716,7 +709,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="h-full"
                 >
-                  {renderCenterPanelContent()}
+                  <Form {...form}>
+                    <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="flex flex-col h-full">
+                        {renderCenterPanelContent()}
+                    </form>
+                  </Form>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -735,4 +732,3 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </Dialog>
   );
 }
-
