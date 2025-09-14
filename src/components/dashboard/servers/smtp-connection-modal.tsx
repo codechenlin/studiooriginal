@@ -223,7 +223,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         spf: {
           title: "Registro SPF (Sender Policy Framework)",
           description: "SPF es un sistema de validación de correo electrónico diseñado para prevenir el spam al detectar la suplantación de identidad (spoofing). Permite a los administradores de dominios especificar qué servidores de correo están autorizados para enviar correos en nombre de su dominio.",
-          recommendation: `v=spf1 include:servidor.com ~all`
+          recommendation: `v=spf1 include:_spf.google.com ~all`
         },
         dkim: {
           title: "Registro DKIM (DomainKeys Identified Mail)",
@@ -549,10 +549,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         }
                     `}</style>
                     {verificationStatus === 'verifying' && (
-                        <>
-                            <div className="absolute size-48 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
-                            <div className="absolute size-48 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1s' }} />
-                        </>
+                        <div className="absolute w-full h-full flex items-center justify-center">
+                             <div className="absolute size-48 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
+                             <div className="absolute size-48 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1s' }} />
+                        </div>
                     )}
                     <div className="z-10 flex flex-col items-center gap-3">
                         {verificationStatus === 'pending' && (
@@ -615,11 +615,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <div className="mt-4 space-y-2">
                  {healthCheckStep === 'mandatory' ? (
                      <Button className="w-full h-12 text-base" onClick={() => handleCheckHealth('mandatory')} disabled={spfStatus === 'verifying'}>
-                      {spfStatus === 'verifying' ? 'Verificando...' : 'Escanear Registros Obligatorios'}
+                      {spfStatus === 'verifying' ? 'Verificando...' : 'Escanear'}
                     </Button>
                  ) : (
                     <Button className="w-full h-12 text-base" onClick={() => handleCheckHealth('optional')} disabled={mxStatus === 'verifying'}>
-                      {mxStatus === 'verifying' ? 'Verificando...' : 'Escanear Registros Opcionales'}
+                      {mxStatus === 'verifying' ? 'Verificando...' : 'Escanear'}
                     </Button>
                  )}
                  {healthCheckStep === 'mandatory' && allMandatoryHealthChecksDone && (
@@ -732,3 +732,5 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </Dialog>
   );
 }
+
+    
