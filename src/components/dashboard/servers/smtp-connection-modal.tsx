@@ -10,6 +10,7 @@ import { Globe, ArrowRight, Copy, Check, ShieldCheck, Loader2, AlertTriangle, Se
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { verifyDnsAction } from '@/app/dashboard/servers/actions';
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -44,17 +45,23 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setCurrentStep(2);
   };
   
-  const handleCheckVerification = () => {
+  const handleCheckVerification = async () => {
     setVerificationStatus('verifying');
-    // Simulate DNS check
-    setTimeout(() => {
-        // Simulate a 50/50 chance of success for demonstration
-        if (Math.random() > 0.5) {
-            setVerificationStatus('verified');
-        } else {
-            setVerificationStatus('failed');
-        }
-    }, 3000);
+    const result = await verifyDnsAction({
+      domain,
+      expectedTxt: txtRecordValue,
+    });
+    
+    if (result.success) {
+      setVerificationStatus('verified');
+    } else {
+      setVerificationStatus('failed');
+      toast({
+        title: "Verificación Fallida",
+        description: result.error,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCopy = (text: string) => {
@@ -62,7 +69,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     toast({
         title: "¡Copiado!",
         description: "El registro ha sido copiado al portapapeles.",
-        className: 'bg-green-500 text-white'
+        className: 'bg-success-login border-none text-white'
     });
   }
 
