@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Server, Zap, ChevronRight, Mail, Code, Bot } from "lucide-react";
 import { cn } from '@/lib/utils';
@@ -74,6 +74,11 @@ const Particle = () => {
 
 
 export default function ServersPage() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background relative overflow-hidden">
@@ -91,10 +96,18 @@ export default function ServersPage() {
           animation: particle-move var(--duration) var(--delay) linear infinite;
           will-change: transform, opacity;
         }
+         @keyframes scanner {
+          0%, 100% {
+            transform: translateX(-100%) skewX(-15deg);
+          }
+          50% {
+            transform: translateX(100%) skewX(-15deg);
+          }
+        }
       `}</style>
       
       <div className="absolute inset-0 z-0 opacity-20 dark:opacity-30 pointer-events-none">
-          {Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
+          {isClient && Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
       </div>
       
       <div className="relative z-10">
@@ -144,7 +157,7 @@ export default function ServersPage() {
 
               <div className="p-6 pt-0 z-10 mt-auto">
                  <Button className="w-full group/btn relative overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-95 transition-opacity">
-                    <span className="absolute -inset-full animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#AD00EC_0%,#009AFF_50%,#AD00EC_100%)] opacity-0 transition-opacity duration-500 group-hover/btn:opacity-100" />
+                    <span className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover/btn:opacity-100 group-hover/btn:animate-[scanner_5s_ease-in-out_infinite]" />
                     <span className="relative flex items-center gap-2">
                       Conectar Ahora <ChevronRight className="size-4" />
                     </span>
