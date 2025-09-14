@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,7 @@ interface SmtpConnectionModalProps {
 type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'failed';
 type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
 type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
-type InfoView = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc' | null;
+type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
 
 
 const generateVerificationCode = () => `demo_${Math.random().toString(36).substring(2, 10)}`;
@@ -39,6 +39,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('idle');
   
   // Health check statuses
+  const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
   const [spfStatus, setSpfStatus] = useState<HealthCheckStatus>('idle');
   const [dkimStatus, setDkimStatus] = useState<HealthCheckStatus>('idle');
   const [dmarcStatus, setDmarcStatus] = useState<HealthCheckStatus>('idle');
@@ -47,7 +48,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [vmcStatus, setVmcStatus] = useState<HealthCheckStatus>('idle');
 
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
-  const [infoView, setInfoView] = useState<InfoView>(null);
+  const [infoViewRecord, setInfoViewRecord] = useState<InfoViewRecord | null>(null);
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [testError, setTestError] = useState('');
   const [deliveryStatus, setDeliveryStatus] = useState<'idle' | 'checking' | 'delivered' | 'bounced'>('idle');
@@ -118,31 +119,31 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
   };
   
-  const handleCheckHealth = async () => {
-    const statuses: React.Dispatch<React.SetStateAction<HealthCheckStatus>>[] = [
-      setSpfStatus, setDkimStatus, setDmarcStatus, setMxStatus, setBimiStatus, setVmcStatus
-    ];
-    statuses.forEach(setStatus => setStatus('verifying'));
-    
+  const handleCheckHealth = async (type: 'mandatory' | 'optional') => {
     const checkRecord = async (
       name: string, 
       recordType: 'TXT' | 'MX' | 'CNAME', 
       expectedValue: string | undefined, 
       setStatus: React.Dispatch<React.SetStateAction<HealthCheckStatus>>
     ) => {
+        setStatus('verifying');
         const result = await verifyDnsAction({ domain, recordType, name, expectedValue });
         setStatus(result.success ? 'verified' : 'failed');
     };
 
-    // Parallel checks
-    await Promise.all([
-        checkRecord('_dmarc', 'TXT', 'v=DMARC1', setDmarcStatus),
-        checkRecord('@', 'TXT', 'v=spf1', setSpfStatus), // @ means root domain
-        checkRecord('default._domainkey', 'TXT', 'v=DKIM1', setDkimStatus),
-        checkRecord(domain, 'MX', undefined, setMxStatus),
-        checkRecord('default._bimi', 'TXT', 'v=BIMI1', setBimiStatus),
-        checkRecord('bimi', 'TXT', 'v=VMC1', setVmcStatus),
-    ]);
+    if (type === 'mandatory') {
+        await Promise.all([
+            checkRecord('@', 'TXT', 'v=spf1', setSpfStatus),
+            checkRecord('default._domainkey', 'TXT', 'v=DKIM1', setDkimStatus),
+            checkRecord('_dmarc', 'TXT', 'v=DMARC1', setDmarcStatus),
+        ]);
+    } else {
+        await Promise.all([
+            checkRecord(domain, 'MX', undefined, setMxStatus),
+            checkRecord('default._bimi', 'TXT', 'v=BIMI1', setBimiStatus),
+            checkRecord('bimi', 'TXT', 'v=VMC1', setVmcStatus),
+        ]);
+    }
   }
 
   const handleCopy = (text: string) => {
@@ -161,6 +162,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setDomain('');
         setVerificationCode('');
         setVerificationStatus('idle');
+        setHealthCheckStep('mandatory');
         setDkimStatus('idle');
         setSpfStatus('idle');
         setDmarcStatus('idle');
@@ -168,7 +170,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setBimiStatus('idle');
         setVmcStatus('idle');
         setTestStatus('idle');
-        setInfoView(null);
+        setInfoViewRecord(null);
         setShowRecommendation(false);
         form.reset();
         setTestError('');
@@ -217,6 +219,39 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       exit: { opacity: 0, y: -20 },
   };
 
+  const infoContent = {
+        spf: {
+          title: "Registro SPF (Sender Policy Framework)",
+          description: "SPF es un sistema de validación de correo electrónico diseñado para prevenir el spam al detectar la suplantación de identidad (spoofing). Permite a los administradores de dominios especificar qué servidores de correo están autorizados para enviar correos en nombre de su dominio.",
+          recommendation: `v=spf1 include:servidor.com ~all`
+        },
+        dkim: {
+          title: "Registro DKIM (DomainKeys Identified Mail)",
+          description: "DKIM añade una firma digital a cada correo electrónico que envías. Esto permite a los servidores de correo receptores verificar que el correo fue realmente enviado desde tu dominio y que su contenido no ha sido alterado en tránsito, como un sello de seguridad.",
+          recommendation: `v=DKIM1; k=rsa; p=PUBLIC_KEY...`
+        },
+        dmarc: {
+          title: "Registro DMARC (Domain-based Message Authentication...)",
+          description: "DMARC unifica los protocolos SPF y DKIM en un marco común y permite al propietario del dominio especificar cómo tratar los correos electrónicos que no superan las comprobaciones SPF o DKIM (por ejemplo, ponerlos en cuarentena o rechazarlos).",
+          recommendation: `v=DMARC1; p=quarantine; rua=mailto:dmarc@dominio.com`
+        },
+        mx: {
+          title: "Registro MX (Mail Exchange)",
+          description: "Los registros MX son fundamentales para la entrega de correo electrónico. Indican a otros sistemas de correo qué servidores son responsables de recibir correos electrónicos en nombre de tu dominio. Sin registros MX correctos, no podrías recibir correos electrónicos.",
+          recommendation: `prioridad: 10, valor: mx.servidor.com`
+        },
+        bimi: {
+          title: "Registro BIMI (Brand Indicators for Message Identification)",
+          description: "BIMI es un estándar emergente que permite mostrar el logotipo de tu marca junto a tus correos electrónicos en las bandejas de entrada de los proveedores compatibles. Para implementarlo, necesitas tener DMARC configurado con una política estricta ('quarantine' o 'reject') y tu logotipo debe estar en formato SVG alojado en una URL pública.",
+          recommendation: `v=BIMI1; l=https://media.dominio.com/logo.svg;`
+        },
+        vmc: {
+          title: "Certificado VMC (Verified Mark Certificate)",
+          description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo de tu marca que estás usando te pertenece legalmente como marca registrada. Es emitido por Autoridades Certificadoras externas y tiene un costo. Prerrequisitos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
+          recommendation: `El registro VMC se añade a tu registro BIMI. Ejemplo: v=BIMI1; l=https://media.dominio.com/logo.svg; a=https://certs.entidad.com/vmc.pem;`
+        },
+    };
+
   const renderLeftPanel = () => {
       const stepInfo = [
           { title: "Verificar Dominio", icon: Globe },
@@ -264,38 +299,46 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       )
   }
 
+  const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
+      <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
+          <span className='font-semibold'>{name}</span>
+          <div className="flex items-center gap-2">
+            {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>)}
+            <Button size="sm" variant="outline" className="h-7" onClick={() => setInfoViewRecord(recordKey)}>Detalles</Button>
+          </div>
+      </div>
+  );
+
   const renderCenterPanelContent = () => {
     switch (currentStep) {
         case 1:
             return (
-                 <div className="space-y-4 h-full flex flex-col">
-                     <div className="flex-grow">
-                      <h3 className="text-lg font-semibold mb-1">Paso 1: Introduce tu Dominio</h3>
-                      <p className="text-sm text-muted-foreground">
-                      Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
-                      </p>
-                      <div className="space-y-2 pt-4">
-                        <Label htmlFor="domain">Tu Dominio</Label>
-                        <div className="relative">
-                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                            <Input 
-                                id="domain" 
-                                placeholder="ejemplo.com" 
-                                className="pl-10 h-12 text-base"
-                                value={domain}
-                                onChange={(e) => setDomain(e.target.value)}
-                            />
-                        </div>
+                 <div className="space-y-4 h-full flex flex-col justify-center">
+                    <h3 className="text-lg font-semibold mb-1">Paso 1: Introduce tu Dominio</h3>
+                    <p className="text-sm text-muted-foreground">
+                    Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
+                    </p>
+                    <div className="space-y-2 pt-4">
+                      <Label htmlFor="domain">Tu Dominio</Label>
+                      <div className="relative">
+                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                          <Input 
+                              id="domain" 
+                              placeholder="ejemplo.com" 
+                              className="pl-10 h-12 text-base"
+                              value={domain}
+                              onChange={(e) => setDomain(e.target.value)}
+                          />
                       </div>
                     </div>
-                     <Button className="w-full h-12 text-base mt-4" onClick={handleStartVerification}>
-                        Siguiente <ArrowRight className="ml-2"/>
-                    </Button>
+                    <Button className="w-full h-12 text-base mt-4" onClick={handleStartVerification}>
+                      Siguiente <ArrowRight className="ml-2"/>
+                  </Button>
                 </div>
             )
         case 2:
             return (
-                 <div className="h-full flex flex-col">
+                 <div className="h-full flex flex-col justify-start">
                    <div className='flex-grow'>
                     <h3 className="text-lg font-semibold mb-1">Paso 2: Añadir Registro DNS</h3>
                     <p className="text-sm text-muted-foreground">
@@ -315,6 +358,26 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                  </div>
             )
         case 3:
+            if (infoViewRecord) {
+                 return (
+                    <div className="h-full flex flex-col">
+                        <h3 className="text-lg font-semibold mb-2">{infoContent[infoViewRecord].title}</h3>
+                        <p className="text-sm text-muted-foreground flex-grow">{infoContent[infoViewRecord].description}</p>
+                        
+                        {showRecommendation && (
+                            <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} className="mt-4 text-left p-3 bg-muted/50 rounded-md font-mono text-xs border">
+                                <p className="font-sans font-semibold text-foreground mb-1">Ejemplo de registro:</p>
+                                <code className='whitespace-pre-wrap'>{infoContent[infoViewRecord].recommendation}</code>
+                            </motion.div>
+                        )}
+                        
+                        <div className="flex gap-2 mt-4">
+                           <Button variant="outline" className="w-full" onClick={() => { setInfoViewRecord(null); setShowRecommendation(false); }}>Atrás</Button>
+                           <Button className="w-full" onClick={() => setShowRecommendation(!showRecommendation)}>{showRecommendation ? 'Ocultar' : 'Ver'} Ejemplo</Button>
+                        </div>
+                    </div>
+                )
+            }
             return (
                 <div className="h-full flex flex-col">
                   <div className='flex-grow'>
@@ -322,27 +385,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <p className="text-sm text-muted-foreground">Verificaremos registros para asegurar una alta entregabilidad. Si alguno falla, te daremos los valores a configurar.</p>
 
                     <div className="space-y-3 mt-4">
-                        <h4 className='font-semibold text-sm'>Obligatorios</h4>
-                         <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-                            <span>SPF</span> {spfStatus === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (spfStatus === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>) }
-                         </div>
-                         <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-                            <span>DKIM</span> {dkimStatus === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (dkimStatus === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>) }
-                         </div>
-                         <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-                            <span>DMARC</span> {dmarcStatus === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (dmarcStatus === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>) }
-                         </div>
-
-                         <h4 className='font-semibold text-sm pt-2'>Opcionales</h4>
-                          <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-                            <span>MX</span> {mxStatus === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (mxStatus === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>) }
-                         </div>
-                         <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-                            <span>BIMI</span> {bimiStatus === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (bimiStatus === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>) }
-                         </div>
-                         <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-                            <span>VMC</span> {vmcStatus === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (vmcStatus === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>) }
-                         </div>
+                        {healthCheckStep === 'mandatory' ? (
+                          <>
+                            <h4 className='font-semibold text-sm'>Obligatorios</h4>
+                            {renderRecordStatus('SPF', spfStatus, 'spf')}
+                            {renderRecordStatus('DKIM', dkimStatus, 'dkim')}
+                            {renderRecordStatus('DMARC', dmarcStatus, 'dmarc')}
+                          </>
+                        ) : (
+                          <>
+                            <h4 className='font-semibold text-sm'>Opcionales</h4>
+                            {renderRecordStatus('MX', mxStatus, 'mx')}
+                            {renderRecordStatus('BIMI', bimiStatus, 'bimi')}
+                            {renderRecordStatus('VMC', vmcStatus, 'vmc')}
+                          </>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -354,10 +411,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
                     <div className="space-y-4 flex-grow pt-4">
                         <FormField control={form.control} name="host" render={({ field }) => (
-                            <FormItem><Label>Host</Label><FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-11" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage /></FormItem>
+                            <FormItem>
+                                <Label>Host</Label>
+                                <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl>
+                                <FormMessage />
+                            </FormItem>
                         )}/>
                          <FormField control={form.control} name="port" render={({ field }) => (
-                            <FormItem><Label>Puerto</Label><FormControl><div className="relative"><Input type="number" placeholder="587" className='h-11' {...field} /></div></FormControl><FormMessage /></FormItem>
+                            <FormItem>
+                                <Label>Puerto</Label>
+                                <FormControl><div className="relative"><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></div></FormControl>
+                                <FormMessage />
+                            </FormItem>
                         )}/>
                         
                         <FormField control={form.control} name="encryption" render={({ field }) => (
@@ -398,17 +463,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         status = 'idle'; text = 'ESPERANDO ACCIÓN';
       }
     } else if (currentStep === 3) {
-      const isVerifying = [dkimStatus, spfStatus, dmarcStatus, mxStatus, bimiStatus, vmcStatus].includes('verifying');
-      const isDone = ![dkimStatus, spfStatus, dmarcStatus, mxStatus, bimiStatus, vmcStatus].includes('idle') && !isVerifying;
-      const hasFailed = [dkimStatus, spfStatus, dmarcStatus, mxStatus, bimiStatus, vmcStatus].includes('failed');
+       const isVerifying = [dkimStatus, spfStatus, dmarcStatus, mxStatus, bimiStatus, vmcStatus].some(s => s === 'verifying');
+      const allMandatoryDone = spfStatus !== 'idle' && dkimStatus !== 'idle' && dmarcStatus !== 'idle';
+      const anyMandatoryFailed = spfStatus === 'failed' || dkimStatus === 'failed' || dmarcStatus === 'failed';
 
       if (isVerifying) {
         status = 'processing'; text = 'ANALIZANDO SALUD';
-      } else if (isDone) {
-        if (hasFailed) {
+      } else if (allMandatoryDone) {
+        if (anyMandatoryFailed) {
           status = 'error'; text = 'REQUIERE ATENCIÓN';
         } else {
-          status = 'success'; text = 'DOMINIO SALUDABLE';
+          status = 'success'; text = 'REGISTROS OBLIGATORIOS OK';
         }
       } else {
         status = 'idle'; text = 'LISTO PARA CHEQUEO';
@@ -428,7 +493,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
     
     const ledColor = {
-      idle: 'bg-blue-500/50',
+      idle: 'bg-blue-500',
       processing: 'bg-amber-500',
       success: 'bg-green-500',
       error: 'bg-red-500',
@@ -439,7 +504,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     return (
       <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
         <div className="relative flex items-center justify-center w-4 h-4">
-          <div className={cn('absolute w-full h-full rounded-full', ledColor, status !== 'processing' && 'animate-pulse')} />
+          <div className={cn('absolute w-full h-full rounded-full', ledColor, status !== 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
           {status === 'processing' ? <Loader2 className='w-4 h-4 text-amber-300 animate-spin'/> : <div className={cn('w-2 h-2 rounded-full', ledColor)} /> }
         </div>
         <p className="text-xs font-semibold tracking-wider text-white/80">{text}</p>
@@ -449,60 +514,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
 
   const renderRightPanelContent = () => {
-    const renderRecordStatus = (name: string, status: HealthCheckStatus, onInfoClick: () => void) => (
-        <div className="flex items-center justify-between p-2 rounded-md bg-muted/40">
-            <span className="font-semibold">{name}</span>
-            <div className="flex items-center gap-2">
-                {status === 'verifying' && <Loader2 className="animate-spin text-primary" />}
-                {status === 'verified' && <CheckCircle className="text-green-500"/>}
-                {status === 'failed' && <AlertTriangle className="text-red-500"/>}
-                <Button size="sm" variant="ghost" className="text-xs h-6 px-1" onClick={onInfoClick}><Info className="size-4 mr-1"/> Aprende más</Button>
-            </div>
-        </div>
-    );
-    
     const allMandatoryHealthChecksDone = dkimStatus !== 'idle' && dkimStatus !== 'verifying' && spfStatus !== 'idle' && spfStatus !== 'verifying' && dmarcStatus !== 'idle' && dmarcStatus !== 'verifying';
     const allMandatoryHealthChecksPassed = dkimStatus === 'verified' && spfStatus === 'verified' && dmarcStatus === 'verified';
+    
+    const allOptionalHealthChecksDone = mxStatus !== 'idle' && mxStatus !== 'verifying' && bimiStatus !== 'idle' && bimiStatus !== 'verifying' && vmcStatus !== 'idle' && vmcStatus !== 'verifying';
 
-    const infoContent = {
-        spf: {
-          title: "Qué es SPF?",
-          description: "Sender Policy Framework (SPF) previene la suplantación de identidad (spoofing) al especificar qué servidores de correo están autorizados a enviar emails desde tu dominio. Es una lista blanca para tus remitentes.",
-          recommendation: `v=spf1 include:servidor.com ~all`
-        },
-        dkim: {
-          title: "Qué es DKIM?",
-          description: "DomainKeys Identified Mail (DKIM) añade una firma digital a tus correos. Esto permite a los servidores receptores verificar que el correo realmente provino de tu dominio y no ha sido alterado en tránsito.",
-          recommendation: `v=DKIM1; k=rsa; p=PUBLIC_KEY...`
-        },
-        dmarc: {
-          title: "Qué es DMARC?",
-          description: "DMARC unifica SPF y DKIM. Le dice a los servidores qué hacer si un correo falla estas verificaciones (rechazarlo, marcarlo como spam, etc.) y envía reportes.",
-          recommendation: `v=DMARC1; p=quarantine; rua=mailto:dmarc@dominio.com`
-        },
-        mx: {
-          title: "Qué son los Registros MX?",
-          description: "Mail Exchanger (MX) son registros DNS que especifican qué servidores de correo aceptan correo electrónico en nombre de tu dominio. Son fundamentales para poder recibir correos.",
-          recommendation: `prioridad: 10, valor: mx.servidor.com`
-        },
-        bimi: {
-          title: "Qué es BIMI?",
-          description: "Brand Indicators for Message Identification (BIMI) es un estándar que permite mostrar el logotipo de tu marca junto a tus correos en las bandejas de entrada, aumentando la visibilidad y confianza. Requiere una configuración DMARC estricta.",
-          recommendation: `v=BIMI1; l=https://url/del/logo.svg;`
-        },
-        vmc: {
-          title: "Qué es un VMC?",
-          description: "Un Verified Mark Certificate (VMC) es un certificado digital que verifica la autenticidad del logotipo de tu marca que se muestra a través de BIMI. Es emitido por una Autoridad Certificadora y tiene un costo. Prerrequisitos: SPF, DKIM y una política DMARC de 'quarantine' o 'reject'.",
-          recommendation: `v=VMC1; a=https://url/del/certificado.pem;`
-        },
-    };
 
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
         <StatusIndicator />
         <AnimatePresence mode="wait">
           <motion.div
-              key={`step-content-${currentStep}-${infoView}`}
+              key={`step-content-${currentStep}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -518,10 +541,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             {currentStep === 2 && (
               <div className="text-center h-full flex flex-col justify-between w-full">
                 <div className="relative flex-grow flex flex-col justify-center overflow-hidden">
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full flex justify-center items-center pointer-events-none">
-                    <div className={cn("absolute w-40 h-40 bg-primary/5 rounded-full transition-all duration-500", verificationStatus === 'verifying' && "animate-pulse")}/>
-                    <div className={cn("absolute w-56 h-56 border-2 border-primary/10 rounded-full transition-all duration-500", verificationStatus === 'verifying' && "animate-ping")}/>
-                  </div>
+                  <div className={cn("absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full transition-all duration-500", verificationStatus === 'verifying' ? "border-2 border-primary/20 animate-ping" : "bg-primary/5")}/>
                   <div className="z-10">
                     {verificationStatus === 'pending' && (
                       <div className="text-center flex-grow flex flex-col justify-center">
@@ -577,57 +597,33 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             )}
             {currentStep === 3 && (
               <div className="w-full h-full flex flex-col justify-between">
-                <div className="flex-grow flex flex-col justify-center">
-                  {infoView ? (
-                    <div className="flex-grow flex flex-col text-left">
-                      <h4 className="font-bold text-lg">{infoContent[infoView].title}</h4>
-                      <p className="text-sm text-muted-foreground mt-2 flex-grow">{infoContent[infoView].description}</p>
-                      {showRecommendation && (
-                        <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} className="mt-3 text-left p-2 bg-muted/50 rounded-md font-mono text-xs border">
-                          <p className="font-sans font-semibold text-foreground mb-1">Ejemplo de registro TXT:</p>
-                          <code>{infoContent[infoView].recommendation}</code>
-                        </motion.div>
-                      )}
+                 <div className="flex-grow flex flex-col justify-center">
+                    <div className="text-center">
+                        <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
+                        <h4 className="font-bold">Salud del Dominio</h4>
+                        <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
                     </div>
-                  ) : (
-                    <div>
-                      {[spfStatus, dkimStatus, dmarcStatus].includes('idle') ? (
-                         <div className="text-center">
-                          <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
-                          <h4 className="font-bold">Salud del Dominio</h4>
-                          <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
-                        </div>
-                      ) : (
-                         <p className="text-sm text-muted-foreground text-left mb-3">Resultados del escaneo. Haz clic en "Aprende más" para obtener detalles y recomendaciones.</p>
-                      )}
-
-                      {allMandatoryHealthChecksDone && !allMandatoryHealthChecksPassed &&
-                        <p className="text-sm my-3 text-red-500">Los registros obligatorios deben estar verificados para continuar.</p>
-                      }
-                    </div>
-                  )}
                 </div>
-                <div className="flex flex-col gap-2">
-                  {infoView ? (
-                    <div className="flex gap-2 mt-4">
-                      <Button variant="outline" className="w-full" onClick={() => { setInfoView(null); setShowRecommendation(false); }}>Atrás</Button>
-                      <Button className="w-full" onClick={() => setShowRecommendation(!showRecommendation)}>
-                        {showRecommendation ? 'Ocultar' : 'Ver'} Recomendación
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="mt-4 space-y-2">
-                      {allMandatoryHealthChecksDone ? (
-                        <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base" onClick={() => setCurrentStep(4)} disabled={!allMandatoryHealthChecksPassed}>
-                          Continuar <ArrowRight className="ml-2"/>
-                        </Button>
-                      ) : (
-                        <Button className="w-full h-12 text-base" onClick={handleCheckHealth} disabled={spfStatus === 'verifying'}>
-                          {spfStatus === 'verifying' ? 'Verificando...' : 'Comprobar Salud del Dominio'}
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                <div className="mt-4 space-y-2">
+                 {healthCheckStep === 'mandatory' ? (
+                     <Button className="w-full h-12 text-base" onClick={() => handleCheckHealth('mandatory')} disabled={spfStatus === 'verifying'}>
+                      {spfStatus === 'verifying' ? 'Verificando...' : 'Escanear Registros Obligatorios'}
+                    </Button>
+                 ) : (
+                    <Button className="w-full h-12 text-base" onClick={() => handleCheckHealth('optional')} disabled={mxStatus === 'verifying'}>
+                      {mxStatus === 'verifying' ? 'Verificando...' : 'Escanear Registros Opcionales'}
+                    </Button>
+                 )}
+                 {healthCheckStep === 'mandatory' && allMandatoryHealthChecksDone && (
+                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base" onClick={() => setHealthCheckStep('optional')} disabled={!allMandatoryHealthChecksPassed}>
+                      Continuar a Opcionales <ArrowRight className="ml-2"/>
+                    </Button>
+                 )}
+                 {healthCheckStep === 'optional' && allOptionalHealthChecksDone && (
+                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
+                        Ir a Configuración SMTP <ArrowRight className="ml-2"/>
+                    </Button>
+                 )}
                 </div>
               </div>
             )}
@@ -692,9 +688,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
           <div className="hidden md:block md:col-span-1 h-full">
             {renderLeftPanel()}
           </div>
-          <div className="md:col-span-2 h-full">
-            <Form {...form}>
-              <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="grid grid-cols-1 md:grid-cols-2 h-full">
+           <Form {...form}>
+              <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="md:col-span-2 h-full grid grid-cols-1 md:grid-cols-2">
                 <div className="p-8 flex flex-col h-full">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -714,7 +709,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 </div>
               </form>
             </Form>
-          </div>
       </DialogContent>
     );
   };
@@ -726,5 +720,3 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </Dialog>
   );
 }
-
-    
