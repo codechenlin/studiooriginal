@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Server, Zap, ChevronRight, Mail, Code, Bot } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
 
 const providers = [
   {
@@ -75,12 +76,22 @@ const Particle = () => {
 
 export default function ServersPage() {
   const [isClient, setIsClient] = useState(false);
+  const [isSmtpModalOpen, setIsSmtpModalOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  const handleConnectClick = (providerId: string) => {
+    if (providerId === 'smtp') {
+      setIsSmtpModalOpen(true);
+    }
+    // Handle other providers later
+  };
 
   return (
+    <>
+    <SmtpConnectionModal isOpen={isSmtpModalOpen} onOpenChange={setIsSmtpModalOpen} />
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background relative overflow-hidden">
        <style>{`
         @keyframes particle-move {
@@ -156,7 +167,10 @@ export default function ServersPage() {
               </div>
 
               <div className="p-6 pt-0 z-10 mt-auto">
-                 <Button className="w-full group/btn relative overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-95 transition-opacity">
+                 <Button 
+                    onClick={() => handleConnectClick(provider.id)}
+                    className="w-full group/btn relative overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-95 transition-opacity"
+                  >
                     <span className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover/btn:opacity-100 group-hover/btn:animate-[scanner_5s_ease-in-out_infinite]" />
                     <span className="relative flex items-center gap-2">
                       Conectar Ahora <ChevronRight className="size-4" />
@@ -168,5 +182,7 @@ export default function ServersPage() {
         ))}
       </div>
     </main>
+    </>
   );
 }
+
