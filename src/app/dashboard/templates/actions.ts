@@ -185,6 +185,32 @@ export async function deleteTemplate(templateId: string) {
     }
 }
 
+export async function getAllCategories(): Promise<{ success: boolean, data?: string[], error?: string }> {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Usuario no autenticado.' };
+
+    try {
+        const { data, error } = await supabase
+            .from('templates')
+            .select('categories')
+            .eq('user_id', user.id);
+        
+        if (error) throw error;
+
+        const allCategories = new Set<string>();
+        data.forEach(item => {
+            if(item.categories) {
+                item.categories.forEach(cat => allCategories.add(cat));
+            }
+        });
+
+        return { success: true, data: Array.from(allCategories).sort() };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
 export async function deleteCategory(categoryName: string) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
