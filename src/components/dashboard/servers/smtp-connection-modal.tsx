@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, Check, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle } from 'lucide-react';
+import { Globe, ArrowRight, Copy, Check, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -25,7 +25,6 @@ type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'faile
 type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 
 const generateVerificationCode = () => `demo_${Math.random().toString(36).substring(2, 10)}`;
-
 
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
   const { toast } = useToast();
@@ -81,6 +80,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       expectedTxt: txtRecordValue,
     });
     
+    // Simulate API call delay for visual feedback
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
     if (result.success) {
       setVerificationStatus('verified');
       form.setValue('username', `ejemplo@${domain}`);
@@ -117,10 +119,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   async function onSubmitSmtp(values: z.infer<typeof smtpFormSchema>) {
     setTestStatus('testing');
-    // Simulate API call to test connection
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Simulate success or failure
     if (values.password.toLowerCase() !== 'fail') {
       setTestStatus('success');
       toast({
@@ -144,37 +144,80 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       exit: { opacity: 0, y: -20 },
   };
 
-  const renderStepContent = () => {
+  const renderLeftPanel = () => {
+      const stepInfo = [
+          { title: "Verificar Dominio", icon: Globe, status: currentStep > 1 ? 'completed' : (currentStep === 1 ? 'active' : 'pending') },
+          { title: "Añadir DNS", icon: Dna, status: currentStep > 2 ? 'completed' : (currentStep === 2 ? 'active' : 'pending') },
+          { title: "Configurar SMTP", icon: DatabaseZap, status: currentStep > 3 ? 'completed' : (currentStep === 3 ? 'active' : 'pending') },
+      ];
+
+      return (
+          <div className="bg-muted/30 p-8 flex flex-col justify-between">
+              <div>
+                 <DialogTitle className="text-xl font-bold flex items-center gap-2"><Workflow /> Conectar Servidor SMTP</DialogTitle>
+                 <DialogDescription className="text-muted-foreground mt-1">Sigue los pasos para una conexión segura.</DialogDescription>
+                  <ul className="space-y-4 mt-8">
+                    {stepInfo.map((step, index) => (
+                        <li key={index} className="flex items-center gap-4">
+                           <div className={cn(
+                                "size-10 rounded-full flex items-center justify-center border-2 transition-all",
+                                step.status === 'active' && "bg-primary/10 border-primary text-primary animate-pulse",
+                                step.status === 'completed' && "bg-green-500/20 border-green-500 text-green-400",
+                                step.status === 'pending' && "bg-muted/50 border-border"
+                           )}>
+                               <step.icon className="size-5" />
+                           </div>
+                           <span className={cn(
+                               "font-semibold transition-colors",
+                               step.status === 'active' && "text-primary",
+                               step.status === 'completed' && "text-green-400",
+                               step.status === 'pending' && "text-muted-foreground"
+                           )}>{step.title}</span>
+                        </li>
+                    ))}
+                  </ul>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                  Una configuración SMTP segura y verificada es crucial para asegurar la máxima entregabilidad y reputación de tus campañas de correo.
+              </div>
+          </div>
+      )
+  }
+
+  const renderRightPanelContent = () => {
     switch (currentStep) {
         case 1:
             return (
-                 <div className="py-4 space-y-4">
+                 <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Paso 1: Introduce tu Dominio</h3>
                     <p className="text-sm text-muted-foreground">
-                    <b>Paso 1: Verificar Dominio.</b> Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio desde el que quieres enviar.
+                    Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
                     </p>
-                    <div className="space-y-2">
-                    <Label htmlFor="domain">Tu Dominio</Label>
-                    <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                        <Input 
-                            id="domain" 
-                            placeholder="ejemplo.com" 
-                            className="pl-10"
-                            value={domain}
-                            onChange={(e) => setDomain(e.target.value)}
-                        />
+                    <div className="space-y-2 pt-4">
+                      <Label htmlFor="domain">Tu Dominio</Label>
+                      <div className="relative">
+                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                          <Input 
+                              id="domain" 
+                              placeholder="ejemplo.com" 
+                              className="pl-10 h-12 text-base"
+                              value={domain}
+                              onChange={(e) => setDomain(e.target.value)}
+                          />
+                      </div>
                     </div>
-                    </div>
-                    <Button className="w-full" onClick={handleStartVerification}>
-                    Verificar Dominio <ArrowRight className="ml-2"/>
+                    <Button className="w-full h-12 text-base" onClick={handleStartVerification}>
+                      Verificar Dominio <ArrowRight className="ml-2"/>
                     </Button>
                 </div>
             )
         case 2:
             return (
-                 <div className="py-4 space-y-4">
+                 <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Paso 2: Añadir Registro DNS</h3>
                     <p className="text-sm text-muted-foreground">
-                        <b>Paso 2: Añadir Registro DNS.</b> Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{domain}</b>.
+                        Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{domain}</b>.
                     </p>
 
                     <div className="space-y-3">
@@ -191,7 +234,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <AnimatePresence mode="wait">
                     {verificationStatus === 'pending' && (
                         <motion.div key="pending" {...cardAnimation}>
-                             <Button className="w-full" onClick={handleCheckVerification}>
+                             <Button className="w-full h-12 text-base" onClick={handleCheckVerification}>
                                 Ya he añadido el registro, verificar ahora
                             </Button>
                         </motion.div>
@@ -214,7 +257,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <ShieldCheck className="size-10" />
                             <h4 className="font-bold">¡Dominio Verificado!</h4>
                             <p className="text-xs">El registro TXT se encontró correctamente.</p>
-                             <Button className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white" onClick={() => setCurrentStep(3)}>
+                             <Button className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white h-12 text-base" onClick={() => setCurrentStep(3)}>
                                 Continuar <ArrowRight className="ml-2"/>
                             </Button>
                         </motion.div>
@@ -224,7 +267,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <AlertTriangle className="size-10" />
                             <h4 className="font-bold">Verificación Fallida</h4>
                             <p className="text-xs">No pudimos encontrar el registro. La propagación de DNS puede tardar. Por favor, inténtalo de nuevo en unos minutos.</p>
-                             <Button variant="outline" className="w-full mt-2" onClick={handleCheckVerification}>
+                             <Button variant="outline" className="w-full mt-2 h-12 text-base" onClick={handleCheckVerification}>
                                 Reintentar Verificación
                             </Button>
                         </motion.div>
@@ -234,10 +277,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             )
         case 3:
             return (
-                <div className="py-4 space-y-4">
-                     <p className="text-sm text-muted-foreground">
-                        <b>Paso 3: Configurar Credenciales.</b> Proporciona los detalles de tu servidor SMTP.
-                    </p>
+                <div className="space-y-4">
+                     <h3 className="text-lg font-semibold">Paso 3: Configurar Credenciales</h3>
+                     <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmitSmtp)} className="space-y-4">
                            <div className="grid grid-cols-2 gap-4">
@@ -264,7 +306,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                            </div>
                            
                            {testStatus !== 'success' && (
-                                <Button type="submit" className="w-full" disabled={testStatus === 'testing'}>
+                                <Button type="submit" className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
                                     {testStatus === 'testing' ? <><TestTube2 className="mr-2 animate-pulse"/> Probando Conexión...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
                                 </Button>
                            )}
@@ -279,7 +321,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                                <p className="text-xs">El correo de prueba fue enviado. Revisa la bandeja de entrada.</p>
                                            </div>
                                        </div>
-                                       <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity" onClick={handleClose}>
+                                       <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
                                            Finalizar y Guardar
                                        </Button>
                                    </motion.div>
@@ -306,35 +348,32 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-sm">
-        <DialogHeader>
-          <DialogTitle>Conectar a Servidor SMTP</DialogTitle>
-          <DialogDescription>
-            Sigue los pasos para conectar de forma segura tu servidor de correo.
-          </DialogDescription>
-        </DialogHeader>
-        <AnimatePresence mode="wait">
-            <motion.div
-                key={currentStep}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.3 }}
-            >
-                {renderStepContent()}
-            </motion.div>
-        </AnimatePresence>
-        <DialogFooter className="mt-4">
-             {currentStep > 1 && (
-                <Button variant="ghost" onClick={() => setCurrentStep(currentStep - 1)}>
-                    Atrás
-                </Button>
-             )}
-            <Button variant="outline" onClick={handleClose} className="ml-auto">Cerrar</Button>
-        </DialogFooter>
+      <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0">
+        <div className="hidden md:block md:col-span-1">
+            {renderLeftPanel()}
+        </div>
+        <div className="md:col-span-2 p-8 flex flex-col justify-center">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentStep}
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -30 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                    {renderRightPanelContent()}
+                </motion.div>
+            </AnimatePresence>
+            <DialogFooter className="mt-6 pt-6 border-t">
+                {currentStep > 1 && (
+                    <Button variant="ghost" onClick={() => setCurrentStep(currentStep - 1)}>
+                        Atrás
+                    </Button>
+                )}
+                <Button variant="outline" onClick={handleClose} className="ml-auto">Cerrar</Button>
+            </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
-
-    
