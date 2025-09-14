@@ -40,17 +40,10 @@ interface CategoryManagerModalProps {
 export function CategoryManagerModal({ isOpen, onOpenChange, template, allTemplates, onTemplateUpdate }: CategoryManagerModalProps) {
     const { toast } = useToast();
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [allUniqueCategories, setAllUniqueCategories] = useState<string[]>([]);
     const [newCategory, setNewCategory] = useState('');
     const [isSaving, startSaving] = useTransition();
     const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
-
-    const allUniqueCategories = useMemo(() => {
-        const categories = new Set<string>();
-        allTemplates.forEach(t => {
-            t.categories?.forEach(c => categories.add(c));
-        });
-        return Array.from(categories).sort();
-    }, [allTemplates]);
 
     const categoryCounts = useMemo(() => {
         const counts = new Map<string, number>();
@@ -65,12 +58,18 @@ export function CategoryManagerModal({ isOpen, onOpenChange, template, allTempla
     useEffect(() => {
         if (isOpen) {
             setSelectedCategories(template.categories || []);
+            const allCats = new Set<string>();
+            allTemplates.forEach(t => {
+                t.categories?.forEach(c => allCats.add(c));
+            });
+            setAllUniqueCategories(Array.from(allCats).sort());
         }
-    }, [isOpen, template.categories]);
+    }, [isOpen, template.categories, allTemplates]);
 
     const handleAddNewCategory = () => {
         const trimmed = newCategory.trim();
         if (trimmed && !allUniqueCategories.includes(trimmed)) {
+            setAllUniqueCategories(prev => [...prev, trimmed].sort());
             setSelectedCategories(prev => [...prev, trimmed]);
             setNewCategory('');
         } else if (trimmed) {
