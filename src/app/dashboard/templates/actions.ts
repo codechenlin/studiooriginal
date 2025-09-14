@@ -226,22 +226,21 @@ export async function deleteCategory(categoryName: string) {
 
         if (fetchError) throw fetchError;
 
-        // 2. Prepare the updates
-        const updates = templatesToUpdate.map(template => ({
-            id: template.id,
-            categories: template.categories.filter((c: string) => c !== categoryName),
-            updated_at: new Date().toISOString()
-        }));
-
-        // 3. Upsert the changes
-        if (updates.length > 0) {
+        // 2. Prepare the updates by removing the category from each template
+        for (const template of templatesToUpdate) {
+            const updatedCategories = template.categories.filter((c: string) => c !== categoryName);
             const { error: updateError } = await supabase
                 .from('templates')
-                .upsert(updates);
-            
-            if (updateError) throw updateError;
-        }
+                .update({ categories: updatedCategories, updated_at: new Date().toISOString() })
+                .eq('id', template.id)
+                .eq('user_id', user.id); // Re-check ownership for security
 
+            if (updateError) {
+                // If one update fails, stop and report the error
+                throw new Error(`Error updating template ${template.id}: ${updateError.message}`);
+            }
+        }
+        
         revalidatePath('/dashboard/templates');
         return { success: true };
     } catch (error: any) {
@@ -249,3 +248,5 @@ export async function deleteCategory(categoryName: string) {
         return { success: false, error: `No se pudo eliminar la categoría: ${error.message}` };
     }
 }
+
+    

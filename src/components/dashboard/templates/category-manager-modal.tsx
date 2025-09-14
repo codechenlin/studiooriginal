@@ -92,7 +92,7 @@ export function CategoryManagerModal({ isOpen, onOpenChange, template, allTempla
             const result = await deleteCategory(categoryToDelete);
             if(result.success) {
                 toast({ title: 'Categoría Eliminada', description: `La categoría "${categoryToDelete}" ha sido eliminada de todas las plantillas.`, className: 'bg-green-500 text-white' });
-                onTemplateUpdate();
+                onTemplateUpdate(); // This will re-fetch templates and update categories
                 setCategoryToDelete(null);
             } else {
                 toast({ title: 'Error', description: result.error, variant: 'destructive' });
@@ -223,3 +223,5 @@ export function CategoryManagerModal({ isOpen, onOpenChange, template, allTempla
         </>
     );
 }
+
+    

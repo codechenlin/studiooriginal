@@ -73,7 +73,7 @@ export function TemplateCard({ template, allTemplates, onTemplateUpdate, onPrevi
                 toast({
                     title: '¡Éxito!',
                     description: 'Plantilla renombrada correctamente.',
-                    className: 'bg-green-500 text-white'
+                    className: 'bg-[#00CB07] border-none text-white'
                 });
                 onTemplateUpdate();
             } else {
@@ -153,7 +153,7 @@ export function TemplateCard({ template, allTemplates, onTemplateUpdate, onPrevi
                              {categories.length > 0 ? (
                                 <>
                                 {visibleCategories.map(cat => (
-                                    <Badge key={cat} style={{backgroundColor: '#1700E6'}} className="truncate max-w-[100px]">{cat}</Badge>
+                                    <Badge key={cat} style={{backgroundColor: '#1700E6'}} className="truncate max-w-[100px] text-white">{cat}</Badge>
                                 ))}
                                 {hiddenCategories.length > 0 && (
                                     <TooltipProvider>
@@ -286,3 +286,5 @@ export function TemplateCardSkeleton() {
         </Card>
     );
 }
+
+    
