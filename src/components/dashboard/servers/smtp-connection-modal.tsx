@@ -313,7 +313,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     switch (currentStep) {
         case 1:
             return (
-                 <div className="space-y-4 h-full flex flex-col justify-center">
+                 <div className="space-y-4 h-full flex flex-col justify-start pt-8">
                     <h3 className="text-lg font-semibold mb-1">Paso 1: Introduce tu Dominio</h3>
                     <p className="text-sm text-muted-foreground">
                     Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
@@ -331,14 +331,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           />
                       </div>
                     </div>
-                    <Button className="w-full h-12 text-base mt-4" onClick={handleStartVerification}>
+                     <Button className="w-full h-12 text-base mt-4" onClick={handleStartVerification}>
                       Siguiente <ArrowRight className="ml-2"/>
-                  </Button>
+                    </Button>
                 </div>
             )
         case 2:
             return (
-                 <div className="h-full flex flex-col justify-start">
+                 <div className="h-full flex flex-col justify-start pt-8">
                    <div className='flex-grow'>
                     <h3 className="text-lg font-semibold mb-1">Paso 2: Añadir Registro DNS</h3>
                     <p className="text-sm text-muted-foreground">
@@ -360,7 +360,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         case 3:
             if (infoViewRecord) {
                  return (
-                    <div className="h-full flex flex-col">
+                    <div className="h-full flex flex-col justify-start pt-8">
                         <h3 className="text-lg font-semibold mb-2">{infoContent[infoViewRecord].title}</h3>
                         <p className="text-sm text-muted-foreground flex-grow">{infoContent[infoViewRecord].description}</p>
                         
@@ -379,7 +379,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 )
             }
             return (
-                <div className="h-full flex flex-col">
+                <div className="h-full flex flex-col justify-start pt-8">
                   <div className='flex-grow'>
                     <h3 className="text-lg font-semibold mb-1">Paso 3: Salud del Dominio</h3>
                     <p className="text-sm text-muted-foreground">Verificaremos registros para asegurar una alta entregabilidad. Si alguno falla, te daremos los valores a configurar.</p>
@@ -406,7 +406,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             )
         case 4:
             return (
-                <div className="space-y-3 h-full flex flex-col">
+                <div className="space-y-3 h-full flex flex-col justify-start pt-8">
                     <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar Credenciales</h3>
                     <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
                     <div className="space-y-4 flex-grow pt-4">
@@ -541,7 +541,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             {currentStep === 2 && (
               <div className="text-center h-full flex flex-col justify-between w-full">
                 <div className="relative flex-grow flex flex-col justify-center overflow-hidden">
-                  <div className={cn("absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full transition-all duration-500", verificationStatus === 'verifying' ? "border-2 border-primary/20 animate-ping" : "bg-primary/5")}/>
+                  <div className={cn("absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full transition-all duration-500", verificationStatus === 'verifying' ? "border-2 border-primary/20 animate-ping" : "bg-primary/5")}/>
                   <div className="z-10">
                     {verificationStatus === 'pending' && (
                       <div className="text-center flex-grow flex flex-col justify-center">
@@ -683,32 +683,47 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   }
 
   const renderContent = () => {
+    if (currentStep === 4) {
+      return (
+         <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-2 gap-0 h-[600px]" showCloseButton={false}>
+            <Form {...form}>
+               <div className="h-full">
+                <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="flex flex-col h-full">
+                    {renderCenterPanelContent()}
+                </form>
+               </div>
+               <div className="h-full">
+                 {renderRightPanelContent()}
+               </div>
+            </Form>
+        </DialogContent>
+      )
+    }
+
     return (
        <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
           <div className="hidden md:block md:col-span-1 h-full">
             {renderLeftPanel()}
           </div>
-           <Form {...form}>
-              <form id="smtp-form" onSubmit={form.handleSubmit(onSubmitSmtp)} className="md:col-span-2 h-full grid grid-cols-1 md:grid-cols-2">
-                <div className="p-8 flex flex-col h-full">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentStep}
-                      initial={{ opacity: 0, x: 30 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -30 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="h-full"
-                    >
-                      {renderCenterPanelContent()}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-                <div className="h-full">
-                  {renderRightPanelContent()}
-                </div>
-              </form>
-            </Form>
+          <div className="md:col-span-2 h-full grid grid-cols-1 md:grid-cols-2">
+            <div className="p-8 flex flex-col h-full">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, x: 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -30 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="h-full"
+                >
+                  {renderCenterPanelContent()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <div className="h-full">
+              {renderRightPanelContent()}
+            </div>
+          </div>
       </DialogContent>
     );
   };
@@ -720,3 +735,4 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </Dialog>
   );
 }
+
