@@ -35,6 +35,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { TemplateRenderer } from './template-renderer';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TemplateCardProps {
     template: TemplateWithAuthor;
@@ -55,6 +56,11 @@ export function TemplateCard({ template, allTemplates, onTemplateUpdate, onPrevi
 
     const authorName = template.profiles?.full_name || 'Desconocido';
     const authorAvatar = template.profiles?.avatar_url;
+
+    const categories = template.categories || [];
+    const maxVisibleCategories = 2;
+    const visibleCategories = categories.slice(0, maxVisibleCategories);
+    const hiddenCategories = categories.slice(maxVisibleCategories);
 
     const handleRename = async () => {
         if (!newName.trim() || newName === template.name) {
@@ -144,8 +150,24 @@ export function TemplateCard({ template, allTemplates, onTemplateUpdate, onPrevi
                         </div>
                          <div className="flex items-center gap-2 flex-wrap">
                             <Tags className="size-4"/>
-                             {template.categories && template.categories.length > 0 ? (
-                                template.categories.map(cat => <Badge key={cat} style={{backgroundColor: '#1700E6'}}>{cat}</Badge>)
+                             {categories.length > 0 ? (
+                                <>
+                                {visibleCategories.map(cat => (
+                                    <Badge key={cat} style={{backgroundColor: '#1700E6'}} className="truncate max-w-[100px]">{cat}</Badge>
+                                ))}
+                                {hiddenCategories.length > 0 && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <Badge variant="secondary">+{hiddenCategories.length}</Badge>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{hiddenCategories.join(', ')}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                                </>
                              ) : (
                                 <span>Sin categoría</span>
                              )}
