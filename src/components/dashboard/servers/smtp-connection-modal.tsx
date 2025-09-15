@@ -136,15 +136,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
     if (type === 'mandatory') {
         await Promise.all([
-            checkRecord('@', 'TXT', 'v=spf1', setSpfStatus),
-            checkRecord('foxmiu._domainkey', 'TXT', undefined, setDkimStatus),
-            checkRecord('_dmarc', 'TXT', 'v=DMARC1', setDmarcStatus),
+            checkRecord(domain, 'TXT', 'v=spf1', setSpfStatus),
+            checkRecord(`foxmiu._domainkey.${domain}`, 'TXT', undefined, setDkimStatus),
+            checkRecord(`_dmarc.${domain}`, 'TXT', 'v=DMARC1', setDmarcStatus),
         ]);
     } else {
         await Promise.all([
             checkRecord(domain, 'MX', undefined, setMxStatus),
-            checkRecord('default._bimi', 'TXT', 'v=BIMI1', setBimiStatus),
-            checkRecord('bimi', 'TXT', 'v=VMC1', setVmcStatus),
+            checkRecord(`default._bimi.${domain}`, 'TXT', 'v=BIMI1', setBimiStatus),
+            checkRecord(`bimi.${domain}`, 'TXT', 'v=VMC1', setVmcStatus),
         ]);
     }
   }
@@ -363,14 +363,19 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <div className="space-y-3 pt-4">
                         <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
                             <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
-                            <p className="flex justify-between items-center">@ <Copy className="size-4 cursor-pointer" onClick={() => handleCopy('@')}/></p>
+                             <div className="flex justify-between items-center">
+                                <span>@</span>
+                                <Button variant="ghost" size="icon" className="size-7 flex-shrink-0" onClick={() => handleCopy('@')}>
+                                    <Copy className="size-4"/>
+                                </Button>
+                            </div>
                         </div>
                          <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
                             <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
                             <div className="flex justify-between items-center">
                                 <span className="break-all pr-2">{txtRecordValue}</span>
                                 <Button variant="ghost" size="icon" className="size-7 flex-shrink-0" onClick={() => handleCopy(txtRecordValue)}>
-                                    <Copy className="size-4 cursor-pointer"/>
+                                    <Copy className="size-4"/>
                                 </Button>
                             </div>
                         </div>
@@ -446,6 +451,58 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         default: return null;
     }
   }
+
+  const Step4Form = () => (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmitSmtp)} id="smtp-form" className="grid grid-cols-1 md:grid-cols-3 gap-0 h-full">
+        {/* Panel Izquierdo - Servidor */}
+        <div className="p-8 flex flex-col justify-start">
+          <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar SMTP</h3>
+          <p className="text-sm text-muted-foreground mb-4">Detalles de tu servidor de correo.</p>
+          <div className="space-y-4">
+            <FormField control={form.control} name="host" render={({ field }) => (
+                <FormItem className="space-y-1"><Label>Host</Label>
+                    <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
+                </FormItem>
+            )}/>
+            <FormField control={form.control} name="port" render={({ field }) => (
+                <FormItem className="space-y-1"><Label>Puerto</Label>
+                    <FormControl><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></FormControl><FormMessage />
+                </FormItem>
+            )}/>
+            <FormField control={form.control} name="encryption" render={({ field }) => (
+                <FormItem><Label>Cifrado</Label><FormControl>
+                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
+                </RadioGroup>
+                </FormControl><FormMessage /></FormItem>
+            )}/>
+          </div>
+        </div>
+
+        {/* Panel Central - Credenciales */}
+        <div className="p-8 border-l border-r flex flex-col justify-start">
+           <h3 className="text-lg font-semibold mb-1 text-transparent select-none">.</h3>
+           <p className="text-sm text-muted-foreground mb-4">Tus credenciales de autenticación.</p>
+           <div className="space-y-4">
+              <FormField control={form.control} name="username" render={({ field }) => (
+                  <FormItem className="space-y-1"><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="password" render={({ field }) => (
+                  <FormItem className="space-y-1"><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
+              )}/>
+           </div>
+        </div>
+        
+        {/* Panel Derecho - Prueba y Estado */}
+        <div className="p-8 bg-muted/20 flex flex-col justify-between h-full">
+            {renderRightPanelContent()}
+        </div>
+      </form>
+    </Form>
+  );
   
   const StatusIndicator = () => {
     let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
@@ -517,71 +574,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       </div>
     );
   };
-
-  const Step4Form = () => (
-     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitSmtp)} id="smtp-form" className="grid grid-cols-1 md:grid-cols-2 h-full">
-        <div className="p-8 flex flex-col h-full">
-          <motion.div
-            key="step4-center"
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="h-full flex flex-col"
-          >
-             <div className="space-y-3 h-full flex flex-col justify-start">
-                <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar Credenciales</h3>
-                <p className="text-sm text-muted-foreground">Proporciona los detalles de tu servidor SMTP.</p>
-                <div className="space-y-4 flex-grow pt-4">
-                     <FormField control={form.control} name="host" render={({ field }) => (
-                        <FormItem className="space-y-1">
-                           <Label>Host</Label>
-                           <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl>
-                           <FormMessage />
-                        </FormItem>
-                    )}/>
-                     <FormField control={form.control} name="port" render={({ field }) => (
-                        <FormItem className="space-y-1">
-                           <Label>Puerto</Label>
-                           <FormControl><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></FormControl>
-                           <FormMessage />
-                        </FormItem>
-                    )}/>
-                    
-                    <FormField control={form.control} name="encryption" render={({ field }) => (
-                        <FormItem><Label>Cifrado</Label><FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
-                            <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
-                        </RadioGroup>
-                        </FormControl><FormMessage /></FormItem>
-                    )}/>
-
-                    <FormField control={form.control} name="username" render={({ field }) => (
-                        <FormItem className="space-y-1"><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="password" render={({ field }) => (
-                        <FormItem className="space-y-1"><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
-                    )}/>
-                </div>
-            </div>
-          </motion.div>
-        </div>
-        <div className="h-full">
-            <motion.div
-                key="step4-right"
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="h-full"
-              >
-              {renderRightPanelContent()}
-            </motion.div>
-        </div>
-      </form>
-    </Form>
-  );
 
   const renderRightPanelContent = () => {
     const allMandatoryHealthChecksDone = dkimStatus !== 'idle' && dkimStatus !== 'verifying' && spfStatus !== 'idle' && spfStatus !== 'verifying' && dmarcStatus !== 'idle' && dmarcStatus !== 'verifying';
@@ -763,7 +755,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderContent = () => {
     if (currentStep === 4) {
       return (
-        <DialogContent className="max-w-4xl p-0 grid grid-cols-1 md:grid-cols-1 gap-0 h-[700px]" showCloseButton={false}>
+        <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-1 gap-0 h-[600px]" showCloseButton={false}>
           <Step4Form />
         </DialogContent>
       );
@@ -1082,9 +1074,6 @@ function DnsInfoModal({
         </Dialog>
     )
 }
-
-    
-
     
 
     
