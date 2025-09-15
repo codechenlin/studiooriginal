@@ -57,6 +57,7 @@ const dnsVerificationFlow = ai.defineFlow(
           records = (await dns.resolveTxt(fqdn)).flat();
           break;
         case 'MX':
+          // For MX, we resolve on the root domain, not a subdomain like '_dmarc'
           records = await dns.resolveMx(domain);
           break;
         case 'CNAME':
@@ -94,7 +95,7 @@ const dnsVerificationFlow = ai.defineFlow(
             }
             return { isVerified: false, reason: "No se encontró 'foxmiu.email' en los registros MX. No podrás recibir correos en nuestros servidores.", foundRecords };
 
-        case 'TXT':
+        case 'TXT': // This case is now for generic TXT verification like domain ownership
         case 'CNAME':
           if (!expectedValue) {
             return { isVerified: true, foundRecords }; // Existence check is enough
@@ -109,7 +110,7 @@ const dnsVerificationFlow = ai.defineFlow(
           };
 
         default:
-           // For any other record types (like BIMI, VMC checked as TXT), existence is enough
+           // For any other record types (like BIMI, VMC checked as TXT), existence is enough if they fall here.
            return { isVerified: true, foundRecords };
       }
 
