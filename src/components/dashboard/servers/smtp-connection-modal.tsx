@@ -124,27 +124,27 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const handleCheckHealth = async (type: 'mandatory' | 'optional') => {
     const checkRecord = async (
       name: string, 
-      recordType: 'TXT' | 'MX' | 'CNAME', 
-      expectedValue: string | undefined, 
+      recordType: 'SPF' | 'DMARC' | 'MX' | 'CNAME' | 'TXT', 
       setStatus: React.Dispatch<React.SetStateAction<HealthCheckStatus>>
     ) => {
         setStatus('verifying');
-        const result = await verifyDnsAction({ domain, recordType, name, expectedValue });
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000));
+        // Use the specific recordType for the action call
+        const result = await verifyDnsAction({ domain, recordType, name });
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
         setStatus(result.success ? 'verified' : 'failed');
     };
 
     if (type === 'mandatory') {
         await Promise.all([
-            checkRecord(domain, 'TXT', 'v=spf1', setSpfStatus),
-            checkRecord(`foxmiu._domainkey.${domain}`, 'TXT', undefined, setDkimStatus),
-            checkRecord(`_dmarc.${domain}`, 'TXT', 'v=DMARC1', setDmarcStatus),
+            checkRecord('@', 'SPF', setSpfStatus),
+            checkRecord('foxmiu._domainkey', 'CNAME', setDkimStatus),
+            checkRecord('_dmarc', 'DMARC', setDmarcStatus),
         ]);
     } else {
         await Promise.all([
-            checkRecord(domain, 'MX', undefined, setMxStatus),
-            checkRecord(`default._bimi.${domain}`, 'TXT', 'v=BIMI1', setBimiStatus),
-            checkRecord(`bimi.${domain}`, 'TXT', 'v=VMC1', setVmcStatus),
+            checkRecord(domain, 'MX', setMxStatus),
+            checkRecord(`default._bimi.${domain}`, 'TXT', setBimiStatus),
+            checkRecord(`bimi.${domain}`, 'TXT', setVmcStatus),
         ]);
     }
   }
@@ -258,7 +258,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         },
         bimi: {
           title: "Registro BIMI",
-          description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
+          description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles."
         },
         vmc: {
           title: "Certificado VMC",
@@ -324,263 +324,135 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   );
 
   const renderCenterPanelContent = () => {
-    switch (currentStep) {
-        case 1:
-            return (
-                 <div className="h-full flex flex-col justify-start">
-                    <h3 className="text-lg font-semibold mb-1">Paso 1: Introduce tu Dominio</h3>
-                    <p className="text-sm text-muted-foreground">
-                    Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
-                    </p>
-                    <div className="space-y-2 pt-4 flex-grow">
-                      <Label htmlFor="domain">Tu Dominio</Label>
-                      <div className="relative">
-                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                          <Input 
-                              id="domain" 
-                              placeholder="ejemplo.com" 
-                              className="pl-10 h-12 text-base"
-                              value={domain}
-                              onChange={(e) => setDomain(e.target.value)}
-                          />
+    return (
+      <div className="h-full flex flex-col justify-start">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col h-full"
+          >
+            {currentStep === 1 && (
+              <>
+                <h3 className="text-lg font-semibold mb-1">Paso 1: Introduce tu Dominio</h3>
+                <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
+                <div className="space-y-2 pt-4 flex-grow">
+                  <Label htmlFor="domain">Tu Dominio</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
+                  </div>
+                </div>
+                <div className='flex justify-center pt-8'>
+                  <Button className="w-full h-12 text-base mt-auto" onClick={handleStartVerification}>
+                    Siguiente <ArrowRight className="ml-2"/>
+                  </Button>
+                </div>
+              </>
+            )}
+            {currentStep === 2 && (
+              <>
+                <div className='flex-grow'>
+                  <h3 className="text-lg font-semibold mb-1">Paso 2: Añadir Registro DNS</h3>
+                  <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{domain}</b>.</p>
+                  <div className="space-y-3 pt-4">
+                    <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                      <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
+                       <div className="flex justify-between items-center">
+                          <span>@</span>
+                          <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 hover:bg-primary/20" onClick={() => handleCopy('@')}>
+                              <Copy className="size-4"/>
+                          </Button>
                       </div>
                     </div>
-                    <div className='flex justify-center pt-8'>
-                        <Button className="w-full h-12 text-base mt-auto" onClick={handleStartVerification}>
-                        Siguiente <ArrowRight className="ml-2"/>
-                        </Button>
-                    </div>
-                </div>
-            )
-        case 2:
-            return (
-                 <div className="h-full flex flex-col justify-start">
-                   <div className='flex-grow'>
-                    <h3 className="text-lg font-semibold mb-1">Paso 2: Añadir Registro DNS</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{domain}</b>.
-                    </p>
-                    <div className="space-y-3 pt-4">
-                        <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                            <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
-                             <div className="flex justify-between items-center">
-                                <span>@</span>
-                                <Button variant="ghost" size="icon" className="size-7 flex-shrink-0" onClick={() => handleCopy('@')}>
-                                    <Copy className="size-4"/>
-                                </Button>
-                            </div>
+                     <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                        <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
+                        <div className="flex justify-between items-center">
+                            <p className="break-all pr-2">{txtRecordValue}</p>
+                            <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 hover:bg-primary/20" onClick={() => handleCopy(txtRecordValue)}>
+                                <Copy className="size-4"/>
+                            </Button>
                         </div>
-                         <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                            <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
-                            <div className="flex justify-between items-center">
-                                <span className="break-all pr-2">{txtRecordValue}</span>
-                                <Button variant="ghost" size="icon" className="size-7 flex-shrink-0" onClick={() => handleCopy(txtRecordValue)}>
-                                    <Copy className="size-4"/>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                   </div>
-                 </div>
-            )
-        case 3:
-            if (infoViewRecord) {
-                 const { title, description } = infoContent[infoViewRecord];
-                 return (
-                    <div className="h-full flex flex-col justify-start">
-                        <h3 className="text-lg font-bold mb-2">{title}</h3>
-                        <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{description}</p>
-                        <motion.div>
-                            {showExample && infoViewRecord === 'spf' && (
-                                <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
-                                    <p className="font-bold mb-1">Importante: Unificación de SPF</p>
-                                    <p>Si ya usas otros servicios de correo (ej. Google Workspace), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
-                                    <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.google.com include:spf.otrodominio.com -all`</p>
-                                </div>
-                            )}
-                        </motion.div>
-                        <div className="flex gap-2 mt-auto">
-                           <Button variant="outline" className="w-full" onClick={() => setInfoViewRecord(null)}>Atrás</Button>
-                           <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
-                        </div>
-                    </div>
-                )
-            }
-            return (
-                <div className="h-full flex flex-col justify-start">
-                  <div className='flex-grow'>
-                    <h3 className="text-lg font-semibold mb-1">Paso 3: Salud del Dominio</h3>
-                    <p className="text-sm text-muted-foreground">Verificaremos los registros de tu dominio, y te mostraremos los registros DNS que deberás añadir a tu dominio.</p>
-
-                    <div className="space-y-3 mt-4">
-                        {healthCheckStep === 'mandatory' ? (
-                          <>
-                            <h4 className='font-semibold text-sm'>Obligatorios</h4>
-                            {renderRecordStatus('SPF', spfStatus, 'spf')}
-                            {renderRecordStatus('DKIM', dkimStatus, 'dkim')}
-                            {renderRecordStatus('DMARC', dmarcStatus, 'dmarc')}
-                             <div className="pt-2">
-                                <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
-                                <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
-                                    <li><span className="font-semibold">SPF:</span> ¿Quién puede enviar?</li>
-                                    <li><span className="font-semibold">DKIM:</span> ¿Está firmado y sin cambios?</li>
-                                    <li><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</li>
-                                </ul>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <h4 className='font-semibold text-sm'>Opcionales</h4>
-                            {renderRecordStatus('MX', mxStatus, 'mx')}
-                            {renderRecordStatus('BIMI', bimiStatus, 'bimi')}
-                            {renderRecordStatus('VMC', vmcStatus, 'vmc')}
-                            <div className="pt-2">
-                                <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
-                                <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
-                                    <li><span className="font-semibold">MX:</span> ¿A qué servidor deben llegar los correos que envían a mi dominio?</li>
-                                    <li><span className="font-semibold">BIMI:</span> ¿Qué logotipo oficial debe mostrarse junto a mis correos en la bandeja de entrada?</li>
-                                    <li><span className="font-semibold">VMC:</span> ¿Hay un certificado que demuestre que ese logotipo y la marca son míos?</li>
-                                </ul>
-                            </div>
-                          </>
-                        )}
                     </div>
                   </div>
                 </div>
-            )
-        default: return null;
-    }
-  }
-
-  const Step4Form = () => (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitSmtp)} id="smtp-form" className="grid grid-cols-1 md:grid-cols-3 gap-0 h-full">
-        {/* Panel Izquierdo - Servidor */}
-        <div className="p-8 flex flex-col justify-start">
-          <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar SMTP</h3>
-          <p className="text-sm text-muted-foreground mb-4">Detalles de tu servidor de correo.</p>
-          <div className="space-y-4">
-            <FormField control={form.control} name="host" render={({ field }) => (
-                <FormItem className="space-y-1"><Label>Host</Label>
-                    <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
-                </FormItem>
-            )}/>
-            <FormField control={form.control} name="port" render={({ field }) => (
-                <FormItem className="space-y-1"><Label>Puerto</Label>
-                    <FormControl><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></FormControl><FormMessage />
-                </FormItem>
-            )}/>
-            <FormField control={form.control} name="encryption" render={({ field }) => (
-                <FormItem><Label>Cifrado</Label><FormControl>
-                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
-                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
-                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
-                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
-                </RadioGroup>
-                </FormControl><FormMessage /></FormItem>
-            )}/>
-          </div>
-        </div>
-
-        {/* Panel Central - Credenciales */}
-        <div className="p-8 border-l border-r flex flex-col justify-start">
-           <h3 className="text-lg font-semibold mb-1 text-transparent select-none">.</h3>
-           <p className="text-sm text-muted-foreground mb-4">Tus credenciales de autenticación.</p>
-           <div className="space-y-4">
-              <FormField control={form.control} name="username" render={({ field }) => (
-                  <FormItem className="space-y-1"><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
-              )}/>
-              <FormField control={form.control} name="password" render={({ field }) => (
-                  <FormItem className="space-y-1"><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
-              )}/>
-           </div>
-        </div>
-        
-        {/* Panel Derecho - Prueba y Estado */}
-        <div className="p-8 bg-muted/20 flex flex-col justify-between h-full">
-            {renderRightPanelContent()}
-        </div>
-      </form>
-    </Form>
-  );
-  
-  const StatusIndicator = () => {
-    let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
-    let text = 'ESTADO DEL SISTEMA';
-
-    if (currentStep === 2) {
-      if (verificationStatus === 'verifying') {
-        status = 'processing'; text = 'VERIFICANDO DNS';
-      } else if (verificationStatus === 'verified') {
-        status = 'success'; text = 'DOMINIO VERIFICADO';
-      } else if (verificationStatus === 'failed') {
-        status = 'error'; text = 'FALLO DE VERIFICACIÓN';
-      } else {
-        status = 'idle'; text = 'ESPERANDO ACCIÓN';
-      }
-    } else if (currentStep === 3) {
-      const isMandatoryVerifying = [spfStatus, dkimStatus, dmarcStatus].some(s => s === 'verifying');
-      const isOptionalVerifying = [mxStatus, bimiStatus, vmcStatus].some(s => s === 'verifying');
-      const allMandatoryDone = spfStatus !== 'idle' && dkimStatus !== 'idle' && dmarcStatus !== 'idle' && !isMandatoryVerifying;
-      const anyMandatoryFailed = spfStatus === 'failed' || dkimStatus === 'failed' || dmarcStatus === 'failed';
-      const allOptionalDone = mxStatus !== 'idle' && bimiStatus !== 'idle' && vmcStatus !== 'idle' && !isOptionalVerifying;
-
-      if (healthCheckStep === 'mandatory') {
-        if (isMandatoryVerifying) {
-          status = 'processing'; text = 'ANALIZANDO OBLIGATORIOS';
-        } else if (allMandatoryDone) {
-          status = anyMandatoryFailed ? 'error' : 'success';
-          text = anyMandatoryFailed ? 'OBLIGATORIOS REQUIEREN ATENCIÓN' : 'OBLIGATORIOS OK';
-        } else {
-          status = 'idle'; text = 'LISTO PARA CHEQUEO';
-        }
-      } else { // optional
-        if (isOptionalVerifying) {
-          status = 'processing'; text = 'ANALIZANDO OPCIONALES';
-        } else if (allOptionalDone) {
-          status = 'success'; text = 'OPCIONALES REVISADOS';
-        } else {
-          status = 'idle'; text = 'LISTO PARA CHEQUEO OPCIONAL';
-        }
-      }
-    } else if (currentStep === 4) {
-      if (testStatus === 'testing' || deliveryStatus === 'checking') {
-        status = 'processing'; text = 'PROBANDO CONEXIÓN';
-      } else if (testStatus === 'success' && deliveryStatus === 'delivered') {
-        status = 'success'; text = 'CONEXIÓN ESTABLECIDA';
-      } else if (testStatus === 'success') {
-        status = 'success'; text = 'CONEXIÓN EXITOSA';
-      } else if (testStatus === 'failed') {
-        status = 'error'; text = 'FALLO DE CONEXIÓN';
-      } else {
-        status = 'idle'; text = 'LISTO PARA PRUEBA';
-      }
-    }
-    
-    const ledColor = {
-      idle: 'bg-blue-500',
-      processing: 'bg-amber-500',
-      success: 'bg-green-500',
-      error: 'bg-red-500',
-    }[status];
-
-    return (
-      <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
-        <div className="relative flex items-center justify-center w-4 h-4">
-          <div className={cn('absolute w-full h-full rounded-full', ledColor, status !== 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
-          {status === 'processing' ? <Loader2 className='w-4 h-4 text-amber-300 animate-spin'/> : <div className={cn('w-2 h-2 rounded-full', ledColor)} /> }
-        </div>
-        <p className="text-xs font-semibold tracking-wider text-white/80">{text}</p>
+              </>
+            )}
+            {currentStep === 3 && (
+              infoViewRecord ? (
+                <>
+                  <h3 className="text-lg font-bold mb-2">{infoContent[infoViewRecord].title}</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{infoContent[infoViewRecord].description}</p>
+                  <motion.div>
+                      {showExample && infoViewRecord === 'spf' && (
+                          <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                              <p className="font-bold mb-1">Importante: Unificación de SPF</p>
+                              <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                              <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com -all`</p>
+                          </div>
+                      )}
+                  </motion.div>
+                  <div className="flex gap-2 mt-auto">
+                     <Button variant="outline" className="w-full" onClick={() => setInfoViewRecord(null)}>Atrás</Button>
+                     <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className='flex-grow'>
+                    <h3 className="text-lg font-semibold mb-1">Paso 3: Salud del Dominio</h3>
+                    <p className="text-sm text-muted-foreground">Verificaremos los registros de tu dominio, y te mostraremos los registros DNS que deberás añadir a tu dominio.</p>
+                    <div className="space-y-3 mt-4">
+                      {healthCheckStep === 'mandatory' ? (
+                        <>
+                          <h4 className='font-semibold text-sm'>Obligatorios</h4>
+                          {renderRecordStatus('SPF', spfStatus, 'spf')}
+                          {renderRecordStatus('DKIM', dkimStatus, 'dkim')}
+                          {renderRecordStatus('DMARC', dmarcStatus, 'dmarc')}
+                           <div className="pt-2">
+                              <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
+                              <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
+                                  <li><span className="font-semibold">SPF:</span> ¿Quién puede enviar?</li>
+                                  <li><span className="font-semibold">DKIM:</span> ¿Está firmado y sin cambios?</li>
+                                  <li><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</li>
+                              </ul>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <h4 className='font-semibold text-sm'>Opcionales</h4>
+                          {renderRecordStatus('MX', mxStatus, 'mx')}
+                          {renderRecordStatus('BIMI', bimiStatus, 'bimi')}
+                          {renderRecordStatus('VMC', vmcStatus, 'vmc')}
+                          <div className="pt-2">
+                              <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
+                              <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
+                                  <li><span className="font-semibold">MX:</span> ¿A qué servidor deben llegar los correos que envían a mi dominio?</li>
+                                  <li><span className="font-semibold">BIMI:</span> ¿Qué logotipo oficial debe mostrarse junto a mis correos en la bandeja de entrada?</li>
+                                  <li><span className="font-semibold">VMC:</span> ¿Hay un certificado que demuestre que ese logotipo y la marca son míos?</li>
+                              </ul>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     );
   };
+  
 
   const renderRightPanelContent = () => {
-    const allMandatoryHealthChecksDone = dkimStatus !== 'idle' && dkimStatus !== 'verifying' && spfStatus !== 'idle' && spfStatus !== 'verifying' && dmarcStatus !== 'idle' && dmarcStatus !== 'verifying';
-    const allMandatoryHealthChecksPassed = dkimStatus === 'verified' && spfStatus === 'verified' && dmarcStatus === 'verified';
-    
+    const allMandatoryHealthChecksDone = spfStatus !== 'idle' && spfStatus !== 'verifying' && dkimStatus !== 'idle' && dkimStatus !== 'verifying' && dmarcStatus !== 'idle' && dmarcStatus !== 'verifying';
+    const allMandatoryHealthChecksPassed = spfStatus === 'verified' && dkimStatus === 'verified' && dmarcStatus === 'verified';
     const allOptionalHealthChecksDone = mxStatus !== 'idle' && mxStatus !== 'verifying' && bimiStatus !== 'idle' && bimiStatus !== 'verifying' && vmcStatus !== 'idle' && vmcStatus !== 'verifying';
-
 
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
@@ -685,7 +557,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     </Button>
                  )}
                  {healthCheckStep === 'mandatory' && allMandatoryHealthChecksDone && (
-                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base" onClick={() => setHealthCheckStep('optional')} disabled={!allMandatoryHealthChecksPassed}>
+                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base" onClick={() => setHealthCheckStep('optional')}>
                       Siguiente <ArrowRight className="ml-2"/>
                     </Button>
                  )}
@@ -752,6 +624,104 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     )
   }
 
+  const Step4Form = () => (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmitSmtp)} id="smtp-form" className="grid grid-cols-1 md:grid-cols-3 gap-0 h-full">
+        {/* Panel Izquierdo - Servidor */}
+        <div className="p-8 flex flex-col justify-start">
+          <h3 className="text-lg font-semibold mb-1">Paso 4: Configurar SMTP</h3>
+          <p className="text-sm text-muted-foreground mb-4">Detalles de tu servidor de correo.</p>
+          <div className="space-y-4">
+            <FormField control={form.control} name="host" render={({ field }) => (
+                <FormItem className="space-y-1"><Label>Host</Label>
+                    <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
+                </FormItem>
+            )}/>
+            <FormField control={form.control} name="port" render={({ field }) => (
+                <FormItem className="space-y-1"><Label>Puerto</Label>
+                    <FormControl><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></FormControl><FormMessage />
+                </FormItem>
+            )}/>
+            <FormField control={form.control} name="encryption" render={({ field }) => (
+                <FormItem><Label>Cifrado</Label><FormControl>
+                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
+                </RadioGroup>
+                </FormControl><FormMessage /></FormItem>
+            )}/>
+          </div>
+        </div>
+
+        {/* Panel Central - Credenciales */}
+        <div className="p-8 border-l border-r flex flex-col justify-start">
+           <h3 className="text-lg font-semibold mb-1 text-transparent select-none">.</h3>
+           <p className="text-sm text-muted-foreground mb-4">Tus credenciales de autenticación.</p>
+           <div className="space-y-4">
+              <FormField control={form.control} name="username" render={({ field }) => (
+                  <FormItem className="space-y-1"><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="password" render={({ field }) => (
+                  <FormItem className="space-y-1"><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
+              )}/>
+           </div>
+        </div>
+        
+        {/* Panel Derecho - Prueba y Estado */}
+        <div className="p-8 bg-muted/20 flex flex-col justify-between h-full">
+            {renderRightPanelContent()}
+        </div>
+      </form>
+    </Form>
+  );
+  
+  const StatusIndicator = () => {
+    let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
+    let text = 'ESTADO DEL SISTEMA';
+
+    if (currentStep === 2) {
+      if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICANDO DNS';
+      } else if (verificationStatus === 'verified') { status = 'success'; text = 'DOMINIO VERIFICADO';
+      } else if (verificationStatus === 'failed') { status = 'error'; text = 'FALLO DE VERIFICACIÓN';
+      } else { status = 'idle'; text = 'ESPERANDO ACCIÓN'; }
+    } else if (currentStep === 3) {
+      const isMandatoryVerifying = [spfStatus, dkimStatus, dmarcStatus].some(s => s === 'verifying');
+      const isOptionalVerifying = [mxStatus, bimiStatus, vmcStatus].some(s => s === 'verifying');
+      
+      if (healthCheckStep === 'mandatory') {
+        if (isMandatoryVerifying) { status = 'processing'; text = 'ANALIZANDO OBLIGATORIOS';
+        } else if (spfStatus !== 'idle' && dkimStatus !== 'idle' && dmarcStatus !== 'idle') {
+          status = [spfStatus, dkimStatus, dmarcStatus].some(s => s === 'failed') ? 'error' : 'success';
+          text = status === 'error' ? 'OBLIGATORIOS REQUIEREN ATENCIÓN' : 'OBLIGATORIOS OK';
+        } else { status = 'idle'; text = 'LISTO PARA CHEQUEO'; }
+      } else { // optional
+        if (isOptionalVerifying) { status = 'processing'; text = 'ANALIZANDO OPCIONALES';
+        } else if (mxStatus !== 'idle' || bimiStatus !== 'idle' || vmcStatus !== 'idle') {
+          status = 'success'; text = 'OPCIONALES REVISADOS';
+        } else { status = 'idle'; text = 'LISTO PARA CHEQUEO OPCIONAL'; }
+      }
+    } else if (currentStep === 4) {
+      if (testStatus === 'testing' || deliveryStatus === 'checking') { status = 'processing'; text = 'PROBANDO CONEXIÓN';
+      } else if (testStatus === 'success' && deliveryStatus === 'delivered') { status = 'success'; text = 'CONEXIÓN ESTABLECIDA';
+      } else if (testStatus === 'success') { status = 'success'; text = 'CONEXIÓN EXITOSA';
+      } else if (testStatus === 'failed') { status = 'error'; text = 'FALLO DE CONEXIÓN';
+      } else { status = 'idle'; text = 'LISTO PARA PRUEBA'; }
+    }
+    
+    const ledColor = { idle: 'bg-blue-500', processing: 'bg-amber-500', success: 'bg-green-500', error: 'bg-red-500' }[status];
+
+    return (
+      <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
+        <div className="relative flex items-center justify-center w-4 h-4">
+          <div className={cn('absolute w-full h-full rounded-full', ledColor, status !== 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
+          {status === 'processing' ? <Loader2 className='w-4 h-4 text-amber-300 animate-spin'/> : <div className={cn('w-2 h-2 rounded-full', ledColor)} /> }
+        </div>
+        <p className="text-xs font-semibold tracking-wider text-white/80">{text}</p>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if (currentStep === 4) {
       return (
@@ -768,18 +738,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
           </div>
           <div className="md:col-span-2 h-full grid grid-cols-1 md:grid-cols-2">
             <div className="p-8 flex flex-col h-full justify-start">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="h-full"
-                >
-                    {renderCenterPanelContent()}
-                </motion.div>
-              </AnimatePresence>
+              {renderCenterPanelContent()}
             </div>
             <div className="h-full">
               {renderRightPanelContent()}
@@ -881,7 +840,7 @@ function DnsInfoModal({
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90">Valor del Registro:</p>
                     <div className="w-full flex justify-between items-start">
-                    <span className="break-all pr-2">{dkimData.record}</span>
+                    <p className="break-all pr-2">{dkimData.record}</p>
                     <Button size="icon" variant="ghost" className="shrink-0 self-start size-6 -mr-2 flex-shrink-0" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
                     </div>
                 </div>
@@ -1019,7 +978,7 @@ function DnsInfoModal({
                 </div>
                 <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
                   <p className="font-bold mb-1">En resumen</p>
-                  <p>Es como un título de propiedad que demuestra que ese logo es tuyo.</p>
+                  <p>Es como un título de propiedad que demuestra que ese logo es tuyo y nadie más puede usarlo.</p>
                 </div>
             </div>
             <div className="space-y-4">

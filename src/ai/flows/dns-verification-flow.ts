@@ -50,6 +50,7 @@ const dnsVerificationFlow = ai.defineFlow(
       
       let records: any[] = [];
       
+      // Resolve DNS records based on the specific type
       switch (recordType) {
         case 'SPF':
         case 'DMARC':
@@ -71,11 +72,12 @@ const dnsVerificationFlow = ai.defineFlow(
         return { isVerified: false, reason: `No se encontraron registros ${recordType} para ${fqdn}.` };
       }
 
+      // Convert records to a simple string array for output
       const foundRecords = (recordType === 'MX')
         ? records.map(r => `${r.priority} ${r.exchange}`)
         : records.map(r => r.toString());
 
-      // Custom verification logic based on record type
+      // Custom verification logic based on the specific recordType
       switch (recordType) {
         case 'SPF':
           if (foundRecords.some(r => r.includes('include:_spf.foxmiu.email'))) {
@@ -95,7 +97,8 @@ const dnsVerificationFlow = ai.defineFlow(
             }
             return { isVerified: false, reason: "No se encontró 'foxmiu.email' en los registros MX. No podrás recibir correos en nuestros servidores.", foundRecords };
 
-        case 'TXT': // This case is now for generic TXT verification like domain ownership
+        // Generic verification for TXT (domain ownership) and CNAME
+        case 'TXT': 
         case 'CNAME':
           if (!expectedValue) {
             return { isVerified: true, foundRecords }; // Existence check is enough
@@ -110,7 +113,7 @@ const dnsVerificationFlow = ai.defineFlow(
           };
 
         default:
-           // For any other record types (like BIMI, VMC checked as TXT), existence is enough if they fall here.
+           // Fallback for any other types, should not be reached with current enum
            return { isVerified: true, foundRecords };
       }
 
