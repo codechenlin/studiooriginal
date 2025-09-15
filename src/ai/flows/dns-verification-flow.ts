@@ -42,6 +42,7 @@ const dnsVerificationFlow = ai.defineFlow(
   async ({ domain, recordType, name, expectedValue }) => {
     try {
       let fqdn = name;
+      // For root domain checks like SPF, MX, or verification TXT
       if (name === '@' || name === domain) {
         fqdn = domain;
       } else if (!name.endsWith(domain)) {
@@ -55,42 +56,37 @@ const dnsVerificationFlow = ai.defineFlow(
           records = (await dns.resolveTxt(fqdn)).flat();
           break;
         case 'MX':
-          records = await dns.resolveMx(domain); // MX records are on the root domain
+          records = await dns.resolveMx(domain); // MX records are always on the root domain
           break;
         case 'CNAME':
-            records = await dns.resolveCname(fqdn);
-            break;
+          records = await dns.resolveCname(fqdn);
+          break;
         default:
           throw new Error(`Unsupported record type: ${recordType}`);
       }
 
-      if (recordType === 'MX') {
-        if (records && records.length > 0) {
-            return { isVerified: true, foundRecords: (records as dns.MxRecord[]).map(r => `${r.priority} ${r.exchange}`) };
-        }
-        return { isVerified: false, reason: 'No se encontraron registros MX.' };
-      }
+      const foundRecords = Array.isArray(records)
+        ? (recordType === 'MX' ? (records as dns.MxRecord[]).map(r => `${r.priority} ${r.exchange}`) : records.flat())
+        : records ? [records] : [];
 
-      const flatRecords = Array.isArray(records) ? records.flat() : [records];
-      
-      if (!flatRecords || flatRecords.length === 0) {
+      if (foundRecords.length === 0) {
         return { isVerified: false, reason: `No se encontraron registros ${recordType} para ${fqdn}.` };
       }
 
       if (expectedValue) {
-        const found = flatRecords.some(record => record.includes(expectedValue));
+        const found = foundRecords.some(record => record.includes(expectedValue));
         if (found) {
-          return { isVerified: true, foundRecords: flatRecords };
+          return { isVerified: true, foundRecords };
         } else {
-          return { isVerified: false, reason: `No se encontró el valor esperado.`, foundRecords: flatRecords };
+          return { isVerified: false, reason: `No se encontró el valor esperado '${expectedValue}'.`, foundRecords };
         }
       }
 
       // If no expected value, just finding any record is a success.
-      return { isVerified: true, foundRecords: flatRecords };
+      return { isVerified: true, foundRecords };
 
     } catch (error: any) {
-      if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
+      if (error.code === 'ENODATA' || error.code === 'ENOTFOUND' || error.code === 'DNS_SETTING_EMPTY') {
         return {
           isVerified: false,
           reason: `No se encontraron registros ${recordType} para el nombre especificado.`,
@@ -104,5 +100,3 @@ const dnsVerificationFlow = ai.defineFlow(
     }
   }
 );
-
-    
