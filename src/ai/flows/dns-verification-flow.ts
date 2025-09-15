@@ -15,7 +15,7 @@ import dns from 'node:dns/promises';
 export type DnsVerificationInput = z.infer<typeof DnsVerificationInputSchema>;
 const DnsVerificationInputSchema = z.object({
   domain: z.string().describe('The domain name to verify.'),
-  recordType: z.enum(['TXT', 'MX', 'CNAME']),
+  recordType: z.enum(['TXT', 'MX', 'CNAME', 'SPF', 'DMARC']),
   name: z.string().describe('The name of the record to look for.'),
   expectedValue: z.string().optional().describe('The expected value to find in the record.'),
 });
@@ -48,9 +48,11 @@ const dnsVerificationFlow = ai.defineFlow(
         fqdn = `${name}.${domain}`;
       }
       
-      let records: string[] | dns.MxRecord[] | dns.SoaRecord | undefined;
+      let records: any[] = [];
       
       switch (recordType) {
+        case 'SPF':
+        case 'DMARC':
         case 'TXT':
           records = (await dns.resolveTxt(fqdn)).flat();
           break;
@@ -64,35 +66,51 @@ const dnsVerificationFlow = ai.defineFlow(
           throw new Error(`Unsupported record type: ${recordType}`);
       }
 
-      const foundRecords = Array.isArray(records)
-        ? (recordType === 'MX' ? (records as dns.MxRecord[]).map(r => `${r.priority} ${r.exchange}`) : records.flat())
-        : records ? [records] : [];
-
-      if (foundRecords.length === 0) {
+      if (!records || records.length === 0) {
         return { isVerified: false, reason: `No se encontraron registros ${recordType} para ${fqdn}.` };
       }
 
-      // If no expected value is provided, simply finding any record is a success.
-      if (!expectedValue) {
-        return { isVerified: true, foundRecords };
-      }
+      const foundRecords = (recordType === 'MX')
+        ? records.map(r => `${r.priority} ${r.exchange}`)
+        : records.map(r => r.toString());
 
-      // Specific verification logic based on expectedValue
-      let isVerified = false;
-      if (recordType === 'TXT' || recordType === 'CNAME') {
-        isVerified = foundRecords.some(record => record.includes(expectedValue));
-      } else if (recordType === 'MX') {
-        isVerified = (records as dns.MxRecord[]).some(record => record.exchange.includes(expectedValue));
-      }
+      // Custom verification logic based on record type
+      switch (recordType) {
+        case 'SPF':
+          if (foundRecords.some(r => r.includes('include:_spf.foxmiu.email'))) {
+            return { isVerified: true, foundRecords };
+          }
+          return { isVerified: false, reason: "El registro SPF no incluye 'include:_spf.foxmiu.email', que es necesario para nuestra plataforma.", foundRecords };
 
-      if (isVerified) {
-        return { isVerified: true, foundRecords };
-      } else {
-        return { 
-          isVerified: false, 
-          reason: `No se encontró el valor esperado '${expectedValue}' en los registros encontrados.`, 
-          foundRecords 
-        };
+        case 'DMARC':
+          if (foundRecords.some(r => r.includes('p=reject'))) {
+            return { isVerified: true, foundRecords };
+          }
+          return { isVerified: false, reason: "El registro DMARC no tiene la política estricta 'p=reject' recomendada.", foundRecords };
+        
+        case 'MX':
+            if ((records as dns.MxRecord[]).some(r => r.exchange.includes('foxmiu.email'))) {
+                return { isVerified: true, foundRecords };
+            }
+            return { isVerified: false, reason: "No se encontró 'foxmiu.email' en los registros MX. No podrás recibir correos en nuestros servidores.", foundRecords };
+
+        case 'TXT':
+        case 'CNAME':
+          if (!expectedValue) {
+            return { isVerified: true, foundRecords }; // Existence check is enough
+          }
+          if (foundRecords.some(r => r.includes(expectedValue))) {
+            return { isVerified: true, foundRecords };
+          }
+          return { 
+            isVerified: false, 
+            reason: `No se encontró el valor esperado '${expectedValue}' en los registros encontrados.`, 
+            foundRecords 
+          };
+
+        default:
+           // For any other record types (like BIMI, VMC checked as TXT), existence is enough
+           return { isVerified: true, foundRecords };
       }
 
     } catch (error: any) {
