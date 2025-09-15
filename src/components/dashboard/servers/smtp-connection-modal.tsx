@@ -258,11 +258,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         },
         bimi: {
           title: "Registro BIMI",
-          description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG TINY con tu logo y requiere tener SPF, DKIM y DMARC correctos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
+          description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
         },
         vmc: {
           title: "Certificado VMC",
-          description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando te pertenece legalmente como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
+          description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
         },
     };
 
@@ -327,7 +327,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     switch (currentStep) {
         case 1:
             return (
-                 <div className="space-y-4 h-full flex flex-col justify-start pt-8">
+                 <div className="h-full flex flex-col justify-start pt-8">
                     <h3 className="text-lg font-semibold mb-1">Paso 1: Introduce tu Dominio</h3>
                     <p className="text-sm text-muted-foreground">
                     Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.
@@ -380,6 +380,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <div className="h-full flex flex-col justify-start pt-8">
                         <h3 className="text-lg font-bold mb-2">{title}</h3>
                         <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{description}</p>
+                        <AnimatePresence>
+                          {showExample && (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                              {/* TODO: Add example here */}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                         <div className="flex gap-2 mt-auto">
                            <Button variant="outline" className="w-full" onClick={() => setInfoViewRecord(null)}>Atrás</Button>
                            <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
@@ -391,7 +398,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <div className="h-full flex flex-col justify-start pt-8">
                   <div className='flex-grow'>
                     <h3 className="text-lg font-semibold mb-1">Paso 3: Salud del Dominio</h3>
-                    <p className="text-sm text-muted-foreground">Verificaremos registros de tu dominio para asegurar una alta entregabilidad, y te proporcionaremos los registros DNS que deberás añadir a tu dominio.</p>
+                    <p className="text-sm text-muted-foreground">Verificaremos los registros de tu dominio, y te mostraremos los registros DNS que deberás añadir a tu dominio.</p>
 
                     <div className="space-y-3 mt-4">
                         {healthCheckStep === 'mandatory' ? (
@@ -415,7 +422,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('MX', mxStatus, 'mx')}
                             {renderRecordStatus('BIMI', bimiStatus, 'bimi')}
                             {renderRecordStatus('VMC', vmcStatus, 'vmc')}
-                             <div className="pt-2">
+                            <div className="pt-2">
                                 <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
                                 <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
                                     <li><span className="font-semibold">MX:</span> ¿A qué servidor deben llegar los correos que envían a mi dominio?</li>
@@ -843,7 +850,7 @@ function DnsInfoModal({
                         <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                             <p className="font-bold mb-1">Importante: Unificación de SPF</p>
                             <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
-                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com -all`</p>
+                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.dominio.com -all`</p>
                         </div>
                     </div>
                 )
@@ -869,7 +876,7 @@ function DnsInfoModal({
                                 <p className="font-bold text-white/90">Valor del Registro:</p>
                                 <div className="w-full flex justify-between items-start">
                                   <span className="break-all pr-2">{dkimData.record}</span>
-                                  <Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
+                                  <Button size="icon" variant="ghost" className="shrink-0 self-start" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
                                 </div>
                               </div>
                             </motion.div>
@@ -894,8 +901,8 @@ function DnsInfoModal({
                     "adkim=s": "Alineación DKIM estricta (el dominio de la firma DKIM debe coincidir exactamente con el “From:” visible).",
                 };
                 return (
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                        <div className="space-y-4">
+                     <div className="flex flex-col md:flex-row gap-6 text-sm">
+                        <div className="w-full md:w-1/2 space-y-4">
                              <p>Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
                              <div className={cn(baseClass, "flex-col items-start gap-1")}>
                                <p className="font-bold text-white/90">Host/Nombre:</p>
@@ -913,7 +920,7 @@ function DnsInfoModal({
                                </div>
                              </div>
                         </div>
-                        <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
+                        <div className="w-full md:w-1/2 text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
                            <p className='font-bold mb-2 text-white'>Explicación de cada parte:</p>
                            <ul className="space-y-1">
                             {Object.entries(dmarcParts).map(([key, value]) => (
@@ -950,6 +957,37 @@ function DnsInfoModal({
                          <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
                             <p className="font-bold mb-1">En resumen</p>
                             <p>Es como poner la dirección exacta de tu buzón para que el cartero sepa dónde dejar las cartas.</p>
+                        </div>
+                    </div>
+                );
+             case 'bimi':
+                return (
+                     <div className="space-y-4 text-sm">
+                        <p>Este es un ejemplo de un registro BIMI apuntando a un archivo SVG Portable/Secure (SVG P/S), basado en SVG Tiny 1.2.</p>
+                        <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20 space-y-1">
+                          <p className="font-bold text-white mb-1">Requisitos del archivo SVG:</p>
+                          <p>◦ **Peso máximo:** No debe superar 32 KB.</p>
+                          <p>◦ **Lienzo cuadrado:** Relación de aspecto 1:1 (ej. 1000×1000 px).</p>
+                          <p>◦ **Fondo sólido:** Evita transparencias.</p>
+                          <p>◦ **Sin elementos prohibidos:** Animaciones, filtros, gradientes complejos.</p>
+                          <p>◦ **Alojamiento:** Debe ser accesible via HTTPS en una URL pública.</p>
+                        </div>
+                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Host/Nombre:</p><span>default._bimi</span>
+                         </div>
+                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Tipo:</p><span>TXT</span>
+                         </div>
+                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Valor:</p>
+                            <div className="w-full flex justify-between items-center">
+                                 <span className="truncate">v=BIMI1; l=https://tudominio.com/logo.svg;</span>
+                                 <Button size="icon" variant="ghost" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg;')}><Copy className="size-4"/></Button>
+                             </div>
+                         </div>
+                        <div className="text-xs text-cyan-300/80 p-3 bg-cyan-500/10 rounded-lg border border-cyan-400/20">
+                          <p className="font-bold mb-1">En resumen</p>
+                          <p>Es como poner un letrero luminoso con tu logo en la puerta de tu oficina de correos para que todos lo vean.</p>
                         </div>
                     </div>
                 );
