@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -49,7 +48,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [infoViewRecord, setInfoViewRecord] = useState<InfoViewRecord | null>(null);
-  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [showExample, setShowExample] = useState(false);
   const [testError, setTestError] = useState('');
   const [deliveryStatus, setDeliveryStatus] = useState<'idle' | 'checking' | 'delivered' | 'bounced'>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
@@ -191,7 +190,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setVmcStatus('idle');
         setTestStatus('idle');
         setInfoViewRecord(null);
-        setShowRecommendation(false);
+        setShowExample(false);
         form.reset();
         setTestError('');
         setDeliveryStatus('idle');
@@ -319,7 +318,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
           <span className='font-semibold'>{name}</span>
           <div className="flex items-center gap-2">
             {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>)}
-            <Button size="sm" variant="outline" className="h-7" onClick={() => { setInfoViewRecord(recordKey); }}>Detalles</Button>
+            <Button size="sm" variant="outline" className="h-7" onClick={() => { setInfoViewRecord(recordKey); setShowExample(false); }}>Detalles</Button>
           </div>
       </div>
   );
@@ -376,13 +375,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             )
         case 3:
             if (infoViewRecord) {
+                 const { title, description } = infoContent[infoViewRecord];
                  return (
                     <div className="h-full flex flex-col justify-start pt-8">
-                        <h3 className="text-lg font-bold mb-2">{infoContent[infoViewRecord].title}</h3>
-                        <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{infoContent[infoViewRecord].description}</p>
+                        <h3 className="text-lg font-bold mb-2">{title}</h3>
+                        <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{description}</p>
                         
                         <div className="flex gap-2 mt-auto">
-                           <Button variant="outline" className="w-full" onClick={() => { setInfoViewRecord(null); setShowRecommendation(false); }}>Atrás</Button>
+                           <Button variant="outline" className="w-full" onClick={() => { setInfoViewRecord(null); setShowExample(false); }}>Atrás</Button>
                            <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
                         </div>
                     </div>
@@ -814,18 +814,18 @@ function DnsInfoModal({
         let recordValue = '';
         switch(recordType) {
             case 'spf':
-                recordValue = `v=spf1 include:_spf.google.com -all`;
+                recordValue = `v=spf1 include:_spf.foxmiu.email -all`;
                 return (
                     <div className="space-y-4 text-sm">
                         <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
                         <div className={baseClass}><span>Host: @</span></div>
                         <div className={baseClass}><span>Tipo: TXT</span></div>
                         <div className={baseClass}><span>TTL: 3600</span></div>
-                        <div className={baseClass}><span className="truncate">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
+                        <div className={cn(baseClass, "flex-wrap h-auto")}><span className="truncate">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
                         <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                             <p className="font-bold mb-1">Importante: Unificación de SPF</p>
                             <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
-                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.google.com include:spf.otrodominio.com -all`</p>
+                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com -all`</p>
                         </div>
                     </div>
                 )
@@ -877,12 +877,12 @@ function DnsInfoModal({
                 };
                 return (
                      <div className="space-y-4 text-sm">
-                        <p>Es crucial usar un registro DMARC estricto para evitar suplantaciones y que tus correos se etiqueten como spam, mejorando tu marca.</p>
+                        <p>Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
                         <div className={cn(baseClass, "flex-col items-start gap-1")}>
                            <div className="w-full flex justify-between items-center"><span>Host: _dmarc</span></div>
                            <div className="w-full flex justify-between items-center"><span>Tipo: TXT</span></div>
                            <div className="w-full flex justify-between items-center"><span>TTL: 3600</span></div>
-                           <div className="w-full flex justify-between items-start"><span className="truncate">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
+                           <div className="w-full flex justify-between items-start"><span className="break-all pr-2">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
                         </div>
                         <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
                            <p className='font-bold mb-2'>Explicación de cada parte:</p>
@@ -890,7 +890,7 @@ function DnsInfoModal({
                             {Object.entries(dmarcParts).map(([key, value]) => (
                                <li key={key} className="flex items-start gap-2">
                                 <Check className="size-3 mt-0.5 shrink-0 text-blue-300"/>
-                                <span><span className="font-mono text-white/90">{key}</span> &rarr; {value}</span>
+                                <span><span className="font-mono text-white/90">{key.replace('...', `@${domain}`)}</span> &rarr; {value}</span>
                                </li>
                             ))}
                            </ul>
@@ -923,3 +923,5 @@ function DnsInfoModal({
         </Dialog>
     )
 }
+
+    
