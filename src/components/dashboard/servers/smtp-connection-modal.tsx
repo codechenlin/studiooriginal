@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [testError, setTestError] = useState('');
   const [deliveryStatus, setDeliveryStatus] = useState<'idle' | 'checking' | 'delivered' | 'bounced'>('idle');
+  const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
 
 
   const smtpFormSchema = z.object({
@@ -128,13 +130,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     ) => {
         setStatus('verifying');
         const result = await verifyDnsAction({ domain, recordType, name, expectedValue });
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 1000)); // Simulate delay
         setStatus(result.success ? 'verified' : 'failed');
     };
 
     if (type === 'mandatory') {
         await Promise.all([
             checkRecord('@', 'TXT', 'v=spf1', setSpfStatus),
-            checkRecord('default._domainkey', 'CNAME', undefined, setDkimStatus),
+            checkRecord('default._domainkey', 'TXT', undefined, setDkimStatus),
             checkRecord('_dmarc', 'TXT', 'v=DMARC1', setDmarcStatus),
         ]);
     } else {
@@ -146,8 +149,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     }
   }
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const handleCopy = (textToCopy: string) => {
+    navigator.clipboard.writeText(textToCopy);
     toast({
         title: "¡Copiado!",
         description: "El registro ha sido copiado al portapapeles.",
@@ -175,6 +178,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         form.reset();
         setTestError('');
         setDeliveryStatus('idle');
+        setActiveInfoModal(null);
     }, 300);
   }
   
@@ -221,34 +225,28 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const infoContent = {
         spf: {
-          title: "Registro SPF (Sender Policy Framework)",
-          description: "SPF es un sistema de validación de correo electrónico diseñado para prevenir el spam al detectar la suplantación de identidad (spoofing). Permite a los administradores de dominios especificar qué servidores de correo están autorizados para enviar correos en nombre de su dominio.",
-          recommendation: `v=spf1 include:_spf.google.com ~all`
+          title: "Registro SPF",
+          description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
         },
         dkim: {
-          title: "Registro DKIM (DomainKeys Identified Mail)",
-          description: "DKIM añade una firma digital a cada correo electrónico que envías. Esto permite a los servidores de correo receptores verificar que el correo fue realmente enviado desde tu dominio y que su contenido no ha sido alterado en tránsito, como un sello de seguridad.",
-          recommendation: `v=DKIM1; k=rsa; p=PUBLIC_KEY...`
+          title: "Registro DKIM",
+          description: "DKIM es como una firmar digital para cada correo con un sello único que solo tú puedes poner, El receptor verifica esa firma con una clave pública que está en tu DNS. Si la firma coincide, sabe que el mensaje no fue alterado y que realmente salió de tu dominio. Ejemplo real: Garantiza que el contenido del correo no fue modificado en el camino."
         },
         dmarc: {
-          title: "Registro DMARC (Domain-based Message Authentication...)",
-          description: "DMARC unifica los protocolos SPF y DKIM en un marco común y permite al propietario del dominio especificar cómo tratar los correos electrónicos que no superan las comprobaciones SPF o DKIM (por ejemplo, ponerlos en cuarentena o rechazarlos).",
-          recommendation: `v=DMARC1; p=quarantine; rua=mailto:dmarc@${domain}`
+          title: "Registro DMARC",
+          description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude."
         },
         mx: {
           title: "Registro MX (Mail Exchange)",
           description: "Los registros MX son fundamentales para la entrega de correo electrónico. Indican a otros sistemas de correo qué servidores son responsables de recibir correos electrónicos en nombre de tu dominio. Sin registros MX correctos, no podrías recibir correos electrónicos.",
-          recommendation: `prioridad: 10, valor: mx.servidor.com`
         },
         bimi: {
           title: "Registro BIMI (Brand Indicators for Message Identification)",
           description: "BIMI es un estándar emergente que permite mostrar el logotipo de tu marca junto a tus correos electrónicos en las bandejas de entrada de los proveedores compatibles. Para implementarlo, necesitas tener DMARC configurado con una política estricta ('quarantine' o 'reject') y tu logotipo debe estar en formato SVG Tiny 1.2 alojado en una URL pública (HTTPS).",
-          recommendation: `v=BIMI1; l=https://media.${domain}/logo.svg;`
         },
         vmc: {
           title: "Certificado VMC (Verified Mark Certificate)",
           description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando te pertenece legalmente como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
-          recommendation: `El registro VMC se añade a tu registro BIMI. Ejemplo: v=BIMI1; l=https://media.${domain}/logo.svg; a=https://certs.entidad.com/vmc.pem;`
         },
     };
 
@@ -304,7 +302,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
           <span className='font-semibold'>{name}</span>
           <div className="flex items-center gap-2">
             {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : <AlertTriangle className="text-red-500"/>)}
-            <Button size="sm" variant="outline" className="h-7" onClick={() => { setInfoViewRecord(recordKey); setShowRecommendation(false); }}>Detalles</Button>
+            <Button size="sm" variant="outline" className="h-7" onClick={() => { setInfoViewRecord(recordKey); }}>Detalles</Button>
           </div>
       </div>
   );
@@ -330,11 +328,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                               onChange={(e) => setDomain(e.target.value)}
                           />
                       </div>
-                       <div className='flex justify-center pt-8'>
-                         <Button className="w-full h-12 text-base mt-auto" onClick={handleStartVerification}>
-                           Siguiente <ArrowRight className="ml-2"/>
-                         </Button>
-                       </div>
+                    </div>
+                    <div className='flex justify-center pt-8'>
+                        <Button className="w-full h-12 text-base mt-auto" onClick={handleStartVerification}>
+                        Siguiente <ArrowRight className="ml-2"/>
+                        </Button>
                     </div>
                 </div>
             )
@@ -363,27 +361,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             if (infoViewRecord) {
                  return (
                     <div className="h-full flex flex-col justify-start pt-8">
-                        <h3 className="text-lg font-semibold mb-2">{infoContent[infoViewRecord].title}</h3>
-                        <p className="text-sm text-muted-foreground whitespace-pre-line">{infoContent[infoViewRecord].description}</p>
+                        <h3 className="text-lg font-bold mb-2">{infoContent[infoViewRecord].title}</h3>
+                        <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{infoContent[infoViewRecord].description}</p>
                         
-                         <AnimatePresence>
-                          {showRecommendation && (
-                              <motion.div 
-                                initial={{opacity: 0, y: -10}} 
-                                animate={{opacity: 1, y: 0}} 
-                                exit={{opacity: 0, y: -10}}
-                                transition={{ duration: 0.3 }}
-                                className="mt-4 text-left p-3 bg-muted/50 rounded-md font-mono text-xs border overflow-hidden"
-                              >
-                                  <p className="font-sans font-semibold text-foreground mb-1">Ejemplo de registro:</p>
-                                  <code className='whitespace-pre-wrap'>{infoContent[infoViewRecord].recommendation}</code>
-                              </motion.div>
-                          )}
-                        </AnimatePresence>
-
                         <div className="flex gap-2 mt-auto">
                            <Button variant="outline" className="w-full" onClick={() => { setInfoViewRecord(null); setShowRecommendation(false); }}>Atrás</Button>
-                           <Button className="w-full" onClick={() => setShowRecommendation(!showRecommendation)}>{showRecommendation ? 'Ocultar' : 'Ver'} Ejemplo</Button>
+                           <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
                         </div>
                     </div>
                 )
@@ -479,7 +462,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       </div>
     );
   };
-
 
   const Step4Form = () => (
      <Form {...form}>
@@ -584,10 +566,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         }
                     `}</style>
                     {verificationStatus === 'verifying' && (
-                        <div className="absolute w-full h-full flex items-center justify-center">
-                             <div className="absolute size-48 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
-                             <div className="absolute size-48 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1s' }} />
-                        </div>
+                       <div className="absolute w-full h-full flex items-center justify-center">
+                         <div className="absolute w-32 h-32 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
+                         <div className="absolute w-32 h-32 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1s' }} />
+                       </div>
                     )}
                     <div className="z-10 flex flex-col items-center gap-3">
                         {verificationStatus === 'pending' && (
@@ -650,11 +632,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <div className="mt-4 space-y-2">
                  {healthCheckStep === 'mandatory' ? (
                      <Button className="w-full h-12 text-base" onClick={() => handleCheckHealth('mandatory')} disabled={spfStatus === 'verifying'}>
-                      {spfStatus === 'verifying' ? 'Verificando...' : 'Escanear'}
+                      {spfStatus === 'verifying' ? 'Escaneando...' : 'Escanear'}
                     </Button>
                  ) : (
                     <Button className="w-full h-12 text-base" onClick={() => handleCheckHealth('optional')} disabled={mxStatus === 'verifying'}>
-                      {mxStatus === 'verifying' ? 'Verificando...' : 'Escanear'}
+                      {mxStatus === 'verifying' ? 'Escaneando...' : 'Escanear'}
                     </Button>
                  )}
                  {healthCheckStep === 'mandatory' && allMandatoryHealthChecksDone && (
@@ -764,8 +746,128 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-       {renderContent()}
-    </Dialog>
+    <>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        {renderContent()}
+      </Dialog>
+      <DnsInfoModal
+        recordType={activeInfoModal}
+        domain={domain}
+        isOpen={!!activeInfoModal}
+        onOpenChange={() => setActiveInfoModal(null)}
+        onCopy={handleCopy}
+      />
+    </>
   );
 }
+
+
+function DnsInfoModal({
+  recordType,
+  domain,
+  isOpen,
+  onOpenChange,
+  onCopy
+}: {
+  recordType: InfoViewRecord | null,
+  domain: string,
+  isOpen: boolean,
+  onOpenChange: () => void,
+  onCopy: (text: string) => void
+}) {
+    if(!recordType) return null;
+
+    const getRecordContent = () => {
+        const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
+        let recordValue = '';
+        switch(recordType) {
+            case 'spf':
+                recordValue = `v=spf1 include:_spf.foxmiu.email -all`;
+                return (
+                    <div className="space-y-4 text-sm">
+                        <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (GoDaddy, Cloudflare, etc.).</p>
+                        <div className={baseClass}><span>Host: @</span></div>
+                        <div className={baseClass}><span>Tipo: TXT</span></div>
+                        <div className={baseClass}><span>TTL: 3600</span></div>
+                        <div className={baseClass}><span className="truncate">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
+                        <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                            <p className="font-bold mb-1">Importante: Unificación de SPF</p>
+                            <p>Si ya usas otros servicios de correo (ej. Google Workspace), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com ~all`</p>
+                        </div>
+                    </div>
+                )
+             case 'dkim':
+                recordValue = `v=DKIM1; k=rsa; p=PUBLIC_KEY...`; // Placeholder
+                return (
+                    <div className="space-y-4 text-sm">
+                         <p>Debido a que DKIM requiere una clave única, nuestro sistema la generará por ti. Haz clic en el botón para crear tu registro DKIM personalizado.</p>
+                          <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                            <p className="font-bold text-white/90">Registro DKIM Generado:</p>
+                            <span className="text-muted-foreground">(Aún no implementado)</span>
+                         </div>
+                         <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90">
+                            <Dna className="mr-2"/> Generar Registro DKIM
+                         </Button>
+                    </div>
+                )
+             case 'dmarc':
+                recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:reportes@${domain}; sp=reject; aspf=s; adkim=s`;
+                 const dmarcParts = {
+                    "v=DMARC1": "Versión del protocolo.",
+                    "p=reject": "Rechaza correos que no pasen la alineación.",
+                    "pct=100": "Aplica la política al 100% de los correos.",
+                    "rua=mailto:...": "Dirección para reportes agregados.",
+                    "ruf=mailto:...": "Dirección para reportes forenses.",
+                    "sp=reject": "Política estricta para subdominios.",
+                    "aspf=s / adkim=s": "Alineación estricta para SPF y DKIM.",
+                };
+                return (
+                     <div className="space-y-4 text-sm">
+                        <p>Es crucial usar un registro DMARC estricto para evitar suplantaciones y mejorar la reputación de tu marca. Añade este registro TXT:</p>
+                        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                           <div className="w-full flex justify-between items-center"><span>Host: _dmarc</span></div>
+                           <div className="w-full flex justify-between items-center"><span>Tipo: TXT</span></div>
+                           <div className="w-full flex justify-between items-center"><span>TTL: 3600</span></div>
+                           <div className="w-full flex justify-between items-start"><span className="truncate">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
+                        </div>
+                        <div className="text-xs p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
+                           <ul className="space-y-1">
+                            {Object.entries(dmarcParts).map(([key, value]) => (
+                               <li key={key} className="flex items-start gap-2">
+                                <Check className="size-3 mt-0.5 shrink-0 text-blue-300"/>
+                                <span><span className="font-mono text-white/90">{key}</span> &rarr; {value}</span>
+                               </li>
+                            ))}
+                           </ul>
+                        </div>
+                    </div>
+                )
+            default:
+                return <p>Información no disponible para este tipo de registro.</p>
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-2xl bg-black/50 backdrop-blur-xl border-primary/20 text-white">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-3 text-lg">
+                        <div className="p-2 rounded-full bg-primary/20"><Dna className="text-primary"/></div>
+                        Instrucciones para Registro {recordType.toUpperCase()}
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    {getRecordContent()}
+                </div>
+                <DialogFooter className="sm:justify-between">
+                     <Button type="button" variant="outline" onClick={onOpenChange}>
+                       Cerrar
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+    
