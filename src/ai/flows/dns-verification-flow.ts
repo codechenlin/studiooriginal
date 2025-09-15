@@ -42,7 +42,6 @@ const dnsVerificationFlow = ai.defineFlow(
   async ({ domain, recordType, name, expectedValue }) => {
     try {
       let fqdn = name;
-      // For root domain checks like SPF, MX, or verification TXT
       if (name === '@' || name === domain) {
         fqdn = domain;
       } else if (!name.endsWith(domain)) {
@@ -56,7 +55,7 @@ const dnsVerificationFlow = ai.defineFlow(
           records = (await dns.resolveTxt(fqdn)).flat();
           break;
         case 'MX':
-          records = await dns.resolveMx(domain); // MX records are always on the root domain
+          records = await dns.resolveMx(domain);
           break;
         case 'CNAME':
           records = await dns.resolveCname(fqdn);
@@ -73,17 +72,28 @@ const dnsVerificationFlow = ai.defineFlow(
         return { isVerified: false, reason: `No se encontraron registros ${recordType} para ${fqdn}.` };
       }
 
-      if (expectedValue) {
-        const found = foundRecords.some(record => record.includes(expectedValue));
-        if (found) {
-          return { isVerified: true, foundRecords };
-        } else {
-          return { isVerified: false, reason: `No se encontró el valor esperado '${expectedValue}'.`, foundRecords };
-        }
+      // If no expected value is provided, simply finding any record is a success.
+      if (!expectedValue) {
+        return { isVerified: true, foundRecords };
       }
 
-      // If no expected value, just finding any record is a success.
-      return { isVerified: true, foundRecords };
+      // Specific verification logic based on expectedValue
+      let isVerified = false;
+      if (recordType === 'TXT' || recordType === 'CNAME') {
+        isVerified = foundRecords.some(record => record.includes(expectedValue));
+      } else if (recordType === 'MX') {
+        isVerified = (records as dns.MxRecord[]).some(record => record.exchange.includes(expectedValue));
+      }
+
+      if (isVerified) {
+        return { isVerified: true, foundRecords };
+      } else {
+        return { 
+          isVerified: false, 
+          reason: `No se encontró el valor esperado '${expectedValue}' en los registros encontrados.`, 
+          foundRecords 
+        };
+      }
 
     } catch (error: any) {
       if (error.code === 'ENODATA' || error.code === 'ENOTFOUND' || error.code === 'DNS_SETTING_EMPTY') {
