@@ -406,7 +406,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
                                     <li><span className="font-semibold">SPF:</span> ¿Quién puede enviar?</li>
                                     <li><span className="font-semibold">DKIM:</span> ¿Está firmado y sin cambios?</li>
-                                    <li><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones?</li>
+                                    <li><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</li>
                                 </ul>
                             </div>
                           </>
@@ -814,7 +814,7 @@ function DnsInfoModal({
         let recordValue = '';
         switch(recordType) {
             case 'spf':
-                recordValue = `v=spf1 include:_spf.google.com ~all`;
+                recordValue = `v=spf1 include:_spf.google.com -all`;
                 return (
                     <div className="space-y-4 text-sm">
                         <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
@@ -824,8 +824,8 @@ function DnsInfoModal({
                         <div className={baseClass}><span className="truncate">Valor: {recordValue}</span><Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button></div>
                         <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                             <p className="font-bold mb-1">Importante: Unificación de SPF</p>
-                            <p>Si ya usas otros servicios de correo (ej. Foxmiu.com), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
-                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com -all`</p>
+                            <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                            <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.google.com include:spf.otrodominio.com -all`</p>
                         </div>
                     </div>
                 )
@@ -851,7 +851,7 @@ function DnsInfoModal({
                                 <p className="font-bold text-white/90">Valor del Registro:</p>
                                 <div className="w-full flex justify-between items-start">
                                   <span className="break-all pr-2">{dkimData.record}</span>
-                                  <Button size="icon" variant="ghost" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
+                                  <Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy(dkimData.record)}><Copy className="size-4"/></Button>
                                 </div>
                               </div>
                             </motion.div>
@@ -872,7 +872,8 @@ function DnsInfoModal({
                     "rua=mailto:...": "Dirección para recibir reportes agregados (estadísticas).",
                     "ruf=mailto:...": "Dirección para recibir reportes forenses (detalles de fallos).",
                     "sp=reject": "Aplica la misma política estricta a subdominios.",
-                    "aspf=s / adkim=s": "Alineación estricta para SPF y DKIM.",
+                    "aspf=s": "Alineación SPF estricta.",
+                    "adkim=s": "Alineación DKIM estricta.",
                 };
                 return (
                      <div className="space-y-4 text-sm">
