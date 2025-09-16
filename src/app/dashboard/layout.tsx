@@ -176,7 +176,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                                  <div className={cn("p-1.5 bg-zinc-700/60 rounded-full")}>
                                   <item.icon className="shrink-0 text-white size-3"/>
                                 </div>
-                                <span className="text-sm">{item.label}</span>
+                                <span className="text-sm font-semibold">{item.label}</span>
                               </SidebarMenuButton>
                             </div>
                           </div>
@@ -209,7 +209,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                                      <div className={cn("p-1.5 bg-zinc-700/60 rounded-full", isActive && "bg-zinc-700/90 dark:bg-zinc-800/80 ")}>
                                       <item.icon className="shrink-0 text-white size-3"/>
                                     </div>
-                                    <span className="text-sm">{item.label}</span>
+                                    <span className="text-sm font-semibold">{item.label}</span>
                                   </div>
                                   <ChevronRight className={cn(
                                     "size-4 transition-transform duration-200 group-data-[state=open]:rotate-90",
@@ -229,7 +229,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                                     <Link href={subItem.href} className="flex items-center justify-between w-full">
                                       <div className="flex items-center gap-2">
                                         <subItem.icon />
-                                        <span>{subItem.label}</span>
+                                        <span className="font-semibold">{subItem.label}</span>
                                       </div>
                                       {isSubmenuItemSelected && (
                                         <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#00CE07', boxShadow: '0 0 8px #00CE07'}}></div>
@@ -260,7 +260,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                                <div className={cn("p-1.5 bg-zinc-700/60 rounded-full", isActive && "bg-zinc-700/90 dark:bg-zinc-800/80 ")}>
                                 <item.icon className="shrink-0 text-white size-3"/>
                               </div>
-                              <span className="text-sm">{item.label}</span>
+                              <span className="text-sm font-semibold">{item.label}</span>
                             </SidebarMenuButton>
                           </div>
                         </div>

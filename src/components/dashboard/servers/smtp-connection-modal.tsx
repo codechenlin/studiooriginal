@@ -477,6 +477,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
+                     <Button
+                        className="w-full h-12 text-base mt-4"
+                        onClick={handleStartVerification}
+                        disabled={!domain}
+                      >
+                        Siguiente <ArrowRight className="ml-2"/>
+                      </Button>
                   </div>
                 )}
                 {currentStep === 2 && (
@@ -553,7 +560,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     </div>
                     <div className="mt-4 p-2 bg-blue-500/10 text-blue-300 text-xs rounded-md border border-blue-400/20 flex items-start gap-2">
                       <Info className="size-5 shrink-0 mt-0.5" />
-                      <p>La propagación de DNS puede tardar hasta 48 horas. Si una verificación falla, espera un tiempo y vuelve a intentarlo.</p>
+                      <p>La propagación de DNS no es instantánea y puede tardar hasta 48 horas. Si una verificación falla, espera un tiempo y vuelve a intentarlo.</p>
                     </div>
                     <div className="mt-4 space-y-2">
                      {healthCheckStep === 'mandatory' ? (
@@ -989,7 +996,7 @@ function DnsInfoModal({
                 <p>◦ **Lienzo cuadrado:** Relación de aspecto 1:1 (ej. 1000×1000 px).</p>
                 <p>◦ **Fondo sólido:** Evita transparencias.</p>
                 <p>◦ **Formato vectorial puro:** No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos.</p>
-                <p>◦ **Elementos prohibidos:** Animaciones, filtros, gradientes complejos.</p>
+                <p>◦ **Elementos prohibidos:** Animaciones, filtros, gradientes complejos, metadatos innecesarios.</p>
                 <p>◦ **Alojamiento:** Debe ser accesible via HTTPS en una URL pública.</p>
             </div>
         </div>
@@ -1064,4 +1071,5 @@ function DnsInfoModal({
     
 
     
+
 
