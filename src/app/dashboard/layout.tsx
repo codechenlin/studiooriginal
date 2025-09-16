@@ -60,7 +60,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/component
 
 
 const menuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Escritorio", icon: LayoutDashboard },
   { 
     href: "/dashboard/campaigns", 
     label: "Campaña", 

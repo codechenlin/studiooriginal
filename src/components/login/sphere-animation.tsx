@@ -33,7 +33,7 @@ export function SphereAnimation() {
     if (!mounted) return [];
     return isDarkMode 
       ? ['#C0C0C0', '#F5F5F5', '#E5E4E2'] // Dark mode colors
-      : ['#009AFF', '#AD00EC', '#00ADEC']; // Light mode colors
+      : ['#FFAF00', '#000000', '#B300FF']; // Light mode colors
   }, [isDarkMode, mounted]);
 
   useEffect(() => {
