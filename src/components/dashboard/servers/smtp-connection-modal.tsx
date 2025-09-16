@@ -548,6 +548,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             Continuar <ArrowRight className="ml-2"/>
                           </Button>
                         )}
+                        <Button variant="outline" className="w-full" onClick={handleClose}>Cancelar</Button>
                       </div>
                   </div>
                 )}
@@ -587,14 +588,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             Ir a Configuración SMTP <ArrowRight className="ml-2"/>
                         </Button>
                      )}
+                      <Button variant="outline" className="w-full" onClick={handleClose}>Cancelar</Button>
                     </div>
                   </div>
                 )}
             </motion.div>
           </AnimatePresence>
-        </div>
-         <div className="mt-auto w-full pt-4">
-          <Button variant="outline" className="w-full" onClick={handleClose}>Cancelar</Button>
         </div>
       </div>
     )
@@ -1071,5 +1070,6 @@ function DnsInfoModal({
     
 
     
+
 
 
