@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -258,7 +259,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         },
         bimi: {
           title: "Registro BIMI",
-          description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles."
+          description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles."
         },
         vmc: {
           title: "Certificado VMC",
@@ -340,124 +341,122 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const renderCenterPanelContent = () => {
     return (
-      <div className="h-full flex flex-col justify-start">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col h-full"
-          >
-            {currentStep === 1 && (
-              <>
-                <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
-                <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
-                <div className="space-y-2 pt-4">
-                  <Label htmlFor="domain">Tu Dominio</Label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
-                  </div>
-                </div>
-              </>
-            )}
-            {currentStep === 2 && (
-              <>
-                <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
-                <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{domain}</b>.</p>
-                <div className="space-y-3 pt-4">
-                  <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                    <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
-                     <div className="flex justify-between items-center">
-                        <span>@</span>
-                        <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 hover:bg-primary/20" onClick={() => handleCopy('@')}>
-                            <Copy className="size-4"/>
-                        </Button>
+        <div className="p-8 flex flex-col h-full justify-start">
+            <AnimatePresence mode="wait">
+            <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col h-full"
+            >
+                {currentStep === 1 && (
+                <>
+                    <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
+                    <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
+                    <div className="space-y-2 pt-4">
+                    <Label htmlFor="domain">Tu Dominio</Label>
+                    <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                        <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
                     </div>
-                  </div>
-                   <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                      <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
-                      <div className="flex justify-between items-center">
-                          <p className="break-all pr-2">{txtRecordValue}</p>
-                          <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 hover:bg-primary/20" onClick={() => handleCopy(txtRecordValue)}>
-                              <Copy className="size-4"/>
-                          </Button>
-                      </div>
-                  </div>
-                </div>
-              </>
-            )}
-            {currentStep === 3 && (
-              infoViewRecord ? (
-                <>
-                  <h3 className="text-lg font-bold mb-2">{infoContent[infoViewRecord].title}</h3>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{infoContent[infoViewRecord].description}</p>
-                  <motion.div>
-                      {showExample && infoViewRecord === 'spf' && (
-                          <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
-                              <p className="font-bold mb-1">Importante: Unificación de SPF</p>
-                              <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
-                              <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com -all`</p>
-                          </div>
-                      )}
-                  </motion.div>
-                  <div className="flex gap-2 mt-auto">
-                     <Button variant="outline" className="w-full" onClick={() => setInfoViewRecord(null)}>Atrás</Button>
-                     <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
-                  </div>
+                    </div>
                 </>
-              ) : (
+                )}
+                {currentStep === 2 && (
                 <>
-                  <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
-                  <p className="text-sm text-muted-foreground">Verificaremos los registros de tu dominio, y te mostraremos los registros DNS que deberás añadir a tu dominio.</p>
-                  <div className="space-y-3 mt-4">
-                    {healthCheckStep === 'mandatory' ? (
-                      <>
-                        <h4 className='font-semibold text-sm'>Obligatorios</h4>
-                        {renderRecordStatus('SPF', spfStatus, 'spf')}
-                        {renderRecordStatus('DKIM', dkimStatus, 'dkim')}
-                        {renderRecordStatus('DMARC', dmarcStatus, 'dmarc')}
-                         <div className="pt-2">
-                            <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
-                            <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
-                                <li><span className="font-semibold">SPF:</span> ¿Quién puede enviar?</li>
-                                <li><span className="font-semibold">DKIM:</span> ¿Está firmado y sin cambios?</li>
-                                <li><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</li>
-                            </ul>
+                    <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
+                    <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{domain}</b>.</p>
+                    <div className="space-y-3 pt-4">
+                    <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                        <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
+                        <div className="flex justify-between items-center">
+                            <span>@</span>
+                            <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 hover:bg-[#00ADEC] text-foreground hover:text-white" onClick={() => handleCopy('@')}>
+                                <Copy className="size-4"/>
+                            </Button>
                         </div>
-                      </>
-                    ) : (
-                      <>
-                        <h4 className='font-semibold text-sm'>Opcionales</h4>
-                        {renderRecordStatus('MX', mxStatus, 'mx')}
-                        {renderRecordStatus('BIMI', bimiStatus, 'bimi')}
-                        {renderRecordStatus('VMC', vmcStatus, 'vmc')}
-                        <div className="pt-2">
-                            <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
-                            <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
-                                <li><span className="font-semibold">MX:</span> ¿A qué servidor deben llegar los correos que envían a mi dominio?</li>
-                                <li><span className="font-semibold">BIMI:</span> ¿Qué logotipo oficial debe mostrarse junto a mis correos en la bandeja de entrada?</li>
-                                <li><span className="font-semibold">VMC:</span> ¿Hay un certificado que demuestre que ese logotipo y la marca son míos?</li>
-                            </ul>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
+                        <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
+                        <div className="flex justify-between items-center">
+                            <p className="break-all pr-2">{txtRecordValue}</p>
+                            <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 hover:bg-[#00ADEC] text-foreground hover:text-white" onClick={() => handleCopy(txtRecordValue)}>
+                                <Copy className="size-4"/>
+                            </Button>
                         </div>
-                      </>
-                    )}
-                  </div>
+                    </div>
+                    </div>
                 </>
-              )
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+                )}
+                {currentStep === 3 && (
+                infoViewRecord ? (
+                    <>
+                    <h3 className="text-lg font-bold mb-2">{infoContent[infoViewRecord].title}</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line flex-grow">{infoContent[infoViewRecord].description}</p>
+                    <motion.div>
+                        {showExample && infoViewRecord === 'spf' && (
+                            <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                                <p className="font-bold mb-1">Importante: Unificación de SPF</p>
+                                <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                                <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.foxmiu.email include:spf.otrodominio.com -all`</p>
+                            </div>
+                        )}
+                    </motion.div>
+                    <div className="flex gap-2 mt-auto">
+                        <Button variant="outline" className="w-full" onClick={() => setInfoViewRecord(null)}>Atrás</Button>
+                        <Button className="w-full" onClick={() => setActiveInfoModal(infoViewRecord)}>Añadir DNS</Button>
+                    </div>
+                    </>
+                ) : (
+                    <>
+                    <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
+                    <p className="text-sm text-muted-foreground">Verificaremos los registros de tu dominio, y te mostraremos los registros DNS que deberás añadir a tu dominio.</p>
+                    <div className="space-y-3 mt-4">
+                        {healthCheckStep === 'mandatory' ? (
+                        <>
+                            <h4 className='font-semibold text-sm'>Obligatorios</h4>
+                            {renderRecordStatus('SPF', spfStatus, 'spf')}
+                            {renderRecordStatus('DKIM', dkimStatus, 'dkim')}
+                            {renderRecordStatus('DMARC', dmarcStatus, 'dmarc')}
+                            <div className="pt-2">
+                                <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
+                                <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
+                                    <li><span className="font-semibold">SPF:</span> ¿Quién puede enviar?</li>
+                                    <li><span className="font-semibold">DKIM:</span> ¿Está firmado y sin cambios?</li>
+                                    <li><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</li>
+                                </ul>
+                            </div>
+                        </>
+                        ) : (
+                        <>
+                            <h4 className='font-semibold text-sm'>Opcionales</h4>
+                            {renderRecordStatus('MX', mxStatus, 'mx')}
+                            {renderRecordStatus('BIMI', bimiStatus, 'bimi')}
+                            {renderRecordStatus('VMC', vmcStatus, 'vmc')}
+                            <div className="pt-2">
+                                <h5 className="font-bold text-sm">🔗 Cómo trabajan juntos</h5>
+                                <ul className="text-xs text-muted-foreground list-disc list-inside mt-1 space-y-1">
+                                    <li><span className="font-semibold">MX:</span> ¿A qué servidor deben llegar los correos que envían a mi dominio?</li>
+                                    <li><span className="font-semibold">BIMI:</span> ¿Qué logotipo oficial debe mostrarse junto a mis correos en la bandeja de entrada?</li>
+                                    <li><span className="font-semibold">VMC:</span> ¿Hay un certificado que demuestre que ese logotipo y la marca son míos?</li>
+                                </ul>
+                            </div>
+                        </>
+                        )}
+                    </div>
+                    </>
+                )
+                )}
+            </motion.div>
+            </AnimatePresence>
+        </div>
     );
   };
   
-
   const renderRightPanelContent = () => {
     const allMandatoryHealthChecksDone = spfStatus !== 'idle' && spfStatus !== 'verifying' && dkimStatus !== 'idle' && dkimStatus !== 'verifying' && dmarcStatus !== 'idle' && dmarcStatus !== 'verifying';
-    const allMandatoryHealthChecksPassed = spfStatus === 'verified' && dkimStatus === 'verified' && dmarcStatus === 'verified';
     const allOptionalHealthChecksDone = mxStatus !== 'idle' && mxStatus !== 'verifying' && bimiStatus !== 'idle' && bimiStatus !== 'verifying' && vmcStatus !== 'idle' && vmcStatus !== 'verifying';
 
     return (
@@ -470,10 +469,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="w-full"
+                  className="w-full flex flex-col justify-between flex-grow"
                 >
                 {currentStep === 1 && (
-                  <div className="text-center">
+                  <div className="text-center flex-grow flex flex-col justify-center">
                     <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
@@ -487,8 +486,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   </div>
                 )}
                 {currentStep === 2 && (
-                  <div className="text-center">
-                      <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center">
+                  <div className="text-center flex-grow flex flex-col">
+                      <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
                           <style>{`
                               @keyframes pulse-radar {
                                   0% { transform: scale(0.5); opacity: 0; }
@@ -553,7 +552,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   </div>
                 )}
                 {currentStep === 3 && (
-                  <div className="w-full flex flex-col justify-center">
+                  <div className="w-full flex-grow flex flex-col justify-center">
                      <div className="text-center">
                         <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
                         <h4 className="font-bold">Salud del Dominio</h4>
@@ -563,7 +562,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       <Info className="size-5 shrink-0 mt-0.5" />
                       <p>La propagación de DNS no es instantánea y puede tardar hasta 48 horas. Si una verificación falla, espera un tiempo y vuelve a intentarlo.</p>
                     </div>
-                    <div className="mt-4 space-y-2">
+                    <div className="mt-auto pt-4 space-y-2">
                      {healthCheckStep === 'mandatory' ? (
                          <Button className="w-full h-12 text-base" onClick={() => handleCheckHealth('mandatory')} disabled={spfStatus === 'verifying'}>
                           {spfStatus === 'verifying' ? 'Escaneando...' : 'Escanear Obligatorios'}
@@ -647,137 +646,128 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
    const renderStep4 = () => {
     return (
-      <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
-          {/* Panel Izquierdo */}
-          <div className="hidden md:block md:col-span-1 h-full">
-            {renderLeftPanel()}
-          </div>
-          
-          {/* Panel Central y Derecho */}
-          <div className="md:col-span-2 h-full grid grid-cols-1 md:grid-cols-2">
-            {/* Panel Central: Formulario */}
-            <div className="p-8 flex flex-col h-full justify-start">
-               <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmitSmtp)} id="smtp-form" className="h-full flex flex-col">
-                      <div className="flex-grow space-y-4">
-                        <FormField control={form.control} name="host" render={({ field }) => (
-                            <FormItem className="space-y-1"><Label>Host</Label>
-                                <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
-                            </FormItem>
-                        )}/>
-                        <FormField control={form.control} name="port" render={({ field }) => (
-                            <FormItem className="space-y-1"><Label>Puerto</Label>
-                                <FormControl><Input type="number" placeholder="587" className='h-12 text-base' {...field} /></FormControl><FormMessage />
-                            </FormItem>
-                        )}/>
-                        <FormField control={form.control} name="encryption" render={({ field }) => (
-                            <FormItem><Label>Cifrado</Label><FormControl>
-                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
-                                <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
-                                <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
-                                <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
-                            </RadioGroup>
-                            </FormControl><FormMessage /></FormItem>
-                        )}/>
-                         <FormField control={form.control} name="username" render={({ field }) => (
-                            <FormItem className="space-y-1"><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={form.control} name="password" render={({ field }) => (
-                            <FormItem className="space-y-1"><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10 h-12 text-base" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
-                        )}/>
-                      </div>
-                  </form>
-               </Form>
-            </div>
-
-            {/* Panel Derecho: Pruebas */}
-            <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
-                <style>{`
-                  .ai-scan-lines {
-                    background-image:
-                      linear-gradient(0deg, hsla(var(--primary)/0) 0%, hsla(var(--primary)/0.2) 50%, hsla(var(--primary)/0) 100%);
-                    background-size: 100% 3px;
-                    animation: ai-scan-animation 3s linear infinite;
-                  }
-                  @keyframes ai-scan-animation {
-                    0% { background-position: 0 100%; }
-                    100% { background-position: 0 0; }
-                  }
-                `}</style>
-                <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent z-0"/>
-                <div className="absolute inset-0 ai-scan-lines z-0"/>
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_50%,_hsl(var(--background)/0.6))] z-0" />
-                <div className="relative z-10 w-full h-full flex flex-col">
-                  <StatusIndicator />
-                  <div className="w-full flex-grow flex flex-col justify-center">
-                    <div className="p-4 border rounded-lg bg-background/30 flex-grow flex flex-col">
-                      <p className="text-sm font-semibold mb-2">Verifica tu conexión</p>
-                      <p className="text-xs text-muted-foreground mb-3 flex-grow">Enviaremos un correo para asegurar que todo esté configurado correctamente.</p>
-                      <FormField control={form.control} name="testEmail" render={({ field }) => (
-                          <FormItem>
-                              <Label className="text-left">Enviar correo de prueba a:</Label>
-                              <FormControl><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="receptor@ejemplo.com" {...field} /></div></FormControl>
-                              <FormMessage />
-                          </FormItem>
-                      )}/>
-                    </div>
-                    {testStatus === 'success' && deliveryStatus !== 'bounced' && (
-                        <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
-                          <Button variant="outline" className="w-full" onClick={handleCheckDelivery} disabled={deliveryStatus === 'checking'}>
-                            {deliveryStatus === 'checking' ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
-                            Verificar Entrega
-                          </Button>
-                          {deliveryStatus === 'delivered' && 
-                              <p className="text-sm font-bold text-green-400">¡Confirmado! El correo fue entregado con éxito.</p>
-                          }
+      <>
+        <div className="md:col-span-1 h-full">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmitSmtp)} id="smtp-form" className="h-full flex flex-col p-8">
+              <h3 className="text-lg font-semibold mb-1">Configurar Credenciales</h3>
+              <p className="text-sm text-muted-foreground">Introduce los datos de tu servidor SMTP para finalizar la conexión.</p>
+              <div className="flex-grow space-y-3 pt-4 overflow-y-auto pr-2 -mr-2 custom-scrollbar">
+                <FormField control={form.control} name="host" render={({ field }) => (
+                    <FormItem className="space-y-1"><Label>Host</Label>
+                        <FormControl><div className="relative"><ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
+                    </FormItem>
+                )}/>
+                <FormField control={form.control} name="port" render={({ field }) => (
+                    <FormItem className="space-y-1"><Label>Puerto</Label>
+                        <FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage />
+                    </FormItem>
+                )}/>
+                <FormField control={form.control} name="encryption" render={({ field }) => (
+                    <FormItem><Label>Cifrado</Label><FormControl>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
+                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
+                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
+                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
+                    </RadioGroup>
+                    </FormControl><FormMessage /></FormItem>
+                )}/>
+                  <FormField control={form.control} name="username" render={({ field }) => (
+                    <FormItem className="space-y-1"><Label>Usuario (Email)</Label><FormControl><div className="relative"><AtSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name="password" render={({ field }) => (
+                    <FormItem className="space-y-1"><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
+                )}/>
+              </div>
+            </form>
+          </Form>
+        </div>
+        <div className="md:col-span-1 h-full">
+          <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
+              <style>{`
+                .ai-scan-lines {
+                  background-image:
+                    linear-gradient(0deg, hsla(var(--primary)/0) 0%, hsla(var(--primary)/0.2) 50%, hsla(var(--primary)/0) 100%);
+                  background-size: 100% 3px;
+                  animation: ai-scan-animation 3s linear infinite;
+                }
+                @keyframes ai-scan-animation {
+                  0% { background-position: 0 100%; }
+                  100% { background-position: 0 0; }
+                }
+              `}</style>
+              <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent z-0"/>
+              <div className="absolute inset-0 ai-scan-lines z-0"/>
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_50%,_hsl(var(--background)/0.6))] z-0" />
+              <div className="relative z-10 w-full h-full flex flex-col">
+                <StatusIndicator />
+                <div className="w-full flex-grow flex flex-col justify-center">
+                  <div className="p-4 border rounded-lg bg-background/30 flex-grow flex flex-col">
+                    <p className="text-sm font-semibold mb-2">Verifica tu conexión</p>
+                    <p className="text-xs text-muted-foreground mb-3 flex-grow">Enviaremos un correo para asegurar que todo esté configurado correctamente.</p>
+                    <FormField control={form.control} name="testEmail" render={({ field }) => (
+                        <FormItem>
+                            <Label className="text-left">Enviar correo de prueba a:</Label>
+                            <FormControl><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="receptor@ejemplo.com" {...field} /></div></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                  </div>
+                  {testStatus === 'success' && deliveryStatus !== 'bounced' && (
+                      <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
+                        <Button variant="outline" className="w-full" onClick={handleCheckDelivery} disabled={deliveryStatus === 'checking'}>
+                          {deliveryStatus === 'checking' ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2"/>}
+                          Verificar Entrega
+                        </Button>
+                        {deliveryStatus === 'delivered' && 
+                            <p className="text-sm font-bold text-green-400">¡Confirmado! El correo fue entregado con éxito.</p>
+                        }
+                      </motion.div>
+                  )}
+                  <AnimatePresence>
+                    {testStatus === 'failed' && (
+                        <motion.div key="failed-smtp" {...cardAnimation} className="p-2 mt-4 bg-red-500/10 text-red-400 rounded-lg text-center text-xs">
+                            <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
+                            <p>{testError}</p>
                         </motion.div>
                     )}
-                    <AnimatePresence>
-                      {testStatus === 'failed' && (
-                          <motion.div key="failed-smtp" {...cardAnimation} className="p-2 mt-4 bg-red-500/10 text-red-400 rounded-lg text-center text-xs">
-                              <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
-                              <p>{testError}</p>
-                          </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  <div className="mt-auto pt-4 flex flex-col gap-2">
-                      {(testStatus === 'success' && deliveryStatus === 'delivered') ? (
-                          <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
-                              Finalizar y Guardar
-                          </Button>
-                      ) : (
-                          <Button type="submit" form="smtp-form" className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
-                              {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
-                          </Button>
-                      )}
-                       <Button variant="outline" className="w-full" onClick={handleClose}>Cancelar</Button>
-                  </div>
+                  </AnimatePresence>
                 </div>
-            </div>
+                <div className="mt-auto pt-4 flex flex-col gap-2">
+                    {(testStatus === 'success' && deliveryStatus === 'delivered') ? (
+                        <Button className="w-full bg-gradient-to-r from-primary to-accent/80 hover:opacity-90 transition-opacity h-12 text-base" onClick={handleClose}>
+                            Finalizar y Guardar
+                        </Button>
+                    ) : (
+                        <Button type="submit" form="smtp-form" className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
+                            {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
+                        </Button>
+                    )}
+                      <Button variant="outline" className="w-full mt-2" onClick={handleClose}>Cancelar</Button>
+                </div>
+              </div>
           </div>
-      </DialogContent>
+        </div>
+      </>
     )
    }
 
   const renderContent = () => {
-    if (currentStep === 4) {
-      return renderStep4();
-    }
-
     return (
        <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
           <div className="hidden md:block md:col-span-1 h-full">
             {renderLeftPanel()}
           </div>
-          <div className="md:col-span-2 h-full grid grid-cols-1 md:grid-cols-2">
-            <div className="p-8 flex flex-col h-full justify-start">
-              {renderCenterPanelContent()}
-            </div>
-            <div className="h-full">
-              {renderRightPanelContent()}
-            </div>
-          </div>
+          {currentStep === 4 ? renderStep4() : (
+            <>
+              <div className="md:col-span-1 h-full">
+                {renderCenterPanelContent()}
+              </div>
+              <div className="md:col-span-1 h-full">
+                {renderRightPanelContent()}
+              </div>
+            </>
+          )}
       </DialogContent>
     );
   };
@@ -1070,6 +1060,7 @@ function DnsInfoModal({
     
 
     
+
 
 
 
