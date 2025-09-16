@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -371,9 +370,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <div className="space-y-3 pt-4">
                     <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
                         <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
-                        <div className="flex justify-between items-center">
+                         <div className="flex justify-between items-center">
                             <span>@</span>
-                            <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 hover:bg-[#00ADEC] text-foreground hover:text-white" onClick={() => handleCopy('@')}>
+                            <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white dark:hover:text-black">
                                 <Copy className="size-4"/>
                             </Button>
                         </div>
@@ -382,7 +381,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
                         <div className="flex justify-between items-center">
                             <p className="break-all pr-2">{txtRecordValue}</p>
-                            <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 hover:bg-[#00ADEC] text-foreground hover:text-white" onClick={() => handleCopy(txtRecordValue)}>
+                             <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white dark:hover:text-black">
                                 <Copy className="size-4"/>
                             </Button>
                         </div>
@@ -648,8 +647,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     return (
       <>
         <div className="md:col-span-1 h-full">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmitSmtp)} id="smtp-form" className="h-full flex flex-col p-8">
+            <div className="h-full flex flex-col p-8">
               <h3 className="text-lg font-semibold mb-1">Configurar Credenciales</h3>
               <p className="text-sm text-muted-foreground">Introduce los datos de tu servidor SMTP para finalizar la conexión.</p>
               <div className="flex-grow space-y-3 pt-4 overflow-y-auto pr-2 -mr-2 custom-scrollbar">
@@ -679,8 +677,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <FormItem className="space-y-1"><Label>Contraseña</Label><FormControl><div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" /><Input type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
                 )}/>
               </div>
-            </form>
-          </Form>
+            </div>
         </div>
         <div className="md:col-span-1 h-full">
           <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
@@ -739,7 +736,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             Finalizar y Guardar
                         </Button>
                     ) : (
-                        <Button type="submit" form="smtp-form" className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
+                        <Button onClick={form.handleSubmit(onSubmitSmtp)} className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
                             {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
                         </Button>
                     )}
@@ -753,21 +750,28 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
    }
 
   const renderContent = () => {
-    return (
-       <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
+    if (currentStep === 4) {
+      return (
+        <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
           <div className="hidden md:block md:col-span-1 h-full">
             {renderLeftPanel()}
           </div>
-          {currentStep === 4 ? renderStep4() : (
-            <>
-              <div className="md:col-span-1 h-full">
-                {renderCenterPanelContent()}
-              </div>
-              <div className="md:col-span-1 h-full">
-                {renderRightPanelContent()}
-              </div>
-            </>
-          )}
+          {renderStep4()}
+        </DialogContent>
+      )
+    }
+
+    return (
+      <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
+          <div className="hidden md:block md:col-span-1 h-full">
+            {renderLeftPanel()}
+          </div>
+          <div className="md:col-span-1 h-full">
+            {renderCenterPanelContent()}
+          </div>
+          <div className="md:col-span-1 h-full">
+            {renderRightPanelContent()}
+          </div>
       </DialogContent>
     );
   };
@@ -776,7 +780,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        {renderContent()}
+         <Form {...form}>
+            {renderContent()}
+         </Form>
       </Dialog>
       <DnsInfoModal
         recordType={activeInfoModal}
@@ -1060,6 +1066,8 @@ function DnsInfoModal({
     
 
     
+
+
 
 
 
