@@ -453,11 +453,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                         0% { background-position: -200% 0; }
                                         100% { background-position: 200% 0; }
                                     }
-                                    .ai-button-scan {
-                                        background: linear-gradient(90deg, transparent, hsl(var(--primary)/0.3), transparent);
-                                        background-size: 200% 100%;
-                                        animation: button-scan 3s linear infinite;
-                                    }
                                     @keyframes thinking-dots {
                                         0%, 100% { transform: translateY(0); }
                                         25% { transform: translateY(-3px); }
@@ -467,10 +462,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 `}</style>
                                 <Button
                                     variant="outline"
-                                    className="w-full h-12 relative overflow-hidden group text-lg font-semibold bg-gradient-to-r from-primary to-accent text-white hover:opacity-90"
+                                    className="w-full h-12 relative overflow-hidden group text-lg font-semibold bg-gradient-to-r from-primary to-accent text-white"
                                     onClick={() => setIsAnalysisModalOpen(true)}
                                 >
-                                    <div className="absolute inset-0 ai-button-scan" />
+                                    <div className="absolute inset-0 ai-button-scan bg-gradient-to-r from-primary to-accent" />
                                     <div className="relative flex items-center justify-center gap-4 text-white">
                                         Análisis de la IA
                                         <div className="flex gap-1.5 items-center">
@@ -692,13 +687,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
     let text = 'ESTADO DEL SISTEMA';
     
+    const allMandatoryHealthChecksDone = healthCheckStatus === 'verified';
     if (currentStep === 2) {
       if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICANDO DNS';
       } else if (verificationStatus === 'verified') { status = 'success'; text = 'DOMINIO VERIFICADO';
       } else if (verificationStatus === 'failed') { status = 'error'; text = 'FALLO DE VERIFICACIÓN';
       } else { status = 'idle'; text = 'ESPERANDO ACCIÓN'; }
     } else if (currentStep === 3) {
-      const allMandatoryHealthChecksDone = healthCheckStatus === 'verified';
+      
       if (healthCheckStatus === 'verifying') { status = 'processing'; text = 'ANALIZANDO REGISTROS';
       } else if (allMandatoryHealthChecksDone) {
           const {spfStatus, dkimStatus, dmarcStatus} = dnsAnalysis || {};
@@ -913,8 +909,8 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
             <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
                 <style>{`
                     @keyframes icon-pulse {
-                        0%, 100% { transform: scale(1); box-shadow: 0 0 10px 0px hsla(var(--primary), 0.5); }
-                        50% { transform: scale(1.05); box-shadow: 0 0 25px 8px hsla(var(--primary), 0.5); }
+                        0%, 100% { transform: scale(1); box-shadow: 0 0 15px 0px hsla(var(--primary), 0.5); }
+                        50% { transform: scale(1.05); box-shadow: 0 0 30px 10px hsla(var(--primary), 0.5); }
                     }
                     .icon-pulse-animation {
                         animation: icon-pulse 2.5s infinite ease-in-out;
@@ -967,6 +963,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     
 
     
+
 
 
 
