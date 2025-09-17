@@ -96,14 +96,13 @@ export default function LoginPage() {
   return (
     <>
       <LoadingModal isOpen={isLoading} variant="login" />
-      <div className="w-screen h-screen flex bg-background">
-        <div className="w-1/2 h-full relative flex flex-col justify-center items-center p-10 overflow-hidden">
-          <div className="absolute top-8 left-8">
+      <div className="w-screen h-screen flex flex-col justify-center items-center bg-background p-10 overflow-hidden relative">
+        <div className="absolute top-8 left-8 z-20">
             <Logo />
-          </div>
-          <SphereAnimation />
+        </div>
+        <SphereAnimation />
 
-          <div className="w-full max-w-sm z-10">
+        <div className="w-full max-w-sm z-10">
              <Card className="bg-card/60 dark:bg-zinc-900/60 backdrop-blur-lg border-border/20 shadow-2xl overflow-hidden">
               <CardHeader className="text-center px-6 pt-6">
                 <motion.div
@@ -216,20 +215,10 @@ export default function LoginPage() {
                 />
               </div>
             </Card>
-          </div>
-        </div>
-        <div className="w-1/2 h-full relative overflow-hidden">
-          <Image
-            src="https://firebasestorage.googleapis.com/v0/b/genkit-19028.appspot.com/o/images%2F6131b790-2e45-4202-86f2-4976d152c93d?alt=media&token=e4758569-826a-4b0c-99c5-7a70195d52b1"
-            alt="AI generated marketing posts collage"
-            fill
-            className="object-cover"
-            sizes="50vw"
-            priority
-          />
-           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
       </div>
     </>
   );
 }
+
+    

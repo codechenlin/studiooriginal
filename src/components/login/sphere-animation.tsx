@@ -159,3 +159,5 @@ export function SphereAnimation() {
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-20 dark:opacity-30 pointer-events-none" />;
 }
+
+    
