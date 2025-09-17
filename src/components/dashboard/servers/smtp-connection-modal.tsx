@@ -467,16 +467,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 `}</style>
                                 <Button
                                     variant="outline"
-                                    className="w-full h-12 relative overflow-hidden group text-base font-semibold bg-gradient-to-r from-primary to-accent text-white"
+                                    className="w-full h-12 relative overflow-hidden group text-lg font-semibold bg-gradient-to-r from-primary to-accent text-white"
                                     onClick={() => setIsAnalysisModalOpen(true)}
                                 >
                                     <div className="absolute inset-0 ai-button-scan" />
                                     <div className="relative flex items-center justify-center gap-4 text-white">
                                         Análisis de la IA
-                                        <div className="flex gap-1 items-center">
-                                            <span className="size-2 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0s'}} />
-                                            <span className="size-2 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.2s'}} />
-                                            <span className="size-2 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.4s'}} />
+                                        <div className="flex gap-1.5 items-center">
+                                            <span className="size-2.5 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0s'}} />
+                                            <span className="size-2.5 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.2s'}} />
+                                            <span className="size-2.5 bg-white rounded-full" style={{animation: 'thinking-dots 1.5s infinite ease-in-out 0.4s'}} />
                                         </div>
                                     </div>
                                 </Button>
@@ -691,17 +691,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const StatusIndicator = () => {
     let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
     let text = 'ESTADO DEL SISTEMA';
-    const {spfStatus, dkimStatus, dmarcStatus} = dnsAnalysis || {};
-    const allMandatoryHealthChecksDone = healthCheckStatus === 'verified';
-
+    
     if (currentStep === 2) {
       if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICANDO DNS';
       } else if (verificationStatus === 'verified') { status = 'success'; text = 'DOMINIO VERIFICADO';
       } else if (verificationStatus === 'failed') { status = 'error'; text = 'FALLO DE VERIFICACIÓN';
       } else { status = 'idle'; text = 'ESPERANDO ACCIÓN'; }
     } else if (currentStep === 3) {
+      const allMandatoryHealthChecksDone = healthCheckStatus === 'verified';
       if (healthCheckStatus === 'verifying') { status = 'processing'; text = 'ANALIZANDO REGISTROS';
       } else if (allMandatoryHealthChecksDone) {
+          const {spfStatus, dkimStatus, dmarcStatus} = dnsAnalysis || {};
           const hasError = spfStatus === 'unverified' || dkimStatus === 'unverified' || dmarcStatus === 'unverified' || spfStatus === 'not-found' || dkimStatus === 'not-found' || dmarcStatus === 'not-found';
           status = hasError ? 'error' : 'success';
           text = hasError ? 'REGISTROS REQUIEREN ATENCIÓN' : 'REGISTROS OBLIGATORIOS OK';
@@ -911,6 +911,15 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <style>{`
+                    @keyframes icon-pulse {
+                        0%, 100% { transform: scale(1); box-shadow: 0 0 10px 0px hsla(var(--primary), 0.5); }
+                        50% { transform: scale(1.05); box-shadow: 0 0 25px 8px hsla(var(--primary), 0.5); }
+                    }
+                    .icon-pulse-animation {
+                        animation: icon-pulse 2.5s infinite ease-in-out;
+                    }
+                `}</style>
                 <div className="absolute inset-0 z-0 opacity-10">
                     <div className="absolute h-full w-full bg-[radial-gradient(#00ADEC_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
                 </div>
@@ -918,7 +927,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
 
                 <DialogHeader className="z-10">
                     <DialogTitle className="flex items-center gap-3 text-xl">
-                        <div className="p-2.5 bg-cyan-500/10 border-2 border-cyan-400/20 rounded-full">
+                        <div className="p-2.5 bg-cyan-500/10 border-2 border-cyan-400/20 rounded-full icon-pulse-animation">
                            <BrainCircuit className="text-cyan-400" />
                         </div>
                         Diagnóstico Detallado de la IA
@@ -930,7 +939,12 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                     </div>
                 </ScrollArea>
                 <DialogFooter className="z-10">
-                    <Button onClick={() => onOpenChange(false)} className="bg-cyan-500 hover:bg-cyan-600 text-black font-bold">Entendido</Button>
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="bg-gradient-to-r from-primary to-[#00ADEC] text-white hover:opacity-90"
+                    >
+                        Entendido
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -940,4 +954,5 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     
 
     
+
 
