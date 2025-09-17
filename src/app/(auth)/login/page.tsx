@@ -145,15 +145,23 @@ export default function LoginPage() {
                           </div>
                           <FormControl>
                             <div className="relative">
-                              <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute right-3 top-1/2 -translate-y-1/2">
-                                {isPasswordVisible ? <EyeOff className="size-4 text-muted-foreground" /> : <Eye className="size-4 text-muted-foreground" />}
-                              </button>
                               <Input
                                 type={isPasswordVisible ? "text" : "password"}
                                 placeholder="••••••••"
                                 {...field}
                                 className="pr-10 bg-background/70 border-border/50"
                               />
+                              <button
+                                type="button"
+                                onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2"
+                              >
+                                {isPasswordVisible ? (
+                                  <EyeOff className="size-4 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="size-4 text-muted-foreground" />
+                                )}
+                              </button>
                             </div>
                           </FormControl>
                           <FormMessage />
