@@ -467,7 +467,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 `}</style>
                                 <Button
                                     variant="outline"
-                                    className="w-full h-12 relative overflow-hidden group text-lg font-semibold bg-gradient-to-r from-primary to-accent text-white"
+                                    className="w-full h-12 relative overflow-hidden group text-lg font-semibold bg-gradient-to-r from-primary to-accent text-white hover:opacity-90"
                                     onClick={() => setIsAnalysisModalOpen(true)}
                                 >
                                     <div className="absolute inset-0 ai-button-scan" />
@@ -919,6 +919,13 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                     .icon-pulse-animation {
                         animation: icon-pulse 2.5s infinite ease-in-out;
                     }
+                    @keyframes sound-wave {
+                        0% { transform: scaleY(0.4); }
+                        25% { transform: scaleY(1); }
+                        50% { transform: scaleY(0.2); }
+                        75% { transform: scaleY(0.7); }
+                        100% { transform: scaleY(0.4); }
+                    }
                 `}</style>
                 <div className="absolute inset-0 z-0 opacity-10">
                     <div className="absolute h-full w-full bg-[radial-gradient(#00ADEC_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
@@ -931,6 +938,12 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                            <BrainCircuit className="text-cyan-400" />
                         </div>
                         Diagnóstico Detallado de la IA
+                        <div className="flex items-end gap-0.5 h-6">
+                            <span className="w-1 h-2/5 bg-cyan-400 rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-cyan-400 rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-cyan-400 rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                             <span className="w-1 h-4/5 bg-cyan-400 rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                        </div>
                     </DialogTitle>
                 </DialogHeader>
                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
@@ -954,5 +967,6 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     
 
     
+
 
 
