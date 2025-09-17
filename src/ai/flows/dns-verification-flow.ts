@@ -70,6 +70,7 @@ const dnsVerificationFlow = ai.defineFlow(
         if(recordType === 'MX' && typeof r === 'object') return `${r.priority} ${r.exchange}`;
         return r.toString();
       });
+      
       const joinedTxtRecords = processedRecords.join('');
 
       switch (recordType) {
