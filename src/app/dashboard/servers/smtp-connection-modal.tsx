@@ -279,14 +279,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             <p className="text-xs text-muted-foreground">Dominio en configuración</p>
             <div className="flex items-center justify-center gap-2 mt-1">
                  <motion.div
-                    animate={{ rotate: [0, 360, 0, -360, 0] }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                    className={cn(isVerified && "hidden")}
+                    animate={{ rotate: isVerified ? 0 : [0, 360, 0, -360, 0] }}
+                    transition={{ duration: 10, repeat: isVerified ? 0 : Infinity, ease: "linear" }}
                   >
-                     <ShieldCheck className="size-5 text-primary"/>
+                     {isVerified ? <CheckCircle className="size-5 text-green-400" /> : <Layers className="size-5 text-primary"/>}
                  </motion.div>
-                  {isVerified && <Check className="size-5 text-green-400" />}
-
                 <span className="font-semibold text-base text-white/90">{domain}</span>
             </div>
         </div>
@@ -348,7 +345,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     })}
                   </ul>
                    <div className="relative w-full h-px my-6 bg-border/20">
-                     <div className="tech-scanner w-[50px]" style={{background: 'linear-gradient(90deg, transparent, var(--color-active-led-start), var(--color-active-led-end), transparent)'}}/>
+                     <div className="tech-scanner w-[50px]" />
                   </div>
 
                   {currentStep > 1 && <DomainStatusIndicator />}
@@ -1085,4 +1082,5 @@ function DnsInfoModal({
     )
 }
     
+
 
