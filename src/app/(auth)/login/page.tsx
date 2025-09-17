@@ -111,14 +111,14 @@ export default function LoginPage() {
                   animate={{
                     scale: [1, 1.05, 1],
                     boxShadow: [
-                      '0 0 10px #1700E600',
-                      '0 0 20px #1700E688',
-                      '0 0 10px #1700E600'
+                      '0 0 15px #1700E600, 0 0 15px #009AFF00',
+                      '0 0 25px #1700E6, 0 0 25px #009AFF',
+                      '0 0 15px #1700E600, 0 0 15px #009AFF00',
                     ]
                   }}
                   transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                 >
-                  <Fingerprint className="size-8" style={{ color: '#E0C8FF'}} />
+                  <Fingerprint className="size-8 text-primary" />
                 </motion.div>
                 <CardTitle className="text-3xl font-bold">{t('login_welcome_back')}</CardTitle>
                 <CardDescription>
