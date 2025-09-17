@@ -55,7 +55,6 @@ const dnsVerificationFlow = ai.defineFlow(
       } else if (recordType === 'MX') {
         records = await dns.resolveMx(domain);
       } else if (recordType === 'CNAME') {
-        // For DKIM, we verify the CNAME pointing to our service
         records = await dns.resolveCname(fqdn);
       } else {
         throw new Error(`Unsupported record type: ${recordType}`);
@@ -71,23 +70,23 @@ const dnsVerificationFlow = ai.defineFlow(
 
       switch (recordType) {
         case 'SPF':
-          // A domain's TXT records can be split. We must join them and then check.
-          const spfRecord = processedRecords.join('');
-          if (spfRecord.startsWith('v=spf1') && spfRecord.includes('include:_spf.foxmiu.email')) {
-              return { isVerified: true, foundRecords: processedRecords };
-          }
-          return { isVerified: false, reason: "El registro SPF no incluye 'include:_spf.foxmiu.email'.", foundRecords: processedRecords };
+            const spfRecord = processedRecords.join('');
+            if (spfRecord.startsWith('v=spf1') && spfRecord.includes('include:_spf.foxmiu.email')) {
+                return { isVerified: true, foundRecords: processedRecords };
+            }
+            return { isVerified: false, reason: "El registro SPF no incluye 'include:_spf.foxmiu.email'.", foundRecords: processedRecords };
 
         case 'DMARC':
-          const dmarcRecord = processedRecords.join('');
-           if (dmarcRecord.startsWith('v=DMARC1') && dmarcRecord.includes('p=reject')) {
-              return { isVerified: true, foundRecords: processedRecords };
-          }
-          return { isVerified: false, reason: "La política DMARC no está establecida en 'p=reject'.", foundRecords: processedRecords };
+            const dmarcRecord = processedRecords.join('');
+            // Check for v=DMARC1 and specifically for p=reject.
+            // Other policies like p=quarantine or p=none are not sufficient for our strict check.
+            const hasRejectPolicy = /\bp=reject\b/.test(dmarcRecord.replace(/\s/g, ''));
+            if (dmarcRecord.startsWith('v=DMARC1') && hasRejectPolicy) {
+                return { isVerified: true, foundRecords: processedRecords };
+            }
+            return { isVerified: false, reason: "La política DMARC no está establecida en 'p=reject'.", foundRecords: processedRecords };
         
         case 'CNAME': // Used for DKIM
-            // We're just checking for existence and that it points SOMEWHERE, 
-            // as the specific target might be variable. The name is what matters.
             if(records.length > 0) {
                 return { isVerified: true, foundRecords: records };
             }

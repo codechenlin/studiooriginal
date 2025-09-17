@@ -278,12 +278,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
             <p className="text-xs text-muted-foreground">Dominio en configuración</p>
             <div className="flex items-center justify-center gap-2 mt-1">
-                 <motion.div
-                    animate={{ rotate: isVerified ? 0 : [0, 360, 0, -360, 0] }}
-                    transition={{ duration: 10, repeat: isVerified ? 0 : Infinity, ease: "linear" }}
-                  >
-                     {isVerified ? <CheckCircle className="size-5 text-green-400" /> : <Layers className="size-5 text-primary"/>}
-                 </motion.div>
+                <motion.div
+                    animate={{ rotate: isVerified ? 0 : 360 }}
+                    transition={{
+                        duration: 2,
+                        repeat: isVerified ? 0 : Infinity,
+                        repeatType: 'loop',
+                        ease: 'linear'
+                    }}
+                >
+                    {isVerified ? <CheckCircle className="size-5 text-green-400" /> : <Layers className="size-5 text-primary"/>}
+                </motion.div>
                 <span className="font-semibold text-base text-white/90">{domain}</span>
             </div>
         </div>
@@ -1081,6 +1086,3 @@ function DnsInfoModal({
         </Dialog>
     )
 }
-    
-
-
