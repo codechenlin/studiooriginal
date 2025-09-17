@@ -2,28 +2,22 @@
 'use server';
 
 import {
-  verifyDns,
-  type DnsVerificationInput,
+  verifyDnsHealth,
+  type DnsHealthInput,
 } from '@/ai/flows/dns-verification-flow';
 import { z } from 'zod';
 
 const actionSchema = z.object({
-  domain: z.string(),
-  recordType: z.enum(['TXT', 'MX', 'CNAME', 'SPF', 'DMARC']),
-  name: z.string(),
-  expectedValue: z.string().optional(),
+  domain: z.string().describe('El nombre de dominio a verificar.'),
+  dkimPublicKey: z.string().describe('La clave pública DKIM esperada para el selector "foxmiu".'),
 });
 
 
-export async function verifyDnsAction(input: DnsVerificationInput) {
+export async function verifyDnsAction(input: DnsHealthInput) {
   try {
     const validatedInput = actionSchema.parse(input);
-    const result = await verifyDns(validatedInput);
-    if (result.isVerified) {
-      return { success: true, data: result.foundRecords };
-    } else {
-      return { success: false, error: result.reason, data: result.foundRecords };
-    }
+    const result = await verifyDnsHealth(validatedInput);
+    return { success: true, data: result };
   } catch (error) {
     console.error('DNS verification action error:', error);
     const errorMessage =
