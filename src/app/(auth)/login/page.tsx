@@ -151,17 +151,22 @@ export default function LoginPage() {
                                 {...field}
                                 className="pr-10 bg-background/70 border-border/50"
                               />
-                              <button
+                              <Button
                                 type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:bg-transparent"
                                 onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2"
                               >
                                 {isPasswordVisible ? (
-                                  <EyeOff className="size-4 text-muted-foreground" />
+                                  <EyeOff className="size-4" />
                                 ) : (
-                                  <Eye className="size-4 text-muted-foreground" />
+                                  <Eye className="size-4" />
                                 )}
-                              </button>
+                                <span className="sr-only">
+                                  {isPasswordVisible ? "Hide password" : "Show password"}
+                                </span>
+                              </Button>
                             </div>
                           </FormControl>
                           <FormMessage />
