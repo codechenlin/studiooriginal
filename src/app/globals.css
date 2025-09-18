@@ -196,30 +196,19 @@ body {
     }
 
     .ai-core-button {
-        background: rgba(10, 5, 20, 0.7);
-        border: 1px solid var(--button-exit-border);
-        backdrop-filter: blur(4px);
-        transition: background-color 0.3s, border-color 0.3s;
+      background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
+      border: 1px solid transparent;
+      backdrop-filter: blur(4px);
+      transition: background-color 0.3s, border-color 0.3s;
     }
-
     .ai-core-button:hover {
-        background: rgba(0, 203, 7, 0.1);
-        border-color: var(--button-exit-border-hover);
-    }
-    
-    .ai-core-button:hover .ai-core-border-animation {
-       --start-color: #00CE07;
-       --end-color: #A6EE00;
-       animation-duration: 1.5s;
+        background: #00CB07;
     }
 
-    .ai-core-button .ai-core {
-      animation-play-state: running;
-    }
-
-    .ai-core-button:hover .ai-core {
-        animation-duration: 0.5s;
-        background: radial-gradient(circle, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.5) 80%);
+    .ai-core-button .ai-core-border-animation,
+    .ai-core-button .ai-core,
+    .ai-core-button .thinking-dot-animation {
+       animation-play-state: running;
     }
 
     .ai-core {
@@ -234,6 +223,10 @@ body {
         animation: ai-core-pulse 4s infinite ease-in-out;
     }
     
+    @keyframes rotating-border {
+        from { --angle: 0deg; }
+        to { --angle: 360deg; }
+    }
     .ai-core-border-animation {
       content: '';
       position: absolute;
@@ -242,27 +235,27 @@ body {
       top: -2px;
       left: -2px;
       background-image: conic-gradient(
-        from var(--angle, 0deg),
+        from var(--angle),
         transparent 0%,
         transparent 60%,
-        var(--start-color, #1700E6),
-        var(--end-color, #009AFF),
-        var(--start-color, #1700E6),
+        hsl(210 100% 56%),
+        hsl(283 100% 55%),
+        hsl(210 100% 56%),
         transparent 90%,
         transparent 100%
       );
-      animation: spin-slow 4s linear infinite;
-      z-index: 0;
+      animation: rotating-border 4s linear infinite;
+      z-index: -1;
       border-radius: inherit;
       filter: blur(3px);
-      opacity: 0;
-      transition: opacity 0.3s;
     }
-    .ai-core-button:hover .ai-core-border-animation {
-      opacity: 1;
+    
+    @keyframes thinking-pulse {
+        0%, 100% { transform: scaleY(0.4); opacity: 0.7; }
+        50% { transform: scaleY(1); opacity: 1; }
     }
-    .ai-core-button .ai-core-border-animation {
-       animation-play-state: running;
+    .thinking-dot-animation {
+        animation: thinking-pulse 1.2s infinite ease-in-out;
     }
 
     .futuristic-source-button {
@@ -354,4 +347,5 @@ body {
       animation: button-scan 2s linear infinite;
     }
 }
+
 

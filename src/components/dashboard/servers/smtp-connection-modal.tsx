@@ -448,20 +448,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                            
                            {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
                                <div className="pt-4">
-                                <Button
-                                    variant="outline"
-                                    className="w-full h-12 relative overflow-hidden group text-lg font-semibold bg-gradient-to-r from-primary to-accent text-white"
+                                <button
+                                    className="ai-core-button w-full h-12 text-lg font-semibold relative inline-flex items-center justify-center overflow-hidden rounded-lg p-4 group"
                                     onClick={() => setIsAnalysisModalOpen(true)}
                                 >
-                                    <div className="relative flex items-center justify-center gap-4 text-white">
+                                    <div className="ai-core-border-animation"></div>
+                                    <div className="ai-core"></div>
+                                    <div className="relative z-10 flex items-center justify-center gap-4 text-white">
                                         Análisis de la IA
                                         <div className="flex gap-1.5 items-end h-6">
-                                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
-                                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
-                                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                                            <span className="w-1 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
+                                            <span className="w-1 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
+                                            <span className="w-1 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
                                         </div>
                                     </div>
-                                </Button>
+                                </button>
                                </div>
                            )}
 
@@ -938,6 +939,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     
 
     
+
 
 
 
