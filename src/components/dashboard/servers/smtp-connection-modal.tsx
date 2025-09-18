@@ -729,7 +729,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             )}
                          
                          {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
-                            <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" onClick={() => setHealthCheckStep('optional')}>
+                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setHealthCheckStep('optional')}>
                                 Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
                             </Button>
                          )}
@@ -930,7 +930,7 @@ function DnsInfoModal({
                  <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                     <p className="font-bold mb-1">Importante: Unificación de SPF</p>
                     <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
-                    <p className="mt-2 font-mono text-white/90">Ej: `v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all`</p>
+                    <p className="mt-2 font-mono text-white/90">Ejemplo: `v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all`</p>
                 </div>
             </div>
         );
