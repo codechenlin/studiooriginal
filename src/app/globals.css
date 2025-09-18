@@ -265,25 +265,34 @@ body {
         animation: thinking-pulse 1.2s infinite ease-in-out;
     }
 
-    .futuristic-source-button {
-        @apply border border-zinc-700 bg-zinc-800/50 text-zinc-300;
+    .futuristic-auth-button {
+      @apply relative size-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300;
+      @apply bg-card/60 dark:bg-zinc-800/60 backdrop-blur-sm;
+      border: 1px solid;
+      border-image: linear-gradient(to bottom right, hsl(var(--primary)/0.4), hsl(var(--accent)/0.4)) 1;
     }
-    .futuristic-source-button.active {
-        @apply bg-primary/20 border-primary text-white shadow-[0_0_15px_hsl(var(--primary)/0.5)];
+    .futuristic-auth-button:hover {
+      border-image: linear-gradient(to bottom right, hsl(var(--primary)), hsl(var(--accent))) 1;
+      box-shadow: 0 0 15px hsl(var(--primary)/0.5);
     }
-    .futuristic-source-button.active::before {
-        content: '';
-        @apply absolute -inset-px rounded-lg border-2 border-primary;
-        animation: futuristic-button-glow 2s infinite;
+    .futuristic-auth-button .grid-glow {
+      @apply absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300;
+      @apply bg-[radial-gradient(theme(colors.zinc.400/.1)_1px,transparent_1px)] dark:bg-[radial-gradient(theme(colors.zinc.400/.1)_1px,transparent_1px)];
+      @apply bg-[length:16px_16px];
+      mask-image: radial-gradient(circle at center, white 50%, transparent 80%);
+      animation: pulse-glow 3s infinite ease-in-out;
     }
-    @keyframes futuristic-button-glow {
-        0%, 100% { box-shadow: 0 0 5px hsl(var(--primary)/0.2), 0 0 10px hsl(var(--primary)/0.2); }
-        50% { box-shadow: 0 0 15px hsl(var(--primary)/0.5), 0 0 25px hsl(var(--primary)/0.5); }
+    .futuristic-auth-button .scan-line {
+      @apply absolute top-0 left-0 w-full h-[10px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100;
+      animation: scan-vertical 2.5s infinite ease-in-out;
     }
-    
-    @keyframes particle-float {
-      0% { transform: translateY(0) translateX(0); opacity: 1; }
-      100% { transform: translateY(-100vh) translateX(var(--x-end)); opacity: 0; }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+    @keyframes scan-vertical {
+      0% { transform: translateY(-10px); }
+      100% { transform: translateY(40px); }
     }
 
     .particle {
@@ -352,35 +361,5 @@ body {
       );
       background-size: 200% 100%;
       animation: button-scan 2s linear infinite;
-    }
-
-    .futuristic-auth-button {
-      @apply relative size-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300;
-      @apply bg-card/60 dark:bg-zinc-800/60 backdrop-blur-sm;
-      border: 1px solid;
-      border-image: linear-gradient(to bottom right, hsl(var(--primary)/0.4), hsl(var(--accent)/0.4)) 1;
-    }
-    .futuristic-auth-button:hover {
-      border-image: linear-gradient(to bottom right, hsl(var(--primary)), hsl(var(--accent))) 1;
-      box-shadow: 0 0 15px hsl(var(--primary)/0.5);
-    }
-    .futuristic-auth-button .grid-glow {
-      @apply absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300;
-      @apply bg-[radial-gradient(theme(colors.zinc.400/.1)_1px,transparent_1px)] dark:bg-[radial-gradient(theme(colors.zinc.400/.1)_1px,transparent_1px)];
-      @apply bg-[length:16px_16px];
-      mask-image: radial-gradient(ellipse at center, white 20%, transparent 80%);
-      animation: pulse-glow 3s infinite ease-in-out;
-    }
-    .futuristic-auth-button .scan-line {
-      @apply absolute top-0 left-0 w-[10px] h-full bg-gradient-to-b from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100;
-      animation: scan-horizontal 2.5s infinite ease-in-out;
-    }
-    @keyframes pulse-glow {
-      0%, 100% { opacity: 0; }
-      50% { opacity: 1; }
-    }
-    @keyframes scan-horizontal {
-      0% { transform: translateX(-10px); }
-      100% { transform: translateX(40px); }
     }
 }
