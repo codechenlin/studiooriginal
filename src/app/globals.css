@@ -365,7 +365,7 @@ body {
       box-shadow: 0 0 15px hsl(var(--primary)/0.5);
     }
     .futuristic-auth-button .grid-glow {
-      @apply absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full;
+      @apply absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300;
       @apply bg-[radial-gradient(theme(colors.zinc.400/.1)_1px,transparent_1px)] dark:bg-[radial-gradient(theme(colors.zinc.400/.1)_1px,transparent_1px)];
       @apply bg-[length:16px_16px];
       mask-image: radial-gradient(ellipse at center, white 20%, transparent 80%);
@@ -384,5 +384,3 @@ body {
       100% { transform: translateX(40px); }
     }
 }
-
-    
