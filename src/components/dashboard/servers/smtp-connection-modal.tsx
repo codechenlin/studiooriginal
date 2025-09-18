@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -439,12 +440,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           {renderRecordStatus('DKIM', dnsAnalysis?.dkimStatus || 'idle', 'dkim')}
                           {renderRecordStatus('DMARC', dnsAnalysis?.dmarcStatus || 'idle', 'dmarc')}
                           
-                           <div className="pt-2 text-xs text-muted-foreground">
-                                <h5 className="font-bold text-sm mb-1">🔗 Cómo trabajan juntos</h5>
-                                <p><span className="font-semibold">SPF:</span> ¿Quién puede enviar?</p>
-                                <p><span className="font-semibold">DKIM:</span> ¿Está firmado y sin cambios?</p>
-                                <p><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
-                            </div>
+                          <div className="pt-2 text-xs text-muted-foreground">
+                            <h5 className="font-bold text-sm mb-1">🔗 Cómo trabajan juntos</h5>
+                            <p><span className="font-semibold">SPF:</span> ¿Quién puede enviar?</p>
+                            <p><span className="font-semibold">DKIM:</span> ¿Está firmado y sin cambios?</p>
+                            <p><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
+                          </div>
                            
                            {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
                                <div className="pt-4">
@@ -452,8 +453,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
                                     onClick={() => setIsAnalysisModalOpen(true)}
                                 >
-                                    <div className="ai-core-border-animation"></div>
-                                    <div className="ai-core"></div>
+                                    <div className="ai-core-border-animation group-hover:hidden"></div>
+                                    <div className="ai-core group-hover:scale-125"></div>
                                     <div className="relative z-10 flex items-center justify-center gap-2 text-white">
                                         <span className="text-sm font-semibold">Análisis de la IA</span>
                                         <div className="flex gap-1 items-end h-4">
@@ -630,7 +631,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       </Button>
                     }
                     {currentStep === 2 && verificationStatus === 'verified' && (
-                      <Button className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white h-12 text-base" onClick={() => setCurrentStep(3)}>
+                      <Button className="w-full mt-2 bg-green-500 hover:bg-[#00CB07] text-white h-12 text-base" onClick={() => setCurrentStep(3)}>
                         Continuar <ArrowRight className="ml-2"/>
                       </Button>
                     )}
@@ -665,7 +666,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     )}
                      <Button 
                         variant="outline"
-                        className="w-full h-12 text-base border-[#F00000] bg-transparent text-white dark:text-white hover:bg-[#F00000] hover:text-white dark:hover:text-white dark:text-foreground"
+                        className="w-full h-12 text-base bg-transparent border-[#F00000] text-white dark:text-foreground hover:bg-[#F00000] hover:text-white"
                         onClick={() => setIsCancelConfirmOpen(true)}
                      >
                         Cancelar
@@ -783,6 +784,24 @@ function DnsInfoModal({
 
     const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
     
+    const infoMap: Record<InfoViewRecord, { title: string, description: string }> = {
+      spf: {
+        title: "Registro SPF",
+        description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
+      },
+      dkim: {
+        title: "Registro DKIM",
+        description: "DKIM es como una firmar digital para cada correo con un sello único que solo tú puedes poner, El receptor verifica esa firma con una clave pública que está en tu DNS. Si la firma coincide, sabe que el mensaje no fue alterado y que realmente salió de tu dominio. Ejemplo real: Garantiza que el contenido del correo no fue modificado en el camino."
+      },
+      dmarc: {
+        title: "Registro DMARC",
+        description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude."
+      },
+      mx: { title: "", description: ""}, // Not used yet
+      bimi: { title: "", description: ""},
+      vmc: { title: "", description: ""},
+    }
+
     const renderSpfContent = () => {
         const recordValue = `v=spf1 include:_spf.foxmiu.email -all`;
         return (
@@ -875,6 +894,7 @@ function DnsInfoModal({
     };
 
     const { title, content } = contentMap[recordType];
+    const { title: infoTitle, description: infoDescription } = infoMap[recordType];
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -889,6 +909,20 @@ function DnsInfoModal({
                     {content}
                 </div>
                 <DialogFooter className="sm:justify-between">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" className="flex items-center gap-2 text-cyan-300">
+                                <HelpCircle />
+                                Cómo funciona
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 bg-black/70 border-cyan-400/20 text-white backdrop-blur-md">
+                            <div className="grid gap-4">
+                                <h4 className="font-medium leading-none text-cyan-300">{infoTitle}</h4>
+                                <p className="text-sm text-cyan-100/90">{infoDescription}</p>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                      <Button type="button" variant="outline" onClick={onOpenChange}>
                        Cerrar
                     </Button>
@@ -929,7 +963,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                 <DialogFooter className="z-10">
                     <Button 
                         onClick={() => onOpenChange(false)} 
-                        className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] hover:from-[#00CE07] hover:to-[#A6EE00] text-white"
+                        className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] hover:bg-[#00CE07] text-white"
                     >
                         Entendido
                     </Button>
