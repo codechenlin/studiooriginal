@@ -33,7 +33,7 @@ export function LanguageToggle() {
           <div>
             <div className="grid-glow"></div>
             <div className="scan-line"></div>
-            <Globe className="size-5 text-white transition-all group-hover/button:text-cyan-300 group-hover/button:drop-shadow-[0_0_5px_hsl(var(--primary))]"/>
+            <Globe className="size-5 text-black dark:text-white transition-all group-hover/button:text-cyan-300 group-hover/button:drop-shadow-[0_0_5px_hsl(var(--primary))]"/>
           </div>
           <span className="sr-only">Cambiar idioma</span>
         </button>

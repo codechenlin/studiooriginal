@@ -46,7 +46,7 @@ export function ThemeToggle() {
             {isDarkMode ? (
                 <Sun className="size-5 text-white transition-all group-hover/button:text-yellow-300 group-hover/button:drop-shadow-[0_0_5px_#facc15]"/>
             ) : (
-                <Moon className="size-5 text-white transition-all group-hover/button:text-purple-300 group-hover/button:drop-shadow-[0_0_5px_#c084fc]"/>
+                <Moon className="size-5 text-black group-hover/button:text-white transition-all group-hover/button:text-purple-300 group-hover/button:drop-shadow-[0_0_5px_#c084fc]"/>
             )}
         </div>
         <span className="sr-only">Cambiar tema</span>
