@@ -663,7 +663,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
                       <Button
-                        className="w-full h-12 text-base mt-4"
+                        className="w-full h-12 text-base mt-4 bg-purple-900 text-white hover:bg-[#AD00EC]"
                         onClick={handleCheckVerification}
                         disabled={verificationStatus === 'verifying'}
                       >
@@ -684,22 +684,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros</>}
                             </Button>
                          
-                         {allMandatoryHealthChecksDone && (
-                             <>
-                                {healthCheckStep === 'mandatory' ? (
-                                <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" onClick={() => setHealthCheckStep('optional')}>
-                                    Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
-                                </Button>
-                                ) : (
+                         {allMandatoryHealthChecksDone && allRecordsVerified && healthCheckStep === 'mandatory' && (
+                            <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" onClick={() => setHealthCheckStep('optional')}>
+                                Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
+                            </Button>
+                         )}
+
+                         {healthCheckStep === 'optional' && (
+                            <>
                                 <Button variant="outline" className="w-full" onClick={() => setHealthCheckStep('mandatory')}>
                                     Volver a Obligatorios
                                 </Button>
-                                )}
-                             
-                                <Button className="w-full bg-[#9400D3] hover:bg-[#7A00B3] text-white" onClick={() => setCurrentStep(4)}>
+                                <Button className="w-full bg-purple-900 hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
                                     Ir a Configuración SMTP <ArrowRight className="ml-2"/>
                                 </Button>
-                             </>
+                            </>
                          )}
                         </div>
                     )}
@@ -1007,15 +1006,15 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                         </div>
                     </DialogTitle>
                 </DialogHeader>
-                <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
-                    <div className="py-4 text-cyan-50 text-sm leading-relaxed whitespace-pre-line">
+                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-cyan-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-cyan-400/10 custom-scrollbar">
                         {analysis ? analysis : "No hay análisis disponible en este momento. Por favor, ejecuta el escaneo de nuevo."}
                     </div>
                 </ScrollArea>
                 <DialogFooter className="z-10">
                     <Button 
                         onClick={() => onOpenChange(false)} 
-                        className="text-white bg-green-800 hover:bg-[#00CB07] hover:text-white"
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
                     >
                         Entendido
                     </Button>
