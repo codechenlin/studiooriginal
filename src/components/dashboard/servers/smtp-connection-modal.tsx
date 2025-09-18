@@ -45,6 +45,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [healthCheckStatus, setHealthCheckStatus] = useState<HealthCheckStatus>('idle');
   const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
 
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
@@ -137,6 +138,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     
     setHealthCheckStatus('verifying');
     setDnsAnalysis(null);
+    setShowNotification(false);
 
     const result = await verifyDnsAction({
       domain,
@@ -146,6 +148,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setHealthCheckStatus(result.success ? 'verified' : 'failed');
     if (result.success && result.data) {
       setDnsAnalysis(result.data);
+      setShowNotification(true);
     } else {
         toast({
             title: "Análisis Fallido",
@@ -197,6 +200,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setActiveInfoModal(null);
         setIsCancelConfirmOpen(false);
         setDkimData(null);
+        setShowNotification(false);
     }, 300);
   }
   
@@ -451,8 +455,19 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                <div className="pt-4 flex justify-center">
                                 <button
                                     className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
-                                    onClick={() => setIsAnalysisModalOpen(true)}
+                                    onClick={() => {
+                                        setIsAnalysisModalOpen(true);
+                                        setShowNotification(false);
+                                    }}
                                 >
+                                    {showNotification && (
+                                        <div 
+                                            className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                            style={{ backgroundColor: (dnsAnalysis?.spfStatus === 'verified' && dnsAnalysis?.dkimStatus === 'verified' && dnsAnalysis?.dmarcStatus === 'verified') ? '#00CB07' : '#F00000' }}
+                                        >
+                                            1
+                                        </div>
+                                    )}
                                     <div className="ai-core-border-animation group-hover:hidden"></div>
                                     <div className="ai-core group-hover:scale-125"></div>
                                     <div className="relative z-10 flex items-center justify-center gap-2 text-white">
@@ -645,7 +660,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </Button>
                          
                          {allMandatoryHealthChecksDone && (
-                            <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
+                            <Button className="w-full bg-[#9400D3] hover:bg-[#7A00B3] text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
                                 Ir a Configuración SMTP <ArrowRight className="ml-2"/>
                             </Button>
                          )}
