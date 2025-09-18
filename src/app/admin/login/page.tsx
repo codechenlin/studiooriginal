@@ -110,12 +110,6 @@ export default function AdminLoginPage() {
                     <FormItem>
                       <div className="flex items-center justify-between">
                         <FormLabel>Password</FormLabel>
-                         <Link
-                            href="/forgot-password" // Could be a separate admin forgot password
-                            className="text-sm font-medium text-primary hover:underline"
-                          >
-                            Forgot Password?
-                          </Link>
                       </div>
                       <FormControl>
                         <div className="relative">
