@@ -77,23 +77,31 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
         name: 'optionalDnsHealthExpertPrompt',
         output: { schema: OptionalDnsHealthOutputSchema },
         prompt: `Eres un experto en DNS y entregabilidad de correo electrónico. Tu respuesta DEBE ser en español.
-        Tu única tarea es analizar los registros opcionales MX, BIMI y VMC para el dominio {{domain}}. Ignora cualquier otro registro.
+        Tu única tarea es analizar los registros opcionales MX, BIMI y VMC para el dominio {{domain}}. Ignora cualquier otro registro. Todos los registros deben ser de tipo TXT, excepto MX.
 
-        Configuración Ideal Esperada:
-        - Registro MX: Puede haber múltiples registros MX. El estado es "verified" si al menos uno apunta a "foxmiu.email".
-        - Registro BIMI: Debe ser un registro TXT en "default._bimi.{{domain}}" que contenga "v=BIMI1;". Solo puede haber un registro BIMI para el selector "default".
-        - Registro VMC para BIMI: Para que un VMC sea válido, el mismo registro TXT de BIMI también debe contener una etiqueta "a=" que apunte a un certificado VMC.
+        Configuración Ideal Esperada para los Registros Opcionales:
+        - Registro MX:
+            - Host/Nombre: @
+            - Pueden existir múltiples registros MX. El estado es "verified" si al menos uno apunta a "daybuu.com" con prioridad 0.
+
+        - Registro BIMI:
+            - Host/Nombre: default._bimi.{{domain}} (o cualquier otro selector)
+            - Valor del Registro debe contener: "v=BIMI1;" y "l=https:".
+
+        - Registro VMC para BIMI:
+            - Se encuentra en el mismo registro TXT que BIMI.
+            - Para que sea "verified", el registro debe contener "v=BIMI1;" y también la etiqueta "a=https:".
 
         Registros DNS Encontrados:
         - Registros MX encontrados en {{domain}}: {{{mxRecords}}}
         - Registros TXT encontrados en default._bimi.{{domain}} (para BIMI y VMC): {{{bimiRecords}}}
 
         Tu Tarea (en español):
-        1. Compara los registros encontrados con la configuración ideal.
+        1. Compara rigurosamente los registros encontrados con la configuración ideal.
         2. Determina el estado de cada registro (verified, unverified, not-found).
-           - MX es "verified" si "foxmiu.email" está presente en al menos un registro.
-           - BIMI es "verified" si "v=BIMI1;" está presente en el registro. Es "unverified" si existe el registro pero no contiene esta etiqueta.
-           - VMC es "verified" si el registro contiene "v=BIMI1;" Y una etiqueta "a=". Es "unverified" si tiene BIMI pero no la etiqueta "a=".
+           - MX es "verified" si "daybuu.com" está presente con prioridad 0.
+           - BIMI es "verified" si el registro contiene "v=BIMI1;" y "l=https:".
+           - VMC es "verified" si el registro contiene "v=BIMI1;" Y una etiqueta "a=https:". Es "unverified" si tiene BIMI pero no la etiqueta "a=".
         3. Proporciona un análisis breve y claro en 'analysis'. Explica el propósito de cada registro opcional y, si alguno está mal o falta, cómo solucionarlo.
         `
     });

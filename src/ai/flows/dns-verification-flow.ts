@@ -15,7 +15,7 @@ import dns from 'node:dns/promises';
 export type DnsHealthInput = z.infer<typeof DnsHealthInputSchema>;
 const DnsHealthInputSchema = z.object({
   domain: z.string().describe('The domain name to check.'),
-  dkimPublicKey: z.string().describe('The expected DKIM public key for the "foxmiu" selector.'),
+  dkimPublicKey: z.string().describe('The expected DKIM public key for the "daybuu" selector.'),
 });
 
 export type DnsHealthOutput = z.infer<typeof DnsHealthOutputSchema>;
@@ -64,7 +64,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
     
     const [spfRecords, dkimRecords, dmarcRecords] = await Promise.all([
       getTxtRecords(domain),
-      getTxtRecords(`foxmiu._domainkey.${domain}`),
+      getTxtRecords(`daybuu._domainkey.${domain}`),
       getTxtRecords(`_dmarc.${domain}`),
     ]);
 
@@ -72,23 +72,38 @@ const dnsHealthCheckFlow = ai.defineFlow(
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
         prompt: `Eres un experto en DNS y entregabilidad de correo electrónico. Tu respuesta DEBE ser en español.
-        Tu única tarea es analizar los registros SPF, DKIM y DMARC para el dominio {{domain}}. Ignora por completo cualquier otro registro TXT que no sea para SPF, DKIM o DMARC (ej. verificaciones de Google, Yandex, Bing, etc).
+        Tu única tarea es analizar los registros SPF, DKIM y DMARC para el dominio {{domain}}. Ignora por completo cualquier otro registro TXT que no sea para SPF, DKIM o DMARC (ej. verificaciones de Google, Yandex, Bing, etc.).
+        Todos los registros deben ser de tipo TXT.
 
-        Configuración Ideal Esperada:
-        - Registro SPF: Debe ser un registro TXT en el dominio raíz que contenga "include:_spf.foxmiu.email". Solo puede haber un registro SPF. Si hay más de uno, es un error.
-        - Registro DKIM: Debe ser un registro TXT en "foxmiu._domainkey.{{domain}}" con el valor exacto de "{{dkimPublicKey}}". Un dominio puede tener múltiples registros DKIM con diferentes selectores; tu trabajo es verificar únicamente el que corresponde a "foxmiu".
-        - Registro DMARC: Debe ser un registro TXT en "_dmarc.{{domain}}" que contenga la etiqueta "p=reject". Una política de "quarantine" o "none" no es suficientemente segura y debe marcarse como no verificada. Solo puede haber un registro DMARC.
+        Configuración Ideal Esperada para los Registros Obligatorios:
+        - Registro SPF:
+            - Host/Nombre: @
+            - Debe existir solo UN registro SPF. Si hay más de uno, es un error grave.
+            - Valor del Registro debe contener las 3 cadenas siguientes: "v=spf1", "include:_spf.daybuu.com", y "-all".
+            - Debes analizar la sintaxis completa. Si un usuario tiene otros servicios, aconséjale unificar los 'include' en un solo registro. Ejemplo: 'v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all'
+
+        - Registro DKIM:
+            - Host/Nombre: daybuu._domainkey.{{domain}}
+            - Pueden existir múltiples registros DKIM con diferentes selectores; tu trabajo es verificar únicamente el que corresponde a "daybuu".
+            - Valor del Registro debe ser exactamente: "{{dkimPublicKey}}". Verifica que contenga "v=DKIM1;", "k=rsa;", y que la clave pública en "p=" coincida.
+
+        - Registro DMARC:
+            - Host/Nombre: _dmarc.{{domain}}
+            - Debe existir solo UN registro DMARC.
+            - Valor del Registro debe contener: "v=DMARC1;", "p=reject;", "pct=100;", "sp=reject;".
+            - La etiqueta 'aspf' debe ser 's' o 'r'.
+            - La etiqueta 'adkim' debe ser 's' o 'r'.
 
         Registros DNS Encontrados:
         - Registros encontrados en {{domain}} (para SPF): {{{spfRecords}}}
-        - Registros encontrados en foxmiu._domainkey.{{domain}} (para DKIM): {{{dkimRecords}}}
+        - Registros encontrados en daybuu._domainkey.{{domain}} (para DKIM): {{{dkimRecords}}}
         - Registros encontrados en _dmarc.{{domain}} (para DMARC): {{{dmarcRecords}}}
 
         Tu Tarea (en español):
-        1. Compara los registros encontrados con la configuración ideal. Un registro es "unverified" si existe pero no cumple con la configuración ideal (ej., DMARC tiene p=quarantine, o hay múltiples registros SPF).
+        1. Compara rigurosamente los registros encontrados con la configuración ideal. Un registro es "unverified" si existe pero no cumple con CUALQUIERA de las reglas (sintaxis, valores requeridos, unicidad, etc.).
         2. Determina el estado de cada registro (verified, unverified, not-found).
         3. Proporciona un análisis breve y claro en 'analysis'. Si todo es correcto, felicita al usuario. Si algo está mal, explica el problema específico y cómo solucionarlo de forma sencilla.
-        4. Al mencionar el valor DKIM en tu análisis, NUNCA muestres la clave pública completa. Muestra solo el inicio y el final, así: "v=DKIM1; k=rsa; p=MIIBIjAN...QAB".
+        4. Al mencionar el valor DKIM en tu análisis, NUNCA muestres la clave pública completa. Muestra solo el inicio, así: "v=DKIM1; k=rsa; p=MIIBIjA...".
         `
     });
 
