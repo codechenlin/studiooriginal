@@ -7,7 +7,6 @@ import {
 } from '@/ai/flows/send-test-email-flow';
 import { z } from 'zod';
 
-// Zod schema for input validation, moved here from the flow file.
 const SendTestEmailInputSchema = z.object({
   host: z.string(),
   port: z.number(),
@@ -25,11 +24,7 @@ export async function sendTestEmailAction(input: SendTestEmailInput) {
   try {
     const validatedInput = SendTestEmailInputSchema.parse(input);
     const result = await sendTestEmail(validatedInput);
-    if (result.success) {
-      return { success: true, data: result.messageId };
-    } else {
-      return { success: false, error: result.error };
-    }
+    return result;
   } catch (error) {
     console.error('Send test email action error:', error);
     const errorMessage =
@@ -37,3 +32,5 @@ export async function sendTestEmailAction(input: SendTestEmailInput) {
     return { success: false, error: errorMessage };
   }
 }
+
+    

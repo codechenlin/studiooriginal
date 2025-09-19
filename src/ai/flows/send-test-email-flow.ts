@@ -55,6 +55,10 @@ const sendTestEmailFlow = ai.defineFlow(
           user: input.auth.user,
           pass: input.auth.pass,
         },
+        tls: {
+            // do not fail on invalid certs
+            rejectUnauthorized: false
+        }
       });
 
       // Verify connection configuration
@@ -80,8 +84,8 @@ const sendTestEmailFlow = ai.defineFlow(
       let errorMessage = 'Ocurrió un error desconocido.';
       if (error.code === 'EAUTH') {
         errorMessage = 'Autenticación fallida. Revisa tu usuario y contraseña.';
-      } else if (error.code === 'ECONNECTION') {
-         errorMessage = 'No se pudo conectar al servidor. Revisa el host y el puerto.';
+      } else if (error.code === 'ECONNREFUSED') {
+         errorMessage = 'Conexión rechazada. Revisa el host, el puerto y la configuración de seguridad (TLS/SSL).';
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -93,3 +97,5 @@ const sendTestEmailFlow = ai.defineFlow(
     }
   }
 );
+
+    

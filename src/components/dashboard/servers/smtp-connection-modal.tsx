@@ -544,7 +544,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                      {showNotification && (
                                         <div 
                                             className="absolute -top-2 -right-2 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
-                                            style={{ backgroundColor: (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified' ? '#00CB07' : '#F00000' }}
+                                            style={{ backgroundColor: '#F00000' }}
                                         >
                                             1
                                         </div>
@@ -755,11 +755,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
 
                          {healthCheckStep === 'optional' && (
-                            <>
-                                <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
-                                    Siguiente <ArrowRight className="ml-2"/>
-                                </Button>
-                            </>
+                             <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
+                                Siguiente <ArrowRight className="ml-2"/>
+                            </Button>
                          )}
                         </div>
                     )}
@@ -770,7 +768,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                  Finalizar y Guardar
                              </Button>
                          ) : (
-                             <Button onClick={form.handleSubmit(onSubmitSmtp)} className="w-full h-12 text-base" disabled={testStatus === 'testing'}>
+                             <Button onClick={form.handleSubmit(onSubmitSmtp)} className="w-full h-12 text-base hover:bg-[#00CB07] hover:text-white" disabled={testStatus === 'testing'}>
                                  {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
                              </Button>
                          )}
@@ -902,7 +900,7 @@ function DnsInfoModal({
 
     const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
     
-    const infoMap: Record<InfoViewRecord, { title: string, description: string }> = {
+    const infoMap: Record<InfoViewRecord, { title: string, description: string }}> = {
       spf: {
         title: "Registro SPF",
         description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
@@ -1161,3 +1159,5 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     );
 }
 
+
+    

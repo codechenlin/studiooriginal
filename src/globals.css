@@ -202,7 +202,7 @@ body {
       transition: background-color 0.3s, border-color 0.3s;
     }
     .ai-core-button:hover {
-        background: #00BFFF;
+        background: #00ADEC;
     }
 
     .ai-core-button .ai-core-border-animation,
@@ -379,3 +379,5 @@ body {
       animation: button-scan 2s linear infinite;
     }
 }
+
+    
