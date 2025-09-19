@@ -71,42 +71,52 @@ const dnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
-        prompt: `Analiza y verifica únicamente los registros DNS de tipo TXT para los siguientes tipos: SPF, DKIM, DMARC. Ignora cualquier otro tipo de registro DNS y no respondas sobre ellos. Tu respuesta DEBE ser en español.
+        prompt: `Tu única tarea es analizar los registros DNS de tipo TXT para SPF, DKIM y DMARC. Ignora cualquier otro registro. Si un registro es CNAME, márcalo como fallo. Responde en español.
 
-        Registros DNS Encontrados:
-        - Registros TXT encontrados en {{domain}}: {{{spfRecords}}}
-        - Registros TXT encontrados en daybuu._domainkey.{{domain}}: {{{dkimRecords}}}
-        - Registros TXT encontrados en _dmarc.{{domain}}: {{{dmarcRecords}}}
-        
-        Reglas de verificación por tipo:
-        
-        1. SPF
-        - El Host/Nombre debe ser @.
-        - Para que un registro TXT sea considerado SPF, DEBE comenzar con "v=spf1". Si no, ignóralo por completo.
-        - Una vez identificado un registro SPF:
+        Registros DNS encontrados para el dominio {{domain}}:
+        - Registros TXT en {{domain}}: {{{spfRecords}}}
+        - Registros TXT en daybuu._domainkey.{{domain}}: {{{dkimRecords}}}
+        - Registros TXT en _dmarc.{{domain}}: {{{dmarcRecords}}}
+
+        Sigue estas reglas estrictamente:
+
+        1. SPF:
+        - Identificación: Busca registros TXT en {{domain}} que empiecen EXACTAMENTE con "v=spf1". Si ninguno lo hace, el estado es "not-found".
+        - Unicidad: SOLO puede existir UN registro SPF. Si encuentras más de uno que empiece con "v=spf1", es un error grave y el estado es "unverified".
+        - Verificación de Contenido:
+            - El Host/Nombre debe ser @.
             - Debe contener la cadena "include:_spf.daybuu.com".
             - Debe terminar EXACTAMENTE con "-all".
-            - No puede existir más de UN registro SPF por dominio. Si hay más de uno, es un error grave.
-            - Puede contener otros mecanismos como 'include:', 'ip4:', 'a:', 'mx:'. Esto es correcto y se llama unificar. No lo marques como error. Simplemente verifica que nuestro 'include' esté presente.
-        
-        2. DKIM
-        - Puede haber varios registros en el mismo dominio, cada uno con un selector diferente. No se unifican.
-        - Verifica que el Host/Nombre sea exactamente "daybuu._domainkey.{{domain}}".
-        - El valor del registro debe ser exactamente: "{{dkimPublicKey}}". Verifica que contenga "v=DKIM1;", "k=rsa;", y que la clave pública en "p=" coincida.
-        
-        3. DMARC
-        - Solo puede existir un registro DMARC por dominio.
-        - El Host/Nombre debe ser "_dmarc".
-        - El valor del registro debe contener "v=DMARC1;", "p=reject;", "pct=100;", y "sp=reject;".
-        - La etiqueta 'aspf' debe tener un valor de 's' (estricto) o 'r' (relajado).
-        - La etiqueta 'adkim' debe tener un valor de 's' (estricto) o 'r' (relajado).
+            - Puede contener otros mecanismos como 'a:', 'mx:', 'ip4:', 'ip6:', 'include:'. Esto es correcto y no es un error.
+            - El número total de mecanismos (include, a, mx, etc.) no debe exceder los 8.
+        - Estado: Si cumple todas las reglas, es "verified". Si existe pero falla en CUALQUIER regla (sintaxis, contenido, unicidad, etc.), es "unverified".
 
-        Tu Tarea (en español):
-        1. Para SPF: Primero, filtra la lista de registros en {{domain}} y quédate solo con los que empiezan con "v=spf1". Ignora todos los demás. Luego, aplica las reglas de verificación a los que quedaron.
-        2. Compara rigurosamente los registros encontrados (SPF, DKIM, DMARC) con la configuración ideal. Un registro es "unverified" si existe pero no cumple con CUALQUIERA de las reglas (sintaxis, valores requeridos, unicidad, etc.).
-        3. Determina el estado de cada registro (verified, unverified, not-found).
-        4. Proporciona un análisis breve y claro en 'analysis'. Si todo es correcto, felicita al usuario. Si algo está mal, explica el problema específico y cómo solucionarlo de forma sencilla.
-        5. Al mencionar el valor DKIM en tu análisis, NUNCA muestres la clave pública completa. Muestra solo el inicio, así: "v=DKIM1; k=rsa; p=MIIBIjA...".`
+        2. DKIM:
+        - Identificación: Busca registros TXT en daybuu._domainkey.{{domain}}.
+        - Unicidad: Puede haber varios, pero para nuestra verificación, nos centramos en el selector 'daybuu'.
+        - Verificación de Contenido:
+            - El Host/Nombre debe ser "daybuu._domainkey.{{domain}}".
+            - El valor debe contener "v=DKIM1;", "k=rsa;", y "p={{dkimPublicKey}}". Verifica que la clave pública coincida exactamente.
+        - Estado: Si el registro para el selector 'daybuu' existe y es correcto, es "verified". Si existe pero es incorrecto, "unverified". Si no existe, "not-found".
+        
+        3. DMARC:
+        - Identificación: Busca registros TXT en _dmarc.{{domain}}.
+        - Unicidad: SOLO puede existir UN registro DMARC. Si hay más de uno, es "unverified".
+        - Verificación de Contenido:
+            - El Host/Nombre debe ser "_dmarc".
+            - El valor debe contener "v=DMARC1;".
+            - Debe contener "p=reject;".
+            - Debe contener "pct=100;".
+            - Debe contener "sp=reject;".
+            - 'aspf' debe ser 's' o 'r'.
+            - 'adkim' debe ser 's' o 'r'.
+        - Estado: Si cumple todas las reglas, "verified". Si existe pero falla en alguna, "unverified". Si no existe, "not-found".
+
+        Análisis Final (en 'analysis'):
+        - Sé conciso y directo.
+        - Si todo está correcto, felicita al usuario.
+        - Si algo está mal, explica el problema específico (ej. "Tienes dos registros SPF, debes unificarlos en uno solo") y cómo solucionarlo.
+        - Al mencionar el valor DKIM, NUNCA muestres la clave pública completa. Usa este formato: "v=DKIM1; k=rsa; p=MIIBIjA...".`
     });
 
     const { output } = await expertPrompt({
