@@ -71,7 +71,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
-        prompt: `Instrucción para la IA: Analiza un registro TXT de un dominio y determina si es un registro SPF válido siguiendo estas reglas estrictas. Responde en español y usa emojis para hacer la respuesta más amigable (ej. ✅, ❌, ⚠️).
+        prompt: `Instrucción para la IA: Tu única tarea es analizar los registros TXT para SPF, DKIM y DMARC. Ignora CUALQUIER otro registro TXT (como verificaciones de Google, etc.). Si un registro es CNAME, márcalo como fallo. Siempre, sin excepción, responde en español y utiliza emojis para hacer el análisis más amigable y visual (ej. ✅, ❌, ⚠️).
 
         Registros DNS encontrados para el dominio {{domain}}:
         - Registros TXT en {{domain}}: {{{spfRecords}}}
@@ -112,12 +112,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
         - Host/Nombre debe ser "_dmarc".
         - El valor debe contener: "v=DMARC1;", "p=reject;", "pct=100;", "sp=reject;".
         - "aspf" debe tener valor "s" (para dominio principal) o "r" (para subdominio).
-        - "adkim" debe tener valor "s" (para dominio principal) o "r" (para subdominio).
-
-        Instrucciones Adicionales:
-        - No analices ni respondas sobre registros TXT que no sean para SPF, DKIM o DMARC (ej. google-site-verification, etc).
-        - Indica claramente si cada registro cumple o no y explica qué falta o está mal.
-        - Si un registro es CNAME para estos casos, márcalo como fallo.`
+        - "adkim" debe tener valor "s" (para dominio principal) o "r" (para subdominio).`
     });
 
     const { output } = await expertPrompt({

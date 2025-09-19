@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -1175,12 +1175,18 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                         </div>
                     </DialogTitle>
                 </DialogHeader>
-                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                <div className="z-10 my-4 p-3 border border-amber-400/30 bg-amber-500/10 rounded-lg flex items-center gap-3">
+                    <AlertCircle className="size-8 text-amber-400 shrink-0" />
+                    <p className="text-xs text-amber-200/90">
+                        <strong>¡Atención!</strong> La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas. Si acabas de hacer un cambio, un nuevo análisis podría mostrar "falsos duplicados" hasta que la propagación se complete.
+                    </p>
+                </div>
+                 <ScrollArea className="max-h-[50vh] z-10 -mx-6 px-6">
                      <div className="py-4 text-cyan-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-cyan-400/10 custom-scrollbar break-words">
                         {analysis ? analysis : "No hay análisis disponible en este momento. Por favor, ejecuta el escaneo de nuevo."}
                     </div>
                 </ScrollArea>
-                <DialogFooter className="z-10">
+                <DialogFooter className="z-10 pt-4">
                     <Button 
                         onClick={() => onOpenChange(false)} 
                         className="text-white bg-green-800 hover:bg-[#00CB07]"
@@ -1192,4 +1198,3 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
-

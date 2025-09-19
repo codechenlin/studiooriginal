@@ -76,7 +76,7 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'optionalDnsHealthExpertPrompt',
         output: { schema: OptionalDnsHealthOutputSchema },
-        prompt: `Instrucción para la IA: Analiza y verifica únicamente los registros DNS para MX, BIMI y VMC. Ignora cualquier otro tipo de registro. Si un registro es de tipo CNAME, márcalo como fallo. Responde en español y usa emojis (✅, ❌, ⚠️).
+        prompt: `Instrucción para la IA: Tu única tarea es analizar y verificar los registros DNS para MX, BIMI y VMC. Ignora cualquier otro tipo de registro. Si un registro es de tipo CNAME, márcalo como fallo. Siempre, sin excepción, responde en español y utiliza emojis para hacer el análisis más amigable y visual (ej. ✅, ❌, ⚠️).
 
         Registros DNS encontrados para el dominio {{domain}}:
         - Registros MX en {{domain}}: {{{mxRecords}}}
