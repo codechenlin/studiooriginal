@@ -160,7 +160,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       if (result.success && result.data) {
         setDnsAnalysis(result.data);
         const hasError = result.data.spfStatus !== 'verified' || result.data.dkimStatus !== 'verified' || result.data.dmarcStatus !== 'verified';
-        setShowNotification(hasError);
+        if (hasError) {
+          setShowNotification(true);
+        }
       } else {
           toast({
               title: "Análisis Fallido",
@@ -194,7 +196,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
     setHealthCheckStatus('verifying');
     await Promise.all([
-      checkRecord('@', 'MX', 'foxmiu.email', 'mx'),
+      checkRecord('@', 'MX', 'daybuu.com', 'mx'),
       checkRecord('default._bimi', 'BIMI', 'v=BIMI1;', 'bimi'),
       checkRecord('default._bimi', 'VMC', 'a=', 'vmc')
     ]);
@@ -754,13 +756,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             )}
                          
                          {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
-                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setHealthCheckStep('optional')}>
+                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base" onClick={() => setHealthCheckStep('optional')}>
                                 Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
                             </Button>
                          )}
 
                          {healthCheckStep === 'optional' && (
-                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
+                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
                                 Siguiente <ArrowRight className="ml-2"/>
                             </Button>
                          )}
@@ -773,7 +775,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                  Finalizar y Guardar
                              </Button>
                          ) : (
-                             <Button onClick={form.handleSubmit(onSubmitSmtp)} className="w-full h-12 text-base bg-[#2a004f] hover:bg-[#00CB07] hover:text-white" disabled={testStatus === 'testing'}>
+                             <Button onClick={form.handleSubmit(onSubmitSmtp)} className="w-full h-12 text-base bg-[#2a004f] hover:bg-[#00CB07] text-white" disabled={testStatus === 'testing'}>
                                  {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
                              </Button>
                          )}
@@ -806,9 +808,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     } else if (currentStep === 3) {
       if (healthCheckStatus === 'verifying') { status = 'processing'; text = 'ANALIZANDO REGISTROS';
       } else if (healthCheckStatus === 'verified') {
-          const {spfStatus, dkimStatus, dmarcStatus} = (dnsAnalysis as DnsHealthOutput) || {};
-          const hasError = spfStatus !== 'verified' || dkimStatus !== 'verified' || dmarcStatus !== 'verified';
           if (healthCheckStep === 'mandatory') {
+            const {spfStatus, dkimStatus, dmarcStatus} = (dnsAnalysis as DnsHealthOutput) || {};
+            const hasError = spfStatus !== 'verified' || dkimStatus !== 'verified' || dmarcStatus !== 'verified';
             status = hasError ? 'error' : 'success';
             text = hasError ? 'REGISTROS REQUIEREN ATENCIÓN' : 'REGISTROS OBLIGATORIOS OK';
           } else {
@@ -873,6 +875,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         onCopy={handleCopy}
         dkimData={dkimData}
         isGeneratingDkim={isGeneratingDkim}
+        onRegenerateDkim={handleGenerateDkim}
       />
       <AiAnalysisModal 
         isOpen={isAnalysisModalOpen}
@@ -892,6 +895,7 @@ function DnsInfoModal({
   onCopy,
   dkimData,
   isGeneratingDkim,
+  onRegenerateDkim,
 }: {
   recordType: InfoViewRecord | null,
   domain: string,
@@ -900,6 +904,7 @@ function DnsInfoModal({
   onCopy: (text: string) => void,
   dkimData: DkimGenerationOutput | null,
   isGeneratingDkim: boolean,
+  onRegenerateDkim: () => void;
 }) {
     if(!recordType) return null;
 
@@ -984,6 +989,10 @@ function DnsInfoModal({
                     <Button size="icon" variant="ghost" className="shrink-0 self-start size-6 -mr-2 flex-shrink-0" onClick={() => onCopy(dkimData.publicKeyRecord)}><Copy className="size-4"/></Button>
                     </div>
                 </div>
+                <Button onClick={onRegenerateDkim} disabled={isGeneratingDkim} className="w-full mt-2" style={{backgroundColor: '#00ADEC'}}>
+                  {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
+                  Generar Nueva Clave
+                </Button>
                 </motion.div>
             ) : (
                 <div className="flex items-center justify-center p-4">
@@ -1015,6 +1024,18 @@ function DnsInfoModal({
                     <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
                     </div>
                 </div>
+                <div className="text-xs text-cyan-300/80 p-3 mt-2 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-1">
+                    <p className="font-bold mb-1">Explicación de cada parte:</p>
+                    <p><strong className="text-white/90">v=DMARC1</strong> → Versión del protocolo DMARC.</p>
+                    <p><strong className="text-white/90">p=reject</strong> → Rechaza cualquier correo que no pase SPF o DKIM alineados.</p>
+                    <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100% de los correos.</p>
+                    <p><strong className="text-white/90">rua=...</strong> → Dirección para recibir reportes agregados (estadísticas).</p>
+                    <p><strong className="text-white/90">ruf=...</strong> → Dirección para recibir reportes forenses (detalles de fallos).</p>
+                    <p><strong className="text-white/90">sp=reject</strong> → Aplica la misma política estricta a subdominios.</p>
+                    <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta (el dominio debe coincidir).</p>
+                    <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta (el dominio debe coincidir).</p>
+                </div>
+                <p className="text-xs text-muted-foreground pt-2">Es crucial usar un registro DMARC estricto en su dominio ya que asi evitara por completo suplantaciones y que sus correo enviado se etiqueten como spam mejorando tu marca.</p>
             </div>
         );
     }
@@ -1163,4 +1184,3 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
-
