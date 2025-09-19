@@ -80,7 +80,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
             - Host/Nombre: @
             - Debe existir solo UN registro SPF. Si hay más de uno, es un error grave.
             - Valor del Registro debe contener las 3 cadenas siguientes: "v=spf1", "include:_spf.daybuu.com", y "-all".
-            - Debes analizar la sintaxis completa. Si un usuario tiene otros servicios, aconséjale unificar los 'include' en un solo registro. Ejemplo: 'v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all'
+            - Debes analizar la sintaxis completa. Si un usuario tiene otros servicios (múltiples "include:", "ip4:", "ip6:", "a:", "mx:"), aconséjale unificar todo en un solo registro. Ejemplo: 'v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all'
 
         - Registro DKIM:
             - Host/Nombre: daybuu._domainkey.{{domain}}

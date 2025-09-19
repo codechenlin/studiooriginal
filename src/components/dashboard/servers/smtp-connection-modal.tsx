@@ -594,7 +594,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
                      <Button
-                        className="w-full h-12 text-base bg-[#2a004f] hover:bg-[#AD00EC] text-white"
+                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white"
                         onClick={handleStartVerification}
                         disabled={!domain}
                       >
@@ -760,7 +760,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
 
                          {healthCheckStep === 'optional' && (
-                             <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
+                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white" onClick={() => setCurrentStep(4)}>
                                 Siguiente <ArrowRight className="ml-2"/>
                             </Button>
                          )}
@@ -773,7 +773,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                  Finalizar y Guardar
                              </Button>
                          ) : (
-                             <Button onClick={form.handleSubmit(onSubmitSmtp)} className="w-full h-12 text-base hover:bg-[#00CB07] hover:text-white" disabled={testStatus === 'testing'}>
+                             <Button onClick={form.handleSubmit(onSubmitSmtp)} className="w-full h-12 text-base bg-[#2a004f] hover:bg-[#00CB07] hover:text-white" disabled={testStatus === 'testing'}>
                                  {testStatus === 'testing' ? <><Loader2 className="mr-2 animate-spin"/> Probando...</> : <><TestTube2 className="mr-2"/> Probar Conexión</>}
                              </Button>
                          )}
@@ -1011,7 +1011,7 @@ function DnsInfoModal({
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90">Valor del Registro:</p>
                     <div className="w-full flex justify-between items-start">
-                    <span className="break-all pr-2">{recordValue.replace(`reportes@${domain}`, '...')}</span>
+                    <p className="break-all pr-2">{recordValue}</p>
                     <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
                     </div>
                 </div>
@@ -1035,7 +1035,7 @@ function DnsInfoModal({
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Valor/Destino:</p>
-          <div className="w-full flex justify-between items-center"><span className="truncate">foxmiu.email</span><Button size="icon" variant="ghost" onClick={() => onCopy('foxmiu.email')}><Copy className="size-4"/></Button></div>
+          <div className="w-full flex justify-between items-center"><span className="truncate">daybuu.com</span><Button size="icon" variant="ghost" onClick={() => onCopy('daybuu.com')}><Copy className="size-4"/></Button></div>
         </div>
       </div>
     );
@@ -1164,5 +1164,3 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     );
 }
 
-
-    
