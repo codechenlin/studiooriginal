@@ -76,12 +76,13 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'optionalDnsHealthExpertPrompt',
         output: { schema: OptionalDnsHealthOutputSchema },
-        prompt: `Eres un experto en DNS y entregabilidad de correo electrónico. Tu respuesta DEBE ser en español. Analiza los siguientes registros DNS opcionales para el dominio {{domain}}.
+        prompt: `Eres un experto en DNS y entregabilidad de correo electrónico. Tu respuesta DEBE ser en español.
+        Tu única tarea es analizar los registros opcionales MX, BIMI y VMC para el dominio {{domain}}. Ignora cualquier otro registro.
 
         Configuración Ideal Esperada:
-        - Registro MX: Debe existir al menos un registro MX que apunte a "foxmiu.email".
-        - Registro BIMI: Debe ser un registro TXT en "default._bimi.{{domain}}" que contenga "v=BIMI1;".
-        - Registro VMC para BIMI: El registro TXT de BIMI también debe contener una etiqueta "a=" que apunte a un certificado VMC.
+        - Registro MX: Puede haber múltiples registros MX. El estado es "verified" si al menos uno apunta a "foxmiu.email".
+        - Registro BIMI: Debe ser un registro TXT en "default._bimi.{{domain}}" que contenga "v=BIMI1;". Solo puede haber un registro BIMI para el selector "default".
+        - Registro VMC para BIMI: Para que un VMC sea válido, el mismo registro TXT de BIMI también debe contener una etiqueta "a=" que apunte a un certificado VMC.
 
         Registros DNS Encontrados:
         - Registros MX encontrados en {{domain}}: {{{mxRecords}}}
@@ -90,10 +91,10 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
         Tu Tarea (en español):
         1. Compara los registros encontrados con la configuración ideal.
         2. Determina el estado de cada registro (verified, unverified, not-found).
-           - MX es "verified" si "foxmiu.email" está presente.
-           - BIMI es "verified" si "v=BIMI1;" está presente.
-           - VMC es "verified" si "v=BIMI1;" Y "a=" están presentes en el mismo registro.
-        3. Proporciona un análisis breve y claro en 'analysis'. Explica el propósito de cada registro opcional y, si alguno está mal, cómo solucionarlo.
+           - MX es "verified" si "foxmiu.email" está presente en al menos un registro.
+           - BIMI es "verified" si "v=BIMI1;" está presente en el registro. Es "unverified" si existe el registro pero no contiene esta etiqueta.
+           - VMC es "verified" si el registro contiene "v=BIMI1;" Y una etiqueta "a=". Es "unverified" si tiene BIMI pero no la etiqueta "a=".
+        3. Proporciona un análisis breve y claro en 'analysis'. Explica el propósito de cada registro opcional y, si alguno está mal o falta, cómo solucionarlo.
         `
     });
 

@@ -71,12 +71,13 @@ const dnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
-        prompt: `Eres un experto en DNS y entregabilidad de correo electrónico. Tu respuesta DEBE ser en español. Analiza los siguientes registros DNS para el dominio {{domain}}.
+        prompt: `Eres un experto en DNS y entregabilidad de correo electrónico. Tu respuesta DEBE ser en español.
+        Tu única tarea es analizar los registros SPF, DKIM y DMARC para el dominio {{domain}}. Ignora por completo cualquier otro registro TXT que no sea para SPF, DKIM o DMARC (ej. verificaciones de Google, Yandex, Bing, etc).
 
         Configuración Ideal Esperada:
-        - Registro SPF: Debe ser un registro TXT que contenga "include:_spf.foxmiu.email".
-        - Registro DKIM: Debe ser un registro TXT en "foxmiu._domainkey.{{domain}}" con el valor exacto de "{{dkimPublicKey}}".
-        - Registro DMARC: Debe ser un registro TXT en "_dmarc.{{domain}}" que contenga la etiqueta "p=reject". Una política de "quarantine" o "none" no es suficientemente segura y debe marcarse como no verificada.
+        - Registro SPF: Debe ser un registro TXT en el dominio raíz que contenga "include:_spf.foxmiu.email". Solo puede haber un registro SPF. Si hay más de uno, es un error.
+        - Registro DKIM: Debe ser un registro TXT en "foxmiu._domainkey.{{domain}}" con el valor exacto de "{{dkimPublicKey}}". Un dominio puede tener múltiples registros DKIM con diferentes selectores; tu trabajo es verificar únicamente el que corresponde a "foxmiu".
+        - Registro DMARC: Debe ser un registro TXT en "_dmarc.{{domain}}" que contenga la etiqueta "p=reject". Una política de "quarantine" o "none" no es suficientemente segura y debe marcarse como no verificada. Solo puede haber un registro DMARC.
 
         Registros DNS Encontrados:
         - Registros encontrados en {{domain}} (para SPF): {{{spfRecords}}}
@@ -84,9 +85,10 @@ const dnsHealthCheckFlow = ai.defineFlow(
         - Registros encontrados en _dmarc.{{domain}} (para DMARC): {{{dmarcRecords}}}
 
         Tu Tarea (en español):
-        1. Compara los registros encontrados con la configuración ideal.
-        2. Determina el estado de cada registro (verified, unverified, not-found). Un registro es "unverified" si existe pero no cumple con la configuración ideal (ej., DMARC tiene p=quarantine).
+        1. Compara los registros encontrados con la configuración ideal. Un registro es "unverified" si existe pero no cumple con la configuración ideal (ej., DMARC tiene p=quarantine, o hay múltiples registros SPF).
+        2. Determina el estado de cada registro (verified, unverified, not-found).
         3. Proporciona un análisis breve y claro en 'analysis'. Si todo es correcto, felicita al usuario. Si algo está mal, explica el problema específico y cómo solucionarlo de forma sencilla.
+        4. Al mencionar el valor DKIM en tu análisis, NUNCA muestres la clave pública completa. Muestra solo el inicio y el final, así: "v=DKIM1; k=rsa; p=MIIBIjAN...QAB".
         `
     });
 
