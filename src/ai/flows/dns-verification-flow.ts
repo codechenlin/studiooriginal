@@ -71,59 +71,53 @@ const dnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
-        prompt: `Tu única tarea es analizar los registros DNS de tipo TXT para SPF, DKIM y DMARC. Ignora cualquier otro registro. Si un registro es CNAME, márcalo como fallo. Responde en español.
+        prompt: `Instrucción para la IA: Analiza un registro TXT de un dominio y determina si es un registro SPF válido siguiendo estas reglas estrictas. Responde en español y usa emojis para hacer la respuesta más amigable (ej. ✅, ❌, ⚠️).
 
         Registros DNS encontrados para el dominio {{domain}}:
         - Registros TXT en {{domain}}: {{{spfRecords}}}
         - Registros TXT en daybuu._domainkey.{{domain}}: {{{dkimRecords}}}
         - Registros TXT en _dmarc.{{domain}}: {{{dmarcRecords}}}
 
-        Sigue estas reglas estrictamente:
+        Reglas de verificación por tipo:
 
-        1.  Verificación de SPF:
-            *   Paso 1: Identificación.
-                *   Busca registros TXT en {{domain}} que empiecen EXACTAMENTE con "v=spf1". Si ninguno lo hace, el estado es "not-found".
-            *   Paso 2: Unicidad.
-                *   SOLO puede existir UN registro SPF. Si encuentras más de uno que empiece con "v=spf1", es un error grave y el estado es "unverified". En tu análisis, explica que deben unificarse.
-            *   Paso 3: Verificación de Contenido y Estructura.
-                *   Host/Nombre: Debe ser @.
-                *   Contenido Requerido: Debe contener la cadena "include:_spf.daybuu.com".
-                *   Final Requerido: Debe terminar EXACTAMENTE con "-all". Un final con ~all o ?all es sintácticamente válido pero no ideal; debes marcarlo como advertencia que requiere mejora, pero no un fallo total si todo lo demás es correcto.
-                *   Sintaxis General: Analiza que la estructura sea lógica. Puede contener otros mecanismos como 'a:', 'mx:', 'ip4:', 'ip6:', y otros 'include:'. Esto es correcto.
-            *   Paso 4: Verificación del Límite de Búsquedas DNS (Regla Crucial).
-                *   Cuenta el número total de mecanismos que implican una búsqueda DNS: 'include', 'a', 'mx', 'exists', y 'redirect'.
-                *   El número total de estos mecanismos NO DEBE EXCEDER 10.
-                *   Si el recuento total supera 10, el registro es inválido y el estado es "unverified". Explica en tu análisis: "El registro SPF es inválido porque supera el límite de 10 búsquedas DNS. Esto suele ocurrir al incluir servicios complejos. El usuario debe simplificar sus mecanismos para cumplir el límite."
-            *   Paso 5: Estado Final.
-                *   'verified': Si cumple TODAS las reglas (unicidad, contenido, final y límite de 10 búsquedas).
-                *   'unverified': Si falla en CUALQUIER regla.
+        1. SPF
+        - Identificación del registro SPF:
+          - Si no existe ningún registro TXT que comience con "v=spf1", ignóralo y marca el estado como "not-found".
+          - Si sí comienza con "v=spf1", procede a la verificación.
+        - Validación estructural:
+          - Analiza la sintaxis y estructura completa para detectar si el registro está mal formado, incluso si contiene las cadenas correctas.
+          - Solo puede existir un registro SPF por dominio. Si hay más de uno que comience con "v=spf1", la verificación falla y debes explicar que deben unificarse.
+        - Reglas de validación de contenido:
+          - El registro debe comenzar con "v=spf1" como primera cadena.
+          - El registro debe contener la cadena "include:_spf.daybuu.com" en cualquier posición.
+          - El registro debe terminar con "-all" como última cadena.
+          - Puede incluir otros mecanismos como "include:", "ip4:", "ip6:", "a", "mx". Estos no son un error.
+        - Límite de Búsquedas DNS:
+          - Si al analizar el registro SPF detectas que supera el límite de 10 búsquedas DNS (mecanismos como include, a, mx, exists, redirect), el registro es inválido. Debes explicar al usuario de forma clara y sencilla:
+            - Motivo del fallo: El estándar SPF (RFC 7208) establece un máximo de 10 búsquedas DNS para evitar sobrecarga. Todos los servidores de correo aplican este límite.
+            - Ejemplo: "Imagina que el límite de 10 búsquedas es como una mochila con 10 espacios. Google Workspace, con su 'include:_spf.google.com', ya usa 8 o 9 espacios. Si añades otro servicio, la mochila se rompe y el SPF falla."
+            - Dato adicional: "Algunos servicios como Google Workspace, Microsoft 365 o Salesforce son “devoradores” de búsquedas DNS."
+        - Resultado esperado:
+          - Considera "verificado con éxito" cualquier registro SPF que cumpla todas las reglas, incluso si incluye otros servicios, siempre que "include:_spf.daybuu.com" esté presente y no se superen los límites.
 
-        2. DKIM:
-        - Identificación: Busca registros TXT en daybuu._domainkey.{{domain}}.
-        - Unicidad: Puede haber varios, pero para nuestra verificación, nos centramos en el selector 'daybuu'.
-        - Verificación de Contenido:
-            - El Host/Nombre debe ser "daybuu._domainkey.{{domain}}".
-            - El valor debe contener "v=DKIM1;", "k=rsa;", y "p={{dkimPublicKey}}". Verifica que la clave pública coincida exactamente.
-        - Estado: Si el registro para el selector 'daybuu' existe y es correcto, es "verified". Si existe pero es incorrecto, "unverified". Si no existe, "not-found".
-        
-        3. DMARC:
-        - Identificación: Busca registros TXT en _dmarc.{{domain}}.
-        - Unicidad: SOLO puede existir UN registro DMARC. Si hay más de uno, es "unverified".
-        - Verificación de Contenido:
-            - El Host/Nombre debe ser "_dmarc".
-            - El valor debe contener "v=DMARC1;".
-            - Debe contener "p=reject;".
-            - Debe contener "pct=100;".
-            - Debe contener "sp=reject;".
-            - 'aspf' debe ser 's' o 'r'.
-            - 'adkim' debe ser 's' o 'r'.
-        - Estado: Si cumple todas las reglas, "verified". Si existe pero falla en alguna, "unverified". Si no existe, "not-found".
+        2. DKIM
+        - Verificar que el Host/Nombre sea "daybuu._domainkey".
+        - Puede haber varios registros DKIM en el mismo dominio, cada uno con un selector diferente. No se unifican. Nos enfocamos solo en el selector 'daybuu'.
+        - El valor debe contener: "v=DKIM1;", "k=rsa;", y "p={{dkimPublicKey}}".
+        - Confirma que la clave pública coincide con la generada por el proyecto.
+        - Si respondes al usuario con el registro DKIM, muestra solo el inicio así: "v=DKIM1; k=rsa; p=MIIBIjA...".
 
-        Análisis Final (en 'analysis'):
-        - Sé conciso y directo.
-        - Si todo está correcto, felicita al usuario.
-        - Si algo está mal, explica el problema específico (ej. "Tienes dos registros SPF, debes unificarlos en uno solo") y cómo solucionarlo.
-        - Al mencionar el valor DKIM, NUNCA muestres la clave pública completa. Usa este formato: "v=DKIM1; k=rsa; p=MIIBIjA...".`
+        3. DMARC
+        - Solo un registro por dominio.
+        - Host/Nombre debe ser "_dmarc".
+        - El valor debe contener: "v=DMARC1;", "p=reject;", "pct=100;", "sp=reject;".
+        - "aspf" debe tener valor "s" (para dominio principal) o "r" (para subdominio).
+        - "adkim" debe tener valor "s" (para dominio principal) o "r" (para subdominio).
+
+        Instrucciones Adicionales:
+        - No analices ni respondas sobre registros TXT que no sean para SPF, DKIM o DMARC (ej. google-site-verification, etc).
+        - Indica claramente si cada registro cumple o no y explica qué falta o está mal.
+        - Si un registro es CNAME para estos casos, márcalo como fallo.`
     });
 
     const { output } = await expertPrompt({
@@ -141,3 +135,5 @@ const dnsHealthCheckFlow = ai.defineFlow(
     return output;
   }
 );
+
+    

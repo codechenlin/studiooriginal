@@ -76,35 +76,34 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'optionalDnsHealthExpertPrompt',
         output: { schema: OptionalDnsHealthOutputSchema },
-        prompt: `Tu única tarea es analizar los registros DNS para MX, BIMI y VMC. Ignora cualquier otro registro. Si un registro es CNAME, márcalo como fallo. Responde en español.
+        prompt: `Instrucción para la IA: Analiza y verifica únicamente los registros DNS para MX, BIMI y VMC. Ignora cualquier otro tipo de registro. Si un registro es de tipo CNAME, márcalo como fallo. Responde en español y usa emojis (✅, ❌, ⚠️).
 
         Registros DNS encontrados para el dominio {{domain}}:
         - Registros MX en {{domain}}: {{{mxRecords}}}
         - Registros TXT en default._bimi.{{domain}} (para BIMI y VMC): {{{bimiRecords}}}
 
-        Sigue estas reglas estrictamente:
+        Reglas de verificación por tipo:
 
-        1. MX:
-        - Puede haber múltiples registros MX.
-        - Host/Nombre debe ser @.
-        - Para ser "verified", al menos UN registro debe apuntar a "daybuu.com" con prioridad 0.
-        - Si existen registros MX pero ninguno cumple la condición, es "unverified". Si no hay registros MX, "not-found".
+        1. MX
+        - Puede haber múltiples registros MX en el mismo dominio. No se unifican.
+        - Host/Nombre debe ser "@".
+        - Para ser verificado, al menos un registro debe tener el valor "daybuu.com" con prioridad 0.
 
-        2. BIMI:
-        - Puede haber varios registros con diferentes selectores, pero nos enfocamos en 'default._bimi'.
-        - El Host/Nombre debe ser "default._bimi.{{domain}}".
-        - El valor del registro TXT debe contener "v=BIMI1;" y "l=https:".
-        - Estado: "verified" si cumple, "unverified" si existe pero no cumple, "not-found" si no existe.
+        2. BIMI
+        - Puede haber varios registros BIMI en el mismo dominio, cada uno con un selector diferente. Nos enfocamos en 'default._bimi'.
+        - No se unifican.
+        - Solo se permite un logotipo por dominio.
+        - El valor del registro TXT debe contener: "v=BIMI1;" y "l=https:".
 
-        3. VMC:
-        - El VMC se verifica en el mismo registro que BIMI.
-        - Para ser "verified", el registro TXT de BIMI debe contener "v=BIMI1;" Y ADEMÁS la etiqueta "a=https:".
-        - Es "unverified" si existe un registro BIMI pero le falta la etiqueta "a=". Si no hay registro BIMI, VMC es "not-found".
-        
-        Análisis Final (en 'analysis'):
-        - Sé conciso y directo.
-        - Explica el propósito de cada registro opcional (MX para recibir correos, BIMI/VMC para mostrar logo y marca).
-        - Si alguno está mal o falta, explica cómo solucionarlo.`
+        3. VMC
+        - Se verifica en el mismo registro que BIMI pero es un estándar diferente.
+        - El valor del registro TXT debe contener "v=BIMI1;" y, adicionalmente, la etiqueta "a=https:".
+        - Solo se permite un certificado VMC por dominio.
+
+        Instrucciones Adicionales:
+        - No analices ni respondas sobre registros que no sean MX, BIMI o VMC.
+        - Cumple estrictamente con las reglas para determinar si un registro es válido.
+        - En el análisis, explica el propósito de cada registro opcional (MX para recibir correos, BIMI para mostrar logo, VMC para validación de marca con logo) y cómo solucionar cualquier problema.`
     });
 
     const { output } = await expertPrompt({
@@ -120,3 +119,5 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
     return output;
   }
 );
+
+    
