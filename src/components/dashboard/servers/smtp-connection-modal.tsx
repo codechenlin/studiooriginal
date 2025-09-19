@@ -196,7 +196,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     await Promise.all([
       checkRecord('@', 'MX', 'foxmiu.email', 'mx'),
       checkRecord('default._bimi', 'BIMI', 'v=BIMI1;', 'bimi'),
-      checkRecord('default._bimi', 'VMC', 'v=BIMI1;', 'vmc')
+      checkRecord('default._bimi', 'VMC', 'a=', 'vmc')
     ]);
     setHealthCheckStatus('verified');
     
@@ -223,7 +223,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     if (!domain) return;
     setIsGeneratingDkim(true);
     try {
-      const result = await generateDkimKeys({ domain, selector: 'foxmiu' });
+      const result = await generateDkimKeys({ domain, selector: 'daybuu' });
       setDkimData(result);
     } catch (error: any) {
       toast({
@@ -594,7 +594,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
                      <Button
-                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white"
+                        className="w-full h-12 text-base bg-[#2a004f] hover:bg-[#AD00EC] text-white"
                         onClick={handleStartVerification}
                         disabled={!domain}
                       >
@@ -933,7 +933,7 @@ function DnsInfoModal({
     }
 
     const renderSpfContent = () => {
-        const recordValue = `v=spf1 include:_spf.foxmiu.email -all`;
+        const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
         return (
             <div className="space-y-4 text-sm">
                 <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
@@ -996,7 +996,7 @@ function DnsInfoModal({
     );
     
     const renderDmarcContent = () => {
-         const recordValue = `v=DMARC1; p=reject; rua=mailto:dmarc-reports@${domain}`;
+         const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:reportes@${domain}; sp=reject; aspf=s; adkim=s`;
          return (
             <div className="space-y-4 text-sm">
                 <p>Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
@@ -1011,7 +1011,7 @@ function DnsInfoModal({
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90">Valor del Registro:</p>
                     <div className="w-full flex justify-between items-start">
-                    <span className="break-all pr-2">{recordValue.replace(`dmarc-reports@${domain}`, '...')}</span>
+                    <span className="break-all pr-2">{recordValue.replace(`reportes@${domain}`, '...')}</span>
                     <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
                     </div>
                 </div>
@@ -1164,3 +1164,5 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
     );
 }
 
+
+    

@@ -18,7 +18,7 @@ const generateKeyPairAsync = promisify(generateKeyPair);
 export type DkimGenerationInput = z.infer<typeof DkimGenerationInputSchema>;
 const DkimGenerationInputSchema = z.object({
   domain: z.string().describe('The domain for which to generate DKIM keys.'),
-  selector: z.string().default('foxmiu').describe('The DKIM selector to use.'),
+  selector: z.string().default('daybuu').describe('The DKIM selector to use.'),
 });
 
 export type DkimGenerationOutput = z.infer<typeof DkimGenerationOutputSchema>;
@@ -71,3 +71,5 @@ const dkimGenerationFlow = ai.defineFlow(
     }
   }
 );
+
+    
