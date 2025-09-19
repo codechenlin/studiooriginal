@@ -182,23 +182,25 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const handleCheckOptionalHealth = async (runAiAnalysis = false) => {
     const checkRecord = async (
-        name: string,
-        recordType: 'MX' | 'BIMI' | 'VMC',
-        expectedValue: string,
-        stateKey: keyof typeof optionalRecordStatus
+        recordType: 'MX' | 'BIMI' | 'VMC'
     ) => {
-        setOptionalRecordStatus(prev => ({...prev, [stateKey]: 'verifying'}));
-        const result = await verifyDomainOwnershipAction({ domain, name, recordType, expectedValue });
+        setOptionalRecordStatus(prev => ({...prev, [recordType.toLowerCase()]: 'verifying'}));
+        const result = await verifyDomainOwnershipAction({ 
+            domain, 
+            name: recordType === 'MX' ? '@' : 'default._bimi',
+            recordType: recordType,
+            expectedValue: recordType === 'MX' ? 'daybuu.com' : (recordType === 'VMC' ? 'a=' : 'v=BIMI1;')
+        });
         await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
-        setOptionalRecordStatus(prev => ({...prev, [stateKey]: result.success ? 'verified' : 'failed'}));
+        setOptionalRecordStatus(prev => ({...prev, [recordType.toLowerCase()]: result.success ? 'verified' : 'failed'}));
         return result.success;
     };
 
     setHealthCheckStatus('verifying');
     await Promise.all([
-      checkRecord('@', 'MX', 'daybuu.com', 'mx'),
-      checkRecord('default._bimi', 'BIMI', 'v=BIMI1;', 'bimi'),
-      checkRecord('default._bimi', 'VMC', 'a=', 'vmc')
+      checkRecord('MX'),
+      checkRecord('BIMI'),
+      checkRecord('VMC')
     ]);
     setHealthCheckStatus('verified');
     
@@ -749,9 +751,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             ) : (
                                 <Button 
                                     className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
-                                    onClick={() => handleCheckOptionalHealth(true)} disabled={Object.values(optionalRecordStatus).some(s => s === 'verifying')}
+                                    onClick={() => handleCheckOptionalHealth(true)} disabled={healthCheckStatus === 'verifying'}
                                 >
-                                {Object.values(optionalRecordStatus).some(s => s === 'verifying') ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Opcionales</>}
+                                {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Opcionales</>}
                                 </Button>
                             )}
                          
@@ -1184,3 +1186,6 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
+
+
+    
