@@ -35,7 +35,7 @@ type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
 type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
 
-const generateVerificationCode = () => `foxmiu_${Math.random().toString(36).substring(2, 10)}`;
+const generateVerificationCode = () => `daybuu_${Math.random().toString(36).substring(2, 10)}`;
 
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
   const { toast } = useToast();
@@ -99,7 +99,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     },
   });
 
-  const txtRecordValue = `foxmiu-verification=${verificationCode}`;
+  const txtRecordValue = `daybuu-verification=${verificationCode}`;
 
   const handleStartVerification = () => {
     if (!domain || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
@@ -548,7 +548,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <p><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                           </div>
                            
-                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
+                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && healthCheckStep === 'mandatory' && (
                                <div className="pt-4 flex justify-center">
                                 <div className="relative">
                                     <button
@@ -579,6 +579,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     )}
                                 </div>
                                </div>
+                           )}
+                           {healthCheckStep === 'optional' && healthCheckStatus === 'verified' && (
+                              <div className="pt-4 flex justify-center">
+                                <button
+                                  className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
+                                  onClick={() => {
+                                    setIsAnalysisModalOpen(true);
+                                    setShowNotification(false);
+                                  }}
+                                >
+                                  <div className="ai-core-border-animation group-hover:hidden" />
+                                  <div className="ai-core group-hover:scale-125" />
+                                  <div className="relative z-10 flex items-center justify-center gap-2 text-white">
+                                    <BrainCircuit className="size-4" />
+                                    <span className="text-sm font-semibold">Análisis Opcional IA</span>
+                                  </div>
+                                </button>
+                              </div>
                            )}
 
                       </div>
@@ -722,10 +740,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </FormItem>
                         )}/>
                         </div>
-                        {testStatus === 'success' && deliveryStatus !== 'bounced' && (
+                        {testStatus === 'success' && form.getValues('encryption') !== 'none' && deliveryStatus !== 'bounced' && (
                             <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
                                 <Button 
-                                  className="w-full text-white bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] hover:bg-[#00ADEC]"
+                                  className="w-full text-white bg-gradient-to-r from-[#E18700] to-[#FFAB00] hover:bg-[#00ADEC]"
                                   onClick={handleCheckDelivery} 
                                   disabled={deliveryStatus === 'checking'}
                                 >
@@ -737,6 +755,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 }
                             </motion.div>
                         )}
+                        {testStatus === 'success' && form.getValues('encryption') === 'none' && (
+                             <motion.div key="no-verify" {...cardAnimation} className="mt-4 p-3 bg-amber-500/10 text-amber-300 rounded-lg text-xs border border-amber-400/30 flex items-start gap-3">
+                                 <Info className="size-6 shrink-0 mt-0.5 text-amber-400" />
+                                 <div className="text-left">
+                                     <h5 className="font-bold text-amber-300">Verificación de Entrega no Disponible</h5>
+                                     <p>La verificación automática de entrega solo está habilitada para conexiones seguras (SSL/TLS).</p>
+                                 </div>
+                             </motion.div>
+                         )}
                         <AnimatePresence>
                         {testStatus === 'failed' && (
                             <motion.div key="failed-smtp" {...cardAnimation} className="mt-4 space-y-3">
@@ -757,15 +784,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                         </div>
                                     </button>
                                     <div 
-                                        className="absolute top-0 right-0 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                        className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
                                         style={{ backgroundColor: '#F00000' }}
                                     >
                                         1
                                     </div>
                                 </div>
-                                <div className="p-2 mt-4 bg-red-500/10 rounded-lg text-center text-xs" style={{color: '#FFCDCD'}}>
-                                    <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle style={{color: '#FFCDCD'}}/>Fallo en la Conexión</h4>
-                                    <p>{testError}</p>
+                                <div className="p-2 mt-4 bg-red-500/10 rounded-lg text-center text-xs">
+                                    <h4 className="font-bold flex items-center justify-center gap-2" style={{color: '#FFCDCD'}}><AlertTriangle style={{color: '#FFCDCD'}}/>Fallo en la Conexión</h4>
+                                    <p style={{color: '#FFCDCD'}}>{testError}</p>
                                 </div>
                             </motion.div>
                         )}
@@ -775,7 +802,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
                       <Button
-                        className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC]"
+                        className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]"
                         onClick={handleCheckVerification}
                         disabled={verificationStatus === 'verifying'}
                       >
@@ -806,9 +833,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             )}
                          
                          {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
-                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base" onClick={() => {
+                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => {
                               setHealthCheckStep('optional');
                               setHealthCheckStatus('idle'); // Reset status for next step
+                              setDnsAnalysis(null);
                               setShowNotification(false);
                             }}>
                                 Continuar a Registros Opcionales <ArrowRight className="ml-2"/>
@@ -816,7 +844,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
 
                          {healthCheckStep === 'optional' && (
-                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
+                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => setCurrentStep(4)}>
                                 Siguiente <ArrowRight className="ml-2"/>
                             </Button>
                          )}
@@ -988,7 +1016,7 @@ function DnsInfoModal({
       },
        mx: {
         title: "Registro MX",
-        description: "MX es un registro que dice “Aquí es donde deben entregarse los correos que envían a mi dominio”. Indica el servidor de correo que recibe tus mensajes. Ejemplo real: Permite que Foxmiu, Outlook o cualquier otro servicio sepa a qué servidor entregar tus correos electrónicos.",
+        description: "MX es un registro que dice “Aquí es donde deben entregarse los correos que envían a mi dominio”. Indica el servidor de correo que recibe tus mensajes. Ejemplo real: Permite que Daybuu, Outlook o cualquier otro servicio sepa a qué servidor entregar tus correos electrónicos.",
       },
       bimi: {
         title: "Registro BIMI",
@@ -1004,7 +1032,7 @@ function DnsInfoModal({
         const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
         return (
             <div className="space-y-4 text-sm">
-                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
+                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Daybuu.com, Cloudflare.com, etc.).</p>
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
                     <span>@</span>
@@ -1022,7 +1050,7 @@ function DnsInfoModal({
                 </div>
                  <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                     <p className="font-bold mb-1">Importante: Unificación de SPF</p>
-                    <p>Si ya usas otros servicios de correo (ej. Foxmiu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                    <p>Si ya usas otros servicios de correo (ej. Daybuu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
                     <p className="mt-2 font-mono text-white/90">Ejemplo: `v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all`</p>
                 </div>
             </div>
@@ -1318,7 +1346,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
-
-    
-
-    
