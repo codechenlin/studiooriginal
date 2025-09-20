@@ -104,7 +104,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
         - Verificar que el Host/Nombre sea "daybuu._domainkey".
         - Puede haber varios registros DKIM en el mismo dominio, cada uno con un selector diferente. No se unifican. Nos enfocamos solo en el selector 'daybuu'.
         - El valor debe contener: "v=DKIM1;", "k=rsa;", y "p={{dkimPublicKey}}".
-        - Confirma que la clave pública coincide con la generada por el proyecto.
+        - Confirma que la clave pública coincide **EXACTAMENTE** con la generada y aceptada por el usuario en el proyecto. Un solo carácter de diferencia es un fallo.
         - Si respondes al usuario con el registro DKIM, muestra solo el inicio así: "v=DKIM1; k=rsa; p=MIIBIjA...".
 
         3. DMARC
@@ -132,3 +132,4 @@ const dnsHealthCheckFlow = ai.defineFlow(
 );
 
     
+

@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -66,6 +66,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
   const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
+  const [showSmtpErrorNotification, setShowSmtpErrorNotification] = useState(false);
+  
+  const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (domain && !dkimData) {
@@ -141,10 +144,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   };
   
   const handleCheckHealth = async () => {
-    if (!dkimData) {
+    if (!acceptedDkimKey) {
       toast({
-        title: "Error",
-        description: "Los datos DKIM no se han generado. Por favor, reinicia el proceso.",
+        title: "Acción Requerida",
+        description: "Debes 'Aceptar y Usar' una clave DKIM antes de verificar la salud del dominio.",
         variant: "destructive",
       });
       return;
@@ -157,7 +160,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     try {
       const result = await verifyDnsAction({
         domain,
-        dkimPublicKey: dkimData.publicKeyRecord,
+        dkimPublicKey: acceptedDkimKey,
       });
       
       setHealthCheckStatus(result.success ? 'verified' : 'failed');
@@ -185,26 +188,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   }
 
   const handleCheckOptionalHealth = async (runAiAnalysis = false) => {
-    const checkRecord = async (
-        recordType: 'MX' | 'BIMI' | 'VMC'
-    ) => {
-        setOptionalRecordStatus(prev => ({...prev, [recordType.toLowerCase()]: 'verifying'}));
-        const result = await verifyDomainOwnershipAction({ 
-            domain, 
-            name: recordType === 'MX' ? '@' : 'default._bimi',
-            recordType: recordType,
-            expectedValue: recordType === 'MX' ? 'daybuu.com' : (recordType === 'VMC' ? 'a=' : 'v=BIMI1;')
-        });
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
-        setOptionalRecordStatus(prev => ({...prev, [recordType.toLowerCase()]: result.success ? 'verified' : 'failed'}));
-        return result.success;
-    };
-
     setHealthCheckStatus('verifying');
     await Promise.all([
-      checkRecord('MX'),
-      checkRecord('BIMI'),
-      checkRecord('VMC')
+      verifyDomainOwnershipAction({ domain, name: '@', recordType: 'MX', expectedValue: 'daybuu.com' }).then(res => setOptionalRecordStatus(p => ({...p, mx: res.success ? 'verified' : 'failed'}))),
+      verifyDomainOwnershipAction({ domain, name: 'default._bimi', recordType: 'BIMI', expectedValue: 'v=BIMI1;' }).then(res => setOptionalRecordStatus(p => ({...p, bimi: res.success ? 'verified' : 'failed'}))),
+      verifyDomainOwnershipAction({ domain, name: 'default._bimi', recordType: 'VMC', expectedValue: 'a=' }).then(res => setOptionalRecordStatus(p => ({...p, vmc: res.success ? 'verified' : 'failed'})))
     ]);
     setHealthCheckStatus('verified');
     
@@ -274,6 +262,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
         setIsSmtpErrorAnalysisModalOpen(false);
         setSmtpErrorAnalysis(null);
+        setShowSmtpErrorNotification(false);
+        setAcceptedDkimKey(null);
     }, 300);
   }
   
@@ -281,6 +271,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setTestStatus('testing');
     setTestError('');
     setDeliveryStatus('idle');
+    setShowSmtpErrorNotification(false);
+    
     const result = await sendTestEmailAction({
         host: values.host,
         port: values.port,
@@ -304,6 +296,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     } else {
        setTestStatus('failed');
        setTestError(result.error || 'Ocurrió un error desconocido.');
+       setShowSmtpErrorNotification(true);
     }
   }
 
@@ -317,6 +310,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     if (!testError) return;
     setSmtpErrorAnalysis(null);
     setIsSmtpErrorAnalysisModalOpen(true);
+    setShowSmtpErrorNotification(false);
     const result = await analyzeSmtpErrorAction({ error: testError });
     if (result.success && result.data) {
         setSmtpErrorAnalysis(result.data.analysis);
@@ -574,7 +568,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                             className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
                                             style={{ backgroundColor: '#F00000' }}
                                         >
-                                            1
+                                            !
                                         </div>
                                     )}
                                 </div>
@@ -740,7 +734,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </FormItem>
                         )}/>
                         </div>
-                        {testStatus === 'success' && form.getValues('encryption') !== 'none' && deliveryStatus !== 'bounced' && (
+                        {testStatus === 'success' && form.getValues('encryption') !== 'none' && (
                             <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
                                 <Button 
                                   className="w-full text-white bg-gradient-to-r from-[#E18700] to-[#FFAB00] hover:bg-[#00ADEC]"
@@ -767,7 +761,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         <AnimatePresence>
                         {testStatus === 'failed' && (
                             <motion.div key="failed-smtp" {...cardAnimation} className="mt-4 space-y-3">
-                                <div className="relative">
+                                <div className="relative w-full flex justify-center">
                                     <button
                                         className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
                                         onClick={handleSmtpErrorAnalysis}
@@ -783,14 +777,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                             <span className="text-sm font-semibold">Análisis de la IA</span>
                                         </div>
                                     </button>
-                                    <div 
-                                        className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
-                                        style={{ backgroundColor: '#F00000' }}
-                                    >
-                                        1
-                                    </div>
+                                     {showSmtpErrorNotification && (
+                                        <div 
+                                            className="absolute top-0 right-[calc(50%-70px)] size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                            style={{ backgroundColor: '#F00000' }}
+                                        >
+                                            !
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="p-2 mt-4 bg-red-500/10 rounded-lg text-center text-xs">
+                                <div className="p-2 mt-4 rounded-lg text-center text-xs" style={{backgroundColor: '#DA0000'}}>
                                     <h4 className="font-bold flex items-center justify-center gap-2" style={{color: '#FFCDCD'}}><AlertTriangle style={{color: '#FFCDCD'}}/>Fallo en la Conexión</h4>
                                     <p style={{color: '#FFCDCD'}}>{testError}</p>
                                 </div>
@@ -844,7 +840,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
 
                          {healthCheckStep === 'optional' && (
-                            <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => setCurrentStep(4)}>
+                             <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => setCurrentStep(4)}>
                                 Siguiente <ArrowRight className="ml-2"/>
                             </Button>
                          )}
@@ -962,6 +958,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         dkimData={dkimData}
         isGeneratingDkim={isGeneratingDkim}
         onRegenerateDkim={handleGenerateDkim}
+        acceptedKey={acceptedDkimKey}
+        onAcceptKey={setAcceptedDkimKey}
       />
       <AiAnalysisModal 
         isOpen={isAnalysisModalOpen}
@@ -987,6 +985,8 @@ function DnsInfoModal({
   dkimData,
   isGeneratingDkim,
   onRegenerateDkim,
+  acceptedKey,
+  onAcceptKey,
 }: {
   recordType: InfoViewRecord | null,
   domain: string,
@@ -996,6 +996,8 @@ function DnsInfoModal({
   dkimData: DkimGenerationOutput | null,
   isGeneratingDkim: boolean,
   onRegenerateDkim: () => void;
+  acceptedKey: string | null;
+  onAcceptKey: (key: string) => void;
 }) {
     if(!recordType) return null;
 
@@ -1058,8 +1060,38 @@ function DnsInfoModal({
     };
 
     const renderDkimContent = () => (
-        <div className="space-y-4 text-sm">
-            <p>Añade el siguiente registro TXT para DKIM. La clave pública se genera automáticamente para tu dominio.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div className="space-y-4">
+           <h4 className="font-semibold text-base mb-2">Paso 1: Genera y Acepta tu Clave</h4>
+            <p>Genera una clave única para tu dominio y acéptala para que nuestro sistema la use en las verificaciones.</p>
+            <div className={cn(baseClass, "flex-col items-start gap-1")}>
+               <div className="font-bold text-white/90 flex justify-between w-full items-center">
+                <span>Clave Aceptada:</span>
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-xs font-semibold", acceptedKey ? "text-green-400" : "text-amber-400")}>
+                    {acceptedKey ? "SÍ" : "NO"}
+                  </span>
+                  <div className="relative flex items-center justify-center w-4 h-4">
+                    <div className={cn('absolute w-full h-full rounded-full', acceptedKey ? 'bg-green-500' : 'bg-amber-500', 'animate-pulse')} style={{filter: `blur(4px)`}}/>
+                    <div className={cn('w-2 h-2 rounded-full', acceptedKey ? 'bg-green-500' : 'bg-amber-500')} />
+                  </div>
+                </div>
+               </div>
+            </div>
+            <div className="flex gap-2">
+                <Button onClick={onRegenerateDkim} disabled={isGeneratingDkim} className="w-full" variant="outline">
+                  {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
+                  Generar Nueva
+                </Button>
+                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:from-[#00CE07] hover:to-[#A6EE00] text-white">
+                  <CheckCheck className="mr-2"/>
+                  {dkimData?.publicKeyRecord === acceptedKey ? 'Clave Aceptada' : 'Aceptar y Usar esta Clave'}
+                </Button>
+            </div>
+        </div>
+        <div className="space-y-4">
+           <h4 className="font-semibold text-base mb-2">Paso 2: Añade el Registro a tu DNS</h4>
+            <p>Una vez aceptada, copia y pega estos valores en la configuración de tu proveedor de dominio.</p>
             <AnimatePresence>
             {dkimData ? (
                 <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="space-y-2 overflow-hidden">
@@ -1080,10 +1112,6 @@ function DnsInfoModal({
                     <Button size="icon" variant="ghost" className="shrink-0 self-start size-6 -mr-2 flex-shrink-0" onClick={() => onCopy(dkimData.publicKeyRecord)}><Copy className="size-4"/></Button>
                     </div>
                 </div>
-                <Button onClick={onRegenerateDkim} disabled={isGeneratingDkim} className="w-full mt-2" style={{backgroundColor: '#00ADEC'}}>
-                  {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
-                  Generar Nueva Clave
-                </Button>
                 </motion.div>
             ) : (
                 <div className="flex items-center justify-center p-4">
@@ -1093,6 +1121,7 @@ function DnsInfoModal({
             )}
             </AnimatePresence>
         </div>
+    </div>
     );
     
     const renderDmarcContent = () => {
@@ -1215,11 +1244,11 @@ function DnsInfoModal({
 
     const { title, content } = contentMap[recordType];
     const { title: infoTitle, description: infoDescription } = infoMap[recordType];
-    const isDmarc = recordType === 'dmarc';
+    const isSpecialLayout = recordType === 'dmarc' || recordType === 'dkim';
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className={cn("bg-black/50 backdrop-blur-xl border-primary/20 text-white", isDmarc ? "sm:max-w-4xl" : "sm:max-w-xl")}>
+            <DialogContent className={cn("bg-black/50 backdrop-blur-xl border-primary/20 text-white", isSpecialLayout ? "sm:max-w-4xl" : "sm:max-w-xl")}>
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3 text-lg">
                         <div className="p-2 rounded-full bg-primary/20"><Dna className="text-primary"/></div>
@@ -1262,7 +1291,7 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                 </div>
                  <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
-                <DialogHeader className="z-10">
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
                     <DialogTitle className="flex items-center gap-3 text-xl">
                         <div className="p-2.5 bg-cyan-500/10 border-2 border-cyan-400/20 rounded-full icon-pulse-animation">
                            <BrainCircuit className="text-cyan-400" />
@@ -1275,6 +1304,10 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
                              <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
                         </div>
                     </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
                 </DialogHeader>
                  <div className="z-10 my-4 p-3 border border-amber-400/30 bg-amber-500/10 rounded-lg flex items-start gap-3">
                     <AlertCircle className="size-8 text-amber-400 shrink-0" />
@@ -1323,7 +1356,7 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
                                 <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
                             </div>
                         </DialogTitle>
-                        <div className="flex items-center gap-2 text-sm text-green-300">
+                         <div className="flex items-center gap-2 text-sm text-green-300">
                             EN LÍNEA
                             <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
                         </div>
@@ -1346,3 +1379,4 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
