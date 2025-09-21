@@ -76,7 +76,30 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'optionalDnsHealthExpertPrompt',
         output: { schema: OptionalDnsHealthOutputSchema },
-        prompt: ``,
+        prompt: `Analiza los registros DNS opcionales de un dominio y responde en español usando emojis.
+
+Análisis del Registro MX:
+
+1.  **Identificación**: Busca en 'mxRecords' los registros para el dominio principal. Puede haber varios.
+2.  **Validación**: Para que la verificación sea exitosa, al menos uno de los registros MX encontrados debe cumplir con estas dos condiciones simultáneamente:
+    *   La propiedad 'exchange' debe ser exactamente \`daybuu.com\`.
+    *   La propiedad 'priority' debe ser exactamente \`0\`.
+3.  **Resultado**: 
+    *   Si encuentras un registro que cumple ambas condiciones, marca 'mxStatus' como 'verified' ✅.
+    *   Si existen registros MX pero ninguno cumple las condiciones, marca 'mxStatus' como 'unverified' ❌.
+    *   Si no se encuentra ningún registro MX, marca 'mxStatus' como 'not-found' 🧐.
+
+Análisis del Registro BIMI:
+(Instrucciones pendientes)
+
+Análisis del Registro VMC:
+(Instrucciones pendientes)
+
+Registros a analizar:
+- Dominio: {{{domain}}}
+- Registros MX: {{{mxRecords}}}
+- Registros BIMI (default._bimi): {{{bimiRecords}}}
+`,
     });
 
     const { output } = await expertPrompt({
