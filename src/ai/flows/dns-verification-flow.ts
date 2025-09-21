@@ -84,14 +84,12 @@ const dnsHealthCheckFlow = ai.defineFlow(
 
         ---
         **1. Análisis de Registro SPF**
-        - **Identificación:** Ignora cualquier registro TXT que no comience con \`v=spf1\`. Si encuentras uno que sí comienza así, procede a la verificación.
-        - **Reglas de Validación:**
+        - **Identificación:** Busca cualquier registro TXT que comience con \`v=spf1\`. Si no encuentras ninguno, el estado es \`not-found\`. Si encuentras más de uno, el estado es \`unverified\` y debes explicar que solo puede existir un registro SPF.
+        - **Reglas de Validación (si solo hay un registro):**
             1.  El registro DEBE comenzar con \`v=spf1\` como primera cadena.
-            2.  El registro DEBE contener la cadena \`include:_spf.daybuu.com\` en cualquier posición.
+            2.  El registro DEBE contener la cadena \`include:_spf.daybuu.com\`.
             3.  El registro DEBE terminar con \`-all\` como última cadena.
-            4.  Solo se permite UN registro SPF por dominio. Si hay más de uno, la verificación falla.
-            5.  Los únicos mecanismos permitidos, además de los anteriores, son: \`include:\`, \`ip4:\`, \`ip6:\`, \`a\`, \`mx\`. El total de estos mecanismos no puede exceder 8.
-        - **Resultado Esperado:** Si todas las reglas se cumplen, el estado es \`verified\`. De lo contrario, es \`unverified\` (o \`not-found\` si no existe).
+        - **Resultado Esperado:** Si las 3 reglas se cumplen, el estado es \`verified\`. Si alguna falla, el estado es \`unverified\`.
         - **Límite de Búsquedas DNS (SUPER IMPORTANTE):** Si detectas que el registro SPF podría superar el límite de 10 búsquedas DNS (especialmente si ves \`include:_spf.google.com\`, \`include:spf.protection.outlook.com\`, etc.), DEBES explicar al usuario lo siguiente en tu análisis:
             - **Motivo del Fallo:** "El estándar SPF (RFC 7208) limita las validaciones a un máximo de 10 búsquedas DNS para evitar sobrecargas. Todos los servicios de correo (Gmail, Outlook, etc.) aplican este límite."
             - **Analogía Fácil:** "Imagina que el límite es una mochila con 10 espacios. Si Google Workspace ya usa 8 o 9 espacios y añades otro servicio que necesita 3, ¡la mochila se rompe y el SPF falla! 🎒"
@@ -104,7 +102,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
         - **Reglas de Validación del Valor:**
             1.  El valor DEBE contener la cadena \`v=DKIM1;\`.
             2.  El valor DEBE contener la cadena \`k=rsa;\`.
-            3.  El valor DEBE contener \`p=\` seguido de una clave pública.
+            3.  El valor DEBE contener \`p=\` seguido de la clave pública.
             4.  **VERIFICACIÓN CRÍTICA:** La clave pública encontrada en el DNS (después de \`p=\`) DEBE COINCIDIR EXACTAMENTE, carácter por carácter, con la \`dkimPublicKey\` esperada que te he proporcionado. ¡No puede haber ni la más mínima diferencia! 🕵️‍♂️
         - **Resultado Esperado:** Si todas las reglas se cumplen, el estado es \`verified\`. Si la clave no coincide, el estado es \`unverified\`. Si el registro no existe, es \`not-found\`.
         - **Seguridad en la Respuesta:** Si en tu análisis mencionas la clave pública, muestra solo el inicio y el final para proteger la información, por ejemplo: \`p=MIIBIjA...QAB\`.
