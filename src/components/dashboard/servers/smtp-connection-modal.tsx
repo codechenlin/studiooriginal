@@ -1165,7 +1165,12 @@ function DnsInfoModal({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}>Sí, generar nueva</AlertDialogAction>
+                <AlertDialogAction 
+                  onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
+                  className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
+                >
+                    Sí, generar nueva
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -1177,7 +1182,7 @@ function DnsInfoModal({
         return (
             <div className="grid md:grid-cols-3 gap-6 text-sm">
                <div className="md:col-span-2 space-y-4">
-                 <h4 className="font-semibold text-base mb-2">Instrucciones</h4>
+                 <h4 className="font-semibold text-base mb-2">Paso 1: Añade el Registro a tu DNS</h4>
                  <p className="mb-4">Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
                  <div className="space-y-3">
                     <div className={cn(baseClass, "flex-col items-start gap-1")}>
@@ -1196,31 +1201,31 @@ function DnsInfoModal({
                        </div>
                    </div>
                  </div>
-                 <div className="mt-4 p-3 bg-cyan-500/10 text-cyan-200/90 rounded-lg border border-cyan-400/20 text-xs flex items-start gap-3">
-                     <MailQuestion className="size-10 shrink-0 text-cyan-400 mt-1" />
+               </div>
+                <div className="md:col-span-1 text-xs text-cyan-300/80 p-4 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-3">
+                   <h4 className="font-bold text-base text-white/90 mb-2">Paso 2: Entiende las Etiquetas</h4>
+                   <div className="space-y-1">
+                       <p><strong className="text-white/90">v=DMARC1</strong> → Versión.</p>
+                       <p><strong className="text-white/90">p=reject</strong> → Política estricta que rechaza correos fallidos.</p>
+                       <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100%.</p>
+                       <p><strong className="text-white/90">rua=...</strong> → Recibe reportes agregados.</p>
+                       <p><strong className="text-white/90">ruf=...</strong> → Recibe reportes forenses.</p>
+                       <p><strong className="text-white/90">sp=reject</strong> → Política para subdominios.</p>
+                       <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta.</p>
+                       <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta.</p>
+                   </div>
+                </div>
+                 <div className="md:col-span-3 mt-4 p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                     <MailQuestion className="size-10 shrink-0 text-amber-400 mt-1" />
                      <div>
-                         <h5 className="font-bold text-cyan-300 mb-1">¡Importante! Crear Correos para Reportes</h5>
-                         <p>Debes crear los buzones de correo que especificaste en las etiquetas `rua` y `ruf` para poder recibir los informes de DMARC.</p>
+                         <h5 className="font-bold text-amber-300 mb-1">Paso 3: ¡Importante! Crea los Buzones de Correo</h5>
+                         <p>Debes crear los buzones de correo que especificaste en las etiquetas `rua` y `ruf` para poder recibir los informes de DMARC. Puedes personalizarlos, pero asegúrate de que existan y estén en tu registro DNS.</p>
                          <ul className="list-disc pl-4 mt-2 font-mono">
                              <li>`rua=mailto:<strong className="text-white">reportes@{domain}</strong>`</li>
                              <li>`ruf=mailto:<strong className="text-white">fallas@{domain}</strong>`</li>
                          </ul>
-                         <p className="mt-2">Puedes personalizar estos correos, pero asegúrate de que existan y estén configurados en tu registro DNS.</p>
                      </div>
                  </div>
-               </div>
-               <div className="md:col-span-1 text-xs text-cyan-300/80 p-4 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-2">
-                   <h4 className="font-bold text-base text-white/90 mb-2">Explicación de cada parte:</h4>
-                   <p><strong className="text-white/90">v=DMARC1</strong> → Versión del protocolo DMARC.</p>
-                   <p><strong className="text-white/90">p=reject</strong> → Rechaza cualquier correo que no pase SPF o DKIM alineados.</p>
-                   <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100% de los correos.</p>
-                   <p><strong className="text-white/90">rua=...</strong> → Dirección para recibir reportes agregados (resúmenes XML).</p>
-                   <p><strong className="text-white/90">ruf=...</strong> → Dirección para recibir reportes forenses (copias de correos fallidos).</p>
-                   <p><strong className="text-white/90">sp=reject</strong> → Aplica la misma política estricta a subdominios.</p>
-                   <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta (dominio coincide).</p>
-                   <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta (dominio coincide).</p>
-                   <p className="text-xs text-muted-foreground pt-2">Es crucial usar un registro DMARC estricto para evitar suplantaciones y mejorar la reputación de tu marca.</p>
-               </div>
            </div>
        );
    }
@@ -1425,5 +1430,7 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+    
 
     

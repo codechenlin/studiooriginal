@@ -58,8 +58,8 @@ const verifyDomainOwnershipSchema = z.object({
 });
 
 export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDomainOwnershipSchema>) {
-  try {
     const { domain, expectedValue, recordType, name } = verifyDomainOwnershipSchema.parse(input);
+  try {
     const fullName = name === '@' ? domain : `${name}.${domain}`;
     
     if (recordType === 'MX') {
@@ -87,7 +87,6 @@ export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDo
     }
   } catch (error: any) {
     if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
-      const { name, domain } = verifyDomainOwnershipSchema.parse(input);
       const fullName = name === '@' ? domain : `${name}.${domain}`;
       return { success: false, error: `No se encontraron registros TXT para ${fullName}.` };
     }
@@ -95,5 +94,7 @@ export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDo
     return { success: false, error: 'Ocurrió un error inesperado al verificar el dominio.' };
   }
 }
+
+    
 
     
