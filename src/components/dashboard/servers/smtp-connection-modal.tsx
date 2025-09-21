@@ -37,7 +37,7 @@ type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
 type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
 
-const generateVerificationCode = () => `dyu_${Math.random().toString(36).substring(2, 10)}`;
+const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
 
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
   const { toast } = useToast();
@@ -106,7 +106,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     },
   });
 
-  const txtRecordValue = `daybuu-verificacion=${verificationCode}`;
+  const txtRecordValue = verificationCode;
 
   const handleStartVerification = () => {
     if (!domain || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
@@ -223,6 +223,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const handleGenerateDkim = async () => {
     if (!domain) return;
     setIsGeneratingDkim(true);
+    setAcceptedDkimKey(null); // Reset accepted key on new generation
     try {
       const result = await generateDkimKeys({ domain, selector: 'daybuu' });
       setDkimData(result);

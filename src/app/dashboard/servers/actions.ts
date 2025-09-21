@@ -15,7 +15,7 @@ import dns from 'node:dns/promises';
 
 const actionSchema = z.object({
   domain: z.string().describe('El nombre de dominio a verificar.'),
-  dkimPublicKey: z.string().describe('La clave pública DKIM esperada para el selector "foxmiu".'),
+  dkimPublicKey: z.string().describe('La clave pública DKIM esperada para el selector "daybuu".'),
 });
 
 
@@ -87,7 +87,9 @@ export async function verifyDomainOwnershipAction(input: z.infer<typeof verifyDo
     }
   } catch (error: any) {
     if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
-      return { success: false, error: `No se encontraron registros TXT para ${name === '@' ? domain : `${name}.${domain}`}.` };
+      const { name, domain } = verifyDomainOwnershipSchema.parse(input);
+      const fullName = name === '@' ? domain : `${name}.${domain}`;
+      return { success: false, error: `No se encontraron registros TXT para ${fullName}.` };
     }
     console.error('Domain ownership verification error:', error);
     return { success: false, error: 'Ocurrió un error inesperado al verificar el dominio.' };
