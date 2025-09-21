@@ -76,42 +76,53 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'optionalDnsHealthExpertPrompt',
         output: { schema: OptionalDnsHealthOutputSchema },
-        prompt: `Eres un experto en DNS y reputación de marca por correo electrónico. Analiza los siguientes registros DNS opcionales para el dominio {{{domain}}} y explica su propósito y estado. Responde siempre en español y utiliza emojis para que tu análisis sea claro.
+        prompt: `
+        Eres un experto en DNS y reputación de marca por correo electrónico. Analiza los siguientes registros DNS opcionales para el dominio {{{domain}}} y explica su propósito y estado. Responde siempre en español y utiliza emojis para que tu análisis sea claro y amigable.
 
-Contexto de los Registros (en formato JSON):
-- Registros MX encontrados en el dominio raíz: {{{mxRecords}}}
-- Registros BIMI/VMC encontrados en default._bimi.{{{domain}}}: {{{bimiRecords}}}
+        Registros DNS a analizar (formato JSON):
+        - Registros MX encontrados en el dominio raíz: {{{mxRecords}}}
+        - Registros BIMI/VMC encontrados en default._bimi.{{{domain}}}: {{{bimiRecords}}}
 
-Sigue estas reglas para tu análisis:
+        ### REGLAS ESTRICTAS DE VALIDACIÓN ###
 
-1.  **Análisis MX (Mail Exchange):**
-    *   **Estado \`not-found\`**: Si el array \`mxRecords\` está vacío.
-    *   **Estado \`unverified\`**: Si ningún registro MX tiene el valor (exchange) \`daybuu.com\`.
-    *   **Estado \`verified\`**: Si al menos un registro MX apunta a \`daybuu.com\` (la prioridad no importa para esta verificación). ✅
+        ---
+        **1. Análisis de Registro MX**
+        - **Host/Nombre:** Debe estar en \`@\` (el dominio raíz).
+        - **Reglas de Validación:**
+            1.  Debe existir al menos un registro MX.
+            2.  El valor (el campo \`exchange\`) de al menos un registro DEBE ser \`daybuu.com\`.
+            3.  La prioridad debe ser \`0\`.
+        - **Resultado Esperado:** \`verified\` si cumple todo, \`unverified\` si algo falla, \`not-found\` si no existe.
 
-2.  **Análisis BIMI (Brand Indicators for Message Identification):**
-    *   **Estado \`not-found\`**: Si el array \`bimiRecords\` está vacío.
-    *   **Estado \`unverified\`**: Si ningún registro contiene la etiqueta \`v=BIMI1;\` o si falta la etiqueta \`l=https://...\` que apunta a un logo SVG.
-    *   **Estado \`verified\`**: Si se encuentra un registro que contiene \`v=BIMI1;\` y una etiqueta \`l=\` con una URL. ✅
+        ---
+        **2. Análisis de Registro BIMI**
+        - **Host/Nombre:** Debe ser \`default._bimi\`.
+        - **Reglas de Validación:**
+            1.  El valor DEBE contener \`v=BIMI1;\`.
+            2.  El valor DEBE contener una etiqueta \`l=https://...\` apuntando a una URL de un archivo SVG.
+        - **Resultado Esperado:** \`verified\` si cumple todo. Si no, \`unverified\` o \`not-found\`.
 
-3.  **Análisis VMC (Verified Mark Certificate):**
-    *   **Estado \`not-found\`**: Si no hay un registro BIMI o si el registro BIMI no contiene la etiqueta \`a=\`.
-    *   **Estado \`unverified\`**: Si el registro BIMI existe pero la etiqueta \`a=\` está vacía o no apunta a una URL de un certificado \`.pem\`.
-    *   **Estado \`verified\`**: Si el registro BIMI contiene una etiqueta \`a=\` que apunta a la URL de un certificado VMC. ✅
+        ---
+        **3. Análisis de Certificado VMC (dentro de BIMI)**
+        - **Host/Nombre:** Utiliza el mismo registro BIMI.
+        - **Reglas de Validación:**
+            1.  El registro BIMI DEBE contener una etiqueta \`a=\` apuntando a una URL de un certificado .pem.
+        - **Resultado Esperado:** \`verified\` si la etiqueta \`a=\` existe y contiene una URL. \`unverified\` si la etiqueta \`a=\` está presente pero vacía. \`not-found\` si la etiqueta \`a=\` no existe en el registro BIMI.
 
-**Formato de la Respuesta en el campo \`analysis\`:**
+        ---
+        **Formato de Respuesta en el campo \`analysis\`:**
+        - Debes devolver el análisis en formato de lista.
+        - Para cada registro (MX, BIMI, VMC), explica brevemente su propósito, indica su estado con un emoji y, si falla, explica por qué.
 
-Genera un resumen claro. Para cada registro (MX, BIMI, VMC), explica brevemente su propósito, indica su estado y, si no está verificado, explica por qué y cómo solucionarlo.
+        **Ejemplo de Análisis:**
+        "
+        ### Análisis de Registros Opcionales ✨
+        ✅ **MX:** ¡Configurado! Este registro le dice al mundo que nuestros servidores reciben correos para tu dominio.
 
-**Ejemplo de Análisis:**
-"
-### Análisis de Registros Opcionales  अतिरिक्त
-✨ **MX:** ¡Configurado! Este registro le dice al mundo que nuestros servidores reciben correos para tu dominio.
+        🖼️ **BIMI:** ¡Encontrado! Este registro permite que tu logo aparezca en la bandeja de entrada de tus clientes, ¡genial para el reconocimiento de marca!
 
-🖼️ **BIMI:** ¡Encontrado! Este registro permite que tu logo aparezca en la bandeja de entrada de tus clientes, ¡genial para el reconocimiento de marca!
-
-📜 **VMC:** No hemos encontrado un Certificado de Marca Verificada (VMC) en tu registro BIMI. Aunque es opcional, añadirlo aumenta aún más la confianza y es requerido por proveedores como Gmail para mostrar tu logo.
-"
+        ❌ **VMC:** No hemos encontrado un Certificado de Marca Verificada (VMC) en tu registro BIMI. La etiqueta \`a=\` falta. Aunque es opcional, añadirlo aumenta aún más la confianza y es requerido por proveedores como Gmail para mostrar tu logo.
+        "
 `,
     });
 
@@ -128,3 +139,5 @@ Genera un resumen claro. Para cada registro (MX, BIMI, VMC), explica brevemente 
     return output;
   }
 );
+
+    

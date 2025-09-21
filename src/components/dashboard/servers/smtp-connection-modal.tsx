@@ -560,7 +560,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <p><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                           </div>
                            
-                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
+                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && healthCheckStep === 'mandatory' && (
                                <div className="pt-4 flex justify-center">
                                 <div className="relative">
                                     <button
@@ -1424,3 +1424,5 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+    

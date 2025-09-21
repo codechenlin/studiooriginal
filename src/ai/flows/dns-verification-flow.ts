@@ -71,53 +71,70 @@ const dnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
-        prompt: `Eres un experto en DNS y seguridad de correo electrónico. Analiza los siguientes registros DNS para el dominio {{{domain}}} y determina su estado de salud para el envío de correos. Responde siempre en español y utiliza emojis para que tu análisis sea más claro y amigable.
+        prompt: `
+        Eres un experto en DNS y seguridad de correo electrónico. Tu tarea es analizar los registros DNS para el dominio {{{domain}}} y determinar si son válidos. Debes seguir las reglas que se te proporcionan de manera estricta. Responde siempre en español y utiliza emojis para que tu análisis sea claro y amigable.
 
-Contexto de los Registros (en formato JSON):
-- Registros SPF encontrados en el dominio raíz: {{{spfRecords}}}
-- Registros DKIM encontrados en daybuu._domainkey.{{{domain}}}: {{{dkimRecords}}}
-- Registros DMARC encontrados en _dmarc.{{{domain}}}: {{{dmarcRecords}}}
-- Clave pública DKIM esperada: {{{dkimPublicKey}}}
+        Registros DNS a analizar (formato JSON):
+        - Registros SPF encontrados en el dominio raíz: {{{spfRecords}}}
+        - Registros DKIM encontrados en daybuu._domainkey.{{{domain}}}: {{{dkimRecords}}}
+        - Registros DMARC encontrados en _dmarc.{{{domain}}}: {{{dmarcRecords}}}
+        - Clave pública DKIM esperada: {{{dkimPublicKey}}}
 
-Sigue estas reglas ESTRICTAS para tu análisis:
+        ### REGLAS ESTRICTAS DE VALIDACIÓN ###
 
-1.  **Análisis SPF (Sender Policy Framework):**
-    *   **Estado \`not-found\`**: Si el array \`spfRecords\` está vacío o no contiene ningún registro que empiece con \`v=spf1\`.
-    *   **Estado \`unverified\`**:
-        *   Si hay más de un registro SPF (más de un string que empiece con \`v=spf1\`). ¡SOLO PUEDE HABER UNO! 🚨
-        *   Si el registro no contiene \`include:_spf.daybuu.com\`.
-        *   Si el registro no termina con un mecanismo \`all\` válido, preferiblemente \`-all\` (RECHAZAR) o \`~all\` (FALLO SUAVE).
-        *   Si el registro supera el límite de 10 búsquedas DNS. Explica esto con la analogía de la mochila: "Imagina que el límite de 10 búsquedas es como una mochila con 10 espacios. Si Google Workspace ya usa 9, y añades otro servicio que necesita 3, ¡la mochila se rompe y el SPF falla!".
-    *   **Estado \`verified\`**: Si existe un único registro SPF que cumple con tener \`v=spf1\`, \`include:_spf.daybuu.com\` y un mecanismo \`all\` final. ✅
+        ---
+        **1. Análisis de Registro SPF**
+        - **Identificación:** Ignora cualquier registro TXT que no comience con \`v=spf1\`. Si encuentras uno que sí comienza así, procede a la verificación.
+        - **Reglas de Validación:**
+            1.  El registro DEBE comenzar con \`v=spf1\` como primera cadena.
+            2.  El registro DEBE contener la cadena \`include:_spf.daybuu.com\` en cualquier posición.
+            3.  El registro DEBE terminar con \`-all\` como última cadena.
+            4.  Solo se permite UN registro SPF por dominio. Si hay más de uno, la verificación falla.
+            5.  Los únicos mecanismos permitidos, además de los anteriores, son: \`include:\`, \`ip4:\`, \`ip6:\`, \`a\`, \`mx\`. El total de estos mecanismos no puede exceder 8.
+        - **Resultado Esperado:** Si todas las reglas se cumplen, el estado es \`verified\`. De lo contrario, es \`unverified\` (o \`not-found\` si no existe).
+        - **Límite de Búsquedas DNS (SUPER IMPORTANTE):** Si detectas que el registro SPF podría superar el límite de 10 búsquedas DNS (especialmente si ves \`include:_spf.google.com\`, \`include:spf.protection.outlook.com\`, etc.), DEBES explicar al usuario lo siguiente en tu análisis:
+            - **Motivo del Fallo:** "El estándar SPF (RFC 7208) limita las validaciones a un máximo de 10 búsquedas DNS para evitar sobrecargas. Todos los servicios de correo (Gmail, Outlook, etc.) aplican este límite."
+            - **Analogía Fácil:** "Imagina que el límite es una mochila con 10 espacios. Si Google Workspace ya usa 8 o 9 espacios y añades otro servicio que necesita 3, ¡la mochila se rompe y el SPF falla! 🎒"
+            - **Explicación Técnica:** "Cada mecanismo como \`include:\`, \`a\`, \`mx\`, etc., consume una búsqueda. Si se necesitan más de 10, el SPF se considera inválido."
+            - **Por qué seguir tu sugerencia:** "Te ayudaré a optimizar tu registro para no superar el límite, unificando servicios o reemplazando \`include\` por rangos de IP (\`ip4:\` o \`ip6:\`)."
 
-2.  **Análisis DKIM (DomainKeys Identified Mail):**
-    *   **Estado \`not-found\`**: Si el array \`dkimRecords\` está vacío.
-    *   **Estado \`unverified\`**:
-        *   Si ningún registro contiene la etiqueta \`v=DKIM1;\`.
-        *   Si ningún registro contiene la etiqueta \`k=rsa;\`.
-        *   Si la clave pública en la etiqueta \`p=\` **no coincide exactamente** con la \`dkimPublicKey\` esperada. ¡Debe ser una coincidencia perfecta! 🕵️‍♂️
-    *   **Estado \`verified\`**: Si se encuentra al menos un registro que contiene \`v=DKIM1;\`, \`k=rsa;\` y la clave pública en \`p=\` es idéntica a la \`dkimPublicKey\` esperada. ✅
+        ---
+        **2. Análisis de Registro DKIM**
+        - **Host/Nombre:** Verifica que el registro se encuentre en \`daybuu._domainkey.{{{domain}}}\`.
+        - **Reglas de Validación del Valor:**
+            1.  El valor DEBE contener la cadena \`v=DKIM1;\`.
+            2.  El valor DEBE contener la cadena \`k=rsa;\`.
+            3.  El valor DEBE contener \`p=\` seguido de una clave pública.
+            4.  **VERIFICACIÓN CRÍTICA:** La clave pública encontrada en el DNS (después de \`p=\`) DEBE COINCIDIR EXACTAMENTE, carácter por carácter, con la \`dkimPublicKey\` esperada que te he proporcionado. ¡No puede haber ni la más mínima diferencia! 🕵️‍♂️
+        - **Resultado Esperado:** Si todas las reglas se cumplen, el estado es \`verified\`. Si la clave no coincide, el estado es \`unverified\`. Si el registro no existe, es \`not-found\`.
+        - **Seguridad en la Respuesta:** Si en tu análisis mencionas la clave pública, muestra solo el inicio y el final para proteger la información, por ejemplo: \`p=MIIBIjA...QAB\`.
 
-3.  **Análisis DMARC (Domain-based Message Authentication, Reporting, and Conformance):**
-    *   **Estado \`not-found\`**: Si el array \`dmarcRecords\` está vacío.
-    *   **Estado \`unverified\`**:
-        *   Si el registro no empieza con \`v=DMARC1;\`.
-        *   Si falta la etiqueta de política \`p=\` o no es \`p=quarantine\` o \`p=reject\`. La política \`p=none\` es válida pero no recomendada para producción.
-    *   **Estado \`verified\`**: Si existe un registro que empieza con \`v=DMARC1;\` y tiene una política \`p=\` válida (\`quarantine\` o \`reject\` son ideales). ✅
+        ---
+        **3. Análisis de Registro DMARC**
+        - **Host/Nombre:** Verifica que el registro se encuentre en \`_dmarc.{{{domain}}}\`.
+        - **Reglas de Validación del Valor:**
+            1.  El valor DEBE contener \`v=DMARC1;\`.
+            2.  El valor DEBE contener \`p=reject;\`.
+            3.  El valor DEBE contener \`pct=100;\`.
+            4.  El valor DEBE contener \`sp=reject;\`.
+            5.  El valor DEBE contener \`aspf=s;\` y \`adkim=s;\`.
+        - **Resultado Esperado:** \`verified\` si cumple todo, \`unverified\` si falta algo, \`not-found\` si no existe.
 
-**Formato de la Respuesta en el campo \`analysis\`:**
+        ---
+        **Formato de Respuesta en el campo \`analysis\`:**
+        - Debes devolver el análisis en formato de lista.
+        - Para cada registro (SPF, DKIM, DMARC), indica su estado con un emoji y luego explica el resultado.
+        - Si algo falla, explica CLARAMENTE qué regla no se cumplió y cómo solucionarlo.
 
-Genera un resumen claro y conciso. Para cada registro (SPF, DKIM, DMARC), indica su estado y, si está \`unverified\` o \`not-found\`, explica el problema específico y cómo solucionarlo.
+        **Ejemplo de Análisis:**
+        "
+        ### Análisis Detallado ախ
+        ✅ **SPF:** ¡Tu registro SPF está correctamente configurado! Permite que nuestros servidores envíen correos en tu nombre.
 
-**Ejemplo de Análisis:**
-"
-### Análisis Detallado ախ
-✅ **SPF:** ¡Tu registro SPF está correctamente configurado! Permite que nuestros servidores envíen correos en tu nombre.
+        ❌ **DKIM:** ¡Atención! No hemos podido verificar tu firma DKIM. La clave pública en tu DNS (\`p=MIIBIjA...abc\`) no coincide con la que esperábamos (\`p=MIIBIjA...xyz\`). Asegúrate de copiar y pegar la clave correcta desde nuestras instrucciones.
 
-❌ **DKIM:** No hemos podido verificar tu firma DKIM. La clave pública en tu DNS no coincide con la que esperábamos. Asegúrate de copiar y pegar la clave correcta desde nuestras instrucciones.
-
-⚠️ **DMARC:** Tienes un registro DMARC, pero su política es \`p=none\`. Te recomendamos cambiarla a \`p=quarantine\` o \`p=reject\` para proteger mejor tu dominio contra la suplantación de identidad.
-"
+        ⚠️ **DMARC:** Tienes un registro DMARC, pero su política de subdominios no es estricta. Te recomendamos usar \`sp=reject\` para proteger completamente tu dominio.
+        "
 `,
     });
 
@@ -136,3 +153,5 @@ Genera un resumen claro y conciso. Para cada registro (SPF, DKIM, DMARC), indica
     return output;
   }
 );
+
+    
