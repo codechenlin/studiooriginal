@@ -122,8 +122,8 @@ Registros a analizar:
 
     const { output } = await expertPrompt({
         domain,
-        mxRecords: JSON.stringify(mxRecords),
-        bimiRecords: JSON.stringify(bimiRecords),
+        mxRecords: mxRecords.map(r => `Prioridad: ${r.priority}, Servidor: ${r.exchange}`).join('\n'),
+        bimiRecords: bimiRecords.join('\n'),
     });
 
     if (!output) {
