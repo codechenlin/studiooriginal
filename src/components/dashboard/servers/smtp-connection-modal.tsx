@@ -171,10 +171,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       setHealthCheckStatus(result.success ? 'verified' : 'failed');
       if (result.success && result.data) {
         setDnsAnalysis(result.data);
-        const hasError = result.data.spfStatus !== 'verified' || result.data.dkimStatus !== 'verified' || result.data.dmarcStatus !== 'verified';
-        if (hasError) {
-          setShowNotification(true);
-        }
+        const allVerified = result.data.spfStatus === 'verified' && result.data.dkimStatus === 'verified' && result.data.dmarcStatus === 'verified';
+        setShowNotification(!allVerified);
       } else {
           toast({
               title: "Análisis Fallido",
@@ -196,6 +194,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setHealthCheckStatus('verifying');
     setDnsAnalysis(null);
     setShowNotification(false);
+    setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
 
     await Promise.all([
       verifyDomainOwnershipAction({ domain, name: '@', recordType: 'MX', expectedValue: 'daybuu.com' }).then(res => setOptionalRecordStatus(p => ({...p, mx: res.success ? 'verified' : 'failed'}))),
