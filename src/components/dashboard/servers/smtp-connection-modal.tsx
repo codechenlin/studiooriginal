@@ -777,21 +777,28 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
                         <AnimatePresence>
                         {testStatus === 'failed' && (
-                            <motion.div key="failed-smtp" {...cardAnimation} className="mt-4 space-y-3">
-                                <div className="relative pt-4 flex justify-center">
-                                    <button
-                                        className="relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
-                                        onClick={handleSmtpErrorAnalysis}
-                                        style={{backgroundColor: '#F00000'}}
-                                    >
-                                        <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-500 opacity-80 group-hover:opacity-100 transition-opacity" />
-                                        <div className="relative z-10 flex items-center justify-center gap-2 text-white">
-                                            <BrainCircuit className="size-5" />
-                                            <span className="text-sm font-semibold">Análisis del error con IA</span>
+                            <motion.div
+                                key="failed-smtp"
+                                {...cardAnimation}
+                                className="relative mt-4 flex justify-center"
+                            >
+                                <button
+                                    onClick={handleSmtpErrorAnalysis}
+                                    className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white"
+                                >
+                                    <div 
+                                        className="absolute inset-0 bg-gradient-to-r from-[#F00000] to-[#F07000] group-hover/error-btn:to-[#F07000] transition-all duration-300"
+                                    />
+                                    <div className="ai-button-scan absolute inset-0"/>
+                                    <div className="relative z-10 flex items-center justify-center gap-2">
+                                        <div className="flex items-end gap-0.5 h-4">
+                                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0s'}}/>
+                                            <span className="w-1 h-full bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0.2s'}}/>
+                                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0.4s'}}/>
                                         </div>
-                                        <div className="absolute inset-0 rounded-lg border-2 border-red-500 animate-ping" />
-                                    </button>
-                                </div>
+                                        <span className="text-sm font-semibold">Análisis del error con IA</span>
+                                    </div>
+                                </button>
                             </motion.div>
                         )}
                         </AnimatePresence>
@@ -1005,6 +1012,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 }
 
 function DeliveryTimeline() {
+    const iconBaseClass = "flex items-center justify-center size-8 rounded-full border-2";
+    const sentIconClass = "border-green-400 bg-green-500/20 text-green-300";
+    const deliveredIconClass = "border-gray-600 text-gray-500";
+    const sentTextClass = "text-green-300";
+    const deliveredTextClass = "text-gray-500";
 
     return (
         <motion.div
@@ -1017,14 +1029,15 @@ function DeliveryTimeline() {
                 {/* Step 1: Sent */}
                 <div className="flex flex-col items-center">
                     <motion.div 
-                      className="flex items-center justify-center size-8 rounded-full border-2 border-green-400 bg-green-500/20 text-green-300"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1, boxShadow: '0 0 15px rgba(52, 211, 153, 0.5)', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0) 70%)' }}
-                      transition={{ duration: 0.5, ease: 'backOut' }}
+                        className={`${iconBaseClass} ${sentIconClass}`}
+                        animate={{
+                            boxShadow: ['0 0 0px rgba(52, 211, 153, 0)', '0 0 15px rgba(52, 211, 153, 0.5)', '0 0 0px rgba(52, 211, 153, 0)'],
+                        }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                     >
                         <Send size={16} />
                     </motion.div>
-                    <p className="text-xs mt-1 text-green-300">Enviado</p>
+                    <p className={`text-xs mt-1 ${sentTextClass}`}>Enviado</p>
                 </div>
                 
                 {/* Connector */}
@@ -1040,15 +1053,21 @@ function DeliveryTimeline() {
                 {/* Step 2: Delivered */}
                  <div className="flex flex-col items-center">
                     <motion.div 
-                      className="flex items-center justify-center size-8 rounded-full border-2 border-gray-600 text-gray-500"
+                      className={`${iconBaseClass} ${deliveredIconClass}`}
                       initial={{ scale: 0, borderColor: 'hsl(var(--muted-foreground))', color: 'hsl(var(--muted-foreground))' }}
-                      animate={{ scale: 1, borderColor: '#22c55e', color: '#86efac', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0) 70%)', boxShadow: '0 0 15px rgba(52, 211, 153, 0.5)' }}
-                      transition={{ delay: 1.5, duration: 0.5, ease: 'backOut' }}
+                      animate={{ 
+                        scale: 1, 
+                        borderColor: '#22c55e', 
+                        color: '#86efac', 
+                        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0) 70%)',
+                        boxShadow: ['0 0 0px rgba(52, 211, 153, 0)', '0 0 15px rgba(52, 211, 153, 0.5)', '0 0 0px rgba(52, 211, 153, 0)']
+                      }}
+                      transition={{ scale: { delay: 1.5, duration: 0.5, ease: 'backOut' }, boxShadow: { delay: 1.5, duration: 1.5, repeat: Infinity, ease: 'easeInOut' } }}
                     >
                         <MailCheck size={16} />
                     </motion.div>
                      <motion.p 
-                      className="text-xs mt-1 text-gray-500"
+                      className={`text-xs mt-1 ${deliveredTextClass}`}
                       initial={{ color: 'hsl(var(--muted-foreground))' }}
                       animate={{ color: '#86efac' }}
                       transition={{ delay: 1.5 }}
@@ -1499,3 +1518,4 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
 }
 
     
+
