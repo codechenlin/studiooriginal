@@ -26,13 +26,37 @@ const DnsHealthOutputSchema = z.object({
   analysis: z.string().describe('A natural language analysis of the findings, explaining what is wrong and how to fix it, if needed. Be concise and direct. Respond in Spanish and always use emojis.'),
 });
 
+async function withRetries<T>(
+  fn: () => Promise<T>,
+  retries: number = 2,
+  delay: number = 1500
+): Promise<T> {
+  let lastError: any;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      if (error.message && error.message.includes('503')) {
+        console.warn(`Attempt ${i + 1} failed with 503 error. Retrying in ${delay / 1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw error; // Not a retriable error
+      }
+    }
+  }
+  console.error("Flow failed after multiple retries:", lastError);
+  throw lastError;
+}
+
+
 export async function verifyDnsHealth(
   input: DnsHealthInput
 ): Promise<DnsHealthOutput | null> {
   try {
-    return await dnsHealthCheckFlow(input);
+    return await withRetries(() => dnsHealthCheckFlow(input));
   } catch (error) {
-    console.error("Flow execution failed:", error);
+    console.error("Flow execution failed after retries:", error);
     // Propagate the original error message
     throw error;
   }

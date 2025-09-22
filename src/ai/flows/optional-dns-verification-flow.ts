@@ -25,13 +25,36 @@ const OptionalDnsHealthOutputSchema = z.object({
   analysis: z.string().describe('A natural language analysis of the optional records, explaining their purpose and how to fix them if they are misconfigured. Be concise and direct. Respond in Spanish and always use emojis.'),
 });
 
+async function withRetries<T>(
+  fn: () => Promise<T>,
+  retries: number = 2,
+  delay: number = 1500
+): Promise<T> {
+  let lastError: any;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      if (error.message && error.message.includes('503')) {
+        console.warn(`Attempt ${i + 1} failed with 503 error. Retrying in ${delay / 1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw error; // Not a retriable error
+      }
+    }
+  }
+  console.error("Flow failed after multiple retries:", lastError);
+  throw lastError;
+}
+
 export async function verifyOptionalDnsHealth(
   input: OptionalDnsHealthInput
 ): Promise<OptionalDnsHealthOutput | null> {
   try {
-    return await optionalDnsHealthCheckFlow(input);
+    return await withRetries(() => optionalDnsHealthCheckFlow(input));
   } catch (error) {
-    console.error("Optional DNS flow execution failed:", error);
+    console.error("Optional DNS flow execution failed after retries:", error);
     throw error;
   }
 }
