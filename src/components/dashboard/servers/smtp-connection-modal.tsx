@@ -437,45 +437,45 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const renderStep4 = () => (
     <>
-        <h3 className="text-lg font-semibold mb-1">Configurar Credenciales</h3>
-        <p className="text-sm text-muted-foreground">Introduce los datos de tu servidor SMTP para finalizar la conexión.</p>
-        <div className="flex-grow space-y-3 pt-4 overflow-y-auto custom-scrollbar">
-            <div className="px-8">
-                <FormField control={form.control} name="host" render={({ field }) => (
-                    <FormItem className="space-y-1 mb-3"><Label>Host</Label>
-                        <FormControl><div className="relative flex items-center"><ServerIcon className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
-                    </FormItem>
-                )}/>
-            </div>
-            <div className="px-8">
-                <FormField control={form.control} name="port" render={({ field }) => (
-                    <FormItem className="space-y-1 mb-3"><Label>Puerto</Label>
-                        <FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage />
-                    </FormItem>
-                )}/>
-            </div>
-            <div className="px-8">
-                <FormField control={form.control} name="encryption" render={({ field }) => (
-                    <FormItem className="mb-3"><Label>Cifrado</Label><FormControl>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
-                    </RadioGroup>
-                    </FormControl><FormMessage /></FormItem>
-                )}/>
-            </div>
-            <div className="px-8">
-                <FormField control={form.control} name="username" render={({ field }) => (
-                    <FormItem className="space-y-1 mb-3"><Label>Usuario (Email)</Label><FormControl><div className="relative flex items-center"><AtSign className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
-                )}/>
-            </div>
-            <div className="px-8">
-                <FormField control={form.control} name="password" render={({ field }) => (
-                    <FormItem className="space-y-1 mb-3"><Label>Contraseña</Label><FormControl><div className="relative flex items-center"><KeyRound className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
-                )}/>
-            </div>
+      <h3 className="text-lg font-semibold mb-1">Configurar Credenciales</h3>
+      <p className="text-sm text-muted-foreground">Introduce los datos de tu servidor SMTP para finalizar la conexión.</p>
+      <div className="flex-grow space-y-3 pt-4 overflow-y-auto custom-scrollbar -mr-4">
+        <div className="px-8">
+            <FormField control={form.control} name="host" render={({ field }) => (
+                <FormItem className="space-y-1 mb-3"><Label>Host</Label>
+                    <FormControl><div className="relative flex items-center"><ServerIcon className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder="smtp.dominio.com" {...field} /></div></FormControl><FormMessage />
+                </FormItem>
+            )}/>
         </div>
+        <div className="px-8">
+            <FormField control={form.control} name="port" render={({ field }) => (
+                <FormItem className="space-y-1 mb-3"><Label>Puerto</Label>
+                    <FormControl><Input type="number" placeholder="587" {...field} /></FormControl><FormMessage />
+                </FormItem>
+            )}/>
+        </div>
+        <div className="px-8">
+            <FormField control={form.control} name="encryption" render={({ field }) => (
+                <FormItem className="mb-3"><Label>Cifrado</Label><FormControl>
+                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4 pt-1">
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="tls" id="tls" /></FormControl><Label htmlFor="tls" className="font-normal">TLS</Label></FormItem>
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="ssl" id="ssl" /></FormControl><Label htmlFor="ssl" className="font-normal">SSL</Label></FormItem>
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="none" id="none" /></FormControl><Label htmlFor="none" className="font-normal">Ninguno</Label></FormItem>
+                </RadioGroup>
+                </FormControl><FormMessage /></FormItem>
+            )}/>
+        </div>
+        <div className="px-8">
+            <FormField control={form.control} name="username" render={({ field }) => (
+                <FormItem className="space-y-1 mb-3"><Label>Usuario (Email)</Label><FormControl><div className="relative flex items-center"><AtSign className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" placeholder={`usuario@${domain}`} {...field} /></div></FormControl><FormMessage /></FormItem>
+            )}/>
+        </div>
+        <div className="px-8">
+            <FormField control={form.control} name="password" render={({ field }) => (
+                <FormItem className="space-y-1 mb-3"><Label>Contraseña</Label><FormControl><div className="relative flex items-center"><KeyRound className="absolute left-3 size-4 text-muted-foreground" /><Input className="pl-10" type="password" placeholder="••••••••" {...field} /></div></FormControl><FormMessage /></FormItem>
+            )}/>
+        </div>
+      </div>
     </>
   );
 
@@ -777,29 +777,33 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
                         <AnimatePresence>
                         {testStatus === 'failed' && (
-                            <motion.div
-                                key="failed-smtp"
-                                {...cardAnimation}
-                                className="relative mt-4 flex justify-center"
+                           <motion.div
+                            key="failed-smtp-content"
+                            {...cardAnimation}
+                            className="mt-4 flex flex-col items-center gap-3"
+                           >
+                            <div className="p-2 bg-red-500/10 text-red-400 rounded-lg text-center text-xs w-full">
+                                <h4 className="font-bold flex items-center justify-center gap-2"><AlertTriangle/>Fallo en la Conexión</h4>
+                                <p>{testError}</p>
+                            </div>
+                            <button
+                                onClick={handleSmtpErrorAnalysis}
+                                className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white"
                             >
-                                <button
-                                    onClick={handleSmtpErrorAnalysis}
-                                    className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white"
-                                >
-                                    <div 
-                                        className="absolute inset-0 bg-gradient-to-r from-[#F00000] to-[#F07000] group-hover/error-btn:to-[#F07000] transition-all duration-300"
-                                    />
-                                    <div className="ai-button-scan absolute inset-0"/>
-                                    <div className="relative z-10 flex items-center justify-center gap-2">
-                                        <div className="flex items-end gap-0.5 h-4">
-                                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0s'}}/>
-                                            <span className="w-1 h-full bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0.2s'}}/>
-                                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0.4s'}}/>
-                                        </div>
-                                        <span className="text-sm font-semibold">Análisis del error con IA</span>
+                                <div 
+                                    className="absolute inset-0 bg-gradient-to-r from-[#F00000] to-[#F07000] group-hover/error-btn:to-[#F07000] transition-all duration-300"
+                                />
+                                <div className="ai-button-scan absolute inset-0"/>
+                                <div className="relative z-10 flex items-center justify-center gap-2">
+                                    <div className="flex items-end gap-0.5 h-4">
+                                        <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0s'}}/>
+                                        <span className="w-1 h-full bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0.2s'}}/>
+                                        <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: 'sound-wave 1.2s infinite ease-in-out 0.4s'}}/>
                                     </div>
-                                </button>
-                            </motion.div>
+                                    <span className="text-sm font-semibold">Análisis del error con IA</span>
+                                </div>
+                            </button>
+                           </motion.div>
                         )}
                         </AnimatePresence>
                     </div>
@@ -877,7 +881,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         )}
                         onClick={isTestSuccessful ? handleClose : () => setIsCancelConfirmOpen(true)}
                      >
-                        {isTestSuccessful ? 'Finalizar' : 'Cancelar'}
+                        {isTestSuccessful ? 'Finalizar y Guardar' : 'Cancelar'}
                     </Button>
                 </div>
               </motion.div>
@@ -1518,4 +1522,5 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
 }
 
     
+
 
