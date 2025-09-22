@@ -71,7 +71,7 @@ const dnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'dnsHealthExpertPrompt',
         output: { schema: DnsHealthOutputSchema },
-        prompt: `Analiza los registros DNS de un dominio y responde en español usando emojis.
+        prompt: `Analiza los registros DNS de un dominio y responde en español usando emojis. No incluyas enlaces a documentación externa.
 
 Análisis del Registro SPF:
 

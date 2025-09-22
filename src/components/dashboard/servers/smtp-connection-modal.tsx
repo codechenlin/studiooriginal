@@ -806,7 +806,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     {currentStep === 3 && (
                         <div className="flex flex-col gap-2">
                            {allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
-                              <div className="p-2.5 mb-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-300 text-sm font-semibold flex items-center justify-center gap-2">
+                              <div 
+                                className="p-2.5 mb-2 rounded-lg text-white text-sm font-semibold flex items-center justify-center gap-2 border-2 border-[#21F700]"
+                                style={{backgroundColor: '#00CB07'}}
+                              >
                                 <CheckCircle />
                                 ¡Todos los registros obligatorios están verificados!
                               </div>
@@ -862,7 +865,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         className={cn(
                           "w-full h-12 text-base bg-transparent transition-colors",
                            isTestSuccessful 
-                           ? "border-[#21F700] text-white hover:bg-[#00CB07] hover:text-white"
+                           ? "border-[#21F700] text-white hover:bg-[#00CB07]"
                            : "border-[#F00000] text-white dark:text-foreground hover:bg-[#F00000] hover:text-white"
                         )}
                         onClick={isTestSuccessful ? handleClose : () => setIsCancelConfirmOpen(true)}
@@ -985,7 +988,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 >
                     <div className="bg-black/70 backdrop-blur-lg border border-green-500/30 rounded-xl p-4 flex items-center gap-4 text-white">
                         <div className="relative p-2 rounded-full bg-green-500/20">
-                            <div className="absolute inset-0 rounded-full bg-green-500/50 animate-pulse"></div>
+                            <div className="absolute inset-0 rounded-full bg-green-500/50 animate-ping"></div>
                             <CheckCheck className="relative z-10 text-green-300"/>
                         </div>
                         <div className="flex-1">

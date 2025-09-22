@@ -76,7 +76,7 @@ const optionalDnsHealthCheckFlow = ai.defineFlow(
     const expertPrompt = ai.definePrompt({
         name: 'optionalDnsHealthExpertPrompt',
         output: { schema: OptionalDnsHealthOutputSchema },
-        prompt: `Analiza los registros DNS opcionales de un dominio y responde en español usando emojis.
+        prompt: `Analiza los registros DNS opcionales de un dominio y responde en español usando emojis. No incluyas enlaces a documentación externa.
 
 Análisis del Registro MX:
 
@@ -95,7 +95,7 @@ Análisis del Registro BIMI:
 1.  **Identificación**: Busca en 'bimiRecords' un registro para el selector 'daybuu._bimi'. Solo puede existir uno con este selector.
 2.  **Validación de Contenido**: El registro encontrado debe contener las siguientes cadenas:
     *   \`v=BIMI1;\`
-    *   \`l=https:\` (para el enlace del logotipo).
+    *   \`l=https:\` (para el enlace del logotipo). No valides el dominio de la URL del logo, solo la presencia de la etiqueta.
 3.  **Resultado**: 
     *   Si el registro existe y contiene ambas cadenas, marca 'bimiStatus' como 'verified' ✅.
     *   Si existe pero falta alguna de las cadenas, 'unverified' ❌.
@@ -122,8 +122,8 @@ Registros a analizar:
 
     const { output } = await expertPrompt({
         domain,
-        mxRecords: JSON.stringify(mxRecords, null, 2),
-        bimiRecords: JSON.stringify(bimiRecords, null, 2),
+        mxRecords: mxRecords.map(r => `Prioridad: ${r.priority}, Servidor: ${r.exchange}`).join('; '),
+        bimiRecords: bimiRecords.join('; '),
     });
 
     if (!output) {
