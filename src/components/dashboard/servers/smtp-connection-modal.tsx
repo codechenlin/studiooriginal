@@ -35,6 +35,7 @@ type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'faile
 type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
 type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
+type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
 
 const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
 
@@ -71,6 +72,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
+  
+  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
 
   useEffect(() => {
     if (domain && !dkimData) {
@@ -260,6 +263,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setHealthCheckStatus('idle');
         setDnsAnalysis(null);
         setTestStatus('idle');
+        setDeliveryStatus('idle');
         form.reset();
         setTestError('');
         setActiveInfoModal(null);
@@ -277,6 +281,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   async function onSubmitSmtp(values: z.infer<typeof smtpFormSchema>) {
     setTestStatus('testing');
+    setDeliveryStatus('idle');
     setTestError('');
     setSmtpErrorAnalysis(null);
     
@@ -297,6 +302,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
     if (result.success) {
       setTestStatus('success');
+      setDeliveryStatus('sent');
+      // Simulate checking for bounce
+      setTimeout(() => {
+        if (result.error?.includes('rejected') || result.error?.includes('bounce')) {
+            setDeliveryStatus('bounced');
+            setTestError(result.error);
+        } else {
+            setDeliveryStatus('delivered');
+        }
+      }, 3500);
       toast({
         title: "¡Conexión Exitosa!",
         description: `Correo de prueba despachado a ${values.testEmail}`,
@@ -614,7 +629,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified';
     const allOptionalRecordsVerified = optionalRecordStatus.mx === 'verified' && optionalRecordStatus.bimi === 'verified' && optionalRecordStatus.vmc === 'verified';
-    const isTestSuccessful = testStatus === 'success';
 
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
@@ -745,6 +759,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                               </div>
                           </motion.div>
                       )}
+                      <div className="mt-4 p-2 bg-blue-500/10 text-blue-300 text-xs rounded-md border border-blue-400/20 flex items-start gap-2">
+                          <Info className="size-5 shrink-0 mt-0.5" />
+                          <p>La propagación de DNS no es instantánea. Si una verificación falla, espera un tiempo y vuelve a intentarlo.</p>
+                      </div>
                   </div>
                 )}
                 {currentStep === 4 && (
@@ -773,7 +791,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </FormItem>
                         )}/>
                         </div>
-                        {isTestSuccessful && isConnectionSecure && <DeliveryTimeline />}
+                        {deliveryStatus !== 'idle' && isConnectionSecure && <DeliveryTimeline deliveryStatus={deliveryStatus} testError={testError}/>}
 
                         <AnimatePresence>
                         {testStatus === 'failed' && (
@@ -788,11 +806,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </div>
                             <button
                                 onClick={handleSmtpErrorAnalysis}
-                                className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white"
+                                className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white bg-gradient-to-r from-[#F00000] to-[#F07000] hover:to-[#F07000]"
                             >
-                                <div 
-                                    className="absolute inset-0 bg-gradient-to-r from-[#F00000] to-[#F07000] group-hover/error-btn:to-[#F07000] transition-all duration-300"
-                                />
                                 <div className="ai-button-scan absolute inset-0"/>
                                 <div className="relative z-10 flex items-center justify-center gap-2">
                                     <div className="flex items-end gap-0.5 h-4">
@@ -844,7 +859,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                 </Button>
                             )}
                          
-                         {healthCheckStatus === 'verified' && healthCheckStep === 'mandatory' && (
+                         {healthCheckStatus === 'verified' && allMandatoryRecordsVerified && healthCheckStep === 'mandatory' && (
                             <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => {
                               setHealthCheckStep('optional');
                               setHealthCheckStatus('idle'); // Reset status for next step
@@ -862,7 +877,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
                         </div>
                     )}
-                    {currentStep === 4 && !isTestSuccessful && (
+                    {currentStep === 4 && (testStatus !== 'success' || deliveryStatus !== 'delivered') && (
                          <Button 
                             onClick={form.handleSubmit(onSubmitSmtp)} 
                             className="w-full h-12 text-base text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00]"
@@ -875,13 +890,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         variant="outline"
                         className={cn(
                           "w-full h-12 text-base bg-transparent transition-colors",
-                           isTestSuccessful 
+                           deliveryStatus === 'delivered'
                            ? "border-[#21F700] text-white hover:text-white hover:bg-[#00CB07]"
                            : "border-[#F00000] text-white dark:text-foreground hover:bg-[#F00000] hover:text-white"
                         )}
-                        onClick={isTestSuccessful ? handleClose : () => setIsCancelConfirmOpen(true)}
+                        onClick={deliveryStatus === 'delivered' ? handleClose : () => setIsCancelConfirmOpen(true)}
                      >
-                        {isTestSuccessful ? 'Finalizar y Guardar' : 'Cancelar'}
+                        {deliveryStatus === 'delivered' ? 'Finalizar y Guardar' : 'Cancelar'}
                     </Button>
                 </div>
               </motion.div>
@@ -1015,12 +1030,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   );
 }
 
-function DeliveryTimeline() {
+function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
     const iconBaseClass = "flex items-center justify-center size-8 rounded-full border-2";
+    
     const sentIconClass = "border-green-400 bg-green-500/20 text-green-300";
-    const deliveredIconClass = "border-gray-600 text-gray-500";
+    const deliveredIconClass = deliveryStatus === 'delivered' ? "border-green-400 bg-green-500/20 text-green-300" : "border-gray-600 text-gray-500";
+    const bouncedIconClass = "border-red-500 bg-red-500/20 text-red-400";
+    
     const sentTextClass = "text-green-300";
-    const deliveredTextClass = "text-gray-500";
+    const deliveredTextClass = deliveryStatus === 'delivered' ? "text-green-300" : "text-gray-500";
+    const bouncedTextClass = "text-red-400";
+
+    const connectorAnimation = deliveryStatus === 'bounced' ? { width: '50%' } : { width: '100%' };
 
     return (
         <motion.div
@@ -1034,9 +1055,7 @@ function DeliveryTimeline() {
                 <div className="flex flex-col items-center">
                     <motion.div 
                         className={`${iconBaseClass} ${sentIconClass}`}
-                        animate={{
-                            boxShadow: ['0 0 0px rgba(52, 211, 153, 0)', '0 0 15px rgba(52, 211, 153, 0.5)', '0 0 0px rgba(52, 211, 153, 0)'],
-                        }}
+                        animate={{ boxShadow: ['0 0 0px rgba(52, 211, 153, 0)', '0 0 15px rgba(52, 211, 153, 0.5)', '0 0 0px rgba(52, 211, 153, 0)'] }}
                         transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                     >
                         <Send size={16} />
@@ -1049,45 +1068,65 @@ function DeliveryTimeline() {
                     <motion.div 
                         className="absolute top-0 left-0 h-full bg-green-400"
                         initial={{ width: '0%' }}
-                        animate={{ width: '100%'}}
+                        animate={connectorAnimation}
                         transition={{ delay: 0.5, duration: 1 }}
                     />
                 </div>
                 
-                {/* Step 2: Delivered */}
+                {/* Step 2: Delivered or Bounced */}
                  <div className="flex flex-col items-center">
                     <motion.div 
-                      className={`${iconBaseClass} ${deliveredIconClass}`}
-                      initial={{ scale: 0, borderColor: 'hsl(var(--muted-foreground))', color: 'hsl(var(--muted-foreground))' }}
+                      className={cn(iconBaseClass, deliveryStatus === 'bounced' ? bouncedIconClass : deliveredIconClass)}
+                      initial={{ scale: 0 }}
                       animate={{ 
                         scale: 1, 
-                        borderColor: '#22c55e', 
-                        color: '#86efac', 
-                        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0) 70%)',
-                        boxShadow: ['0 0 0px rgba(52, 211, 153, 0)', '0 0 15px rgba(52, 211, 153, 0.5)', '0 0 0px rgba(52, 211, 153, 0)']
+                        borderColor: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#ef4444' : '#22c55e') : '#6b7280',
+                        color: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#f87171' : '#86efac') : '#6b7280',
+                        boxShadow: deliveryStatus !== 'sent' ? ['0 0 0px', `0 0 15px ${deliveryStatus === 'bounced' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(52, 211, 153, 0.5)'}`, '0 0 0px'] : 'none'
                       }}
                       transition={{ scale: { delay: 1.5, duration: 0.5, ease: 'backOut' }, boxShadow: { delay: 1.5, duration: 1.5, repeat: Infinity, ease: 'easeInOut' } }}
                     >
-                        <MailCheck size={16} />
+                        {deliveryStatus === 'bounced' ? <X size={16} /> : <MailCheck size={16} />}
                     </motion.div>
                      <motion.p 
-                      className={`text-xs mt-1 ${deliveredTextClass}`}
+                      className={cn("text-xs mt-1", deliveryStatus === 'bounced' ? bouncedTextClass : deliveredTextClass)}
                       initial={{ color: 'hsl(var(--muted-foreground))' }}
-                      animate={{ color: '#86efac' }}
+                      animate={{ color: deliveryStatus !== 'sent' ? (deliveryStatus === 'bounced' ? '#f87171' : '#86efac') : '#6b7280' }}
                       transition={{ delay: 1.5 }}
                      >
-                        Entregado
+                        {deliveryStatus === 'bounced' ? 'Rebotado' : 'Entregado'}
                     </motion.p>
                 </div>
             </div>
              <motion.p 
-                className="text-xs text-center text-green-300/80 pt-2"
+                className={cn("text-xs text-center pt-2", deliveryStatus === 'delivered' ? 'text-green-300/80' : 'text-red-300/80')}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 2 }}
              >
-                ¡Confirmado! La IA ha verificado la entrega exitosa del correo de prueba.
+                {deliveryStatus === 'delivered' && '¡Confirmado! La IA ha verificado la entrega exitosa del correo de prueba.'}
+                {deliveryStatus === 'bounced' && '¡Fallo en la entrega! El correo fue rebotado.'}
             </motion.p>
+            {deliveryStatus === 'bounced' && (
+                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2 }} className="flex justify-center">
+                    <button
+                        onClick={async () => {
+                            if (!testError) return;
+                            setIsSmtpErrorAnalysisModalOpen(true);
+                            setSmtpErrorAnalysis(null);
+                            const result = await analyzeSmtpErrorAction({ error: testError });
+                            setSmtpErrorAnalysis(result.success && result.data ? result.data.analysis : result.error || 'No se pudo generar un análisis.');
+                        }}
+                        className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white bg-gradient-to-r from-[#F00000] to-[#F07000] hover:to-[#F07000]"
+                    >
+                        <div className="ai-button-scan absolute inset-0"/>
+                        <div className="relative z-10 flex items-center justify-center gap-2">
+                            <BrainCircuit className="size-4"/>
+                            <span className="text-sm font-semibold">Analizar Rebote con IA</span>
+                        </div>
+                    </button>
+                 </motion.div>
+            )}
         </motion.div>
     );
 }
@@ -1522,5 +1561,6 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
 }
 
     
+
 
 

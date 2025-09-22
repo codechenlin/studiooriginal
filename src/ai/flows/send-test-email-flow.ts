@@ -82,7 +82,10 @@ const sendTestEmailFlow = ai.defineFlow(
       console.error('SMTP Error:', error);
       
       let errorMessage = 'Ocurrió un error desconocido.';
-      if (error.code === 'EAUTH') {
+       // Check for specific error responses from the server after authentication
+      if (error.responseCode === 550 || (error.response && /recipient rejected|mailbox unavailable|no such user/i.test(error.response))) {
+        errorMessage = `El correo de prueba fue rebotado por el servidor de destino. Código: ${error.responseCode}. Respuesta: ${error.response}`;
+      } else if (error.code === 'EAUTH') {
         errorMessage = 'Autenticación fallida. Revisa tu usuario y contraseña.';
       } else if (error.code === 'ECONNREFUSED') {
          errorMessage = 'Conexión rechazada. Revisa el host, el puerto y la configuración de seguridad (TLS/SSL).';
