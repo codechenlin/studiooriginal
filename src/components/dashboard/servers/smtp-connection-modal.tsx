@@ -73,6 +73,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
+  const [isConnectionSecure, setIsConnectionSecure] = useState(false);
 
   useEffect(() => {
     if (domain && !dkimData) {
@@ -279,6 +280,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setSmtpErrorAnalysis(null);
         setShowSmtpErrorNotification(false);
         setAcceptedDkimKey(null);
+        setIsConnectionSecure(false);
     }, 300);
   }
   
@@ -289,10 +291,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setSmtpErrorAnalysis(null);
     setShowSmtpErrorNotification(false);
     
+    const isSecure = values.encryption !== 'none';
+    setIsConnectionSecure(isSecure);
+
     const result = await sendTestEmailAction({
         host: values.host,
         port: values.port,
-        secure: values.encryption !== 'none',
+        secure: isSecure,
         auth: {
             user: values.username,
             pass: values.password
@@ -720,7 +725,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   </div>
                 )}
                 {currentStep === 4 && (
-                    <div className="relative z-10 w-full h-full flex flex-col -mr-4">
+                    <div className="relative z-10 w-full h-full flex flex-col">
                       <div className="absolute inset-0 z-0">
                           <div className="absolute inset-0 bg-black/30" />
                           <div
@@ -745,7 +750,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </FormItem>
                         )}/>
                         </div>
-                        {testStatus === 'success' && form.getValues('encryption') !== 'none' ? (
+                        {testStatus === 'success' && isConnectionSecure ? (
                             <motion.div key="delivery-check" {...cardAnimation} className="mt-4 space-y-3">
                                 <Button 
                                   className="w-full text-white bg-gradient-to-r from-[#E18700] to-[#FFAB00] hover:bg-[#00ADEC]"
@@ -759,7 +764,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     <p className="text-sm font-bold text-green-400">¡Confirmado! El correo fue entregado con éxito.</p>
                                 }
                             </motion.div>
-                        ) : testStatus === 'success' && form.getValues('encryption') === 'none' ? (
+                        ) : testStatus === 'success' && !isConnectionSecure ? (
                              <motion.div key="no-verify" {...cardAnimation} className="mt-4 p-3 bg-amber-500/10 text-amber-300 rounded-lg text-xs border border-amber-400/30 flex items-start gap-3">
                                  <Info className="size-6 shrink-0 mt-0.5 text-amber-400" />
                                  <div className="text-left">
@@ -879,7 +884,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         className={cn(
                           "w-full h-12 text-base bg-transparent transition-colors",
                            isTestSuccessful 
-                           ? "border-[#21F700] text-white hover:bg-[#00CB07]"
+                           ? "border-[#21F700] text-white hover:bg-[#00CB07] hover:text-white"
                            : "border-[#F00000] text-white dark:text-foreground hover:bg-[#F00000] hover:text-white"
                         )}
                         onClick={isTestSuccessful ? handleClose : () => setIsCancelConfirmOpen(true)}
@@ -1457,3 +1462,4 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
 
 
     
+
