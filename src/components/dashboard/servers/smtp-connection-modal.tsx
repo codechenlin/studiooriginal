@@ -697,7 +697,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 )}
                 {currentStep === 3 && healthCheckStep === 'mandatory' && (
                   <div className="w-full flex-grow flex flex-col justify-center">
-                      {allMandatoryRecordsVerified && (
+                      {allMandatoryRecordsVerified ? (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -712,12 +712,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
                           </div>
                         </motion.div>
+                      ) : (
+                        <div className="text-center">
+                            <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
+                            <h4 className="font-bold">Registros Obligatorios</h4>
+                            <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
+                        </div>
                       )}
-                     <div className="text-center">
-                        <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
-                        <h4 className="font-bold">Registros Obligatorios</h4>
-                        <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
-                    </div>
                      <div className="mt-4 p-2 bg-blue-500/10 text-blue-300 text-xs rounded-md border border-blue-400/20 flex items-start gap-2">
                       <Info className="size-5 shrink-0 mt-0.5" />
                       <p>La propagación de DNS no es instantánea. Si una verificación falla, espera un tiempo y vuelve a intentarlo.</p>
@@ -766,28 +767,19 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <motion.div key="failed-smtp" {...cardAnimation} className="mt-4 space-y-3">
                                <div className="relative pt-4 flex justify-center">
                                     <button
-                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
+                                        className="relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
                                         onClick={handleSmtpErrorAnalysis}
-                                        style={{'--ai-glow-start': 'hsl(0 100% 50%)', '--ai-glow-end': 'hsl(0 100% 60%)'} as React.CSSProperties}
+                                        style={{backgroundColor: '#F00000'}}
                                     >
-                                        <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-800 opacity-80 group-hover:opacity-100 transition-opacity" />
+                                        <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-orange-500 opacity-80 group-hover:opacity-100 transition-opacity" />
                                         <div className="relative z-10 flex items-center justify-center gap-2 text-white">
                                             <BrainCircuit className="size-5" />
-                                            <span className="text-sm font-semibold">Análisis de IA del Error</span>
+                                            <span className="text-sm font-semibold">Análisis del error con IA</span>
                                         </div>
                                          {showSmtpErrorNotification && (
-                                            <div className="absolute -top-2 -right-2">
-                                                <div className="relative flex h-5 w-5">
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 items-center justify-center text-xs font-bold text-white">!</span>
-                                                </div>
-                                            </div>
+                                            <div className="absolute inset-0 rounded-lg border-2 border-red-500 animate-ping" />
                                         )}
                                     </button>
-                                </div>
-                                <div className="p-2 mt-4 rounded-lg text-center text-xs" style={{backgroundColor: '#DA0000'}}>
-                                    <h4 className="font-bold flex items-center justify-center gap-2" style={{color: '#FFCDCD'}}><AlertTriangle style={{color: '#FFCDCD'}}/>Fallo en la Conexión</h4>
-                                    <p style={{color: '#FFCDCD'}}>{testError}</p>
                                 </div>
                             </motion.div>
                         )}
@@ -1013,9 +1005,14 @@ function DeliveryTimeline() {
             <div className="flex items-center gap-2">
                 {/* Step 1: Sent */}
                 <div className="flex flex-col items-center">
-                    <div className="flex items-center justify-center size-8 rounded-full border-2 border-green-400 bg-green-500/20 text-green-300">
+                    <motion.div 
+                      className="flex items-center justify-center size-8 rounded-full border-2 border-green-400 bg-green-500/20 text-green-300"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1, boxShadow: '0 0 15px rgba(52, 211, 153, 0.5)', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0) 70%)' }}
+                      transition={{ duration: 0.5, ease: 'backOut' }}
+                    >
                         <Send size={16} />
-                    </div>
+                    </motion.div>
                     <p className="text-xs mt-1 text-green-300">Enviado</p>
                 </div>
                 
@@ -1033,9 +1030,9 @@ function DeliveryTimeline() {
                  <div className="flex flex-col items-center">
                     <motion.div 
                       className="flex items-center justify-center size-8 rounded-full border-2 border-gray-600 text-gray-500"
-                      initial={{ borderColor: 'hsl(var(--muted-foreground))', color: 'hsl(var(--muted-foreground))' }}
-                      animate={{ borderColor: '#22c55e', color: '#86efac' }}
-                      transition={{ delay: 1.5 }}
+                      initial={{ scale: 0, borderColor: 'hsl(var(--muted-foreground))', color: 'hsl(var(--muted-foreground))' }}
+                      animate={{ scale: 1, borderColor: '#22c55e', color: '#86efac', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0) 70%)', boxShadow: '0 0 15px rgba(52, 211, 153, 0.5)' }}
+                      transition={{ delay: 1.5, duration: 0.5, ease: 'backOut' }}
                     >
                         <MailCheck size={16} />
                     </motion.div>
@@ -1489,5 +1486,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
-
-    
