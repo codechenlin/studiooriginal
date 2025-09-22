@@ -173,6 +173,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setDnsAnalysis(result.data);
         const allVerified = result.data.spfStatus === 'verified' && result.data.dkimStatus === 'verified' && result.data.dmarcStatus === 'verified';
         setShowNotification(!allVerified);
+        if (allVerified) {
+             toast({
+                title: "¡Registros Verificados!",
+                description: "Todos los registros obligatorios son correctos.",
+                className: 'bg-green-500 text-white border-none'
+            })
+        }
       } else {
           toast({
               title: "Análisis Fallido",
@@ -563,7 +570,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             <p><span className="font-semibold">DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                           </div>
                            
-                           {healthCheckStatus !== 'idle' && healthCheckStatus !== 'verifying' && (
+                           {dnsAnalysis && (
                                <div className="pt-4 flex justify-center">
                                 <div className="relative">
                                     <button
@@ -713,7 +720,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   </div>
                 )}
                 {currentStep === 4 && (
-                    <div className="relative z-10 w-full h-full flex flex-col">
+                    <div className="relative z-10 w-full h-full flex flex-col -mr-4">
                       <div className="absolute inset-0 z-0">
                           <div className="absolute inset-0 bg-black/30" />
                           <div
@@ -831,7 +838,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             ) : (
                                 <Button 
                                     className="w-full h-12 text-base bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00] text-white" 
-                                    onClick={() => handleCheckOptionalHealth(true)} disabled={healthCheckStatus === 'verifying'}
+                                    onClick={() => {
+                                        setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
+                                        handleCheckOptionalHealth(true)
+                                    }} disabled={healthCheckStatus === 'verifying'}
                                 >
                                 {healthCheckStatus === 'verifying' ? <><Loader2 className="mr-2 animate-spin"/> Analizando...</> : <><Search className="mr-2"/> Analizar Registros Opcionales</>}
                                 </Button>
@@ -1442,5 +1452,8 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
     
 
     
+
+    
+
 
     
