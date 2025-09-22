@@ -67,7 +67,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
   const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
-  const [showSmtpErrorNotification, setShowSmtpErrorNotification] = useState(false);
   
   const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
@@ -271,7 +270,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
         setIsSmtpErrorAnalysisModalOpen(false);
         setSmtpErrorAnalysis(null);
-        setShowSmtpErrorNotification(false);
         setAcceptedDkimKey(null);
         setIsConnectionSecure(false);
     }, 300);
@@ -281,7 +279,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setTestStatus('testing');
     setTestError('');
     setSmtpErrorAnalysis(null);
-    setShowSmtpErrorNotification(false);
     
     const isSecure = values.encryption !== 'none';
     setIsConnectionSecure(isSecure);
@@ -309,7 +306,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     } else {
        setTestStatus('failed');
        setTestError(result.error || 'Ocurrió un error desconocido.');
-       setShowSmtpErrorNotification(true);
     }
   }
 
@@ -317,7 +313,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     if (!testError) return;
     setSmtpErrorAnalysis(null);
     setIsSmtpErrorAnalysisModalOpen(true);
-    setShowSmtpErrorNotification(false);
     const result = await analyzeSmtpErrorAction({ error: testError });
     if (result.success && result.data) {
         setSmtpErrorAnalysis(result.data.analysis);
@@ -618,6 +613,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' && (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified';
+    const allOptionalRecordsVerified = optionalRecordStatus.mx === 'verified' && optionalRecordStatus.bimi === 'verified' && optionalRecordStatus.vmc === 'verified';
     const isTestSuccessful = testStatus === 'success';
 
     return (
@@ -697,27 +693,27 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 )}
                 {currentStep === 3 && healthCheckStep === 'mandatory' && (
                   <div className="w-full flex-grow flex flex-col justify-center">
-                      {allMandatoryRecordsVerified ? (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
-                        >
-                          <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
-                          <div className="relative z-10 flex flex-col items-center text-center gap-2">
-                            <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
-                              <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
-                            </motion.div>
-                            <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
-                            <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
-                          </div>
-                        </motion.div>
-                      ) : (
+                      {!allMandatoryRecordsVerified ? (
                         <div className="text-center">
                             <div className="flex justify-center mb-4"><ShieldCheck className="size-16 text-primary/30" /></div>
                             <h4 className="font-bold">Registros Obligatorios</h4>
                             <p className="text-sm text-muted-foreground">Comprobaremos tus registros para asegurar una alta entregabilidad.</p>
                         </div>
+                      ) : (
+                          <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                          >
+                              <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                              <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                                  <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                                      <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                  </motion.div>
+                                  <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                                  <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
+                              </div>
+                          </motion.div>
                       )}
                      <div className="mt-4 p-2 bg-blue-500/10 text-blue-300 text-xs rounded-md border border-blue-400/20 flex items-start gap-2">
                       <Info className="size-5 shrink-0 mt-0.5" />
@@ -727,11 +723,28 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 )}
                  {currentStep === 3 && healthCheckStep === 'optional' && (
                   <div className="w-full flex-grow flex flex-col justify-center">
-                     <div className="text-center">
-                        <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
-                        <h4 className="font-bold">Registros Opcionales</h4>
-                        <p className="text-sm text-muted-foreground">Estos registros mejoran la reputación y visibilidad de tu marca.</p>
-                    </div>
+                     {!allOptionalRecordsVerified ? (
+                        <div className="text-center">
+                            <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
+                            <h4 className="font-bold">Registros Opcionales</h4>
+                            <p className="text-sm text-muted-foreground">Estos registros mejoran la reputación y visibilidad de tu marca.</p>
+                        </div>
+                      ) : (
+                          <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                          >
+                              <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                              <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                                  <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                                      <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                  </motion.div>
+                                  <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                                  <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
+                              </div>
+                          </motion.div>
+                      )}
                   </div>
                 )}
                 {currentStep === 4 && (
@@ -765,7 +778,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         <AnimatePresence>
                         {testStatus === 'failed' && (
                             <motion.div key="failed-smtp" {...cardAnimation} className="mt-4 space-y-3">
-                               <div className="relative pt-4 flex justify-center">
+                                <div className="relative pt-4 flex justify-center">
                                     <button
                                         className="relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group"
                                         onClick={handleSmtpErrorAnalysis}
@@ -776,9 +789,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                             <BrainCircuit className="size-5" />
                                             <span className="text-sm font-semibold">Análisis del error con IA</span>
                                         </div>
-                                         {showSmtpErrorNotification && (
-                                            <div className="absolute inset-0 rounded-lg border-2 border-red-500 animate-ping" />
-                                        )}
+                                        <div className="absolute inset-0 rounded-lg border-2 border-red-500 animate-ping" />
                                     </button>
                                 </div>
                             </motion.div>
@@ -1236,7 +1247,7 @@ function DnsInfoModal({
     const renderDmarcContent = () => {
         const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:fallas@${domain}; sp=reject; aspf=s; adkim=s`;
         return (
-            <div className="grid md:grid-cols-3 gap-6 text-sm">
+             <div className="grid md:grid-cols-3 gap-6 text-sm">
                <div className="md:col-span-2 space-y-4">
                  <h4 className="font-semibold text-base mb-2">Paso 1: Añade el Registro a tu DNS</h4>
                  <p className="mb-4">Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
@@ -1486,3 +1497,5 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+    
