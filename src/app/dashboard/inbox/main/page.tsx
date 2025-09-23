@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { MailCheck, Database, Search, ChevronDown, Filter } from 'lucide-react';
+import { MailCheck, Database, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,10 +10,12 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export default function MainInboxPage() {
   return (
-    <main className="flex-1 p-4 md:p-8 bg-background/90 relative overflow-hidden">
+    <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden">
+      {/* Background Animation */}
       <div 
-        className="absolute inset-0 z-0 opacity-5 bg-[radial-gradient(#00ADEC_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,white_50%,transparent_100%)]"
+        className="absolute inset-0 z-0 opacity-5 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"
       />
+
       <div className="relative z-10">
         <header className="mb-8">
             <div className="flex items-center gap-3">
@@ -65,12 +67,14 @@ export default function MainInboxPage() {
           </CardContent>
         </Card>
 
-        <div className="border-2 border-dashed border-primary/20 rounded-xl min-h-[50vh] flex flex-col items-center justify-center text-center p-8 bg-primary/5">
-            <div className="relative mb-4">
-                <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping"/>
-                <MailCheck className="relative z-10 size-20 text-primary" />
+        <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-8">
+            <div className="relative w-48 h-48 flex items-center justify-center">
+                <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: '8s' }}></div>
+                <div className="absolute inset-4 border border-primary/10 rounded-full animate-spin" style={{ animationDuration: '6s', animationDirection: 'reverse' }}></div>
+                <div className="absolute inset-8 bg-primary/5 rounded-full animate-pulse"></div>
+                <MailCheck className="relative z-10 size-20 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
             </div>
-            <h2 className="text-xl font-bold text-primary-foreground">Tu Buzón Principal está listo</h2>
+            <h2 className="text-2xl font-bold text-primary-foreground mt-8">Buzón Principal Listo</h2>
             <p className="text-muted-foreground mt-2 max-w-md">
                 Los correos electrónicos entrantes aparecerán aquí. ¡Todo está preparado para empezar a recibir comunicaciones!
             </p>

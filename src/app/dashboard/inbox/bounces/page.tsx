@@ -10,7 +10,8 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export default function BouncesPage() {
   return (
-    <main className="flex-1 p-4 md:p-8 bg-background/90 relative overflow-hidden">
+    <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden">
+      {/* Background Animation */}
       <div 
         className="absolute inset-0 z-0 opacity-[0.05] bg-grid-red-500/[0.2] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]"
       />
@@ -66,12 +67,14 @@ export default function BouncesPage() {
           </CardContent>
         </Card>
 
-        <div className="border-2 border-dashed border-red-500/30 rounded-xl min-h-[50vh] flex flex-col items-center justify-center text-center p-8 bg-red-900/10">
-            <div className="relative mb-4">
-                <div className="absolute inset-0 bg-red-500/20 rounded-full animate-ping"/>
-                <ShieldAlert className="relative z-10 size-20 text-red-400" />
+        <div className="min-h-[50vh] flex flex-col items-center justify-center text-center p-8">
+            <div className="relative w-48 h-48 flex items-center justify-center">
+                <div className="absolute inset-0 border-2 border-red-500/20 rounded-full animate-spin" style={{ animationDuration: '10s' }}></div>
+                <div className="absolute inset-4 border border-red-500/10 rounded-full animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }}></div>
+                <div className="absolute inset-8 bg-red-500/5 rounded-full animate-pulse"></div>
+                <ShieldAlert className="relative z-10 size-20 text-red-400" style={{ filter: 'drop-shadow(0 0 10px #f43f5e)' }}/>
             </div>
-            <h2 className="text-xl font-bold text-red-300">Bandeja de Rebotes Vacía</h2>
+            <h2 className="text-2xl font-bold text-red-300 mt-8">Bandeja de Rebotes Vacía</h2>
             <p className="text-red-200/70 mt-2 max-w-md">
               No se han detectado rebotes. Este es el lugar donde aparecerán los correos que no se pudieron entregar, permitiéndote diagnosticar y solucionar problemas.
             </p>
