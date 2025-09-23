@@ -73,8 +73,8 @@ export default function MainInboxPage() {
                 <div className="absolute inset-8 bg-primary/5 rounded-full animate-pulse"></div>
                 <MailCheck className="relative z-10 size-20 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
             </div>
-            <h2 className="text-2xl font-bold text-primary-foreground mt-8">Buzón Principal Listo</h2>
-            <p className="text-muted-foreground mt-2 max-w-md">
+            <h2 className="text-2xl font-bold mt-8 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Buzón Principal Listo</h2>
+            <p className="text-transparent bg-clip-text bg-gradient-to-r from-primary/80 to-accent/80 mt-2 max-w-md">
                 Los correos electrónicos entrantes aparecerán aquí. ¡Todo está preparado para empezar a recibir comunicaciones!
             </p>
         </div>
