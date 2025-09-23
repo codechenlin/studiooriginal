@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-settings-modal';
-import { EmailList, type Email } from '@/components/dashboard/inbox/email-list';
+import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 
 const mockBouncedEmails: Email[] = [
@@ -35,7 +35,20 @@ const mockBouncedEmails: Email[] = [
 
 export default function BouncesPage() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
-  const [selectedEmail, setSelectedEmail] = useState<Email | null>(mockBouncedEmails[0]);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+
+  const handleSelectEmail = (email: Email) => {
+    setSelectedEmail(email);
+  };
+  
+  const handleBackToList = () => {
+      setSelectedEmail(null);
+  }
+
+  if (selectedEmail) {
+      return <EmailView email={selectedEmail} onBack={handleBackToList} />
+  }
+
 
   return (
     <>
@@ -64,7 +77,7 @@ export default function BouncesPage() {
         <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-2 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-rose-500/10" />
           <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
-            <div className="flex items-center gap-4 w-full md:w-auto">
+             <div className="flex items-center gap-4 w-full md:w-auto">
               <Select defaultValue="domain1">
                 <SelectTrigger className="w-full sm:w-[200px] bg-background/70 border-red-500/30">
                   <div className="flex items-center gap-2">
@@ -88,9 +101,9 @@ export default function BouncesPage() {
                 </SelectContent>
               </Select>
             </div>
-             <div className="relative w-full md:flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input placeholder="Buscar por destinatario o asunto..." className="pl-10 bg-background/70 border-red-500/30" />
+            <div className="relative w-full md:flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input placeholder="Buscar en rebotes..." className="pl-10 bg-background/70 border-red-500/30" />
             </div>
              <Button variant="outline" className="w-full md:w-auto bg-background/70 border-red-500/30 hover:bg-cyan-500 hover:text-white">
                 <Tag className="mr-2 size-4" />
@@ -122,17 +135,10 @@ export default function BouncesPage() {
             </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <div className="md:col-span-1 lg:col-span-1">
-                <EmailList 
-                    emails={mockBouncedEmails}
-                    selectedEmail={selectedEmail}
-                    onSelectEmail={setSelectedEmail}
-                />
-            </div>
-            <div className="md:col-span-2 lg:col-span-3">
-                <EmailView email={selectedEmail} />
-            </div>
+        <div className="bg-card/60 backdrop-blur-sm border border-red-500/20 rounded-lg shadow-lg">
+            {mockBouncedEmails.map((email, index) => (
+                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === mockBouncedEmails.length - 1} />
+            ))}
         </div>
       </div>
     </main>
