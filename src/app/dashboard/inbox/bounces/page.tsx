@@ -22,10 +22,9 @@ export default function BouncesPage() {
                 <ShieldAlert className="size-8"/>
                 Buzón de Rebotes
               </h1>
-              <div className="flex items-end gap-1 h-8">
-                  <span className="w-1 h-2/5 bg-red-400 rounded-full animate-pulse" style={{animationDelay: '0s'}}/>
-                  <span className="w-1 h-full bg-red-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}/>
-                  <span className="w-1 h-3/5 bg-red-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}/>
+              <div className="relative flex items-center justify-center size-8 ml-2">
+                  <Database className="text-red-500/80 size-7" />
+                  <div className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" />
               </div>
           </div>
           <p className="text-muted-foreground mt-1">
@@ -38,7 +37,7 @@ export default function BouncesPage() {
           <CardContent className="p-4 flex flex-col md:flex-row items-center gap-4 relative z-10">
             <div className="flex-1 flex items-center gap-4 w-full">
               <Select defaultValue="domain1">
-                <SelectTrigger className="w-full md:w-[250px] bg-background/70">
+                <SelectTrigger className="w-full md:w-[250px] bg-background/70 border-red-500/30">
                   <div className="flex items-center gap-2">
                     <Database className="size-4" />
                     <SelectValue />
@@ -50,7 +49,7 @@ export default function BouncesPage() {
                 </SelectContent>
               </Select>
                <Select defaultValue="all">
-                <SelectTrigger className="w-full md:w-[250px] bg-background/70">
+                <SelectTrigger className="w-full md:w-[250px] bg-background/70 border-red-500/30">
                    <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

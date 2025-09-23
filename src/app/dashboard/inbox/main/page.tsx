@@ -23,10 +23,9 @@ export default function MainInboxPage() {
                 <MailCheck className="size-8"/>
                 Buzón Principal
               </h1>
-               <div className="flex items-end gap-1 h-8">
-                  <span className="w-1 h-2/5 bg-primary rounded-full animate-pulse" style={{animationDelay: '0s'}}/>
-                  <span className="w-1 h-full bg-primary rounded-full animate-pulse" style={{animationDelay: '0.2s'}}/>
-                  <span className="w-1 h-3/5 bg-primary rounded-full animate-pulse" style={{animationDelay: '0.4s'}}/>
+               <div className="relative flex items-center justify-center size-8 ml-2">
+                  <Database className="text-primary/70 size-7" />
+                  <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
               </div>
             </div>
           <p className="text-muted-foreground mt-1">
