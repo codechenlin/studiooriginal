@@ -69,7 +69,7 @@ export default function SpamPage() {
             </div>
              <div className="relative w-full md:w-auto md:min-w-[300px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input placeholder="Buscar en spam..." className="pl-10 bg-background/70" />
+              <Input placeholder="Buscar en spam..." className="pl-10 bg-background/70 border-amber-500/30" />
             </div>
           </CardContent>
         </Card>
