@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { format, isToday, isThisWeek, isThisYear } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -24,18 +24,23 @@ interface EmailListItemProps {
 }
 
 export function EmailListItem({ email, onSelect, isFirst, isLast }: EmailListItemProps) {
-  const formatDate = (date: Date) => {
-    if (isToday(date)) {
-      return format(date, 'p', { locale: es });
-    }
-    if (isThisWeek(date, { weekStartsOn: 1 })) {
-      return format(date, 'E', { locale: es });
-    }
-    if (isThisYear(date)) {
-      return format(date, 'd MMM', { locale: es });
-    }
-    return format(date, 'dd/MM/yyyy', { locale: es });
-  };
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    const formatDate = (date: Date) => {
+      if (isToday(date)) {
+        return format(date, 'p', { locale: es });
+      }
+      if (isThisWeek(date, { weekStartsOn: 1 })) {
+        return format(date, 'E', { locale: es });
+      }
+      if (isThisYear(date)) {
+        return format(date, 'd MMM', { locale: es });
+      }
+      return format(date, 'dd/MM/yyyy', { locale: es });
+    };
+    setFormattedDate(formatDate(email.date));
+  }, [email.date]);
 
   return (
     <button
@@ -64,10 +69,8 @@ export function EmailListItem({ email, onSelect, isFirst, isLast }: EmailListIte
       </div>
 
       <p className={cn("text-xs shrink-0", !email.read ? "text-primary font-bold" : "text-muted-foreground")}>
-        {formatDate(email.date)}
+        {formattedDate}
       </p>
     </button>
   );
 }
-
-    
