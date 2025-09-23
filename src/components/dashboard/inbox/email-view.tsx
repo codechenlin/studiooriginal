@@ -64,8 +64,9 @@ export function EmailView({ email, onBack }: EmailViewProps) {
 
   return (
     <>
-    <main className="flex-1 flex flex-col h-screen bg-background">
-        <header className="p-2 border-b border-border/10 flex items-center justify-between sticky top-0 z-10 bg-background/50 backdrop-blur-sm">
+    <main className="flex-1 flex flex-col h-screen bg-background relative">
+        <header className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-lg z-10">
+          <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-800/80 backdrop-blur-sm border border-border/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
                 <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
                 <Button className={buttonClass} onClick={() => setIsDeleting(true)}><Trash2/></Button>
@@ -75,10 +76,11 @@ export function EmailView({ email, onBack }: EmailViewProps) {
                 <Button className={buttonClass} onClick={() => setIsReportingSpam(true)}><AlertTriangle/></Button>
                 <Button className={buttonClass}><Languages/></Button>
             </div>
+          </div>
         </header>
 
         <ScrollArea className="flex-1">
-            <div className="p-4 md:p-8 max-w-4xl mx-auto">
+            <div className="p-4 md:p-8 max-w-4xl mx-auto pt-24">
                 <h1 className="text-2xl md:text-3xl font-bold mb-2">{email.subject}</h1>
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-6">
                     <p>De: <span className="font-medium text-foreground">{email.from}</span></p>
