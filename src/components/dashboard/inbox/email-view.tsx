@@ -19,6 +19,7 @@ import { ArrowLeft, Trash2, AlertTriangle, Languages, Star, FolderOpen, EyeOff, 
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
+import { cn } from '@/lib/utils';
 
 interface EmailViewProps {
   email: Email | null;
@@ -59,18 +60,20 @@ export function EmailView({ email, onBack }: EmailViewProps) {
         `;
       });
 
+  const buttonClass = "size-10 rounded-lg bg-card/60 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
+
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background">
-        <header className="p-2 border-b flex items-center justify-between sticky top-0 z-10 bg-background/80 backdrop-blur-sm">
+        <header className="p-2 border-b border-border/10 flex items-center justify-between sticky top-0 z-10 bg-background/50 backdrop-blur-sm">
             <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft/></Button>
-                <Button variant="ghost" size="icon" onClick={() => setIsDeleting(true)}><Trash2/></Button>
-                <Button variant="ghost" size="icon"><Star/></Button>
+                <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
+                <Button className={buttonClass} onClick={() => setIsDeleting(true)}><Trash2/></Button>
+                <Button className={buttonClass}><Star/></Button>
             </div>
             <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => setIsReportingSpam(true)}><AlertTriangle/></Button>
-                <Button variant="ghost" size="icon"><Languages/></Button>
+                <Button className={buttonClass} onClick={() => setIsReportingSpam(true)}><AlertTriangle/></Button>
+                <Button className={buttonClass}><Languages/></Button>
             </div>
         </header>
 
@@ -139,5 +142,3 @@ export function EmailView({ email, onBack }: EmailViewProps) {
     </>
   );
 }
-
-    
