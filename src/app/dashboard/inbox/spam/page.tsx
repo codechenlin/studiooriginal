@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, Filter, Star } from 'lucide-react';
+import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, ShieldAlert, ShieldHalf, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -128,7 +128,7 @@ export default function SpamPage() {
                     <Button variant="ghost" size="icon" className="hover:bg-amber-500/20"><Square/></Button>
                     <Separator orientation="vertical" className="h-6 bg-amber-500/30" />
                     <Button variant="ghost" size="icon" className="hover:bg-amber-500/20"><RefreshCw/></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20"><Star/></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-yellow-500/20 border-2 border-transparent hover:border-yellow-500/50 text-yellow-500"><Star/></Button>
                 </div>
                  <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
@@ -140,8 +140,9 @@ export default function SpamPage() {
                         <Button variant="ghost" size="icon" className="hover:bg-amber-500/20"><ChevronRight/></Button>
                     </div>
                     <Separator orientation="vertical" className="h-6 bg-amber-500/30" />
-                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-red-500/20 border-2 border-transparent hover:border-red-500/50 text-red-500"><ShieldHalf /></Button>
                 </div>
             </CardContent>
         </Card>
@@ -158,3 +159,5 @@ export default function SpamPage() {
     </>
   );
 }
+
+    
