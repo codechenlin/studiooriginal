@@ -12,14 +12,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, AlertTriangle, Languages, Star, FolderOpen, EyeOff, Eye } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertTriangle, Languages, Star, FolderOpen, EyeOff, Eye, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
-import { cn } from '@/lib/utils';
 
 interface EmailViewProps {
   email: Email | null;
@@ -60,20 +58,20 @@ export function EmailView({ email, onBack }: EmailViewProps) {
         `;
       });
 
-  const buttonClass = "size-10 rounded-lg bg-card/60 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
+  const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-primary/20 hover:bg-primary hover:text-primary-foreground";
 
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
-        <header className="sticky top-0 left-0 w-full z-10 p-4 flex justify-center">
-          <div className="p-2 rounded-xl bg-card/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-border/20 flex items-center justify-between gap-4 w-full max-w-lg">
+        <header className="sticky top-0 left-0 w-full z-10 p-4">
+          <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-between gap-4 w-full max-w-lg mx-auto">
             <div className="flex items-center gap-2">
                 <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
                 <Button className={buttonClass} onClick={() => setIsDeleting(true)}><Trash2/></Button>
                 <Button className={buttonClass}><Star/></Button>
             </div>
             <div className="flex items-center gap-2">
-                <Button className={buttonClass} onClick={() => setIsReportingSpam(true)}><AlertTriangle/></Button>
+                <Button className={buttonClass} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
                 <Button className={buttonClass}><Languages/></Button>
             </div>
           </div>

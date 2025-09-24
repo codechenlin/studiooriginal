@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { X, CheckCircle, BrainCircuit, ShieldAlert, HelpCircle } from 'lucide-react';
+import { CheckCircle, BrainCircuit, ShieldAlert, HelpCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -39,7 +39,7 @@ export function SpamFilterSettingsModal({ isOpen, onOpenChange }: SpamFilterSett
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden">
+      <DialogContent className="max-w-4xl bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
         <div className="absolute inset-0 z-0 opacity-10">
             <div className="absolute h-full w-full bg-[radial-gradient(#F59E0B_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
         </div>
@@ -121,7 +121,7 @@ export function SpamFilterSettingsModal({ isOpen, onOpenChange }: SpamFilterSett
         </div>
 
         <DialogFooter className="z-10 pt-4">
-          <Button variant="outline" className="hover:bg-[#F00000] hover:text-white" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="outline" className="hover:bg-[#F00000] hover:text-white hover:border-[#F00000]" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button 
             onClick={() => {
                 onOpenChange(false);
@@ -131,9 +131,6 @@ export function SpamFilterSettingsModal({ isOpen, onOpenChange }: SpamFilterSett
             Guardar Cambios
           </Button>
         </DialogFooter>
-        <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-20" onClick={() => onOpenChange(false)}>
-            <X />
-        </Button>
       </DialogContent>
     </Dialog>
   );
