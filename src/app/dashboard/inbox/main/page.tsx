@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, ShieldLock, Filter } from 'lucide-react';
+import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Shield, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -164,7 +164,7 @@ export default function MainInboxPage() {
                           <Button variant="ghost" size="icon" className="hover:bg-primary/20"><ChevronRight/></Button>
                       </div>
                       <Separator orientation="vertical" className="h-6" />
-                      <Button variant="ghost" size="icon" className="hover:bg-primary/20" onClick={() => setIsSecurityModalOpen(true)}><ShieldLock /></Button>
+                      <Button variant="ghost" size="icon" className="hover:bg-primary/20" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
                       <Button variant="ghost" size="icon" className="hover:bg-primary/20" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
                   </div>
               </CardContent>

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, ShieldLock, Filter, Star } from 'lucide-react';
+import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, Filter, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -140,7 +140,7 @@ export default function SpamPage() {
                         <Button variant="ghost" size="icon" className="hover:bg-amber-500/20"><ChevronRight/></Button>
                     </div>
                     <Separator orientation="vertical" className="h-6 bg-amber-500/30" />
-                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20" onClick={() => setIsSecurityModalOpen(true)}><ShieldLock /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
                     <Button variant="ghost" size="icon" className="hover:bg-amber-500/20" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
                 </div>
             </CardContent>
