@@ -26,6 +26,63 @@ const mockEmails: Email[] = [
       read: false,
     },
     {
+      id: 'threat-1',
+      from: 'Marketing Agresivo',
+      subject: '¡Oferta que no puedes rechazar! 90% de descuento',
+      body: `
+        <div class='p-4 mb-4 rounded-lg bg-destructive/10 border border-destructive/20'>
+          <h3 class='font-bold text-destructive flex items-center gap-2'><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-alert"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>¡Peligro! Se detectaron múltiples amenazas</h3>
+          <p class='text-sm text-destructive/90 mt-2'>Nuestro sistema de antivirus ha identificado y neutralizado varias amenazas de seguridad en este correo electrónico.</p>
+        </div>
+        <ul class='list-disc pl-5 space-y-3 text-sm'>
+          <li><strong class='text-destructive'>Enlace de Phishing:</strong> Se detectó un intento de redirigirte a un sitio web fraudulento.</li>
+          <li><strong class='text-destructive'>Script Malicioso:</strong> Un script oculto intentó ejecutarse para comprometer tus datos.</li>
+          <li><strong class='text-destructive'>Rastreador de Píxel:</strong> Se bloqueó un píxel de seguimiento invisible que monitoreaba tu actividad.</li>
+          <li><strong class='text-destructive'>Contenido Engañoso:</strong> El cuerpo del correo contiene tácticas de ingeniería social.</li>
+          <li><strong class='text-destructive'>Falsificación de Remitente:</strong> El remitente podría no ser quien dice ser.</li>
+        </ul>
+        <br><br>El contenido original ha sido bloqueado para tu seguridad.
+      `,
+      snippet: '¡Peligro! Se detectaron múltiples amenazas...',
+      date: new Date(Date.now() - 1000 * 60 * 20),
+      read: false,
+    },
+    {
+      id: 'attachment-2',
+      from: 'Contabilidad Urgente',
+      subject: 'Factura Pendiente: Acción Requerida',
+      body: `
+        <div class='p-4 mb-4 rounded-lg bg-destructive/10 border border-destructive/20'>
+          <h3 class='font-bold text-destructive flex items-center gap-2'><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-virus"><path d="M15 12c-2.33 2.33-2.33 6.14 0 8.47l-1.06-1.06C13.06 18.53 12 17.47 12 16s1.06-2.53 1.94-3.41L15 12z"/><path d="M9 12c2.33 2.33 2.33 6.14 0 8.47l1.06-1.06C10.94 18.53 12 17.47 12 16s-1.06-2.53-1.94-3.41L9 12z"/><path d="M12 15c-2.33-2.33-6.14-2.33-8.47 0l1.06 1.06C5.47 17.06 6.53 18 8 18s2.53-1.06 3.41-1.94L12 15z"/><path d="M12 9c-2.33-2.33-6.14-2.33-8.47 0l1.06 1.06C5.47 10.94 6.53 12 8 12s2.53-1.06 3.41-1.94L12 9z"/><path d="M12 15c2.33 2.33 6.14 2.33 8.47 0l-1.06-1.06C18.53 13.06 17.47 12 16 12s-2.53 1.06-3.41 1.94L12 15z"/><path d="M12 9c2.33 2.33 6.14 2.33 8.47 0l-1.06-1.06C18.53 7.06 17.47 6 16 6s-2.53 1.06-3.41 1.94L12 9z"/><path d="M15 12c2.33-2.33 2.33-6.14 0-8.47l-1.06 1.06C13.06 5.47 12 6.53 12 8s1.06 2.53 1.94 3.41L15 12z"/><path d="M9 12c-2.33-2.33-2.33-6.14 0-8.47l1.06 1.06C10.94 5.47 12 6.53 12 8s-1.06 2.53-1.94 3.41L9 12z"/></svg>¡Amenaza Contenida!</h3>
+          <p class='text-sm text-destructive/90 mt-2'>Se detectó y eliminó un archivo adjunto malicioso (<strong class='font-bold'>factura_final.zip</strong>) que contenía un troyano. El archivo ha sido eliminado permanentemente para proteger tu sistema.</p>
+        </div>
+        <p>Por favor, revisa los archivos adjuntos seguros.</p>
+        <br>
+        <!-- Clean files -->
+        <p data-attachment='true' data-filename='Detalles_Servicio.pdf' data-filetype='PDF' data-filesize='1.2 MB' data-scan-result='clean'>Attachment</p>
+        <p data-attachment='true' data-filename='logo_cliente.png' data-filetype='PNG' data-filesize='85 KB' data-scan-result='clean'>Attachment</p>
+        <p data-attachment='true' data-filename='contrato.docx' data-filetype='DOCX' data-filesize='256 KB' data-scan-result='clean'>Attachment</p>
+      `,
+      snippet: 'Se detectó y eliminó un archivo adjunto malicioso...',
+      date: new Date(Date.now() - 1000 * 60 * 45),
+      read: true,
+    },
+     {
+      id: 'attachment-1',
+      from: 'Equipo de Diseño',
+      subject: 'Revisión de Propuesta de Diseño v3',
+      body: `
+        <p>Hola equipo,</p>
+        <p>Adjunto la última versión de la propuesta de diseño para el proyecto "Zenith". Por favor, revisen los mockups y el esquema de la marca.</p>
+        <br>
+        <p data-attachment='true' data-filename='Propuesta_Zenith_v3.pdf' data-filetype='PDF' data-filesize='2.4 MB' data-scan-result='clean'>Attachment</p>
+        <p data-attachment='true' data-filename='Esquema_Marca.png' data-filetype='PNG' data-filesize='620 KB' data-scan-result='clean'>Attachment</p>
+      `,
+      snippet: 'Adjunto la última versión de la propuesta de diseño...',
+      date: new Date(Date.now() - 1000 * 60 * 60 * 1.5),
+      read: true,
+    },
+    {
       id: '2',
       from: 'Notificaciones de la Plataforma',
       subject: 'Actualización de Seguridad Importante',
@@ -167,7 +224,7 @@ export default function MainInboxPage() {
                       </div>
                       <Separator orientation="vertical" className="h-6" />
                       <Button variant="ghost" size="icon" className="hover:bg-green-500/20 border-2 border-transparent hover:border-green-500/50 text-green-500" onClick={() => setIsSecurityModalOpen(true)}><ShieldHalf /></Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
+                      <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
                       <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
                   </div>
               </CardContent>

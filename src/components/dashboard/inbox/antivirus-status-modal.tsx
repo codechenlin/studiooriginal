@@ -40,15 +40,25 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
               position: absolute;
               left: 50%;
               transform: translateX(-50%);
-              width: 150%;
-              height: 100px;
+              width: 200%;
+              height: 150px;
               background: radial-gradient(ellipse 50% 100% at 50% 0%, hsl(190 100% 50% / 0.4), transparent 70%);
               animation: scan-anim 4s infinite linear;
               will-change: transform;
             }
             @keyframes scan-anim {
-              0% { top: -100px; }
-              100% { top: calc(100% + 100px); }
+              0% { top: -150px; }
+              100% { top: 100%; }
+            }
+            @keyframes status-glow {
+              0%, 100% { 
+                background-color: hsl(190 100% 30% / 0.5);
+                box-shadow: 0 0 15px hsl(190 100% 50% / 0.3);
+              }
+              50% { 
+                background-color: hsl(190 100% 40% / 0.7);
+                box-shadow: 0 0 25px hsl(190 100% 50% / 0.5);
+              }
             }
           `}</style>
         <div className="grid grid-cols-1 md:grid-cols-2 h-full">
@@ -82,7 +92,13 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                         Entendido
                       </Button>
                 </motion.div>
-                <div className="absolute bottom-4 left-4 right-4 z-10 p-2 bg-black/40 rounded-lg text-xs text-center text-blue-300/70 border border-blue-500/20">
+                <div 
+                    className="absolute bottom-4 left-4 right-4 z-10 p-2 rounded-lg text-xs text-center text-blue-100/90 border border-blue-500/20"
+                    style={{
+                        animation: 'status-glow 3s infinite ease-in-out',
+                        background: 'linear-gradient(45deg, hsl(190 100% 30% / 0.5), hsl(210 100% 40% / 0.5))'
+                    }}
+                >
                   <p>Escaneo de amenazas activado...</p>
                 </div>
             </div>
