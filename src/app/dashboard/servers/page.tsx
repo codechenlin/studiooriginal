@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Server, Zap, ChevronRight, Mail, Code, Bot } from "lucide-react";
+import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
@@ -16,7 +16,10 @@ const providers = [
     icon: Mail,
     connected: false,
     colors: 'from-cyan-500/10 to-blue-500/10',
-    borderColor: 'hover:border-cyan-400'
+    borderColor: 'hover:border-cyan-400',
+    domainsCount: 102,
+    emailsCount: 5234,
+    lastDnsCheck: 'hace 4h',
   },
   {
     id: 'blastengine',
@@ -25,7 +28,10 @@ const providers = [
     icon: Zap,
     connected: false,
     colors: 'from-purple-500/10 to-indigo-500/10',
-    borderColor: 'hover:border-purple-400'
+    borderColor: 'hover:border-purple-400',
+    domainsCount: 58,
+    emailsCount: 8912,
+    lastDnsCheck: 'hace 2h',
   },
   {
     id: 'sparkpost',
@@ -34,7 +40,10 @@ const providers = [
     icon: Code,
     connected: false,
     colors: 'from-orange-500/10 to-amber-500/10',
-    borderColor: 'hover:border-orange-400'
+    borderColor: 'hover:border-orange-400',
+    domainsCount: 23,
+    emailsCount: 3489,
+    lastDnsCheck: 'hace 8h',
   },
   {
     id: 'elasticemail',
@@ -43,7 +52,10 @@ const providers = [
     icon: Bot,
     connected: false,
     colors: 'from-green-500/10 to-emerald-500/10',
-    borderColor: 'hover:border-green-400'
+    borderColor: 'hover:border-green-400',
+    domainsCount: 76,
+    emailsCount: 9102,
+    lastDnsCheck: 'hace 1h',
   },
 ];
 
@@ -156,14 +168,26 @@ export default function ServersPage() {
                        </div>
                         <div>
                            <h2 className="text-xl font-bold text-foreground">{provider.name}</h2>
-                           <div className="mt-1">
+                           <div className="flex items-center gap-4 mt-2">
                              {provider.connected ? (
-                               <span className="text-xs font-semibold text-green-400 px-2 py-1 bg-green-500/10 rounded-full">Conectado</span>
+                               <span className="text-xs font-semibold text-green-400 px-2 py-1 bg-green-500/10 rounded-full flex items-center gap-1"><div className="size-2 rounded-full bg-green-400 animate-pulse"/>Conectado</span>
                              ) : (
                                <span className="text-xs font-semibold text-amber-400 px-2 py-1 bg-amber-500/10 rounded-full">Desconectado</span>
                              )}
+                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Globe className="size-3"/>
+                                <span>{provider.domainsCount}</span>
+                             </div>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Send className="size-3"/>
+                                <span>{provider.emailsCount}</span>
+                             </div>
                            </div>
                         </div>
+                    </div>
+                     <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Clock className="size-3" />
+                        <span>{provider.lastDnsCheck}</span>
                     </div>
                 </div>
                 <p className="text-muted-foreground mt-4 text-sm">{provider.description}</p>
