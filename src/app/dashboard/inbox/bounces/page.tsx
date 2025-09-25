@@ -133,9 +133,9 @@ export default function BouncesPage() {
                         <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><ChevronRight/></Button>
                     </div>
                     <Separator orientation="vertical" className="h-6 bg-red-500/30" />
-                    <Button variant="ghost" size="icon" className="hover:bg-green-500/20 border-2 border-transparent hover:border-green-500/50 text-green-500"><ShieldHalf /></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-green-500/20 border-2 border-transparent hover:border-green-500/50 text-green-500" onClick={() => setIsSecurityModalOpen(true)}><ShieldHalf /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500"><Shield /></Button>
                 </div>
             </CardContent>
         </Card>

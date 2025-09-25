@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Shield, ShieldAlert, ShieldHalf } from 'lucide-react';
+import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Shield, ShieldAlert, ShieldHalf, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -164,9 +164,9 @@ export default function MainInboxPage() {
                           <Button variant="ghost" size="icon" className="hover:bg-primary/20"><ChevronRight/></Button>
                       </div>
                       <Separator orientation="vertical" className="h-6" />
-                      <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsSecurityModalOpen(true)}><Shield /></Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-red-500/20 border-2 border-transparent hover:border-red-500/50 text-red-500"><ShieldHalf /></Button>
+                      <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsSecurityModalOpen(true)}><ShieldHalf /></Button>
+                      <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
+                      <Button variant="ghost" size="icon" className="hover:bg-red-500/20 border-2 border-transparent hover:border-red-500/50 text-red-500"><ShieldAlert /></Button>
                   </div>
               </CardContent>
           </Card>
