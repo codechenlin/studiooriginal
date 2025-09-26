@@ -65,13 +65,15 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
         <header className="sticky top-0 left-0 w-full z-10 p-4">
-          <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-between gap-4 w-full max-w-lg mx-auto">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-4 w-full max-w-lg mx-auto">
+            {/* Left Bar */}
+            <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center gap-2">
                 <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
-                <Button className={buttonClass} onClick={() => setIsDeleting(true)}><Trash2/></Button>
                 <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star/></Button>
             </div>
-            <div className="flex items-center gap-2">
+            {/* Right Bar */}
+            <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center gap-2">
+                <Button className={buttonClass} onClick={() => setIsDeleting(true)}><Trash2/></Button>
                 <Button className={buttonClass} onClick={() => setIsReportingSpam(true)}><AlertTriangle/></Button>
                 <Button className={buttonClass}><Languages/></Button>
             </div>
@@ -144,4 +146,3 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   );
 }
 
-    
