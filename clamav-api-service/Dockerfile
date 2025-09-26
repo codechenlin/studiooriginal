@@ -1,28 +1,34 @@
-# Usa una imagen base de Node.js
-FROM node:18-slim
+# Usar una imagen base de Node.js ligera y segura
+FROM node:20-alpine
 
-# Instala clamav y curl (para el healthcheck)
-RUN apt-get update && apt-get install -y clamav-daemon curl
+# Instalar 'curl' (necesario para el HEALTHCHECK) y las herramientas de compilación
+# build-base incluye python3, make, y g++ que son necesarios para compilar
+# algunas dependencias de npm.
+RUN apk add --no-cache curl build-base python3
 
-# Crea el directorio de la aplicación
+# Establecer el directorio de trabajo
 WORKDIR /usr/src/app
 
-# Copia los archivos de definición del proyecto y el lockfile
+# Copiar los archivos de definición del proyecto
 COPY package*.json ./
 
-# Instala las dependencias de la aplicación
-RUN npm install
+# Instalar las dependencias de producción
+# El comando --omit=dev es el equivalente moderno y recomendado a --production
+RUN npm install --omit=dev
 
-# Copia el resto del código de la aplicación
+# Desinstalar las herramientas de compilación para mantener la imagen final pequeña y segura
+RUN apk del build-base python3
+
+# Copiar el resto del código de la aplicación
 COPY . .
 
-# Expone el puerto en el que correrá la aplicación
+# Exponer el puerto en el que se ejecuta la API
 EXPOSE 3001
 
-# Configura la comprobación de estado para Coolify/Traefik
-# Espera 15 segundos para que todo inicie, luego comprueba cada 30s.
+# --- Comprobación de estado para Coolify/Traefik ---
+# Espera 15s antes de la primera comprobación, comprueba cada 30s, espera 5s por una respuesta.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:3001/health || exit 1
 
-# Comando para iniciar el demonio de ClamAV en segundo plano y luego la API
-CMD ["/bin/sh", "-c", "freshclam -d && clamd & npm start"]
+# Comando para iniciar la API
+CMD [ "node", "index.js" ]
