@@ -1,5 +1,3 @@
-
-'use server';
 /**
  * @fileOverview Type definitions for the virus scan flow.
  */
