@@ -11,13 +11,13 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const SpamCheckerInputSchema = z.object({
+const SpamCheckerInputSchema = z.object({
   text: z.string().describe('The text content to be analyzed for spam.'),
   threshold: z.number().min(1).max(10).optional().default(5.0).describe('The spam score threshold. Default is 5.0.'),
 });
 export type SpamCheckerInput = z.infer<typeof SpamCheckerInputSchema>;
 
-export const SpamCheckerOutputSchema = z.object({
+const SpamCheckerOutputSchema = z.object({
   is_spam: z.boolean(),
   result: z.string(),
   score: z.number(),

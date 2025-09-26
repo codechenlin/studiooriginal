@@ -1,9 +1,14 @@
 
 'use server';
 
-import { checkSpam, SpamCheckerInputSchema, type SpamCheckerInput } from '@/ai/flows/spam-checker-flow';
+import { checkSpam, type SpamCheckerInput } from '@/ai/flows/spam-checker-flow';
 import { scanFileForViruses, type VirusScanInput } from '@/ai/flows/virus-scan-flow';
 import { z } from 'zod';
+
+const SpamCheckerInputSchema = z.object({
+  text: z.string().describe('The text content to be analyzed for spam.'),
+  threshold: z.number().min(1).max(10).optional().default(5.0).describe('The spam score threshold. Default is 5.0.'),
+});
 
 /**
  * Server action to run the spam check flow.
