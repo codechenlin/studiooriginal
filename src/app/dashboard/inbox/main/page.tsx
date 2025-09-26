@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Shield, ShieldAlert, ShieldHalf, Filter } from 'lucide-react';
+import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Shield, ShieldHalf, Filter, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +14,8 @@ import { SpamFilterSettingsModal } from '@/components/dashboard/inbox/spam-filte
 import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
+import { motion, AnimatePresence } from 'framer-motion';
+import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 
 const initialEmails: Email[] = [
     {
@@ -166,7 +168,8 @@ export default function MainInboxPage() {
         />
 
         <div className="relative z-10">
-          <header className="mb-8">
+          <header className="mb-8 flex justify-between items-start">
+            <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent flex items-center gap-3">
                   <MailCheck className="size-8"/>
@@ -177,9 +180,11 @@ export default function MainInboxPage() {
                     <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
                 </div>
               </div>
-            <p className="text-muted-foreground mt-1">
-              Aquí recibirás todos tus correos importantes y comunicaciones generales.
-            </p>
+              <p className="text-muted-foreground mt-1">
+                Aquí recibirás todos tus correos importantes y comunicaciones generales.
+              </p>
+            </div>
+            <StorageIndicator used={10.2} total={15} />
           </header>
 
            <Card className={cn(
@@ -234,8 +239,23 @@ export default function MainInboxPage() {
                       <Separator orientation="vertical" className="h-6" />
                       <Button variant="ghost" size="icon" className="hover:bg-primary/20"><RefreshCw/></Button>
                       <Button variant="ghost" size="icon" onClick={() => setShowStarred(!showStarred)} className="hover:bg-yellow-500/20">
-                        <Star className={cn(showStarred ? "text-yellow-400 fill-yellow-400" : "text-foreground")}/>
+                          <Star className={cn("text-foreground dark:text-white transition-colors", showStarred && "text-yellow-400 fill-yellow-400")}/>
                       </Button>
+                      <AnimatePresence>
+                      {showStarred && (
+                        <motion.div
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={{ opacity: 1, width: 'auto' }}
+                          exit={{ opacity: 0, width: 0 }}
+                          className="flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-300"
+                        >
+                           <motion.div initial={{scale:0.5}} animate={{scale:1}} exit={{scale:0.5}} className="flex items-center justify-center">
+                              <Eye className="size-4 animate-pulse" />
+                           </motion.div>
+                          <span className="text-xs font-bold whitespace-nowrap">Mostrando correos importantes</span>
+                        </motion.div>
+                      )}
+                      </AnimatePresence>
                   </div>
                   <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
@@ -254,11 +274,22 @@ export default function MainInboxPage() {
               </CardContent>
           </Card>
           
-          <div className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
-            {displayedEmails.map((email, index) => (
-                <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === displayedEmails.length - 1} onToggleStar={handleToggleStar} />
-            ))}
-          </div>
+          <motion.div layout className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
+            <AnimatePresence>
+              {displayedEmails.map((email, index) => (
+                  <motion.div
+                    key={email.id}
+                    layout
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <EmailListItem email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === displayedEmails.length - 1} onToggleStar={handleToggleStar} />
+                  </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </main>
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
@@ -267,3 +298,5 @@ export default function MainInboxPage() {
     </>
   );
 }
+
+    

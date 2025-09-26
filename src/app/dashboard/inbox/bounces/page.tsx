@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ShieldAlert, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, Star, ShieldHalf, Filter } from 'lucide-react';
+import { ShieldAlert, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, Star, ShieldHalf, Filter, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +14,8 @@ import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-li
 import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 
 const initialBouncedEmails: Email[] = [
     {
@@ -77,20 +79,23 @@ export default function BouncesPage() {
         className="absolute inset-0 z-0 opacity-[0.05] bg-grid-red-500/[0.2] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]"
       />
       <div className="relative z-10">
-        <header className="mb-8">
-          <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-400 flex items-center gap-3">
-                <ShieldAlert className="size-8"/>
-                Buzón de Rebotes
-              </h1>
-              <div className="relative flex items-center justify-center size-8 ml-2">
-                  <ShieldAlert className="text-red-500/80 size-7" />
-                  <div className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" />
-              </div>
+        <header className="mb-8 flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-400 flex items-center gap-3">
+                  <ShieldAlert className="size-8"/>
+                  Buzón de Rebotes
+                </h1>
+                <div className="relative flex items-center justify-center size-8 ml-2">
+                    <ShieldAlert className="text-red-500/80 size-7" />
+                    <div className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" />
+                </div>
+            </div>
+            <p className="text-muted-foreground mt-1">
+              Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
+            </p>
           </div>
-          <p className="text-muted-foreground mt-1">
-            Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
-          </p>
+          <StorageIndicator used={10.2} total={15} />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-2 relative overflow-hidden">
@@ -139,8 +144,23 @@ export default function BouncesPage() {
                     <Separator orientation="vertical" className="h-6 bg-red-500/30" />
                     <Button variant="ghost" size="icon" className="hover:bg-red-500/20"><RefreshCw/></Button>
                     <Button variant="ghost" size="icon" onClick={() => setShowStarred(!showStarred)} className="hover:bg-yellow-500/20">
-                      <Star className={cn(showStarred ? "text-yellow-400 fill-yellow-400" : "text-foreground")}/>
+                      <Star className={cn("text-foreground dark:text-white transition-colors", showStarred && "text-yellow-400 fill-yellow-400")}/>
                     </Button>
+                    <AnimatePresence>
+                      {showStarred && (
+                        <motion.div
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={{ opacity: 1, width: 'auto' }}
+                          exit={{ opacity: 0, width: 0 }}
+                          className="flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-300"
+                        >
+                           <motion.div initial={{scale:0.5}} animate={{scale:1}} exit={{scale:0.5}} className="flex items-center justify-center">
+                              <Eye className="size-4 animate-pulse" />
+                           </motion.div>
+                          <span className="text-xs font-bold whitespace-nowrap">Mostrando correos importantes</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                 </div>
                  <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-sm font-mono p-2 rounded-md bg-black/10">
@@ -159,11 +179,22 @@ export default function BouncesPage() {
             </CardContent>
         </Card>
 
-        <div className="bg-card/60 backdrop-blur-sm border border-red-500/20 rounded-lg shadow-lg">
+        <motion.div layout className="bg-card/60 backdrop-blur-sm border border-red-500/20 rounded-lg shadow-lg">
+           <AnimatePresence>
             {displayedEmails.map((email, index) => (
+               <motion.div
+                    key={email.id}
+                    layout
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
                 <EmailListItem key={email.id} email={email} onSelect={handleSelectEmail} onToggleStar={handleToggleStar} isFirst={index === 0} isLast={index === displayedEmails.length - 1} />
+              </motion.div>
             ))}
-        </div>
+           </AnimatePresence>
+        </motion.div>
       </div>
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
@@ -172,3 +203,5 @@ export default function BouncesPage() {
     </>
   );
 }
+
+    
