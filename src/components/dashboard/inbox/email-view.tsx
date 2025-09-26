@@ -22,9 +22,10 @@ import { type Email } from './email-list-item';
 interface EmailViewProps {
   email: Email | null;
   onBack: () => void;
+  onToggleStar: (emailId: string) => void;
 }
 
-export function EmailView({ email, onBack }: EmailViewProps) {
+export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReportingSpam, setIsReportingSpam] = useState(false);
   const [showImages, setShowImages] = useState(false);
@@ -68,7 +69,7 @@ export function EmailView({ email, onBack }: EmailViewProps) {
             <div className="flex items-center gap-2">
                 <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
                 <Button className={buttonClass} onClick={() => setIsDeleting(true)}><Trash2/></Button>
-                <Button className={buttonClass}><Star/></Button>
+                <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star/></Button>
             </div>
             <div className="flex items-center gap-2">
                 <Button className={buttonClass} onClick={() => setIsReportingSpam(true)}><AlertTriangle/></Button>

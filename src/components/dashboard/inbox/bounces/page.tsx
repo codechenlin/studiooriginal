@@ -65,7 +65,7 @@ export default function BouncesPage() {
   const displayedEmails = showStarred ? emails.filter(email => email.starred) : emails;
 
   if (selectedEmail) {
-      return <EmailView email={selectedEmail} onBack={handleBackToList} />
+      return <EmailView email={selectedEmail} onBack={handleBackToList} onToggleStar={handleToggleStar} />
   }
 
 
@@ -179,3 +179,5 @@ export default function BouncesPage() {
     </>
   );
 }
+
+    

@@ -66,7 +66,7 @@ export default function SpamPage() {
 
 
   if (selectedEmail) {
-      return <EmailView email={selectedEmail} onBack={handleBackToList} />
+      return <EmailView email={selectedEmail} onBack={handleBackToList} onToggleStar={handleToggleStar} />
   }
 
   return (
@@ -187,3 +187,5 @@ export default function SpamPage() {
     </>
   );
 }
+
+    

@@ -154,7 +154,7 @@ export default function MainInboxPage() {
 
 
   if (selectedEmail) {
-      return <EmailView email={selectedEmail} onBack={handleBackToList} />
+      return <EmailView email={selectedEmail} onBack={handleBackToList} onToggleStar={handleToggleStar} />
   }
 
   return (
@@ -274,3 +274,5 @@ export default function MainInboxPage() {
     </>
   );
 }
+
+    
