@@ -57,7 +57,7 @@ const virusScanFlow = ai.defineFlow(
       });
 
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: response.statusText }));
+        const errorBody = await response.json().catch(() => ({ error: `El servidor respondió con un error ${response.status}.` }));
         throw new Error(`Error from API: ${errorBody.error || response.statusText}`);
       }
 
@@ -73,10 +73,6 @@ const virusScanFlow = ai.defineFlow(
       
       let errorMessage = `Error al contactar el servicio de antivirus: ${error.message}`;
 
-      if (error.message && (error.message.includes('ECONNREFUSED') || error.message.includes('fetch failed'))) {
-        errorMessage = "No se pudo conectar con la API de escaneo en tu servidor. Verifica que el servicio esté en línea y accesible.";
-      }
-      
       return {
         isInfected: false,
         viruses: [],
