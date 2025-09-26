@@ -47,16 +47,17 @@ export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar }
   }, [email.date]);
 
   return (
-    <button
-      onClick={() => onSelect(email)}
+    <div
       className={cn(
         "w-full text-left p-4 grid grid-cols-[auto,1fr,auto] items-center gap-4 transition-colors",
         "hover:bg-primary/10 dark:hover:bg-primary/20",
         !isLast && "border-b border-border/10 dark:border-border/30",
         isFirst && "rounded-t-lg",
         isLast && "rounded-b-lg",
-        !email.read && "bg-primary/5 dark:bg-primary/10"
+        !email.read && "bg-primary/5 dark:bg-primary/10",
+        "cursor-pointer"
       )}
+      onClick={() => onSelect(email)}
     >
       <div className="flex items-center gap-3">
         <div className={cn("w-2 h-2 rounded-full", !email.read ? "bg-primary" : "bg-transparent")} />
@@ -76,7 +77,7 @@ export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar }
          <Button
             variant="ghost"
             size="icon"
-            className="size-7 hover:bg-yellow-500/20"
+            className="size-7 hover:bg-yellow-500/20 z-10"
             onClick={(e) => {
               e.stopPropagation();
               onToggleStar(email.id);
@@ -88,6 +89,6 @@ export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar }
             {formattedDate}
           </p>
       </div>
-    </button>
+    </div>
   );
 }
