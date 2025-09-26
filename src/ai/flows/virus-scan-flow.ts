@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A flow to scan a file for viruses using ClamAV.
+ * @fileOverview A flow to scan a file for viruses using an external ClamAV API.
  *
  * - scanFileForViruses - A function that handles the virus scanning process.
  * - VirusScanInput - The input type for the scanFileForViruses function.
@@ -10,8 +10,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import ClamScan from 'clamscan';
-import { Readable } from 'stream';
 
 const VirusScanInputSchema = z.object({
   fileName: z.string(),
@@ -39,44 +37,46 @@ const virusScanFlow = ai.defineFlow(
     outputSchema: VirusScanOutputSchema,
   },
   async ({ fileName, fileDataUri }) => {
-    try {
-      // Correctly initialize ClamScan and then call init with options
-      const clamscan = new ClamScan();
-      await clamscan.init({
-        clamdscan: {
-          host: 'localhost', // Connect to the host machine where Docker exposes the port
-          port: 3310,
-          timeout: 60000,
-        },
-        preference: 'clamdscan',
-      });
+    const apiUrl = 'http://apiantivirus.fanton.cloud/scan';
 
-      // Convert data URI to a buffer
+    try {
+      // Convert data URI to a Buffer
       const base64Data = fileDataUri.split(',')[1];
       if (!base64Data) {
         throw new Error('Invalid data URI format.');
       }
       const buffer = Buffer.from(base64Data, 'base64');
       
-      // Convert buffer to a readable stream
-      const stream = Readable.from(buffer);
+      // Use FormData to send the file
+      const formData = new FormData();
+      formData.append('file', new Blob([buffer]), fileName);
 
-      const { is_infected, viruses } = await clamscan.scan_stream(stream);
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(`Error from API: ${errorBody.error || response.statusText}`);
+      }
+
+      const result: { isInfected: boolean; viruses: string[] } = await response.json();
 
       return {
-        isInfected: is_infected ?? false,
-        viruses: viruses || [],
+        isInfected: result.isInfected,
+        viruses: result.viruses || [],
       };
-    } catch (error: any) {
-      console.error('Virus Scan Error:', error);
-      
-      let errorMessage = `Error al escanear el archivo: ${error.message}`;
 
-      if (error.message && error.message.includes('ECONNREFUSED')) {
-        errorMessage = "No se pudo conectar al servicio de antivirus. Asegúrate de que el contenedor de Docker 'clamav' esté en funcionamiento y accesible en el puerto 3310.";
+    } catch (error: any) {
+      console.error('Virus Scan API Error:', error);
+      
+      let errorMessage = `Error al contactar el servicio de antivirus: ${error.message}`;
+
+      if (error.message && (error.message.includes('ECONNREFUSED') || error.message.includes('fetch failed'))) {
+        errorMessage = "No se pudo conectar con la API de escaneo en tu servidor. Verifica que el servicio esté en línea y accesible.";
       }
       
-      // Return a structured error response
       return {
         isInfected: false,
         viruses: [],
