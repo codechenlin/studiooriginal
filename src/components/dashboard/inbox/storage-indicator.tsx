@@ -38,9 +38,10 @@ export function StorageIndicator({ used, total }: StorageIndicatorProps) {
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{used} GB de {total} GB usados</p>
+          <p>{used} GB usados de {total} GB</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 }
+

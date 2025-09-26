@@ -397,6 +397,7 @@ body {
         hsl(var(--primary)) 100%
       );
       background-size: 200% 100%;
-      animation: progress-scan 2s linear infinite;
+      animation: progress-scan 8s linear infinite;
     }
 }
+
