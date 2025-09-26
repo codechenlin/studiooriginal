@@ -37,7 +37,7 @@ const virusScanFlow = ai.defineFlow(
     outputSchema: VirusScanOutputSchema,
   },
   async ({ fileName, fileDataUri }) => {
-    // This is the new API endpoint you deployed on Coolify.
+    // This is the API endpoint you deployed on Coolify.
     const apiUrl = 'http://apiantivirus.fanton.cloud/api/v1/scan';
 
     try {
@@ -62,35 +62,31 @@ const virusScanFlow = ai.defineFlow(
         throw new Error(`Error from API (${response.status}): ${errorText || response.statusText}`);
       }
       
-      // The new API returns a simple string: "malicious", "benign", or "error"
-      const resultText = await response.text();
-      // The response includes quotes, so we remove them.
-      const cleanResult = resultText.replace(/"/g, '');
+      const resultText = (await response.text()).replace(/"/g, '').trim();
 
-      if (cleanResult === 'malicious') {
-        // The simple API doesn't provide the virus name, so we use a generic one.
+      if (resultText === 'malicious') {
         return {
           isInfected: true,
           viruses: ['Win.Test.EICAR_HDB-1 (detected)'], 
         };
-      } else if (cleanResult === 'benign') {
+      } else if (resultText === 'benign') {
         return {
           isInfected: false,
           viruses: [],
         };
       } else {
-        // Handle the "error" case from the API
-         throw new Error(`API returned an error state: ${cleanResult}`);
+         // This handles unexpected responses from the API
+         throw new Error(`API returned an unknown state: ${resultText}`);
       }
 
     } catch (error: any) {
       console.error('Virus Scan Flow Error:', error);
       
-      // Unified error handling
+      // Unified error handling ensures no contradictory results.
       return {
         isInfected: false,
         viruses: [],
-        error: `Error al escanear el archivo: ${error.message}`,
+        error: `Error al contactar el servicio de antivirus: ${error.message}`,
       };
     }
   }
