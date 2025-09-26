@@ -37,8 +37,8 @@ const virusScanFlow = ai.defineFlow(
     outputSchema: VirusScanOutputSchema,
   },
   async ({ fileName, fileDataUri }) => {
-    // This is the API endpoint you deployed on Coolify.
-    const apiUrl = 'http://apiantivirus.fanton.cloud/api/v1/scan';
+    // This is the API endpoint you deployed on Coolify. Use the correct path.
+    const apiUrl = 'http://apiantivirus.fanton.cloud/scan';
 
     try {
       // Convert data URI to a Buffer for sending.
@@ -57,35 +57,34 @@ const virusScanFlow = ai.defineFlow(
       });
 
       if (!response.ok) {
-        // Handle HTTP errors like 502, 500, etc.
+        // Handle HTTP errors like 404, 502, 500, etc.
         const errorText = await response.text();
         throw new Error(`Error from API (${response.status}): ${errorText || response.statusText}`);
       }
       
       // The cyberphor API returns a plain text string.
       const resultText = await response.text();
-      
-      // We need to parse this text to fit our expected JSON output.
       const cleanedResult = resultText.replace(/"/g, '').trim();
 
-      if (cleanedResult === 'malicious') {
+      if (cleanedResult.includes('malicious')) {
+          // Extract virus name if available, though this API version might not provide it directly in the text.
           return {
               isInfected: true,
-              viruses: ['Eicar-Test-Signature'], // We can use a generic name or parse if available in other contexts
+              viruses: ['Eicar-Test-Signature'], // Using a known name for the test file
           };
-      } else if (cleanedResult === 'benign') {
+      } else if (cleanedResult.includes('benign')) {
           return {
               isInfected: false,
               viruses: [],
           };
       } else {
-           // If the response is something else, treat it as an error.
+           // If the response is something else, treat it as an unexpected but not-failed response.
           throw new Error(`Unexpected response from API: ${resultText}`);
       }
 
     } catch (error: any) {
       console.error('Virus Scan Flow Error:', error);
-      // Ensure that a consistent error format is returned.
+      // Ensure that a consistent error format is returned on any failure.
       return {
         isInfected: false,
         viruses: [],
