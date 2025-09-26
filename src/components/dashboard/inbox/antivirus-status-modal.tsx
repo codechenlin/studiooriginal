@@ -52,12 +52,12 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
             }
             @keyframes status-glow {
               0%, 100% { 
-                background-color: hsl(190 100% 30% / 0.5);
-                box-shadow: 0 0 15px hsl(190 100% 50% / 0.3);
+                background-color: hsl(80 100% 30% / 0.5);
+                box-shadow: 0 0 15px hsl(80 100% 50% / 0.3);
               }
               50% { 
-                background-color: hsl(190 100% 40% / 0.7);
-                box-shadow: 0 0 25px hsl(190 100% 50% / 0.5);
+                background-color: hsl(80 100% 40% / 0.7);
+                box-shadow: 0 0 25px hsl(80 100% 50% / 0.5);
               }
             }
           `}</style>
@@ -93,10 +93,10 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                       </Button>
                 </motion.div>
                 <div 
-                    className="absolute bottom-4 left-4 right-4 z-10 p-2 rounded-lg text-xs text-center text-blue-100/90 border border-blue-500/20"
+                    className="absolute bottom-4 left-4 right-4 z-10 p-2 rounded-lg text-xs text-center text-lime-100/90 border border-lime-500/20"
                     style={{
                         animation: 'status-glow 3s infinite ease-in-out',
-                        background: 'linear-gradient(45deg, hsl(190 100% 30% / 0.5), hsl(210 100% 40% / 0.5))'
+                        background: 'linear-gradient(45deg, hsl(80 100% 30% / 0.5), hsl(100 100% 40% / 0.5))'
                     }}
                 >
                   <p>Escaneo de amenazas activado...</p>
