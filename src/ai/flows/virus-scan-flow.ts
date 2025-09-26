@@ -67,18 +67,16 @@ const virusScanFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('Virus Scan Error:', error);
       
+      let errorMessage = `Error al escanear el archivo: ${error.message}`;
+
       if (error.message && error.message.includes('ECONNREFUSED')) {
-        return {
-            isInfected: false,
-            viruses: [],
-            error: "No se pudo conectar al servicio de antivirus. Asegúrate de que el contenedor de Docker 'clamav' esté en funcionamiento y accesible en el puerto 3310."
-        };
+        errorMessage = "No se pudo conectar al servicio de antivirus. Asegúrate de que el contenedor de Docker 'clamav' esté en funcionamiento y accesible en el puerto 3310.";
       }
       
       return {
         isInfected: false,
         viruses: [],
-        error: `Error al escanear el archivo: ${error.message}`,
+        error: errorMessage,
       };
     }
   }
