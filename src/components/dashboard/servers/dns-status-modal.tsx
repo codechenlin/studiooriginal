@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, AlertCircle, ShieldCheck, Dna, Bot, Shield, Loader2 } from 'lucide-react';
@@ -47,6 +47,11 @@ const Particle = () => {
 export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalProps) {
     const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const handleAnalyzeDomain = (domain: string) => {
         setSelectedDomain(domain);
@@ -88,7 +93,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                         {/* Left Panel */}
                         <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden">
                              <div className="absolute inset-0 pointer-events-none">
-                                {Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
+                                {isClient && Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
                              </div>
                             <motion.div 
                                 initial={{ scale: 0.5, opacity: 0 }} 
@@ -173,7 +178,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                     </div>
                     {/* Right Panel */}
                     <div className="flex flex-col h-full p-8 relative">
-                       <div className="absolute inset-0 bg-grid-zinc-400/[0.05] [mask-image:radial-gradient(ellipse_at_center,transparent_60%,black)]" />
+                       <div className="absolute inset-0 bg-grid-zinc-400/[0.05] [mask-image:radial-gradient(ellipse_at_center,transparent_60%,black)] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-500/10 via-transparent to-transparent" />
                         <DialogHeader className="text-left z-10">
                             <DialogTitle className="text-2xl font-bold text-red-300">
                                 Diagnóstico de DNS
