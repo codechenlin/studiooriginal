@@ -10,6 +10,7 @@ export const VirusScanInputSchema = z.object({
 export type VirusScanInput = z.infer<typeof VirusScanInputSchema>;
 
 export const VirusScanOutputSchema = z.object({
+  success: z.boolean(),
   isInfected: z.boolean().describe('Whether a virus was detected or not.'),
   message: z.string().describe('A summary of the scan result.'),
 });

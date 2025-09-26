@@ -1,14 +1,13 @@
 
 'use server';
 /**
- * @fileOverview A flow to scan a file for viruses using a local ClamAV daemon.
+ * @fileOverview A flow to scan a file for viruses using a custom ClamAV API.
  *
  * - scanFileForVirus - A function that handles the virus scanning process.
  */
 
 import { ai } from '@/ai/genkit';
 import { VirusScanInput, VirusScanInputSchema, VirusScanOutput, VirusScanOutputSchema } from './virus-scan-types';
-import NodeClam from 'clamscan';
 
 export async function scanFileForVirus(
   input: VirusScanInput
@@ -23,48 +22,34 @@ const virusScanFlow = ai.defineFlow(
     outputSchema: VirusScanOutputSchema,
   },
   async ({ fileName, fileBuffer }) => {
+    const apiUrl = 'http://apiantivirus.fanton.cloud/';
+
     try {
-      const clamscan = new NodeClam().init({
-        clamdscan: {
-          socket: '/var/run/clamav/clamd.sock', // Docker socket path
-          host: '127.0.0.1', // Docker-compose service name
-          port: 3310,
-          timeout: 300000,
-          multiscan: true,
-          active: true
-        },
-        preference: 'clamdscan'
+      const formData = new FormData();
+      const blob = new Blob([fileBuffer], { type: 'application/octet-stream' });
+      formData.append('file', blob, fileName);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
       });
-      
-      const clam = await clamscan;
 
-      // Create a readable stream from the buffer
-      const { Readable } = require('stream');
-      const stream = Readable.from(fileBuffer);
-
-      const { is_infected, file, viruses } = await clam.scan_stream(stream);
-
-      if (is_infected) {
-        return {
-          isInfected: true,
-          message: `¡Peligro! Se encontró la amenaza "${viruses[0]}" en el archivo ${fileName}.`,
-        };
-      } else {
-        return {
-          isInfected: false,
-          message: 'El archivo es seguro. No se encontraron amenazas.',
-        };
+      if (!response.ok) {
+        let errorBody;
+        try {
+            errorBody = await response.json();
+        } catch (e) {
+            errorBody = { message: await response.text() };
+        }
+        throw new Error(`Error from API (${response.status}): ${errorBody.message || 'Error desconocido'}`);
       }
+
+      const result: VirusScanOutput = await response.json();
+      return result;
+
     } catch (error: any) {
-      console.error('Fallo en el escaneo de ClamAV:', error);
-      // Provide a more specific error message if possible
-      let errorMessage = 'Error desconocido al escanear el archivo.';
-      if (error.message && error.message.includes('connect ECONNREFUSED')) {
-        errorMessage = 'No se pudo conectar al servicio de antivirus. Asegúrate de que el contenedor de ClamAV esté funcionando.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      throw new Error(errorMessage);
+      console.error('Fallo en la llamada a la API de ClamAV:', error);
+      throw new Error(`Error al contactar el servicio de antivirus: ${error.message}`);
     }
   }
 );
