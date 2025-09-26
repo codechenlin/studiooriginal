@@ -1,7 +1,6 @@
-
 'use server';
 /**
- * @fileOverview A flow to scan a file for viruses using a custom ClamAV API.
+ * @fileOverview A flow to scan a file for viruses using the deployed ajilaag/clamav-rest API.
  *
  * - scanFileForVirus - A function that handles the virus scanning process.
  */
@@ -22,7 +21,7 @@ const virusScanFlow = ai.defineFlow(
     outputSchema: VirusScanOutputSchema,
   },
   async ({ fileName, fileBuffer }) => {
-    const apiUrl = 'http://apiantivirus.fanton.cloud/';
+    const apiUrl = 'https://apiantivirus.fanton.cloud/scan';
 
     try {
       const formData = new FormData();
@@ -34,18 +33,32 @@ const virusScanFlow = ai.defineFlow(
         body: formData,
       });
 
-      if (!response.ok) {
-        let errorBody;
-        try {
-            errorBody = await response.json();
-        } catch (e) {
-            errorBody = { message: await response.text() };
-        }
-        throw new Error(`Error from API (${response.status}): ${errorBody.message || 'Error desconocido'}`);
-      }
+      // The API uses different HTTP status codes to indicate the result.
+      // 406 means a virus was found.
+      // 200 means the file is clean.
+      // Other codes indicate an error.
 
-      const result: VirusScanOutput = await response.json();
-      return result;
+      if (response.status === 200) {
+        // Clean file
+        return {
+          success: true,
+          isInfected: false,
+          message: 'El archivo es seguro. No se encontraron amenazas.',
+        };
+      } else if (response.status === 406) {
+        // Infected file
+        const result = await response.json();
+        const description = result.Description || 'Amenaza desconocida';
+        return {
+          success: true,
+          isInfected: true,
+          message: `¡Peligro! Se encontró una amenaza: ${description}.`,
+        };
+      } else {
+        // Handle other potential errors from the API
+        const errorBody = await response.json().catch(() => ({ Description: `Error del servidor con código: ${response.status}` }));
+        throw new Error(errorBody.Description || `Error en la API de antivirus: ${response.statusText}`);
+      }
 
     } catch (error: any) {
       console.error('Fallo en la llamada a la API de ClamAV:', error);
