@@ -184,8 +184,8 @@ export default function ServersPage() {
             )}>
               <div className={cn("absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br", provider.colors)} />
               
-                <div className="p-6 pb-0 z-10">
-                    <div className="flex items-start justify-between mb-4">
+                <div className="p-6 pb-0 z-10 flex flex-col flex-grow">
+                     <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-4">
                             <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
                                <provider.icon className="size-8 text-primary"/>
@@ -198,32 +198,19 @@ export default function ServersPage() {
                                 ) : (
                                    <span className="text-xs font-semibold text-amber-400 px-2 py-1 bg-amber-500/10 rounded-full">Desconectado</span>
                                 )}
-                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <Send className="size-3"/>
-                                    <span>{provider.emailsCount}</span>
-                                </div>
                                </div>
                            </div>
                         </div>
                         
                         <div className="flex items-center gap-2">
-                           <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-7 rounded-md border-2 border-transparent hover:border-cyan-400/50"
-                                    onClick={() => setIsDomainInfoModalOpen(true)}
-                                  >
-                                    <Info className="size-5 text-cyan-400" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Información de Dominios</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                           <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs h-7 px-3 border-cyan-400/50 text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 hover:text-cyan-200"
+                              onClick={() => setIsDomainInfoModalOpen(true)}
+                           >
+                              Información
+                            </Button>
 
                            <Button 
                               size="icon" 
@@ -245,9 +232,23 @@ export default function ServersPage() {
 
                     <p className="text-muted-foreground text-sm mb-4">{provider.description}</p>
                     
-                    <div className="text-xs text-muted-foreground flex items-center justify-end gap-2 border-t border-border/20 pt-2 -mx-6 px-6">
-                        <Clock className="size-3" />
-                        <span>Último chequeo DNS: {provider.lastDnsCheck}</span>
+                    <div className="mt-auto space-y-3">
+                      <div className="flex items-center gap-6 text-sm">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Globe className="size-4"/>
+                            <span className="font-semibold text-foreground">{provider.domainsCount}</span>
+                            <span>Dominios</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Send className="size-4"/>
+                            <span className="font-semibold text-foreground">{provider.emailsCount.toLocaleString()}</span>
+                            <span>Correos</span>
+                          </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center justify-end gap-2 border-t border-border/20 pt-2 -mx-6 px-6">
+                          <Clock className="size-3" />
+                          <span>Último chequeo DNS: {provider.lastDnsCheck}</span>
+                      </div>
                     </div>
                 </div>
 
