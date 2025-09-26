@@ -43,6 +43,6 @@ export async function scanFileForVirusAction(formData: FormData): Promise<{ succ
     return { success: true, data: result };
   } catch (error: any) {
     console.error('Virus scan action error:', error);
-    return { success: false, error: `Error al contactar el servicio de antivirus: ${error.message}` };
+    return { success: false, error: `Error al escanear con ClamAV: ${error.message}` };
   }
 }

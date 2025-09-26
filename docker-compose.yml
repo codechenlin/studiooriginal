@@ -1,0 +1,12 @@
+
+version: '3.8'
+
+services:
+  clamav:
+    image: clamav/clamav:latest
+    container_name: clamav-daemon
+    restart: unless-stopped
+    volumes:
+      - /var/run/clamav:/var/run/clamav
+    # This service does not need to be exposed to the outside world.
+    # Our Next.js app will communicate with it via the shared Docker socket.
