@@ -34,15 +34,13 @@ export function StorageIndicator({ used, total }: StorageIndicatorProps) {
               </div>
               <span className="font-bold text-foreground">{percentage.toFixed(0)}%</span>
             </div>
-            <Progress value={percentage} indicatorClassName="bg-gradient-to-r from-primary to-accent" />
+            <Progress value={percentage} indicatorClassName="bg-gradient-to-r from-primary to-accent animate-progress-scan" />
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{used} GB / {total} GB Usados</p>
+          <p>{used} GB de {total} GB usados</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 }
-
-    
