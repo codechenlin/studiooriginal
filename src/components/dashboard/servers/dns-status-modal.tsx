@@ -33,6 +33,17 @@ const mockErrorDomains = [
     { name: 'test-env.dev', status: 'ok' },
 ];
 
+const Particle = () => {
+    const style = {
+      '--size': `${Math.random() * 2 + 1}px`,
+      '--x-start': `${Math.random() * 100}%`,
+      '--x-end': `${Math.random() * 100}%`,
+      '--duration': `${Math.random() * 4 + 3}s`,
+      '--delay': `-${Math.random() * 7}s`,
+    } as React.CSSProperties;
+    return <div className="particle" style={style} />;
+};
+
 export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalProps) {
     const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
@@ -48,17 +59,37 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
         return (
             <Dialog open={isOpen} onOpenChange={onOpenChange}>
                 <DialogContent className="max-w-4xl w-full h-[600px] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-green-500/30 text-white overflow-hidden" showCloseButton={false}>
+                    <style>{`
+                        @keyframes particle-fall {
+                            from { transform: translateY(-10px); opacity: 1; }
+                            to { transform: translateY(100%); opacity: 0; }
+                        }
+                        .particle {
+                            position: absolute;
+                            top: 0;
+                            left: var(--x-start);
+                            width: var(--size);
+                            height: var(--size);
+                            background: hsl(125, 100%, 70%);
+                            border-radius: 50%;
+                            animation: particle-fall var(--duration) var(--delay) linear infinite;
+                            will-change: transform, opacity;
+                            filter: blur(1px);
+                        }
+                        .neural-bg {
+                            background-color: #0a0a0a;
+                            background-image:
+                                radial-gradient(circle at 1px 1px, hsl(125 70% 50% / 0.1), transparent),
+                                radial-gradient(circle at 15px 15px, hsl(125 70% 50% / 0.1), transparent);
+                            background-size: 30px 30px;
+                        }
+                    `}</style>
                     <div className="grid grid-cols-1 md:grid-cols-2 h-full">
                         {/* Left Panel */}
                         <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-center p-8 overflow-hidden">
-                             <div className="absolute inset-0 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
-                             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-green-500/10 via-transparent to-green-500/10 animate-[scan_5s_linear_infinite]" />
-                              <style>{`
-                                @keyframes scan {
-                                  0% { transform: translateY(-100%); }
-                                  100% { transform: translateY(100%); }
-                                }
-                              `}</style>
+                             <div className="absolute inset-0 pointer-events-none">
+                                {Array.from({ length: 50 }).map((_, i) => <Particle key={i} />)}
+                             </div>
                             <motion.div 
                                 initial={{ scale: 0.5, opacity: 0 }} 
                                 animate={{ scale: 1, opacity: 1 }} 
@@ -76,8 +107,8 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                             </motion.div>
                         </div>
                         {/* Right Panel */}
-                        <div className="flex flex-col h-full p-8 relative">
-                           <div className="absolute inset-0 bg-grid-zinc-400/[0.05] [mask-image:radial-gradient(ellipse_at_center,transparent_60%,black)]" />
+                        <div className="flex flex-col h-full p-8 relative neural-bg">
+                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-0" />
                             <DialogHeader className="text-left z-10">
                                 <DialogTitle className="text-2xl font-bold text-green-300">
                                     Estado del Sistema: Óptimo
