@@ -42,7 +42,7 @@ const virusScanFlow = ai.defineFlow(
     try {
       const clamscan = new ClamScan({
         clamdscan: {
-          host: 'clamav', // Docker service name
+          host: 'localhost', // Connect to the host machine where Docker exposes the port
           port: 3310,
           timeout: 60000,
         },
@@ -83,4 +83,3 @@ const virusScanFlow = ai.defineFlow(
     }
   }
 );
-
