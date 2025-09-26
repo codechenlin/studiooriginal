@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 type ProviderStatus = 'ok' | 'error';
 
-const providers = [
+const initialProviders = [
   {
     id: 'smtp',
     name: 'SMTP Genérico',
@@ -102,9 +102,12 @@ export default function ServersPage() {
   const [isDnsModalOpen, setIsDnsModalOpen] = useState(false);
   const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
+  const [providers, setProviders] = useState(initialProviders);
 
   useEffect(() => {
     setIsClient(true);
+    // Set formatted numbers on client-side to avoid hydration errors
+    setProviders(initialProviders.map(p => ({...p, emailsCount: p.emailsCount})));
   }, []);
   
   const handleConnectClick = (providerId: string) => {
@@ -271,3 +274,4 @@ export default function ServersPage() {
     </>
   );
 }
+
