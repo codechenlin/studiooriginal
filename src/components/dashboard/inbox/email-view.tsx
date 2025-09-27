@@ -100,18 +100,18 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   return (
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
-        <header className="sticky top-0 left-0 w-full z-10 p-4 flex items-center justify-center">
-             <div className="flex items-center gap-2">
+        <header className="sticky top-0 left-0 w-full z-10 p-4 bg-background">
+             <div className="flex items-center justify-center gap-2">
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20">
                      <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
                 </div>
                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
                     <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star className={cn(email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
-                    <Button className={cn(buttonClass, "border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
-                    <Button className={cn(buttonClass, "border-blue-500/50 text-blue-500 hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
+                    <Button className={cn(buttonClass, "border-white/50 text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
+                    <Button className={cn(buttonClass, "border-white/50 text-white hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
                     <Button 
-                      className={cn(buttonClass, "border-[#F00000]/50 text-[#F00000] hover:bg-[#F00000] hover:text-white")}
+                      className={cn(buttonClass, "border-[#F00000]/80 text-[#F00000] hover:bg-[#F00000] hover:text-white")}
                       onClick={() => setIsDeleting(true)}
                     >
                       <Trash2/>
