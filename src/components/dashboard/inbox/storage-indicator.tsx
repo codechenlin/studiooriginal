@@ -18,7 +18,7 @@ export function StorageIndicator({ used, total }: StorageIndicatorProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" className="w-48 h-auto flex-col items-stretch p-2 space-y-2 cursor-pointer hover:bg-transparent">
+        <Button variant="ghost" className="w-48 h-auto flex-col items-stretch p-2 space-y-2 cursor-pointer hover:bg-transparent bg-transparent">
             <div className="flex items-center justify-between text-xs font-mono">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <div className="relative">
@@ -29,7 +29,7 @@ export function StorageIndicator({ used, total }: StorageIndicatorProps) {
               </div>
               <span className="font-bold text-foreground">{percentage.toFixed(0)}%</span>
             </div>
-            <Progress value={percentage} className="h-2" indicatorClassName="animate-progress-scan" />
+            <Progress value={percentage} className="h-4" indicatorClassName="animate-progress-scan-futuristic" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-48 p-2 text-center text-sm">

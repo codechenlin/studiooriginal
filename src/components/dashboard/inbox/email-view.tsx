@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, EyeOff, Eye, ShieldAlert, File } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, EyeOff, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -22,6 +22,9 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Image from 'next/image';
+import { SecuritySettingsModal } from './security-settings-modal';
+import { cn } from '@/lib/utils';
+
 
 interface EmailViewProps {
   email: Email | null;
@@ -34,6 +37,9 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   const [isReportingSpam, setIsReportingSpam] = useState(false);
   const [showImages, setShowImages] = useState(false);
   const { toast } = useToast();
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+  const [isConfirmImagesModalOpen, setIsConfirmImagesModalOpen] = useState(false);
+  const [isPrivacyFeatureEnabled, setIsPrivacyFeatureEnabled] = useState(true);
 
   if (!email) {
     return (
@@ -54,7 +60,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
   const sanitizedBodyForDisplay = (body: string) => {
     let processedBody = body.replace(/<p[^>]*data-attachment='true'[^>]*>Attachment<\/p>/g, '');
-    if (!showImages) {
+    if (!showImages && isPrivacyFeatureEnabled) {
         processedBody = processedBody.replace(/<img[^>]*>/g, (match) => {
             const alt = match.match(/alt="([^"]*)"/)?.[1] || 'Imagen bloqueada';
             const aiHint = match.match(/data-ai-hint="([^"]*)"/)?.[1] || 'image';
@@ -77,7 +83,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   
   const sanitizedBody = sanitizedBodyForDisplay(email.body);
 
-  const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-primary/20 hover:bg-primary hover:text-primary-foreground";
+  const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
   
   // Placeholder for BIMI logo logic
   const bimiLogoUrl = null;
@@ -87,53 +93,80 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     <>
     <main className="flex-1 flex flex-col h-screen bg-background relative">
         <header className="sticky top-0 left-0 w-full z-10 p-4">
-          <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-between gap-4 w-full max-w-lg mx-auto">
-            <div className="flex items-center gap-2">
-                <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
-                <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star/></Button>
+            <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-between gap-2 w-full max-w-lg mx-auto">
+                <div className="flex items-center gap-2">
+                    <Button className={buttonClass} onClick={onBack}><ArrowLeft/></Button>
+                </div>
+                
+                <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
+
+                <div className="flex items-center gap-2">
+                    <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star/></Button>
+                    <Button className={cn(buttonClass, "border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
+                    <Button className={buttonClass}><Languages/></Button>
+                    <Button 
+                      className={cn(buttonClass, "border-destructive/50 text-destructive hover:bg-destructive hover:text-white")}
+                      onClick={() => setIsDeleting(true)}
+                    >
+                      <Trash2/>
+                    </Button>
+                </div>
             </div>
-            <div className="flex items-center gap-2">
-                <Button className={buttonClass} onClick={() => setIsDeleting(true)}><Trash2/></Button>
-                <Button className={buttonClass} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
-                <Button className={buttonClass}><Languages/></Button>
-            </div>
-          </div>
         </header>
 
         <ScrollArea className="flex-1">
             <div className="p-4 md:p-8 max-w-4xl mx-auto">
                 <h1 className="text-2xl md:text-3xl font-bold mb-4">{email.subject}</h1>
+                
                 <div className="flex items-start justify-between mb-8">
                   <div className="flex items-center gap-4">
-                     <Avatar className="size-12 border-2 border-primary/20">
+                     <Avatar className="size-16 border-2 border-primary/20">
                        {bimiLogoUrl ? (
                          <Image src={bimiLogoUrl} alt={`Logo de ${email.from}`} fill className="object-contain" />
                        ) : (
-                         <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
+                         <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
                            {senderInitial}
                          </AvatarFallback>
                        )}
                      </Avatar>
                      <div className="text-sm">
                        <p className="font-semibold text-foreground text-base">{email.from}</p>
-                       <p className="text-muted-foreground">Para: <span className="text-foreground/80">ventas@mailflow.ai</span></p>
+                       <p className="text-muted-foreground text-sm">{`<${email.from.toLowerCase().replace(/\s+/g, '.')}@example.com>`}</p>
+                       <p className="text-muted-foreground mt-2">Para: <span className="text-foreground/80">ventas@mailflow.ai</span></p>
                        <p className="text-muted-foreground">{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
                      </div>
                   </div>
                 </div>
-                
-                 {!showImages && email.body.includes('<img') && (
-                    <div className="mb-6 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-between gap-2">
-                        <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                            <EyeOff className="inline-block mr-2 size-4"/>
-                            Se ha bloqueado la carga de imágenes para proteger tu privacidad.
-                        </p>
-                        <Button size="sm" variant="outline" className="shrink-0" onClick={() => setShowImages(true)}>
-                            <Eye className="mr-2 size-4"/>
-                            Cargar Imágenes
-                        </Button>
-                    </div>
-                )}
+
+                <div className="my-6 flex flex-col sm:flex-row items-center gap-4">
+                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:border-primary/50 flex-1 group relative overflow-hidden">
+                      <Wand2 className="mr-2 text-primary transition-transform group-hover:scale-110"/>
+                      Traducir Mensaje
+                      <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
+                  </Button>
+                  
+                  {isPrivacyFeatureEnabled ? (
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:border-amber-500/50 flex-1 group relative overflow-hidden"
+                        onClick={() => setIsConfirmImagesModalOpen(true)}
+                      >
+                          <Eye className="mr-2 text-amber-500 transition-transform group-hover:scale-110"/>
+                          Mostrar Imágenes
+                          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-amber-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
+                      </Button>
+                  ) : (
+                       <Button
+                        variant="outline"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:border-green-500/50 flex-1 group relative overflow-hidden"
+                        onClick={() => setIsPrivacyModalOpen(true)}
+                      >
+                          <ShieldOff className="mr-2 text-green-500 transition-transform group-hover:scale-110"/>
+                          Activar Privacidad
+                          <div className="absolute inset-x-0 bottom-0 h-0.5 bg-green-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
+                      </Button>
+                  )}
+                </div>
                 
                 <div
                     className="prose dark:prose-invert max-w-none"
@@ -197,7 +230,86 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
+
+    {/* Confirm Show Images Modal */}
+    <Dialog open={isConfirmImagesModalOpen} onOpenChange={setIsConfirmImagesModalOpen}>
+        <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
+            <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+            <DialogHeader className="z-10">
+                <DialogTitle className="flex items-center gap-3 text-2xl text-amber-300">
+                    <ShieldQuestion className="size-8"/>
+                    Confirmar Visualización de Imágenes
+                </DialogTitle>
+                <DialogDescription className="text-amber-100/70 pt-2">
+                    Mostrar imágenes de este remitente podría revelar información a servidores externos.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 z-10 text-amber-100/90 text-sm space-y-3">
+                <p>Al cargar contenido externo (como imágenes), el remitente puede saber que abriste el correo y podría recopilar datos como:</p>
+                <ul className="list-disc list-inside space-y-1 pl-2">
+                    <li>Tu dirección IP (ubicación aproximada)</li>
+                    <li>Tipo de dispositivo y cliente de correo que usas</li>
+                    <li>Si y cuándo abriste el correo</li>
+                </ul>
+                <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
+            </div>
+            <DialogFooter className="z-10 pt-4 flex justify-between w-full">
+                <Button variant="ghost" className="hover:text-white" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                <Button
+                    className="bg-amber-600 text-white hover:bg-amber-500"
+                    onClick={() => {
+                        setShowImages(true);
+                        setIsConfirmImagesModalOpen(false);
+                        toast({ title: 'Imágenes habilitadas', description: 'Se ha cargado el contenido externo para este correo.' });
+                    }}
+                >
+                    <Check className="mr-2"/>Sí, mostrar imágenes
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    {/* Enable Privacy Modal */}
+    <Dialog open={isPrivacyModalOpen} onOpenChange={setIsPrivacyModalOpen}>
+        <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-green-400/20 text-white overflow-hidden" showCloseButton={false}>
+             <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+            <DialogHeader className="z-10">
+                <DialogTitle className="flex items-center gap-3 text-2xl text-green-300">
+                    <ShieldOff className="size-8"/>
+                    Activar Protección de Privacidad
+                </DialogTitle>
+                <DialogDescription className="text-green-100/70 pt-2">
+                    Habilita el bloqueo de imágenes y rastreadores para los correos de este remitente.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 z-10 text-green-100/90 text-sm">
+                <p>¿Deseas activar la función de privacidad para todos los correos futuros de <strong className="text-white">{email.from}</strong>? Esto bloqueará automáticamente la carga de imágenes y otros contenidos externos para proteger tu información.</p>
+            </div>
+             <DialogFooter className="z-10 pt-4 flex justify-between w-full">
+                <div className="flex-1">
+                    <Button variant="link" className="text-cyan-300" onClick={() => {
+                        /* Logic to open advanced settings */
+                        setIsPrivacyModalOpen(false); // Close this one first
+                        // You might need a way to globally open the SecuritySettingsModal, e.g. via context
+                    }}>Configuración Avanzada</Button>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="ghost" className="hover:text-white" onClick={() => setIsPrivacyModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                    <Button
+                        className="bg-green-600 text-white hover:bg-green-500"
+                        onClick={() => {
+                            setIsPrivacyFeatureEnabled(true);
+                            setIsPrivacyModalOpen(false);
+                            toast({ title: 'Privacidad Activada', description: `Se bloquearán las imágenes para ${email.from}.` });
+                        }}
+                    >
+                        <Check className="mr-2"/>Sí, activar
+                    </Button>
+                </div>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
     </>
   );
 }
-
