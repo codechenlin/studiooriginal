@@ -108,8 +108,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <div className="w-px h-8 bg-gradient-to-b from-transparent via-primary/50 to-transparent mx-2" />
                 <div className="p-2 rounded-xl bg-card/60 dark:bg-zinc-900/60 backdrop-blur-sm border border-border/20 flex items-center justify-center gap-2">
                     <Button className={buttonClass} onClick={() => onToggleStar(email.id)}><Star className={cn(email.starred && "fill-yellow-400 text-yellow-400")}/></Button>
-                    <Button className={cn(buttonClass, "border-white/50 text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
-                    <Button className={cn(buttonClass, "border-white/50 text-white hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
+                    <Button className={cn(buttonClass, "border-transparent text-white hover:bg-amber-500 hover:text-white")} onClick={() => setIsReportingSpam(true)}><ShieldAlert/></Button>
+                    <Button className={cn(buttonClass, "border-transparent text-white hover:bg-blue-500 hover:text-white")} onClick={() => setIsAntivirusModalOpen(true)}><Shield /></Button>
                     <Button 
                       className={cn(buttonClass, "border-[#F00000]/80 text-[#F00000] hover:bg-[#F00000] hover:text-white")}
                       onClick={() => setIsDeleting(true)}
@@ -141,7 +141,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 </div>
 
                 <div className="my-6 flex flex-col sm:flex-row items-center gap-4">
-                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:border-primary/50 flex-1 group relative overflow-hidden">
+                  <Button variant="outline" className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent flex-1 group relative overflow-hidden hover-border-gradient-primary">
                       <Wand2 className="mr-2 text-primary transition-transform group-hover:scale-110"/>
                       Traducir Mensaje
                       <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-center" />
@@ -150,7 +150,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   {isPrivacyFeatureEnabled ? (
                       <Button
                         variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:border-amber-500/50 flex-1 group relative overflow-hidden"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent flex-1 group relative overflow-hidden hover-border-gradient-accent"
                         onClick={() => setIsConfirmImagesModalOpen(true)}
                       >
                           <Eye className="mr-2 text-amber-500 transition-transform group-hover:scale-110"/>
@@ -160,7 +160,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   ) : (
                        <Button
                         variant="outline"
-                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:border-green-500/50 flex-1 group relative overflow-hidden"
+                        className="w-full sm:w-auto text-base py-6 px-6 border-2 border-transparent hover:bg-transparent flex-1 group relative overflow-hidden hover-border-gradient-primary"
                         onClick={() => setIsPrivacyModalOpen(true)}
                       >
                           <ShieldOff className="mr-2 text-green-500 transition-transform group-hover:scale-110"/>

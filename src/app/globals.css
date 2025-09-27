@@ -148,6 +148,13 @@ body {
       inherits: false;
     }
 
+    .hover-border-gradient-primary:hover {
+      border-image: linear-gradient(to right, #AD00EC, #1700E6) 1;
+    }
+    .hover-border-gradient-accent:hover {
+      border-image: linear-gradient(to right, #E18700, #FFAB00) 1;
+    }
+
     @keyframes spin-slow {
         to {
             transform: rotate(360deg);
@@ -377,17 +384,5 @@ body {
       );
       background-size: 200% 100%;
       animation: button-scan 2s linear infinite;
-    }
-
-    @keyframes progress-scan {
-      0% { background-position: 200% 50%; opacity: 0.8; }
-      60% { opacity: 1; }
-      100% { background-position: -200% 50%; opacity: 0.8; }
-    }
-    .animate-progress-scan {
-        background-image: linear-gradient(90deg, transparent, hsl(var(--primary)), hsl(var(--accent)), transparent);
-        background-size: 40% 100%;
-        background-repeat: no-repeat;
-        animation: progress-scan 6s ease-in-out infinite;
     }
 }
