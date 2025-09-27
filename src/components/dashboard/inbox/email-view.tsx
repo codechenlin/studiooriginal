@@ -14,12 +14,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, AlertTriangle, Languages, Star, FolderOpen, EyeOff, Eye, ShieldAlert, File } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, EyeOff, Eye, ShieldAlert, File } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import Image from 'next/image';
 
 interface EmailViewProps {
   email: Email | null;
@@ -76,6 +78,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   const sanitizedBody = sanitizedBodyForDisplay(email.body);
 
   const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-primary/20 hover:bg-primary hover:text-primary-foreground";
+  
+  // Placeholder for BIMI logo logic
+  const bimiLogoUrl = null;
+  const senderInitial = email.from.charAt(0).toUpperCase();
 
   return (
     <>
@@ -96,10 +102,24 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
         <ScrollArea className="flex-1">
             <div className="p-4 md:p-8 max-w-4xl mx-auto">
-                <h1 className="text-2xl md:text-3xl font-bold mb-2">{email.subject}</h1>
-                <div className="flex items-center justify-between text-sm text-muted-foreground mb-6">
-                    <p>De: <span className="font-medium text-foreground">{email.from}</span></p>
-                    <p>{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
+                <h1 className="text-2xl md:text-3xl font-bold mb-4">{email.subject}</h1>
+                <div className="flex items-start justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                     <Avatar className="size-12 border-2 border-primary/20">
+                       {bimiLogoUrl ? (
+                         <Image src={bimiLogoUrl} alt={`Logo de ${email.from}`} fill className="object-contain" />
+                       ) : (
+                         <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
+                           {senderInitial}
+                         </AvatarFallback>
+                       )}
+                     </Avatar>
+                     <div className="text-sm">
+                       <p className="font-semibold text-foreground text-base">{email.from}</p>
+                       <p className="text-muted-foreground">Para: <span className="text-foreground/80">ventas@mailflow.ai</span></p>
+                       <p className="text-muted-foreground">{format(email.date, "d 'de' MMMM, yyyy 'a las' p", { locale: es })}</p>
+                     </div>
+                  </div>
                 </div>
                 
                  {!showImages && email.body.includes('<img') && (
@@ -180,3 +200,4 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+
