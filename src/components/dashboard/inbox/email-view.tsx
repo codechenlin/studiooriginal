@@ -220,19 +220,21 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </AlertDialog>
     
     <AlertDialog open={isReportingSpam} onOpenChange={setIsReportingSpam}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reportar como Spam</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Deseas mover también todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>No, solo este correo</AlertDialogCancel>
-            <AlertDialogAction>Sí, y futuros correos</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Reportar como Spam</AlertDialogTitle>
+          <AlertDialogDescription>
+            ¿Deseas mover este correo a la bandeja de spam o todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction>Mover solo este correo</AlertDialogAction>
+          <AlertDialogAction>Mover todo lo de este remitente</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
     </AlertDialog>
+
 
     <Dialog open={isConfirmImagesModalOpen} onOpenChange={setIsConfirmImagesModalOpen}>
         <DialogContent className="sm:max-w-xl bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
