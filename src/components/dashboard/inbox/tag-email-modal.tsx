@@ -76,8 +76,14 @@ export function TagEmailModal({ isOpen, onOpenChange }: TagEmailModalProps) {
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-4xl w-full h-[450px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Etiquetar Correo</DialogTitle>
+              <DialogDescription>
+                Aplica una etiqueta existente o crea una nueva para organizar este correo.
+              </DialogDescription>
+            </DialogHeader>
            <style>{`
                 .info-grid {
                     background-image:
@@ -201,4 +207,3 @@ export function TagEmailModal({ isOpen, onOpenChange }: TagEmailModalProps) {
     </>
   );
 }
-
