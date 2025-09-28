@@ -64,7 +64,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                              <circle className="pulse-dot" cx="80" cy="80" r="2" fill="#E18700" style={{animationDelay: '1s'}}/>
                              <circle className="pulse-dot" cx="80" cy="20" r="2" fill="#AD00EC" style={{animationDelay: '0.5s'}}/>
                         </svg>
-                        <ShieldCheck className="size-24 text-cyan-300 animate-[icon-pulse_4s_infinite_ease-in-out]" style={{ filter: 'drop-shadow(0 0 20px #00adec)' }}/>
+                        <ShieldCheck className="size-24 text-cyan-300" style={{ filter: 'drop-shadow(0 0 20px #00adec)' }}/>
                     </div>
                      <div className="p-3 rounded-lg bg-gradient-to-r from-[#00CE07]/20 to-[#A6EE00]/20 border border-[#00CE07]/50 flex items-center gap-3">
                         <CheckCircle className="size-6 text-[#A6EE00]"/>
@@ -99,14 +99,14 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.15 + 0.4 }}
-                            className="group/card relative p-4 pt-8 rounded-lg bg-blue-950/40 border border-blue-500/20 overflow-hidden"
+                            className="group/card relative p-4 rounded-lg bg-blue-950/40 border border-blue-500/20 overflow-hidden"
                         >
                              <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-[#1700E6] to-[#009AFF]"/>
                             <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-950/70 border border-green-500/30">
                                 <div className="size-2 rounded-full bg-[#39FF14] led-pulse"/>
                                 <span className="text-xs font-bold text-green-300">ACTIVADO</span>
                             </div>
-                            <div className="flex items-start gap-4">
+                            <div className="flex items-start gap-4 pt-8">
                                 <div className="relative p-2 bg-blue-950/50 rounded-full border border-blue-500/30">
                                     <div className="absolute inset-0 rounded-full icon-check-pulse bg-green-500/30"/>
                                     <item.icon className="relative z-10 size-6 text-blue-300" />
@@ -143,7 +143,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                       transition={{ delay: 0.8 }}
                     >
                       <span className="text-white">Veredicto: </span>
-                      <span className="text-[#00CB07]" style={{textShadow: '0 0 8px #00CB07'}}>Cero Amenazas</span>
+                      <span className="scanline-text" data-text="Cero Amenazas" style={{color: '#00CB07', textShadow: '0 0 8px #00CB07'}}>Cero Amenazas</span>
                     </motion.h2>
                 </div>
                  <ScrollArea className="flex-1 mt-6 -mr-3 pr-3 custom-scrollbar z-10">
@@ -185,5 +185,3 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
     </Dialog>
   );
 }
-
-    
