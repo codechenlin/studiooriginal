@@ -148,11 +148,6 @@ body {
       inherits: false;
     }
 
-    @keyframes rotating-border {
-        from { --angle: 0deg; }
-        to { --angle: 360deg; }
-    }
-
     @keyframes spin-slow {
         to {
             transform: rotate(360deg);
@@ -234,6 +229,10 @@ body {
         transition: transform 0.3s ease-in-out;
     }
     
+    @keyframes rotating-border {
+        from { --angle: 0deg; }
+        to { --angle: 360deg; }
+    }
     .ai-core-border-animation {
       content: '';
       position: absolute;
@@ -377,14 +376,6 @@ body {
       );
       background-size: 200% 100%;
       animation: button-scan 2s linear infinite;
-    }
-    @keyframes button-scan {
-      0% {
-        background-position: -200% 0;
-      }
-      100% {
-        background-position: 200% 0;
-      }
     }
 
     @keyframes sound-wave {

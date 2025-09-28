@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, CheckCircle, BrainCircuit, Link, FileScan, UserCheck, Code, Fingerprint, Lock, ShieldQuestion } from 'lucide-react';
@@ -75,14 +75,15 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
             </div>
 
             {/* Section 2: Middle Panel */}
-            <div className="flex flex-col h-full p-6 border-r border-cyan-400/20 bg-black/20">
-                <DialogHeader className="text-left mb-4">
+            <div className="flex flex-col h-full p-6 border-r border-cyan-400/20 bg-black/20 relative overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10 bg-grid-blue-500/30 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+                <DialogHeader className="text-left mb-4 z-10">
                     <DialogTitle className="text-xl font-bold text-cyan-300 flex items-center gap-2">
                         <BrainCircuit />
                         Análisis de Este Correo
                     </DialogTitle>
                 </DialogHeader>
-                <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar -mr-3 pr-3">
+                <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar -mr-3 pr-3 z-10">
                     {analysisItems.map((item, index) => (
                         <motion.div
                             key={item.title}
@@ -108,19 +109,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
 
             {/* Section 3: Right Panel */}
             <div className="flex flex-col h-full p-6 bg-black/10 relative overflow-hidden">
-                <div className="absolute inset-0 z-0 transform -scale-x-100 opacity-30">
-                    <svg width="100%" height="100%" preserveAspectRatio="none">
-                        <defs>
-                            <linearGradient id="circuit-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#AD00EC" /><stop offset="100%" stopColor="#E18700" /></linearGradient>
-                        </defs>
-                        <path className="energy-path" stroke="url(#circuit-glow)" strokeWidth="0.5" fill="none" d="M0 40 L180 40 L200 60 L350 60" />
-                        <path className="energy-path" style={{animationDelay: '1.5s'}} stroke="url(#circuit-glow)" strokeWidth="0.5" fill="none" d="M0 100 L120 100 L140 120 L300 120" />
-                         <path className="energy-path" style={{animationDelay: '3s'}} stroke="url(#circuit-glow)" strokeWidth="0.5" fill="none" d="M400 150 L220 150 L200 130 L50 130" />
-                        <circle className="node-pulse" cx="180" cy="40" r="2" fill="url(#circuit-glow)" />
-                        <circle className="node-pulse" style={{animationDelay: '1s'}} cx="140" cy="120" r="2" fill="url(#circuit-glow)" />
-                         <circle className="node-pulse" style={{animationDelay: '2.5s'}} cx="200" cy="130" r="2" fill="url(#circuit-glow)" />
-                    </svg>
-                </div>
+                <div className="absolute inset-0 z-0 opacity-30 bg-gradient-to-br from-purple-900/20 via-transparent to-transparent"/>
                  <DialogHeader className="text-left mb-4 z-10">
                     <DialogTitle className="text-xl font-bold text-cyan-300 flex items-center gap-2">
                         <CheckCircle />
