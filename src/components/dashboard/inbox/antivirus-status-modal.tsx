@@ -38,12 +38,14 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl w-full h-[650px] flex p-0 gap-0 bg-zinc-900/90 backdrop-blur-2xl border-2 border-cyan-400/30 text-white overflow-hidden" showCloseButton={false}>
-           <DialogHeader className="sr-only">
-            <DialogTitle>Estado del Antivirus</DialogTitle>
-            <DialogDescription>
-              Un resumen detallado del análisis de seguridad realizado en el correo electrónico.
-            </DialogDescription>
-          </DialogHeader>
+           <div className="sr-only">
+            <DialogHeader>
+              <DialogTitle>Estado del Antivirus</DialogTitle>
+              <DialogDescription>
+                Un resumen detallado del análisis de seguridad realizado en el correo electrónico.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 h-full w-full">
             {/* Section 1: Left Panel */}
             <div className="relative h-full w-full bg-black/30 flex flex-col items-center justify-between p-8 overflow-hidden border-r border-cyan-400/20">
@@ -137,13 +139,13 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                          <CheckCircle className="size-16 text-green-300 mb-2 icon-check-pulse" style={{ filter: 'drop-shadow(0 0 10px #39FF14)'}}/>
                     </motion.div>
                     <motion.h2
-                      className="text-2xl font-bold tracking-tight relative"
+                      className="text-2xl font-bold tracking-tight"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.8 }}
                     >
                       <span className="text-white">Veredicto: </span>
-                      <span className="scanline-text" data-text="Cero Amenazas" style={{color: '#00CB07', textShadow: '0 0 8px #00CB07'}}>Cero Amenazas</span>
+                      <span style={{color: '#00CB07', textShadow: '0 0 8px #00CB07'}}>Cero Amenazas</span>
                     </motion.h2>
                 </div>
                  <ScrollArea className="flex-1 mt-6 -mr-3 pr-3 custom-scrollbar z-10">
