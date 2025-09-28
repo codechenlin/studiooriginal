@@ -27,6 +27,7 @@ const initialSpamEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 30),
       read: false,
       starred: false,
+      tag: { name: 'Peligroso', color: '#ff0000' },
     },
     {
       id: 'spam-2',
@@ -211,5 +212,3 @@ export default function SpamPage() {
     </>
   );
 }
-
-    

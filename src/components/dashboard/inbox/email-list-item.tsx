@@ -5,8 +5,13 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { format, isToday, isThisWeek, isThisYear } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Star } from 'lucide-react';
+import { Star, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 export interface Email {
   id: string;
@@ -17,6 +22,10 @@ export interface Email {
   date: Date;
   read: boolean;
   starred: boolean;
+  tag?: {
+    name: string;
+    color: string;
+  } | null;
 }
 
 interface EmailListItemProps {
@@ -85,6 +94,27 @@ export function EmailListItem({ email, onSelect, isFirst, isLast, onToggleStar }
           >
             <Star className={cn("size-4 text-muted-foreground transition-all", email.starred && "fill-yellow-400 text-yellow-400")} />
           </Button>
+
+         <div className="w-7 h-7">
+          {email.tag && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 z-10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Tag className="size-4" style={{ color: email.tag.color }} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent side="left" className="w-auto p-2" onClick={(e) => e.stopPropagation()}>
+                <div className="font-semibold text-sm" style={{ color: email.tag.color }}>{email.tag.name}</div>
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
+
           <p className={cn("text-xs w-16 text-right shrink-0", !email.read ? "text-primary font-bold" : "text-muted-foreground")}>
             {formattedDate}
           </p>

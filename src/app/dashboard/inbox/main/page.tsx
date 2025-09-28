@@ -27,6 +27,7 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 5),
       read: false,
       starred: true,
+      tag: { name: 'Importante', color: '#ef4444' },
     },
     {
       id: 'threat-1',
@@ -87,6 +88,7 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 60 * 1.5),
       read: true,
       starred: false,
+      tag: { name: 'Proyecto Alpha', color: '#3b82f6' },
     },
     {
       id: '2',
@@ -107,6 +109,7 @@ const initialEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 60 * 24),
       read: true,
       starred: true,
+      tag: { name: 'Seguimiento', color: '#f97316' },
     },
     {
       id: '4',
@@ -298,5 +301,3 @@ export default function MainInboxPage() {
     </>
   );
 }
-
-    

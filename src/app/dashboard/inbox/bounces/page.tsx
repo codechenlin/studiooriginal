@@ -37,6 +37,7 @@ const initialBouncedEmails: Email[] = [
       date: new Date(Date.now() - 1000 * 60 * 60 * 8),
       read: true,
       starred: true,
+      tag: { name: 'Revisar', color: '#8b5cf6' },
     },
 ];
 
@@ -203,5 +204,3 @@ export default function BouncesPage() {
     </>
   );
 }
-
-    
