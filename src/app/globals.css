@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -312,7 +311,7 @@ body {
     }
 
     @keyframes particle-float {
-      0% { transform: translateY(0); opacity: 1; }
+      0% { transform: translateY(0) translateX(0); opacity: 1; }
       100% { transform: translateY(-100vh) translateX(var(--x-end)); opacity: 0; }
     }
     .particle {
@@ -322,6 +321,7 @@ body {
       width: var(--size);
       height: var(--size);
       border-radius: 50%;
+      background: var(--color);
       animation: particle-float var(--duration) var(--delay) linear infinite;
     }
 
@@ -384,9 +384,19 @@ body {
 
     @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     @keyframes icon-check-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.7; } }
-    @keyframes node-pulse { 0%, 100% { r: 2; opacity: 0.8; } 50% { r: 3; opacity: 1; } }
+    @keyframes node-pulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
     
-    .node-pulse { animation: node-pulse 2s infinite ease-in-out; }
+    .node-pulse { animation: node-pulse 3s infinite ease-in-out; }
+    
+    @keyframes circuit-flow {
+      from { stroke-dashoffset: 200; }
+      to { stroke-dashoffset: 0; }
+    }
+    .circuit-flow {
+      stroke-dasharray: 4 8;
+      animation: circuit-flow 10s linear infinite;
+    }
+
     @keyframes icon-pulse-banner {
         0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px currentColor); }
         50% { transform: scale(1.1); filter: drop-shadow(0 0 12px currentColor); }
@@ -426,42 +436,6 @@ body {
         animation: animate-progress-scan 2s linear infinite;
     }
 
-    @keyframes radar-sweep {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .radar-sweep {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: conic-gradient(
-        from 0deg,
-        transparent 0%,
-        transparent 70%,
-        rgba(0, 173, 236, 0.5) 95%,
-        transparent 100%
-      );
-      animation: radar-sweep 4s linear infinite;
-      mask-image: radial-gradient(circle at center, transparent 30%, black 30%);
-    }
-
-    @keyframes pulse-dot {
-      0%, 100% { transform: scale(1); opacity: 0; }
-      50% { transform: scale(1.5); opacity: 1; }
-      75% { transform: scale(1); opacity: 0; }
-    }
-    .pulse-dot {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: #00ADEC;
-      box-shadow: 0 0 10px #00ADEC;
-      animation: pulse-dot 4s infinite ease-out;
-    }
-
     @keyframes text-reveal {
       from {
         opacity: 0;
@@ -478,13 +452,5 @@ body {
       animation: text-reveal 0.8s ease-out forwards;
       animation-delay: var(--reveal-delay, 0s);
       opacity: 0;
-    }
-    
-    @keyframes circuit-flow {
-      0% { stroke-dashoffset: 200; }
-      100% { stroke-dashoffset: 0; }
-    }
-    .circuit-flow {
-      animation: circuit-flow 10s linear infinite;
     }
 }
