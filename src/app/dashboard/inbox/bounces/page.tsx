@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ShieldAlert, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, Star, ShieldHalf, Filter, Eye } from 'lucide-react';
+import { Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, ShieldHalf, Filter, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,7 +15,6 @@ import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 
 const initialBouncedEmails: Email[] = [
     {
@@ -84,19 +83,26 @@ export default function BouncesPage() {
           <div>
             <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#F00000] to-[#F07000] flex items-center gap-3">
-                  <ShieldAlert className="size-8"/>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                       <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                       <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                   Buzón de Rebotes
                 </h1>
                 <div className="relative flex items-center justify-center size-8 ml-2">
-                    <ShieldAlert className="text-red-500/80 size-7" />
-                    <div className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" />
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-red-500/80">
+                       <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                       <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
                 </div>
             </div>
             <p className="text-muted-foreground mt-1">
               Analiza los correos que no pudieron ser entregados para mejorar la salud de tus listas.
             </p>
           </div>
-          <StorageIndicator used={10.2} total={15} gradientColors={['#F00000', '#F07000']} />
         </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-red-500/30 shadow-lg mb-2 relative overflow-hidden">

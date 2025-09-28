@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -178,7 +178,10 @@ export default function DemoPage() {
                  {/* Virus Scanner Panel */}
                 <Card className="bg-card/50 backdrop-blur-sm border-blue-500/30 shadow-xl">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><ShieldCheck className="text-blue-400"/>Prueba de Antivirus (ClamAV)</CardTitle>
+                        <CardTitle className="flex items-center gap-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-blue-400">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>Prueba de Antivirus (ClamAV)</CardTitle>
                         <CardDescription>Sube un archivo para escanearlo en busca de virus.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -222,7 +225,10 @@ export default function DemoPage() {
                                     </div>
                                 ) : (
                                     <div className="p-3 rounded-md bg-green-500/10 text-green-700 dark:text-green-300 border border-green-500/20 flex items-start gap-2">
-                                        <ShieldCheck />
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 shrink-0">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
                                         <div>
                                             <p><strong>El archivo es seguro.</strong></p>
                                             <p>{virusResult.message}</p>
@@ -258,8 +264,8 @@ export default function DemoPage() {
                         <div className="flex flex-col items-center gap-2">
                             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M12 11v0a3 3 0 0 1 3 3v0a3 3 0 0 1-3 3v0a3 3 0 0 1-3-3v0a3 3 0 0 1 3-3v0Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                <path d="M12 11V9a3 3 0 0 1 3-3v0a3 3 0 0 1 3 3v0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M14.5 11.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M12 11.5V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             <span className="font-bold text-lg">2</span>
                         </div>
@@ -271,6 +277,10 @@ export default function DemoPage() {
                                 <path d="m17 17 5 5m-5 0 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                            </svg>
                             <span className="font-bold text-lg">3</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                           <MailWarning size={64} strokeWidth={1}/>
+                            <span className="font-bold text-lg">4</span>
                         </div>
                     </div>
                 </CardContent>
