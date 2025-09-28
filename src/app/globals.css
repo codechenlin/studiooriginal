@@ -487,10 +487,4 @@ body {
         opacity: 0.7;
         animation: hud-glitch 5s infinite linear alternate-reverse;
     }
-    
-    @keyframes arc-draw {
-        to {
-            stroke-dashoffset: var(--final-offset, 0);
-        }
-    }
 }

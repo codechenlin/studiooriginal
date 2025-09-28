@@ -42,7 +42,7 @@ export function StorageIndicator({ used, total, gradientColors }: StorageIndicat
                     />
                     {/* Progress arc */}
                     <circle
-                        className="stroke-current transition-all duration-500 ease-out"
+                        className="stroke-current transition-all duration-1000 ease-out"
                         strokeWidth="8"
                         cx="50"
                         cy="50"
@@ -53,7 +53,6 @@ export function StorageIndicator({ used, total, gradientColors }: StorageIndicat
                         strokeLinecap="round"
                         transform="rotate(-90 50 50)"
                         style={{
-                            animation: 'arc-draw 1.5s ease-out forwards',
                             filter: `drop-shadow(0 0 5px ${shadowColor})`,
                             stroke: arcColor
                         }}
