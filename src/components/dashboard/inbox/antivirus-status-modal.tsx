@@ -23,9 +23,10 @@ const analysisItems = [
 ];
 
 const protectionItems = [
-    { icon: Lock, title: "Encriptación de Contenido", description: "El contenido sensible se mantiene encriptado en todo momento para proteger tu privacidad, incluso si el correo es interceptado." },
-    { icon: BrainCircuit, title: "Análisis Predictivo de Comportamiento", description: "Nuestra IA no solo busca amenazas conocidas, sino que aprende y se anticipa a nuevas tácticas de ataque antes de que sean catalogadas globalmente." },
-    { icon: ShieldQuestion, title: "Cuarentena Atómica", description: "Cualquier elemento mínimamente sospechoso es aislado a nivel subatómico en un entorno virtual, impidiendo cualquier posible daño a tu sistema." },
+    { icon: CheckCircle, title: "Análisis Semántico", description: "La IA interpretó el contexto y la intención del texto, confirmando que no hay tácticas de ingeniería social." },
+    { icon: Lock, title: "Validación de Integridad", description: "Se verificó la firma criptográfica del correo, asegurando que el contenido no fue alterado en tránsito." },
+    { icon: BrainCircuit, title: "Análisis Predictivo", description: "Los patrones del correo fueron comparados con modelos de ataque emergentes, sin encontrar coincidencias." },
+    { icon: ShieldQuestion, title: "Comprobación de Reputación", description: "La reputación del remitente y los servidores de origen fue validada como segura en nuestra red global." },
 ];
 
 export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusModalProps) {
@@ -80,7 +81,8 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                         Análisis de Este Correo
                     </DialogTitle>
                 </DialogHeader>
-                <ScrollArea className="flex-1 space-y-3 -mr-3 pr-3 custom-scrollbar z-10">
+                <ScrollArea className="flex-1 -mr-3 pr-3 custom-scrollbar z-10">
+                  <div className="space-y-3">
                     {analysisItems.map((item, index) => (
                         <React.Fragment key={item.title}>
                         <motion.div
@@ -102,6 +104,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                         )}
                         </React.Fragment>
                     ))}
+                  </div>
                 </ScrollArea>
             </div>
 
@@ -115,7 +118,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                         transition={{ delay: 0.5, duration: 0.5}}
                         className="relative p-2"
                     >
-                      <CheckCircle className="size-16 text-green-300 mb-2 animate-icon-pulse-banner" style={{ filter: 'drop-shadow(0 0 10px #39FF14)'}}/>
+                      <CheckCircle className="size-16 text-green-300 mb-2 icon-check-pulse" style={{ filter: 'drop-shadow(0 0 10px #39FF14)'}}/>
                     </motion.div>
                     <motion.h2 
                       className="text-2xl font-bold tracking-tight text-reveal" 
@@ -124,7 +127,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                       Veredicto Final: <span className="text-green-300">Cero Amenazas</span>
                     </motion.h2>
                 </div>
-                 <ScrollArea className="flex-1 mt-6 space-y-6 -mr-3 pr-3 custom-scrollbar z-10">
+                 <div className="flex-1 grid grid-rows-4 gap-4 mt-6 z-10">
                       {protectionItems.map((item, index) => (
                         <motion.div
                             key={item.title}
@@ -151,7 +154,7 @@ export function AntivirusStatusModal({ isOpen, onOpenChange }: AntivirusStatusMo
                             </div>
                         </motion.div>
                       ))}
-                </ScrollArea>
+                </div>
             </div>
           </div>
       </DialogContent>
