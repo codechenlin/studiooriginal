@@ -47,8 +47,9 @@ export function SpamFilterSettingsModal({ isOpen, onOpenChange }: SpamFilterSett
         
         <DialogHeader className="z-10">
           <DialogTitle className="flex items-center gap-3 text-2xl">
-            <div className="p-2.5 bg-amber-500/10 border-2 border-amber-400/20 rounded-full icon-pulse-animation">
-              <ShieldAlert className="text-amber-400" />
+            <div className="relative p-2.5 bg-amber-500/10 border-2 border-amber-400/20 rounded-full">
+              <div className="absolute inset-0 rounded-full animate-ping bg-amber-400/50" />
+              <ShieldAlert className="relative text-amber-400" />
             </div>
             Ajustes del Filtro de Spam con IA
           </DialogTitle>
