@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -383,10 +383,10 @@ export default function DemoPage() {
                         </div>
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-15">
-                                <Gift className="text-yellow-400 size-10 icon15"/>
+                                <Check className="text-yellow-400 size-10 icon15"/>
                             </div>
                             <span className="font-bold text-lg">15</span>
-                            <span className="text-xs text-muted-foreground font-mono">Regalo Sorpresa</span>
+                            <span className="text-xs text-muted-foreground font-mono">Sello de Aprobación</span>
                         </div>
                          <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-16">

@@ -531,9 +531,11 @@ body {
     .animation-wrapper-14 .icon14 { animation: hex-seal-icon 4s infinite ease-in-out alternate; }
     @keyframes hex-seal-icon { from { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 8px hsl(180, 100%, 50%)); } to { transform: scale(1.1) rotate(15deg); filter: drop-shadow(0 0 20px hsl(180, 100%, 50%)); } }
 
-    .animation-wrapper-15 .icon15 { animation: gift-shake 3s infinite; }
-    @keyframes gift-shake { 0%, 100% { transform: rotate(0); } 10%, 30%, 50% { transform: rotate(-5deg); } 20%, 40% { transform: rotate(5deg); } 60% { transform: scale(1.2); } 70% { transform: scale(0.9); } 80% { transform: scale(1.1); } 90% { transform: scale(1); } }
-    
+    .animation-wrapper-15 .icon15 { animation: approval-stamp 3s infinite ease-out; }
+    @keyframes approval-stamp { 0% { transform: scale(1.5); opacity: 0; } 20% { transform: scale(0.9); opacity: 1; } 25% { transform: scale(1); opacity: 1; } 35% { opacity: 1; } 100% { opacity: 1; } }
+    .animation-wrapper-15::after { content: ''; position: absolute; inset: 0; border: 2px solid hsl(48, 100%, 50%); border-radius: 50%; animation: approval-ring 3s infinite ease-out; }
+    @keyframes approval-ring { 0% { transform: scale(0.5); opacity: 0; } 20% { transform: scale(0.9); opacity: 1; } 30% { transform: scale(1.5); opacity: 0; } 100% { opacity: 0; } }
+
     .animation-wrapper-16 .icon16 { animation: floating-tags 6s infinite ease-in-out; }
     @keyframes floating-tags { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-10px) rotate(5deg); } 50% { transform: translateY(0) rotate(0); } 75% { transform: translateY(10px) rotate(-5deg); } }
 }
