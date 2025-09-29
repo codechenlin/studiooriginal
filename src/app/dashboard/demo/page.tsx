@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -258,7 +258,7 @@ export default function DemoPage() {
                                 <Shield className="text-cyan-400 size-10 icon1"/>
                             </div>
                             <span className="font-bold text-lg">1</span>
-                            <span className="text-xs text-muted-foreground font-mono">Pulso Neuronal</span>
+                             <span className="text-xs text-muted-foreground font-mono">Pulso Neuronal</span>
                         </div>
 
                         <div className="flex flex-col items-center gap-2">
@@ -274,7 +274,7 @@ export default function DemoPage() {
                                 <MailWarning className="text-orange-400 size-10 icon3"/>
                             </div>
                             <span className="font-bold text-lg">3</span>
-                             <span className="text-xs text-muted-foreground font-mono">Implosión de Partículas</span>
+                             <span className="text-xs text-muted-foreground font-mono">Firma de Partículas</span>
                         </div>
 
                         <div className="flex flex-col items-center gap-2">
@@ -282,9 +282,15 @@ export default function DemoPage() {
                                <Eye className="text-green-400 size-10 icon4"/>
                             </div>
                             <span className="font-bold text-lg">4</span>
-                            <span className="text-xs text-muted-foreground font-mono">Escaneo Biométrico</span>
+                            <span className="text-xs text-muted-foreground font-mono">Ojo Biométrico</span>
                         </div>
-
+                    </div>
+                </CardContent>
+            </Card>
+            
+             <Card className="w-full max-w-4xl bg-card/50 backdrop-blur-sm border-border/30 shadow-xl">
+                <CardContent className="p-6">
+                    <div className="flex justify-around items-center">
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-16 h-16 flex items-center justify-center animation-wrapper-5">
                                 <ShieldCheck className="text-blue-400 size-10 icon5"/>
@@ -308,7 +314,51 @@ export default function DemoPage() {
                                 <Dna className="text-red-400 size-10 icon7"/>
                             </div>
                             <span className="font-bold text-lg">7</span>
-                            <span className="text-xs text-muted-foreground font-mono">Glitch de ADN</span>
+                            <span className="text-xs text-muted-foreground font-mono">ADN Digital</span>
+                        </div>
+                         <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-8">
+                                <div className="icon-8-wrapper">
+                                   <Binary className="text-lime-400 size-10 icon8"/>
+                                </div>
+                            </div>
+                            <span className="font-bold text-lg">8</span>
+                            <span className="text-xs text-muted-foreground font-mono">Partículas Gaseosas</span>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+             <Card className="w-full max-w-4xl bg-card/50 backdrop-blur-sm border-border/30 shadow-xl">
+                <CardContent className="p-6">
+                    <div className="flex justify-around items-center">
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-9">
+                                <GitBranch className="text-teal-400 size-10 icon9"/>
+                            </div>
+                            <span className="font-bold text-lg">9</span>
+                            <span className="text-xs text-muted-foreground font-mono">Circuito de IA</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-10">
+                                <Activity className="text-indigo-400 size-10 icon10"/>
+                            </div>
+                            <span className="font-bold text-lg">10</span>
+                            <span className="text-xs text-muted-foreground font-mono">Onda de Expansión</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-11">
+                                <Bot className="text-sky-400 size-10 icon11"/>
+                            </div>
+                            <span className="font-bold text-lg">11</span>
+                            <span className="text-xs text-muted-foreground font-mono">Escáner de Datos</span>
+                        </div>
+                         <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 flex items-center justify-center animation-wrapper-12">
+                                <Loader2 className="text-fuchsia-400 size-10 icon12"/>
+                            </div>
+                            <span className="font-bold text-lg">12</span>
+                            <span className="text-xs text-muted-foreground font-mono">Vórtice Digital</span>
                         </div>
                     </div>
                 </CardContent>
@@ -318,3 +368,4 @@ export default function DemoPage() {
     );
 
     
+}
