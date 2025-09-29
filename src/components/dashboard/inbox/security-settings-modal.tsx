@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Shield, User, Users, Globe, ArrowRight, Mail, Search } from 'lucide-react';
+import { User, Users, Globe, ArrowRight, Mail, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -116,7 +116,11 @@ export function SecuritySettingsModal({ isOpen, onOpenChange }: SecuritySettings
         <DialogHeader className="z-10">
           <DialogTitle className="flex items-center gap-3 text-2xl">
             <div className="relative p-3 rounded-full bg-blue-900/50 border-2 border-blue-500/50">
-               <Shield className="text-blue-300 size-6" />
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-6 text-blue-300">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14.5 10.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M12 13v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+               </svg>
                <div className="absolute inset-0 rounded-full animate-ping border-2 border-blue-400/50" />
             </div>
             Configuración de Privacidad Avanzada

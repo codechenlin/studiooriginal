@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, Eye, ShieldAlert, File, Check, X, Wand2, ShieldQuestion, ShieldOff, Shield, AlertTriangle, Tag } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, ShieldOff, AlertTriangle, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -123,7 +123,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                         className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")}
                         onClick={() => setIsAntivirusModalOpen(true)}
                     >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
                           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
@@ -144,7 +144,10 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     </button>
                     <button className={cn(aiButtonClass, "before:bg-[conic-gradient(from_var(--angle),theme(colors.orange.400),theme(colors.yellow.400),theme(colors.orange.400))] before:animate-rotating-border")} onClick={() => setIsConfirmImagesModalOpen(true)}>
                         <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
-                          <Eye className="size-5 text-amber-500" />
+                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/>
+                            </svg>
                         </div>
                     </button>
                 </div>
@@ -231,7 +234,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                     <circle className="node-pulse" style={{animationDelay: '1s'}} cx="140" cy="30" r="2" fill="url(#safe-glow)" />
                                 </svg>
                             </div>
-                            <Shield className="relative z-10 size-8 text-green-400 shrink-0 animate-icon-pulse-banner" />
+                            <ShieldOff className="relative z-10 size-8 text-green-400 shrink-0 animate-icon-pulse-banner" />
                             <div className="relative z-10">
                                 <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
                                 <p className="text-sm text-green-200/90">Nuestro Escudo de IA ha analizado este correo y no ha encontrado amenazas.</p>
