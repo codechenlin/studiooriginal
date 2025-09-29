@@ -270,8 +270,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </div>
         </ScrollArea>
     </main>
-
-    {/* Modals */}
     <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
     <TagEmailModal 
       isOpen={isTagModalOpen} 
@@ -331,23 +329,21 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
-            <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }} className="relative">
-                <div className="absolute top-0 left-0 h-full w-1.5 bg-gradient-to-b from-[#E18700] to-[#FFAB00] rounded-l-lg animate-pulse" />
-                <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-amber-400/30 hover:bg-amber-500/10 hover:border-amber-400/60">
-                    <h3 className="text-base font-semibold text-[#E18700] hover:text-[#E18700]">Reportar solo este correo</h3>
-                    <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
-                </Button>
+            <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}>
+              <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-amber-400/30 hover:bg-amber-500/10 hover:border-amber-400/60">
+                  <h3 className="text-base font-semibold text-[#E18700] hover:text-[#E18700]">Reportar solo este correo</h3>
+                  <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
+              </Button>
             </motion.div>
-            <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }} className="relative">
-                 <div className="absolute top-0 right-0 h-full w-1.5 bg-gradient-to-b from-[#F00000] to-[#F07000] rounded-r-lg animate-pulse" />
-                <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-destructive/30 hover:bg-destructive/10 hover:border-destructive/60">
-                    <h3 className="text-base font-semibold text-destructive">Bloquear y reportar todo</h3>
-                    <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
-                </Button>
+            <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}>
+              <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-destructive/30 hover:bg-destructive/10 hover:border-destructive/60">
+                <h3 className="text-base font-semibold text-destructive">Bloquear y reportar todo</h3>
+                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
+              </Button>
             </motion.div>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
-            <Button variant="outline" className="border-white dark:border-white text-white bg-transparent hover:bg-zinc-800" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
+            <Button className="border border-white bg-transparent text-white hover:bg-[#F00000] hover:border-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -359,7 +355,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <DialogHeader className="z-10">
                 <DialogTitle className="flex items-center gap-3 text-2xl text-amber-300">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
-                      Confirmar Visualización de Imágenes
+                    Confirmar Visualización de Imágenes
                 </DialogTitle>
                 <DialogDescription className="text-amber-100/70 pt-2">
                     Mostrar imágenes de este remitente podría revelar información a servidores externos.
@@ -375,7 +371,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
             </div>
             <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                <Button variant="outline" className="border-white text-white bg-transparent hover:bg-[#F00000] hover:text-white hover:border-transparent" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                <Button variant="outline" className="border-white text-white bg-transparent hover:bg-[#F00000] hover:border-transparent hover:text-white" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
                 <Button
                     className="bg-amber-600 text-white hover:bg-[#FFAB00] hover:text-white"
                     onClick={() => {
@@ -433,4 +429,3 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   );
 }
 
-    
