@@ -478,7 +478,7 @@ body {
     @keyframes eye-scan { 0%, 20%, 80%, 100% { transform: scaleY(1); } 10%, 90% { transform: scaleY(0.1); } 40%, 60% { filter: drop-shadow(0 0 10px #0f0); } 50% { filter: drop-shadow(0 0 20px #0f0); } }
 
     .animation-wrapper-5 { position: relative; }
-    .animation-wrapper-5::before { content: ''; position: absolute; width: 120%; height: 120%; top: -10%; left: -10%; border-radius: 50%; background: radial-gradient(circle, transparent 60%, hsl(var(--primary)) 100%); animation: shield-deploy 4s infinite ease-out; }
+    .animation-wrapper-5::before { content: ''; position: absolute; width: 120%; height: 120%; top: -10%; left: -10%; border-radius: 50%; background: radial-gradient(circle, transparent 60%, currentColor 100%); animation: shield-deploy 4s infinite ease-out; }
     @keyframes shield-deploy { 0%, 100% { transform: scale(0); opacity: 0; } 50% { transform: scale(1); opacity: 0.5; } 70% { transform: scale(0.95); opacity: 0.3; } }
 
     .animation-wrapper-6 .icon6-wrapper { animation: digital-heartbeat 2s infinite ease-in-out; }
@@ -489,7 +489,7 @@ body {
     .animation-wrapper-7 { position: relative; }
     .animation-wrapper-7 .icon7 { animation: dna-glitch 3s infinite; }
     @keyframes dna-glitch { 0%, 100% { transform: skewX(0); } 5% { transform: skewX(10deg); } 10% { transform: skewX(-10deg); } 15%, 100% { transform: skewX(0); } }
-    .animation-wrapper-7::after { content: ''; position: absolute; inset: 0; background: linear-gradient(hsl(var(--primary)/0.2), transparent); animation: dna-scanline 0.5s infinite; }
+    .animation-wrapper-7::after { content: ''; position: absolute; inset: 0; background: linear-gradient(currentColor, transparent); animation: dna-scanline 0.5s infinite; }
     @keyframes dna-scanline { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
 
     .animation-wrapper-8 { position: relative; overflow: hidden; }
@@ -520,4 +520,22 @@ body {
     @keyframes vortex-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .animation-wrapper-12 .icon12 { animation: vortex-pulse 2s infinite ease-in-out alternate; }
     @keyframes vortex-pulse { from { transform: scale(1); filter: drop-shadow(0 0 5px hsl(278, 81%, 64%)); } to { transform: scale(0.8); filter: drop-shadow(0 0 20px hsl(278, 81%, 64%)); } }
+
+    .animation-wrapper-13 .icon13 { animation: seismic-pulse 2s infinite cubic-bezier(0.4, 0, 0.2, 1); }
+    @keyframes seismic-pulse { 0% { transform: scale(0.95); opacity: 0.7; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.7; } }
+    .animation-wrapper-13::after { content: ''; position: absolute; inset: 0; border: 2px solid hsl(340, 100%, 70%); border-radius: 50%; animation: seismic-ring 2s infinite cubic-bezier(0.4, 0, 0.2, 1); }
+    @keyframes seismic-ring { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+    
+    .animation-wrapper-14 { animation: hex-seal 8s infinite linear; }
+    @keyframes hex-seal { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animation-wrapper-14 .icon14 { animation: hex-seal-icon 4s infinite ease-in-out alternate; }
+    @keyframes hex-seal-icon { from { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 8px hsl(180, 100%, 50%)); } to { transform: scale(1.1) rotate(15deg); filter: drop-shadow(0 0 20px hsl(180, 100%, 50%)); } }
+
+    .animation-wrapper-15 .icon15 { animation: gift-shake 3s infinite; }
+    @keyframes gift-shake { 0%, 100% { transform: rotate(0); } 10%, 30%, 50% { transform: rotate(-5deg); } 20%, 40% { transform: rotate(5deg); } 60% { transform: scale(1.2); } 70% { transform: scale(0.9); } 80% { transform: scale(1.1); } 90% { transform: scale(1); } }
+    
+    .animation-wrapper-16 .icon16 { animation: floating-tags 6s infinite ease-in-out; }
+    @keyframes floating-tags { 0%, 100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-10px) rotate(5deg); } 50% { transform: translateY(0) rotate(0); } 75% { transform: translateY(10px) rotate(-5deg); } }
 }
+
+    
