@@ -83,7 +83,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             return `
               <div class="my-4 p-4 rounded-lg bg-muted/50 border border-dashed flex items-center gap-4 text-sm text-muted-foreground">
                 <div class="p-3 bg-background rounded-full border">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-off"><path d="M19.69 14a6.9 6.9 0 0 0 .31-2V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m2 2 20 20"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-off"><path d="M19.69 14a6.9 6.9 0 0 0 .31-2V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m2 2 20 20"/></svg>
                 </div>
                 <div>
                   <p class="font-semibold text-foreground">Contenido externo bloqueado</p>
@@ -122,10 +122,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                         className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-white hover:bg-blue-500 hover:text-white")}
                         onClick={() => setIsAntivirusModalOpen(true)}
                     >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
-                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </Button>
                     <Button 
                       className={cn("size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm text-[#F00000] hover:bg-[#F00000] hover:text-white")}
@@ -145,10 +142,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                        <div className="size-[calc(100%-2px)] rounded-[7px] bg-background/80 dark:bg-zinc-800/80 flex items-center justify-center">
                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5 text-amber-500">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M14.5 10.5a2.5 2.5 0 0 1-5 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                                <path d="M12 12a4.5 4.5 0 0 0-4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                                <path d="M12 12a4.5 4.5 0 0 1 4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                            </svg>
+                                <path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/>
+                           </svg>
                         </div>
                     </button>
                 </div>
@@ -217,7 +212,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                 </svg>
                             </div>
                             <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                <Bug className="text-red-400 size-8 animate-pulse" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
+                                <Bug className="text-red-400 size-8 animate-ping" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
                             </div>
                             <div className="relative z-10">
                                 <h3 className="font-bold text-red-300">¡Amenaza Detectada!</h3>
@@ -355,7 +350,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
             <DialogHeader className="z-10">
                 <DialogTitle className="flex items-center gap-3 text-2xl text-amber-300">
-                    <ShieldQuestion className="size-8"/>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/></svg>
                     Confirmar Visualización de Imágenes
                 </DialogTitle>
                 <DialogDescription className="text-amber-100/70 pt-2">

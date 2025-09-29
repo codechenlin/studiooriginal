@@ -279,17 +279,14 @@ export default function DemoPage() {
                         </div>
                         <div className="flex flex-col items-center gap-2">
                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                               <path d="M14.5 10.5a2.5 2.5 0 0 1-5 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                               <path d="M12 12a4.5 4.5 0 0 0-4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                               <path d="M12 12a4.5 4.5 0 0 1 4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/>
                            </svg>
                             <span className="font-bold text-lg">4</span>
                         </div>
                          <div className="flex flex-col items-center gap-2">
                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                               <path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/>
+                               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14.5 10.5a2.5 2.5 0 0 1-5 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M12 12a4.5 4.5 0 0 0-4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M12 12a4.5 4.5 0 0 1 4.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                            </svg>
                             <span className="font-bold text-lg">5</span>
                         </div>
