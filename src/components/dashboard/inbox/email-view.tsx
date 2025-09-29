@@ -375,7 +375,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
               </div>
               <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                  <Button variant="ghost" className="hover:text-white" onClick={()={() => setIsConfirmImagesModalOpen(false)}}><X className="mr-2"/>Cancelar</Button>
+                  <Button variant="ghost" className="hover:text-white" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
                   <Button
                       className="bg-amber-600 text-white hover:bg-amber-500"
                       onClick={() => {
