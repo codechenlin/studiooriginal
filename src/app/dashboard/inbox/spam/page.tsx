@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Eye, ShieldAlert } from 'lucide-react';
+import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Eye, ShieldAlert, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -96,7 +96,7 @@ export default function SpamPage() {
                   Bandeja de Spam
                 </h1>
                 <div className="relative flex items-center justify-center size-8 ml-2">
-                    <MailWarning className="text-amber-500/80 size-7 animate-ping" />
+                    <MailWarning className="text-amber-500/80 size-7" />
                 </div>
               </div>
               <p className="text-muted-foreground mt-1">
@@ -186,7 +186,7 @@ export default function SpamPage() {
                             <path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/>
                         </svg>
                     </Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><Filter /></Button>
                     <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsAntivirusModalOpen(true)}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </Button>
