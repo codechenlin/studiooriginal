@@ -317,15 +317,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
             <DialogHeader className="p-6 pb-0 z-10">
               <DialogTitle className="flex items-center gap-3 text-xl">
-                <motion.div
-                  animate={{
-                    scale: [1, 1.1, 1, 1.1, 1],
-                    rotate: [0, 5, -5, 5, 0],
-                  }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  <ShieldAlert className="text-amber-400 size-8 drop-shadow-[0_0_8px_hsl(var(--primary))]"/>
-                </motion.div>
+                <ShieldAlert className="text-amber-400 size-8 animate-ping"/>
                 Reportar Correo como Spam
               </DialogTitle>
              <DialogDescription className="text-amber-100/70 pt-2">
@@ -351,7 +343,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
               </motion.div>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
-            <Button variant="outline" className="border-white dark:border-black text-white bg-transparent hover:bg-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
+            <Button variant="outline" className="border-white dark:border-white text-white bg-transparent hover:bg-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -377,9 +369,9 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
               </div>
               <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                  <Button variant="ghost" className="border border-white dark:border-black hover:text-white hover:bg-[#F00000]" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                  <Button variant="ghost" className="border border-white hover:text-white hover:bg-[#F00000]" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
                   <Button
-                      className="bg-amber-600 text-white hover:bg-[#E18700] hover:text-white"
+                      className="bg-amber-600 text-white hover:bg-[#FFAB00] hover:text-white"
                       onClick={() => {
                           setShowImages(true);
                           setIsConfirmImagesModalOpen(false);
