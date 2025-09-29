@@ -219,7 +219,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                                   <SidebarMenuSubButton asChild isActive={isSubmenuItemSelected}>
                                     <Link href={subItem.href} className="flex items-center justify-between w-full">
                                       <div className="flex items-center gap-2">
-                                        <subItem.icon />
+                                        <subItem.icon className="size-4"/>
                                         <span className="font-semibold">{subItem.label}</span>
                                       </div>
                                       {isSubmenuItemSelected && (
@@ -284,7 +284,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="group/button rounded-full size-10 bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r from-[#AD00EC] to-[#0018EC] dark:hover:bg-gradient-to-r dark:from-[#AD00EC] dark:to-[#0018EC]"
+                className="group/button rounded-full size-10 bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r from-[#AD00EC] to-[#1700E6] dark:hover:bg-gradient-to-r dark:from-[#AD00EC] dark:to-[#1700E6]"
             >
               <Bell className="size-5 text-black dark:text-white group-hover/button:text-white dark:group-hover/button:text-white"/>
               <span className="sr-only">Notificaciones</span>
@@ -293,7 +293,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme} 
-                className="group/button rounded-full size-10 bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r from-[#AD00EC] to-[#0018EC] dark:hover:bg-gradient-to-r dark:from-[#AD00EC] dark:to-[#0018EC]"
+                className="group/button rounded-full size-10 bg-background/50 dark:bg-zinc-800/80 backdrop-blur-sm border border-black/5 dark:border-white/10 text-black dark:text-white hover:bg-gradient-to-r from-[#AD00EC] to-[#1700E6] dark:hover:bg-gradient-to-r dark:from-[#AD00EC] dark:to-[#1700E6]"
             >
               {isDarkMode ? <Sun className="size-5 text-white" /> : <Moon className="size-5 text-black group-hover/button:text-white" />}
               <span className="sr-only">Cambiar tema</span>

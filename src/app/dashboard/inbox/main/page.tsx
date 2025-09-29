@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Shield, ShieldHalf, Filter, Eye } from 'lucide-react';
+import { MailCheck, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, ShieldHalf, Filter, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -177,7 +177,7 @@ export default function MainInboxPage() {
                   Buzón Principal
                 </h1>
                 <div className="relative flex items-center justify-center size-8 ml-2">
-                    <Database className="text-primary/70 size-7" />
+                    <MailCheck className="text-primary/70 size-7" />
                     <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
                 </div>
               </div>

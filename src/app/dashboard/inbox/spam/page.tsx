@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Shield, Star, ShieldHalf, Filter, Eye } from 'lucide-react';
+import { MailWarning, Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, ShieldHalf, Filter, Eye, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -96,8 +96,8 @@ export default function SpamPage() {
                   Bandeja de Spam
                 </h1>
                 <div className="relative flex items-center justify-center size-8 ml-2">
-                    <MailWarning className="text-amber-500/80 size-7" />
-                    <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-pulse" />
+                    <MailWarning className="text-amber-500/80 size-7 animate-ping" />
+                    <MailWarning className="text-amber-500/80 size-7 absolute" />
                 </div>
               </div>
               <p className="text-muted-foreground mt-1">
