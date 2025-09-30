@@ -61,11 +61,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     const matches = [...body.matchAll(/<p[^>]*data-attachment='true'[^>]*data-filename="([^"]*)"[^>]*data-filetype="([^"]*)"[^>]*data-filesize="([^"]*)"[^>]*>/g)];
     return matches.map(match => ({ name: match[1], type: match[2], size: match[3] }));
   };
-
-  const attachments = email ? extractAttachments(email.body) : [];
-  const hasThreat = email ? email.id.startsWith('threat-') || email.id.startsWith('attachment-2') : false;
-
-
+  
   const sanitizedBodyForDisplay = (body: string) => {
     let processedBody = body.replace(/<p[^>]*data-attachment='true'[^>]*>Attachment<\/p>/g, '');
     if (!showImages && isPrivacyFeatureEnabled) {
@@ -90,11 +86,11 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
   }
   
   const sanitizedBody = email ? sanitizedBodyForDisplay(email.body) : '';
-  
+  const attachments = email ? extractAttachments(email.body) : [];
+  const hasThreat = email ? email.id.startsWith('threat-') || email.id.startsWith('attachment-2') : false;
   const senderInitial = email ? email.from.charAt(0).toUpperCase() : '';
-
-  const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
   
+  const buttonClass = "size-10 rounded-lg bg-background/50 dark:bg-zinc-800/60 backdrop-blur-sm border border-border/20 hover:bg-primary hover:text-primary-foreground";
   const aiButtonClass = "relative size-10 rounded-lg flex items-center justify-center cursor-pointer p-0 bg-transparent before:absolute before:-inset-px before:rounded-lg before:-z-10 before:transition-all before:duration-300 before:opacity-0 hover:before:opacity-100";
 
   return (
