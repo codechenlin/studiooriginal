@@ -322,7 +322,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
             <DialogHeader className="p-6 pb-0 z-10">
               <DialogTitle className="flex items-center gap-3 text-xl">
-                <ShieldAlert className="text-amber-400 size-8"/>
+                <ShieldAlert className="text-amber-400 size-8 animate-[icon-pulse_2s_infinite] drop-shadow-[0_0_8px_hsl(var(--chart-3))]"/>
                 Reportar Correo como Spam
               </DialogTitle>
               <DialogDescription className="text-amber-100/70 pt-2">
