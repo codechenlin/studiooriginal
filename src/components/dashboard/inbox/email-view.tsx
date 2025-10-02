@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, AlertTriangle, Tag, Bug, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Trash2, Languages, Star, FolderOpen, ShieldAlert, File, Check, X, ShieldQuestion, AlertTriangle, Tag, Bug, CheckCircle, Mail, Server } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Email } from './email-list-item';
@@ -319,39 +319,49 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
       
       <Dialog open={isReportingSpam} onOpenChange={setIsReportingSpam}>
         <DialogContent className="sm:max-w-3xl bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden" showCloseButton={false}>
-            <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
-            <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
-            <DialogHeader className="p-6 pb-0 z-10">
-                <DialogTitle className="flex items-center gap-3 text-xl">
-                    <div className="relative size-8 flex items-center justify-center">
-                        <div className="absolute w-full h-full border-2 border-dashed border-amber-400 rounded-full animate-spin" style={{ animationDuration: '4s' }}/>
-                        <ShieldAlert className="text-amber-400 size-6" />
+          <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+          <DialogHeader className="p-6 pb-0 z-10">
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <div className="relative size-8 flex items-center justify-center">
+                  <div className="absolute w-full h-full border-2 border-dashed border-amber-400 rounded-full animate-spin" style={{ animationDuration: '4s' }}/>
+                  <ShieldAlert className="text-amber-400 size-6" />
+              </div>
+              Reportar Correo como Spam
+            </DialogTitle>
+             <DialogDescription className="text-amber-100/70 pt-2">
+                ¿Deseas mover este correo a la bandeja de spam o todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
+            {/* Card 1: Report this email */}
+            <div className="group relative p-0.5 rounded-xl bg-transparent overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#E18700]/50 to-transparent transition-all duration-500 ease-in-out transform -translate-x-full group-hover:translate-x-full w-1/2 h-full opacity-50 blur-xl" />
+                <button className="relative w-full h-full p-6 bg-zinc-900/80 rounded-lg border border-amber-400/30 text-left transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-full bg-amber-500/10 border border-amber-400/20"><Mail className="size-5 text-amber-400"/></div>
+                        <h3 className="text-base font-semibold text-amber-300">Reportar solo este correo</h3>
                     </div>
-                    Reportar Correo como Spam
-                </DialogTitle>
-                <DialogDescription className="text-amber-100/70 pt-2">
-                    ¿Deseas mover este correo a la bandeja de spam o todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
-                </DialogDescription>
-            </DialogHeader>
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
-              <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}>
-                <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-amber-400/30 hover:bg-amber-500/10 hover:border-amber-400/60">
-                    <h3 className="text-base font-semibold text-[#E18700] hover:text-[#E18700]">Reportar solo este correo</h3>
                     <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}>
-                <Button variant="outline" className="w-full h-auto p-6 flex flex-col items-start text-left gap-2 border-destructive/30 hover:bg-destructive/10 hover:border-destructive/60">
-                  <h3 className="text-base font-semibold text-destructive">Bloquear y reportar todo</h3>
-                  <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
-                </Button>
-              </motion.div>
+                </button>
             </div>
-            <DialogFooter className="p-6 pt-0 z-10">
-              <Button variant="outline" className="border-border/30 hover:bg-zinc-800" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            {/* Card 2: Block all */}
+            <div className="group relative p-0.5 rounded-xl bg-transparent overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#F00000]/50 to-transparent transition-all duration-500 ease-in-out transform translate-x-full group-hover:-translate-x-full w-1/2 h-full opacity-50 blur-xl" />
+                <button className="relative w-full h-full p-6 bg-zinc-900/80 rounded-lg border border-red-500/30 text-left transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-full bg-red-500/10 border border-red-500/20"><Server className="size-5 text-red-500"/></div>
+                        <h3 className="text-base font-semibold text-red-400">Bloquear y reportar todo</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
+                </button>
+            </div>
+          </div>
+          <DialogFooter className="p-6 pt-0 z-10">
+            <Button variant="outline" className="border-white text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
 
       <Dialog open={isConfirmImagesModalOpen} onOpenChange={setIsConfirmImagesModalOpen}>
@@ -432,5 +442,3 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
-
-    
