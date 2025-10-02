@@ -321,13 +321,16 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
             <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
             <DialogHeader className="p-6 pb-0 z-10">
-              <DialogTitle className="flex items-center gap-3 text-xl">
-                <ShieldAlert className="text-amber-400 size-8 animate-[icon-pulse_2s_infinite] drop-shadow-[0_0_8px_hsl(var(--primary))]"/>
-                Reportar Correo como Spam
-              </DialogTitle>
-              <DialogDescription className="text-amber-100/70 pt-2">
-                  ¿Deseas mover este correo a la bandeja de spam o todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
-              </DialogDescription>
+                <DialogTitle className="flex items-center gap-3 text-xl">
+                    <div className="relative size-8 flex items-center justify-center">
+                        <div className="absolute w-full h-full border-2 border-dashed border-amber-400 rounded-full animate-spin" style={{ animationDuration: '4s' }}/>
+                        <ShieldAlert className="text-amber-400 size-6" />
+                    </div>
+                    Reportar Correo como Spam
+                </DialogTitle>
+                <DialogDescription className="text-amber-100/70 pt-2">
+                    ¿Deseas mover este correo a la bandeja de spam o todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam?
+                </DialogDescription>
             </DialogHeader>
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
               <motion.div whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}>
@@ -428,5 +431,3 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
-
-    
