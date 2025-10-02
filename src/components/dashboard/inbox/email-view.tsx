@@ -211,8 +211,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                   </svg>
                               </div>
                               <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                  <div className="absolute w-full h-full border-2 border-dashed border-red-500 rounded-full animate-spin" style={{ animationDuration: '4s' }} />
-                                  <Bug className="relative text-[#F00000] size-6" style={{filter: 'drop-shadow(0 0 5px #f00)'}}/>
+                                  <div className="absolute w-full h-full border-2 border-dashed border-[#F00000] rounded-full animate-spin" style={{ animationDuration: '4s' }} />
+                                  <Bug className="relative text-[#F00000] size-6" style={{filter: 'drop-shadow(0 0 5px #F00000)'}}/>
                               </div>
                               <div className="relative z-10">
                                   <h3 className="font-bold" style={{color: '#F00000'}}>¡Amenaza Detectada!</h3>
@@ -224,7 +224,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                               <div className="absolute inset-0 z-0 transform -scale-x-100">
                                   <svg width="100%" height="100%" preserveAspectRatio="none">
                                       <defs>
-                                          <linearGradient id="safe-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#00CB07" /><stop offset="100%" stopColor="#00F508" /></linearGradient>
+                                        <linearGradient id="safe-glow" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#00CB07" /><stop offset="100%" stopColor="#00F508" /></linearGradient>
                                       </defs>
                                       <path className="energy-path" stroke="url(#safe-glow)" strokeWidth="0.5" fill="none" d="M0 40 L180 40 L200 60 L350 60" />
                                       <path className="energy-path" style={{animationDelay: '1.5s'}} stroke="url(#safe-glow)" strokeWidth="0.5" fill="none" d="M0 10 L120 10 L140 30 L250 30" />
@@ -233,11 +233,11 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                                   </svg>
                               </div>
                               <div className="relative z-10 flex items-center justify-center size-8 shrink-0">
-                                  <div className="absolute w-full h-full border-2 border-dashed border-green-400 rounded-full animate-spin" style={{ animationDuration: '4s' }} />
-                                  <CheckCircle className="relative size-6 text-green-400" />
+                                  <div className="absolute w-full h-full border-2 border-dashed border-[#00CB07] rounded-full animate-spin" style={{ animationDuration: '4s' }} />
+                                  <CheckCircle className="relative size-6 text-[#00CB07]" />
                               </div>
                               <div className="relative z-10">
-                                  <h3 className="font-bold text-green-300">Correo Verificado y Seguro</h3>
+                                  <h3 className="font-bold" style={{color: '#00CB07'}}>Correo Verificado y Seguro</h3>
                                   <p className="text-sm text-green-200/90">Nuestro Escudo de IA ha analizado este correo y no ha encontrado amenazas.</p>
                               </div>
                           </div>
@@ -334,7 +334,6 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
-            {/* Card 1: Report this email */}
             <motion.div 
                 className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-amber-400/30 hover:shadow-[0_0_10px_#E1870050,0_0_10px_#FFAB0050]"
                 whileHover={{ scale: 1.03 }}
@@ -344,9 +343,8 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                     <div className="p-2 rounded-full bg-amber-500/10 border border-amber-400/20"><Mail className="size-5 text-amber-400"/></div>
                     <h3 className="text-base font-semibold text-amber-300">Reportar solo este correo</h3>
                 </div>
-                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje de <strong>{email.from}</strong> a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
+                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
             </motion.div>
-            {/* Card 2: Block all */}
             <motion.div 
                 className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-red-500/30 hover:shadow-[0_0_10px_#F0000050,0_0_10px_#F0700050]"
                 whileHover={{ scale: 1.03 }}
@@ -360,7 +358,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
             </motion.div>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
-            <Button variant="outline" className="border-white text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
+            <Button variant="outline" className="border-border/30 hover:bg-zinc-800" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -444,3 +442,5 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
     </>
   );
 }
+
+    
