@@ -335,23 +335,29 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           </DialogHeader>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
             {/* Card 1: Report this email */}
-            <div className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-amber-400/30 hover:shadow-[0_0_10px_#E1870050,0_0_10px_#FFAB0050]">
+            <motion.div 
+                className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-amber-400/30 hover:shadow-[0_0_10px_#E1870050,0_0_10px_#FFAB0050]"
+                whileHover={{ scale: 1.03 }}
+            >
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-[#E18700] to-[#FFAB00]" style={{boxShadow: '0 0 15px #FFAB00'}}/>
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-full bg-amber-500/10 border border-amber-400/20"><Mail className="size-5 text-amber-400"/></div>
                     <h3 className="text-base font-semibold text-amber-300">Reportar solo este correo</h3>
                 </div>
-                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
-            </div>
+                <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje de <strong>{email.from}</strong> a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
+            </motion.div>
             {/* Card 2: Block all */}
-            <div className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-red-500/30 hover:shadow-[0_0_10px_#F0000050,0_0_10px_#F0700050]">
+            <motion.div 
+                className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-red-500/30 hover:shadow-[0_0_10px_#F0000050,0_0_10px_#F0700050]"
+                whileHover={{ scale: 1.03 }}
+            >
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#F00000] to-[#F07000]" style={{boxShadow: '0 0 15px #F07000'}}/>
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-full bg-red-500/10 border border-red-500/20"><Server className="size-5 text-red-500"/></div>
                     <h3 className="text-base font-semibold text-red-400">Bloquear y reportar todo</h3>
                 </div>
                 <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje y todos los futuros correos de <strong>{email.from}</strong> a la bandeja de spam.</p>
-            </div>
+            </motion.div>
           </div>
           <DialogFooter className="p-6 pt-0 z-10">
             <Button variant="outline" className="border-white text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000] hover:text-white" onClick={() => setIsReportingSpam(false)}>Cancelar</Button>
