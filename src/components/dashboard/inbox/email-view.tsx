@@ -335,7 +335,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
           </DialogHeader>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 z-10">
             {/* Card 1: Report this email */}
-            <div className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-amber-400/30 hover:shadow-[0_0_20px_#E18700,0_0_20px_#FFAB00]">
+            <div className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-amber-400/30 hover:shadow-[0_0_15px_#E1870080,0_0_15px_#FFAB0080]">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-[#E18700] to-[#FFAB00]" style={{boxShadow: '0 0 15px #FFAB00'}}/>
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-full bg-amber-500/10 border border-amber-400/20"><Mail className="size-5 text-amber-400"/></div>
@@ -344,7 +344,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                 <p className="text-xs text-muted-foreground font-normal whitespace-normal">Mueve este mensaje a la bandeja de spam. No afectará a futuros correos del mismo remitente.</p>
             </div>
             {/* Card 2: Block all */}
-            <div className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-red-500/30 hover:shadow-[0_0_20px_#F00000,0_0_20px_#F07000]">
+            <div className="group relative rounded-xl bg-zinc-900/80 p-6 text-left transition-all duration-300 hover:scale-105 overflow-hidden border border-red-500/30 hover:shadow-[0_0_15px_#F0000080,0_0_15px_#F0700080]">
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#F00000] to-[#F07000]" style={{boxShadow: '0 0 15px #F07000'}}/>
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 rounded-full bg-red-500/10 border border-red-500/20"><Server className="size-5 text-red-500"/></div>
