@@ -330,7 +330,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings"><UserIcon className="mr-2 size-4" /><span>Mi Perfil</span></Link>
+                <Link href="/dashboard/settings"><User className="mr-2 size-4" /><span>Mi Perfil</span></Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/login"><LogOut className="mr-2 size-4" /><span>Cerrar Sesión</span></Link>
