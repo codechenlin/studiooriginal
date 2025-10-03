@@ -66,6 +66,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const menuItems = [
@@ -339,8 +340,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="flex-1 flex flex-col overflow-hidden">
-        {children}
+      <SidebarInset>
+        <ScrollArea className="h-full custom-scrollbar">
+          {children}
+        </ScrollArea>
         <FloatingActionButton />
       </SidebarInset>
     </>
