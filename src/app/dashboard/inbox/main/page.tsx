@@ -16,6 +16,7 @@ import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialEmails: Email[] = [
     {
@@ -290,22 +291,24 @@ export default function MainInboxPage() {
           </Card>
         </div>
           
-        <motion.div layout className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
-          <AnimatePresence>
-            {displayedEmails.map((email, index) => (
-                <motion.div
-                  key={email.id}
-                  layout
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <EmailListItem email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === displayedEmails.length - 1} onToggleStar={handleToggleStar} />
-                </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        <ScrollArea className="flex-1 custom-scrollbar -mr-4 pr-4">
+          <motion.div layout className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
+            <AnimatePresence>
+              {displayedEmails.map((email, index) => (
+                  <motion.div
+                    key={email.id}
+                    layout
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <EmailListItem email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === displayedEmails.length - 1} onToggleStar={handleToggleStar} />
+                  </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        </ScrollArea>
       </main>
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
       <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
