@@ -180,19 +180,21 @@ export default function MainInboxPage() {
 
         <div className="relative z-10 shrink-0">
           <header className="mb-8 flex justify-between items-start">
-            <div className="flex items-center gap-6">
-                <div className="relative flex items-center justify-center animation-wrapper-1 w-16 h-16 text-primary">
-                   <MailCheck className="size-8 icon1"/>
+             <div className="flex-1">
+                <div className="flex items-center gap-6">
+                    <div className="relative flex items-center justify-center animation-wrapper-1 w-16 h-16 text-primary">
+                       <MailCheck className="size-8 icon1"/>
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                          Buzón Principal
+                        </h1>
+                        <p className="text-muted-foreground mt-1">
+                          Aquí recibirás todos tus correos importantes y comunicaciones generales.
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-                      Buzón Principal
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                      Aquí recibirás todos tus correos importantes y comunicaciones generales.
-                    </p>
-                </div>
-            </div>
+             </div>
             <div className="p-4">
               <StorageIndicator used={10.2} total={15} gradientColors={['#AD00EC', '#1700E6']} />
             </div>
@@ -318,3 +320,5 @@ export default function MainInboxPage() {
     </>
   );
 }
+
+    
