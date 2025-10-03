@@ -16,6 +16,7 @@ import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-sta
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialSpamEmails: Email[] = [
     {
@@ -74,7 +75,7 @@ export default function SpamPage() {
 
   return (
     <>
-    <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden">
+    <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden flex flex-col">
       {/* Background Animation */}
       <div 
         className="absolute inset-0 z-0 opacity-10"
@@ -87,22 +88,23 @@ export default function SpamPage() {
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-transparent via-transparent to-orange-900/40 opacity-50"/>
 
 
-      <div className="relative z-10 flex justify-between items-start mb-8">
-        <div className="flex items-center gap-6">
-            <div className="relative flex items-center justify-center animation-wrapper-1 text-amber-500">
-                <MailWarning className="size-12 icon1"/>
+      <div className="relative z-10 shrink-0">
+        <header className="mb-8 flex justify-between items-start">
+           <div className="flex items-center gap-6">
+                <div className="relative flex items-center justify-center animation-wrapper-1 w-16 h-16 text-amber-500">
+                    <MailWarning className="size-8 icon1"/>
+                </div>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500">
+                      Bandeja de Spam
+                    </h1>
+                    <p className="text-muted-foreground mt-1">
+                      Revisa los correos clasificados como no deseados por nuestro sistema de IA.
+                    </p>
+                </div>
             </div>
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500">
-                  Bandeja de Spam
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  Revisa los correos clasificados como no deseados por nuestro sistema de IA.
-                </p>
-            </div>
-        </div>
-        <StorageIndicator used={10.2} total={15} gradientColors={['#E18700', '#FFAB00']} />
-      </div>
+            <StorageIndicator used={10.2} total={15} gradientColors={['#E18700', '#FFAB00']} />
+        </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-amber-500/30 shadow-lg mb-2 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10" />
@@ -142,7 +144,7 @@ export default function SpamPage() {
           </CardContent>
         </Card>
         
-         <Card className="bg-card/80 backdrop-blur-sm border-amber-500/30 shadow-lg mb-6 relative overflow-hidden">
+         <Card className="bg-card/80 backdrop-blur-sm border-amber-500/30 shadow-lg mb-6 relative overflow-hidden shrink-0">
              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-orange-500/5" />
             <CardContent className="p-2 flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-2">
@@ -191,7 +193,9 @@ export default function SpamPage() {
                 </div>
             </CardContent>
         </Card>
+      </div>
 
+       <ScrollArea className="flex-1 custom-scrollbar -mr-4 pr-4">
          <motion.div layout className="bg-card/60 backdrop-blur-sm border border-amber-500/20 rounded-lg shadow-lg">
             <AnimatePresence>
                 {displayedEmails.map((email, index) => (
@@ -208,6 +212,7 @@ export default function SpamPage() {
                 ))}
             </AnimatePresence>
         </motion.div>
+       </ScrollArea>
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />

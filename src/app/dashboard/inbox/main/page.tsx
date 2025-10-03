@@ -16,6 +16,7 @@ import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialEmails: Email[] = [
     {
@@ -171,16 +172,16 @@ export default function MainInboxPage() {
 
   return (
     <>
-      <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden">
+      <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden flex flex-col">
         {/* Background Animation */}
         <div 
           className="absolute inset-0 z-0 opacity-5 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"
         />
 
-        <div className="relative z-10">
+        <div className="relative z-10 shrink-0">
           <header className="mb-8 flex justify-between items-start">
             <div className="flex items-center gap-6">
-                <div className="relative flex items-center justify-center animation-wrapper-1 text-primary w-12 h-12">
+                <div className="relative flex items-center justify-center animation-wrapper-1 w-16 h-16 text-primary">
                    <MailCheck className="size-8 icon1"/>
                 </div>
                 <div>
@@ -290,7 +291,9 @@ export default function MainInboxPage() {
                   </div>
               </CardContent>
           </Card>
-          
+        </div>
+        
+        <ScrollArea className="flex-1 custom-scrollbar -mr-4 pr-4">
           <motion.div layout className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
             <AnimatePresence>
               {displayedEmails.map((email, index) => (
@@ -307,7 +310,7 @@ export default function MainInboxPage() {
               ))}
             </AnimatePresence>
           </motion.div>
-        </div>
+        </ScrollArea>
       </main>
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
       <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
