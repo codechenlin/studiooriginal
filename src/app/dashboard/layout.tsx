@@ -51,6 +51,7 @@ import {
   FileWarning,
   DollarSign,
   Mail,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,7 +78,7 @@ const menuItems = [
       { href: "/dashboard/inbox/shopping", label: "Compras", icon: (props: any) => (
         <div style={{ position: 'relative', width: props.width || 24, height: props.height || 24 }}>
           <Mail {...props} style={{ position: 'absolute' }} />
-          <DollarSign {...props} style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0' }}/>
+          <Tag {...props} style={{ position: 'absolute', width: '60%', height: '60%', bottom: '0', right: '0' }}/>
         </div>
       )},
       { href: "/dashboard/inbox/spam", label: "Spam", icon: MailWarning },
@@ -333,7 +334,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings"><User className="mr-2 size-4" /><span>Mi Perfil</span></Link>
+                <Link href="/dashboard/settings"><UserIcon className="mr-2 size-4" /><span>Mi Perfil</span></Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/login"><LogOut className="mr-2 size-4" /><span>Cerrar Sesión</span></Link>
