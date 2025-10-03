@@ -251,7 +251,7 @@ export default function DemoPage() {
             </div>
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
                 <div className="flex flex-col items-center gap-2">
-                    <div className="text-blue-500">
+                     <div className="text-blue-500">
                         <ShoppingCart size={32} />
                     </div>
                     <span className="font-mono text-xs">1</span>
@@ -274,8 +274,26 @@ export default function DemoPage() {
                     </div>
                     <span className="font-mono text-xs">4</span>
                 </div>
+                <div className="flex flex-col items-center gap-2">
+                    <div className="text-yellow-500">
+                        <Tags size={32} />
+                    </div>
+                    <span className="font-mono text-xs">5</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <div className="text-teal-500">
+                        <DollarSign size={32} />
+                    </div>
+                    <span className="font-mono text-xs">6</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                     <div className="relative text-orange-500">
+                        <Mail size={32} />
+                        <ShoppingCart className="absolute -bottom-1 -right-1 size-5 bg-card rounded-full p-0.5" />
+                    </div>
+                    <span className="font-mono text-xs">7</span>
+                </div>
             </div>
         </main>
     );
-
-    
+}
