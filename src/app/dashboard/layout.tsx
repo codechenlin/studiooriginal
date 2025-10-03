@@ -339,7 +339,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset>
+      <SidebarInset className="flex-1 flex flex-col overflow-hidden">
         {children}
         <FloatingActionButton />
       </SidebarInset>
