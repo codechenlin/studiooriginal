@@ -341,9 +341,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        {children}
-        <FloatingActionButton />
+        <ScrollArea className="h-screen custom-scrollbar">
+          {children}
+        </ScrollArea>
       </SidebarInset>
+      <FloatingActionButton />
     </>
   );
 }

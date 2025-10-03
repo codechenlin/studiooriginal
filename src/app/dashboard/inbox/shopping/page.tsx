@@ -16,6 +16,7 @@ import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-sta
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialShoppingEmails: Email[] = [
     {
@@ -73,7 +74,7 @@ export default function ShoppingPage() {
 
   return (
     <>
-    <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden">
+    <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden flex flex-col">
       <div 
         className="absolute inset-0 z-0 opacity-[0.05] bg-grid-green-500/[0.2] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]"
         style={{
@@ -84,22 +85,23 @@ export default function ShoppingPage() {
       />
        <div className="absolute inset-0 z-0 bg-gradient-to-br from-transparent via-transparent to-[#00EF10]/20 opacity-50"/>
 
-      <div className="relative z-10 flex justify-between items-start mb-8">
-          <div className="flex items-center gap-6">
-              <div className="relative flex items-center justify-center animation-wrapper-1 text-[#A6EE00]">
-                  <ShoppingCart className="size-12 icon1"/>
-              </div>
-              <div>
-                  <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#00EF10] to-[#A6EE00]">
-                    Buzón de Compras
-                  </h1>
-                  <p className="text-muted-foreground mt-1">
-                    Aquí encontrarás tus confirmaciones de compra, envíos y ofertas.
-                  </p>
-              </div>
-          </div>
-          <StorageIndicator used={10.2} total={15} gradientColors={['#00EF10', '#A6EE00']} />
-        </div>
+      <div className="relative z-10 shrink-0">
+         <header className="mb-8 flex justify-between items-start">
+            <div className="flex items-center gap-6">
+                <div className="relative flex items-center justify-center animation-wrapper-1 w-16 h-16 text-[#A6EE00]">
+                    <ShoppingCart className="size-8 icon1"/>
+                </div>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#00EF10] to-[#A6EE00]">
+                      Buzón de Compras
+                    </h1>
+                    <p className="text-muted-foreground mt-1">
+                      Aquí encontrarás tus confirmaciones de compra, envíos y ofertas.
+                    </p>
+                </div>
+            </div>
+            <StorageIndicator used={10.2} total={15} gradientColors={['#00EF10', '#A6EE00']} />
+        </header>
 
         <Card className="bg-card/80 backdrop-blur-sm border-[#00CB07]/30 shadow-lg mb-2 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10" />
@@ -139,7 +141,7 @@ export default function ShoppingPage() {
           </CardContent>
         </Card>
         
-        <Card className="bg-card/80 backdrop-blur-sm border-[#00CB07]/30 shadow-lg mb-6 relative overflow-hidden">
+        <Card className="bg-card/80 backdrop-blur-sm border-[#00CB07]/30 shadow-lg mb-6 relative overflow-hidden shrink-0">
              <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-emerald-500/5" />
             <CardContent className="p-2 flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-2">
@@ -191,7 +193,8 @@ export default function ShoppingPage() {
                 </div>
             </CardContent>
         </Card>
-
+      </div>
+      <div className="flex-1 overflow-y-auto custom-scrollbar -mr-4 pr-4">
         <motion.div layout className="bg-card/60 backdrop-blur-sm border border-[#00CB07]/30 rounded-lg shadow-lg">
            <AnimatePresence>
             {displayedEmails.map((email, index) => (
@@ -218,6 +221,7 @@ export default function ShoppingPage() {
             ))}
            </AnimatePresence>
         </motion.div>
+      </div>
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />

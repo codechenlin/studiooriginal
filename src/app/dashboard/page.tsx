@@ -36,7 +36,7 @@ export default function DashboardPage() {
   return (
     <>
       <OnboardingModal isOpen={showOnboarding} onOpenChange={setShowOnboarding} />
-      <div className="flex-1 p-4 md:gap-8 md:p-8 bg-background">
+      <div className="p-4 md:gap-8 md:p-8 bg-background">
         <div className="flex items-center justify-between">
             <div>
             <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">

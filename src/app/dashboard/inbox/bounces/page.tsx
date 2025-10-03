@@ -193,7 +193,7 @@ export default function BouncesPage() {
             </CardContent>
         </Card>
       </div>
-      <ScrollArea className="flex-1 custom-scrollbar -mr-4 pr-4">
+      <div className="flex-1 overflow-y-auto custom-scrollbar -mr-4 pr-4">
         <motion.div layout className="bg-card/60 backdrop-blur-sm border border-red-500/20 rounded-lg shadow-lg">
            <AnimatePresence>
             {displayedEmails.map((email, index) => (
@@ -210,7 +210,7 @@ export default function BouncesPage() {
             ))}
            </AnimatePresence>
         </motion.div>
-      </ScrollArea>
+      </div>
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
