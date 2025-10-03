@@ -171,7 +171,7 @@ export default function MainInboxPage() {
         <div className="relative z-10 flex justify-between items-start mb-8">
             <div className="flex items-center gap-6">
                 <div className="relative flex items-center justify-center animation-wrapper-1 text-primary">
-                   <MailCheck className="size-16 icon1"/>
+                   <MailCheck className="size-12 icon1"/>
                 </div>
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
@@ -302,5 +302,3 @@ export default function MainInboxPage() {
     </>
   );
 }
-
-    

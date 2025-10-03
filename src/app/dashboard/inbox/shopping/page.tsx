@@ -84,11 +84,10 @@ export default function ShoppingPage() {
       />
        <div className="absolute inset-0 z-0 bg-gradient-to-br from-transparent via-transparent to-[#00EF10]/20 opacity-50"/>
 
-      <div className="relative z-10">
-        <header className="mb-8 flex justify-between items-start">
+      <div className="relative z-10 flex justify-between items-start mb-8">
           <div className="flex items-center gap-6">
-              <div className="relative flex items-center justify-center animation-wrapper-8 text-[#A6EE00]">
-                  <ShoppingCart className="size-16 icon8"/>
+              <div className="relative flex items-center justify-center animation-wrapper-1 text-[#A6EE00]">
+                  <ShoppingCart className="size-12 icon1"/>
               </div>
               <div>
                   <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#00EF10] to-[#A6EE00]">
@@ -100,7 +99,7 @@ export default function ShoppingPage() {
               </div>
           </div>
           <StorageIndicator used={10.2} total={15} gradientColors={['#00EF10', '#A6EE00']} />
-        </header>
+        </div>
 
         <Card className="bg-card/80 backdrop-blur-sm border-[#00CB07]/30 shadow-lg mb-2 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10" />
@@ -219,7 +218,6 @@ export default function ShoppingPage() {
             ))}
            </AnimatePresence>
         </motion.div>
-      </div>
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />

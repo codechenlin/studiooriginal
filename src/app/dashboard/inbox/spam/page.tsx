@@ -89,8 +89,8 @@ export default function SpamPage() {
 
       <div className="relative z-10 flex justify-between items-start mb-8">
         <div className="flex items-center gap-6">
-            <div className="relative flex items-center justify-center animation-wrapper-12 text-amber-500">
-                <MailWarning className="size-16 icon12"/>
+            <div className="relative flex items-center justify-center animation-wrapper-1 text-amber-500">
+                <MailWarning className="size-12 icon1"/>
             </div>
             <div>
                 <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500">
@@ -215,5 +215,3 @@ export default function SpamPage() {
     </>
   );
 }
-
-    

@@ -90,8 +90,8 @@ export default function BouncesPage() {
       />
       <div className="relative z-10 flex justify-between items-start mb-8">
         <div className="flex items-center gap-6">
-            <div className="relative flex items-center justify-center animation-wrapper-13 text-red-500">
-                <BounceIcon className="size-16 icon13"/>
+            <div className="relative flex items-center justify-center animation-wrapper-1 text-red-500">
+                <BounceIcon className="size-12 icon1"/>
             </div>
             <div>
                 <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#F00000] to-[#F07000]">
@@ -220,4 +220,3 @@ export default function BouncesPage() {
   );
 }
 
-    
