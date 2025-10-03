@@ -172,7 +172,7 @@ export default function MainInboxPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col h-full bg-background relative p-4 md:p-8">
+      <div className="p-4 md:p-8 flex flex-col h-full bg-background relative">
         {/* Background Animation */}
         <div 
           className="absolute inset-0 z-0 opacity-5 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"
@@ -200,10 +200,9 @@ export default function MainInboxPage() {
               </header>
             </div>
         
-            <div className="flex-1 overflow-hidden">
-              <div className="space-y-4">
+            <div className="flex-1 flex flex-col gap-4 overflow-hidden">
                 <Card className={cn(
-                "bg-card/80 backdrop-blur-sm shadow-lg mb-2 relative overflow-hidden",
+                "bg-card/80 backdrop-blur-sm shadow-lg mb-2 relative overflow-hidden shrink-0",
                 "dark:border-border/50 border-transparent",
                 "dark:from-primary/10 dark:to-accent/10",
                 "bg-gradient-to-r from-purple-100 to-cyan-100"
@@ -245,7 +244,7 @@ export default function MainInboxPage() {
                 </Card>
                 
                 <Card className={cn(
-                "bg-card/80 backdrop-blur-sm shadow-lg mb-6 relative overflow-hidden",
+                "bg-card/80 backdrop-blur-sm shadow-lg relative overflow-hidden shrink-0",
                 "bg-gradient-to-r from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10"
                 )}>
                     <CardContent className="p-2 flex items-center justify-between">
@@ -295,8 +294,9 @@ export default function MainInboxPage() {
                         </div>
                     </CardContent>
                 </Card>
-                    <motion.div layout className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg">
-                        <AnimatePresence>
+                <div className="flex-1 overflow-hidden">
+                    <motion.div layout className="bg-card/60 backdrop-blur-sm border dark:border-border/50 border-border/20 rounded-lg shadow-lg h-full">
+                      <AnimatePresence>
                         {displayedEmails.map((email, index) => (
                             <motion.div
                                 key={email.id}
@@ -309,9 +309,9 @@ export default function MainInboxPage() {
                                 <EmailListItem email={email} onSelect={handleSelectEmail} isFirst={index === 0} isLast={index === displayedEmails.length - 1} onToggleStar={handleToggleStar} />
                             </motion.div>
                         ))}
-                        </AnimatePresence>
+                      </AnimatePresence>
                     </motion.div>
-              </div>
+                </div>
             </div>
         </div>
       </div>

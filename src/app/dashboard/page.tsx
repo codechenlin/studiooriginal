@@ -36,7 +36,7 @@ export default function DashboardPage() {
   return (
     <>
       <OnboardingModal isOpen={showOnboarding} onOpenChange={setShowOnboarding} />
-      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background">
+      <div className="flex-1 p-4 md:gap-8 md:p-8 bg-background">
         <div className="flex items-center justify-between">
             <div>
             <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
@@ -47,7 +47,7 @@ export default function DashboardPage() {
             <HelpButton />
         </div>
         
-        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4 pt-4">
             <StatCard 
             title="Total de Suscriptores"
             value="12,405"
@@ -78,7 +78,7 @@ export default function DashboardPage() {
             />
         </div>
 
-        <Separator className="my-4"/>
+        <Separator className="my-8"/>
 
         <div className="grid grid-cols-1 gap-4 md:gap-8">
             <AnalyticsChart />
@@ -88,7 +88,7 @@ export default function DashboardPage() {
             </div>
         </div>
 
-        <div className="grid gap-4 md:gap-8">
+        <div className="grid gap-4 md:gap-8 mt-8">
             <InsightsCard />
         </div>
       </div>
