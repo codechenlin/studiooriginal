@@ -166,12 +166,17 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
 
                   <div className="flex items-start justify-between mb-8">
                       <div className="flex items-center gap-4">
-                          <Avatar className="size-20 border-4 border-primary/20 cursor-pointer transition-all hover:scale-110 hover:border-primary" onClick={() => setIsBimiModalOpen(true)}>
-                            <AvatarImage src={email.avatarUrl} alt={email.from}/>
-                            <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
-                              {senderInitial}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div
+                            className="group rounded-full p-1 bg-transparent hover:bg-gradient-to-br from-[#AD00EC] to-[#1700E6] transition-all duration-300 cursor-pointer"
+                            onClick={() => setIsBimiModalOpen(true)}
+                          >
+                            <Avatar className="size-20 border-4 border-primary/20 group-hover:border-transparent transition-colors">
+                                <AvatarImage src={email.avatarUrl} alt={email.from}/>
+                                <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-blue-400 to-cyan-400 text-white">
+                                {senderInitial}
+                                </AvatarFallback>
+                            </Avatar>
+                          </div>
                           <div className="text-sm">
                               <p className="font-semibold text-foreground text-base">{email.from}</p>
                               <p className="text-muted-foreground text-sm">{`<${senderEmail}>`}</p>
