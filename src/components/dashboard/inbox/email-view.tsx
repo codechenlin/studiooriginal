@@ -167,7 +167,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   <div className="flex items-start justify-between mb-8">
                       <div className="flex items-center gap-4">
                           <div
-                            className="group rounded-full p-0.5 bg-transparent hover:bg-gradient-to-br from-[#AD00EC] to-[#1700E6] transition-all duration-300 cursor-pointer hover:scale-105"
+                            className="group rounded-full p-px bg-transparent hover:bg-gradient-to-br from-[#AD00EC] to-[#1700E6] transition-all duration-300 cursor-pointer hover:scale-105"
                             onClick={() => setIsBimiModalOpen(true)}
                           >
                             <Avatar className="size-20 border-4 border-primary/20 group-hover:border-transparent transition-colors">
