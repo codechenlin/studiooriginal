@@ -78,6 +78,7 @@ const menuItems = [
     submenu: [
       { href: "/dashboard/inbox/main", label: "Principal", icon: MailCheck },
       { href: "/dashboard/inbox/shopping", label: "Compras", icon: ShoppingCart },
+      { href: "/dashboard/inbox/social", label: "Redes Sociales", icon: Users },
       { href: "/dashboard/inbox/spam", label: "Spam", icon: MailWarning },
       { href: "/dashboard/inbox/bounces", label: "Rebotes", icon: (props: any) => (
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
