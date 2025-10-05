@@ -167,7 +167,7 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   <div className="flex items-start justify-between mb-8">
                       <div className="flex items-center gap-4">
                           <div
-                            className="group rounded-full p-px bg-transparent hover:bg-gradient-to-br from-[#AD00EC] to-[#1700E6] transition-all duration-300 cursor-pointer hover:scale-105"
+                            className="group p-px rounded-full bg-transparent hover:bg-gradient-to-br from-primary to-accent transition-all duration-300"
                             onClick={() => setIsBimiModalOpen(true)}
                           >
                             <Avatar className="size-20 border-4 border-primary/20 group-hover:border-transparent transition-colors">
@@ -410,7 +410,13 @@ export function EmailView({ email, onBack, onToggleStar }: EmailViewProps) {
                   <p className="font-semibold pt-2">¿Confías en <strong className="text-white">{email.from}</strong> y deseas mostrar las imágenes para este correo?</p>
               </div>
               <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                  <Button variant="ghost" className="hover:text-white" onClick={() => setIsConfirmImagesModalOpen(false)}><X className="mr-2"/>Cancelar</Button>
+                  <Button
+                    variant="outline"
+                    className="border-white text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000] hover:text-white"
+                    onClick={() => setIsConfirmImagesModalOpen(false)}
+                  >
+                    <X className="mr-2"/>Cancelar
+                  </Button>
                   <Button
                       className="bg-amber-600 text-white hover:bg-amber-500"
                       onClick={() => {
