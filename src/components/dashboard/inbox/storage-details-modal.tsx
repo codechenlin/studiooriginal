@@ -154,40 +154,36 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     </Button>
                 </div>
                 
-                <div className="flex-1 flex flex-col gap-px bg-[#AD00EC]/20">
-                    {/* Top Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#AD00EC]/20">
-                        {storageData.sections.map(section => (
-                            <div key={section.id} className="bg-black/30 p-6">
-                                <div className="relative text-left mb-4 p-3 rounded-lg bg-gradient-to-r from-[#AD00EC]/20 to-[#1700E6]/20 border border-[#AD00EC]/30">
-                                    <h3 className="font-bold text-lg flex items-center gap-2 text-white">
-                                        <section.icon className="size-5" />
-                                        {section.label}
-                                    </h3>
-                                </div>
-                                <div className="space-y-4">
-                                    {section.items.map(item => (
-                                        <SectionProgressBar key={item.id} {...item} total={storageData.total}/>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-px bg-[#AD00EC]/20">
+                  {storageData.sections.map(section => (
+                      <div key={section.id} className="bg-black/30 p-6">
+                          <div className="relative text-left mb-4 p-3 rounded-lg bg-background border border-border">
+                              <h3 className="font-bold text-lg flex items-center gap-2 text-white">
+                                  <section.icon className="size-5" />
+                                  {section.label}
+                              </h3>
+                          </div>
+                          <div className="space-y-4">
+                              {section.items.map(item => (
+                                  <SectionProgressBar key={item.id} {...item} total={storageData.total}/>
+                              ))}
+                          </div>
+                      </div>
+                  ))}
+                </div>
 
-                    {/* Bottom Section */}
-                    <div className="p-6 bg-background">
-                        <QuantumProgressBar used={totalUsed} total={storageData.total} />
-                         <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 flex items-center gap-4">
-                            <Eye className="size-10 shrink-0 text-amber-300"/>
-                            <p className="text-xs text-amber-200/90 flex-1">
-                                Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
-                            </p>
-                            <Button className="group relative h-11 overflow-hidden bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px_#AD00EC] shrink-0">
-                                <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] animate-[button-scan_3s_infinite_linear]"/>
-                                <DatabaseZap className="mr-2"/>
-                                Aumentar Almacenamiento
-                            </Button>
-                        </div>
+                 <div className="p-6 bg-background">
+                    <QuantumProgressBar used={totalUsed} total={storageData.total} />
+                    <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 flex items-center gap-4">
+                        <Eye className="size-10 shrink-0 text-amber-300"/>
+                        <p className="text-xs text-amber-200/90 flex-1">
+                            Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
+                        </p>
+                        <Button className="group relative h-11 overflow-hidden bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px_#AD00EC] shrink-0">
+                            <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] animate-[button-scan_3s_infinite_linear]"/>
+                            <DatabaseZap className="mr-2"/>
+                            Aumentar Almacenamiento
+                        </Button>
                     </div>
                 </div>
             </DialogContent>
