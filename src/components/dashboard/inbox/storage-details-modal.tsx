@@ -1,11 +1,10 @@
 
-
 "use client";
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap, CheckCircle, Eye, Gift } from 'lucide-react';
+import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap, CheckCircle, Eye, Gift, Share2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -40,7 +39,7 @@ const storageData = {
         { id: 'images', label: 'Imágenes', value: 1843.20, color: 'from-[#1700E6] to-[#009AFF]', icon: ImageIcon },
         { id: 'gifs', label: 'GIFs', value: 921.60, color: 'from-[#1700E6] to-[#009AFF]', icon: Film },
         { id: 'templates', label: 'Plantillas', value: 1228.80, color: 'from-[#1700E6] to-[#009AFF]', icon: FileText },
-        { id: 'lists', label: 'Listas', value: 307.20, color: 'from-[#1700E6] to-[#009AFF]', icon: Users },
+        { id: 'lists', label: 'Listas', value: 307.20, color: 'from-[#1700E6] to-[#009AFF]', icon: Share2 },
         { id: 'campaigns', label: 'Campañas', value: 1536.00, color: 'from-[#1700E6] to-[#009AFF]', icon: Gift },
       ]
     }
@@ -98,11 +97,11 @@ const QuantumProgressBar = ({ used, total }: { used: number, total: number }) =>
           </div>
         </motion.div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <p className="font-bold text-lg text-white drop-shadow-lg">{percentage.toFixed(1)}% Usado</p>
+          <p className="font-bold text-lg text-white drop-shadow-lg">{(used / 1024).toFixed(2)} GB</p>
         </div>
       </div>
       <div className="flex justify-between items-center mt-2 text-xs font-mono text-white/80">
-        <p>Total Usado: <span className="font-bold text-white">{(used / 1024).toFixed(2)} GB</span></p>
+        <p>Total Usado: <span className="font-bold text-white">{percentage.toFixed(1)}%</span></p>
         <p>Disponible: <span className="font-bold text-white">{((total - used) / 1024).toFixed(2)} GB</span></p>
       </div>
     </div>
