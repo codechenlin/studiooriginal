@@ -16,7 +16,6 @@ import { EmailView } from '@/components/dashboard/inbox/email-view';
 import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { StorageDetailsModal } from '@/components/dashboard/inbox/storage-details-modal';
 
 const initialEmails: Email[] = [
@@ -174,7 +173,7 @@ export default function MainInboxPage() {
 
   return (
     <>
-      <div className="p-4 md:p-8 bg-background relative overflow-hidden flex flex-col h-full">
+      <main className="flex-1 p-4 md:p-8 bg-background relative overflow-hidden flex flex-col h-full">
         {/* Background Animation */}
         <div 
           className="absolute inset-0 z-0 opacity-5 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_100%)]"
@@ -311,7 +310,7 @@ export default function MainInboxPage() {
               ))}
             </AnimatePresence>
         </motion.div>
-      </div>
+      </main>
       <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
       <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
       <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />

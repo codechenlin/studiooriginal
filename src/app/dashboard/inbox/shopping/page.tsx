@@ -16,7 +16,6 @@ import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-sta
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { StorageDetailsModal } from '@/components/dashboard/inbox/storage-details-modal';
 
 const initialShoppingEmails: Email[] = [
