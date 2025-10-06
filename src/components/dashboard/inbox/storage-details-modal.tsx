@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -59,7 +60,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
         >
             <div className="flex justify-between items-center text-xs">
                 <p className="font-semibold flex items-center gap-2 text-white"><Icon className="size-4" />{label}</p>
-                <p className="font-mono text-white/80">{value.toFixed(2)} MB</p>
+                <p className="font-mono text-white/80">{value.toFixed(2)} MB <span className="text-white/50">({percentage.toFixed(1)}%)</span></p>
             </div>
             <div className="relative h-3 w-full bg-black/30 rounded-full overflow-hidden border border-[#AD00EC]/20">
                 <motion.div
@@ -81,7 +82,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
 };
 
 const CircularChart = ({ percentage, total, used, label, isMain = false, usedLast30Days }: { percentage: number; total: number; used: number; label: string; isMain?: boolean; usedLast30Days?: number }) => {
-    const radius = isMain ? 45 : 40;
+    const radius = isMain ? 50 : 40;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
 
@@ -92,9 +93,9 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
 
     return (
         <div className="flex flex-col items-center gap-1">
-            <div className="relative w-24 h-24">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                     <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth={isMain ? "8" : "6"} fill="transparent" r={radius} cx="50" cy="50" />
+            <div className="relative w-28 h-28">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                     <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth={isMain ? "8" : "6"} fill="transparent" r={radius} cx="60" cy="60" />
                      <motion.circle
                         className="text-white"
                         stroke="url(#progressGradient)"
@@ -102,8 +103,8 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                         strokeLinecap="round"
                         fill="transparent"
                         r={radius}
-                        cx="50"
-                        cy="50"
+                        cx="60"
+                        cy="60"
                         initial={{ strokeDashoffset: circumference }}
                         animate={{ strokeDashoffset: offset }}
                         transition={{ duration: 1.5, ease: "circOut", delay: 0.2 }}
@@ -112,7 +113,7 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                     
                     {usedLast30Days !== undefined && (
                         <>
-                         <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="3" fill="transparent" r={innerRadius} cx="50" cy="50" />
+                         <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="3" fill="transparent" r={innerRadius} cx="60" cy="60" />
                          <motion.circle
                             className="text-white"
                             stroke="url(#progressGradient)"
@@ -120,8 +121,8 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                             strokeLinecap="round"
                             fill="transparent"
                             r={innerRadius}
-                            cx="50"
-                            cy="50"
+                            cx="60"
+                            cy="60"
                             initial={{ strokeDashoffset: innerCircumference }}
                             animate={{ strokeDashoffset: innerOffset }}
                             transition={{ duration: 1.5, ease: "circOut", delay: 0.4 }}
@@ -133,8 +134,8 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                     {Array.from({ length: isMain ? 4 : 2 }).map((_, i) => (
                         <motion.circle
                             key={i}
-                            cx="50"
-                            cy="50"
+                            cx="60"
+                            cy="60"
                             r="1"
                             fill="rgba(255, 255, 255, 0.8)"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
@@ -142,27 +143,27 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                             <animateMotion
                                 dur={`${2 + i * 0.5}s`}
                                 repeatCount="indefinite"
-                                path={`M50,${50 - radius} a ${radius},${radius} 0 1,0 0.001,0 z`}
+                                path={`M60,${60 - radius} a ${radius},${radius} 0 1,0 0.001,0 z`}
                             />
                         </motion.circle>
                     ))}
                     {usedLast30Days !== undefined && Array.from({ length: 1 }).map((_, i) => (
                         <motion.circle
                             key={i}
-                            cx="50"
-                            cy="50"
+                            cx="60"
+                            cy="60"
                             r="0.5"
                             fill="rgba(255, 255, 255, 0.6)"
                         >
                             <animateMotion
                                 dur={`${3 + i * 0.5}s`}
                                 repeatCount="indefinite"
-                                path={`M50,${50-innerRadius} a ${innerRadius},${innerRadius} 0 1,0 0.001,0 z`}
+                                path={`M60,${60-innerRadius} a ${innerRadius},${innerRadius} 0 1,0 0.001,0 z`}
                             />
                         </motion.circle>
                     ))}
-                    <circle cx="50" cy="50" r={radius + (isMain ? 8 : 6)} stroke="url(#shineGradient)" strokeWidth="0.5" fill="none" strokeDasharray="100 400" className="animate-[hud-spin_10s_linear_infinite]" />
-                    <circle cx="50" cy="50" r={radius + (isMain ? 12 : 10)} stroke="url(#shineGradient)" strokeWidth="0.2" fill="none" strokeDasharray="10 50" className="animate-[hud-spin_15s_linear_infinite] [animation-direction:reverse]" />
+                    <circle cx="60" cy="60" r={radius + (isMain ? 8 : 6)} stroke="url(#shineGradient)" strokeWidth="0.5" fill="none" strokeDasharray="100 400" className="animate-[hud-spin_10s_linear_infinite]" />
+                    <circle cx="60" cy="60" r={radius + (isMain ? 12 : 10)} stroke="url(#shineGradient)" strokeWidth="0.2" fill="none" strokeDasharray="10 50" className="animate-[hud-spin_15s_linear_infinite] [animation-direction:reverse]" />
                 </svg>
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
@@ -191,6 +192,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full h-auto flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
+                <div className="absolute inset-0 w-full h-full animated-grid opacity-30"/>
                 <div className="p-4 flex items-center justify-between border-b border-[#AD00EC]/20 bg-black/50">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-3">
@@ -198,10 +200,8 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                             <span className="font-semibold text-xl">Diagnóstico de Almacenamiento</span>
                         </DialogTitle>
                     </DialogHeader>
-                    <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="size-8 rounded-full border border-white hover:bg-white/20">
-                      <X className="size-4" />
-                    </Button>
                 </div>
+
                 <style>{`
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
                     .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
