@@ -4,7 +4,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap, CheckCircle, Eye, Gift, Share2 } from 'lucide-react';
+import { HardDrive, Inbox, FileText, ImageIcon, Users, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap, Eye, Gift, Share2, LayoutTemplate } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -38,7 +38,7 @@ const storageData = {
       items: [
         { id: 'images', label: 'Imágenes', value: 1843.20, color: 'from-[#1700E6] to-[#009AFF]', icon: ImageIcon },
         { id: 'gifs', label: 'GIFs', value: 921.60, color: 'from-[#1700E6] to-[#009AFF]', icon: Film },
-        { id: 'templates', label: 'Plantillas', value: 1228.80, color: 'from-[#1700E6] to-[#009AFF]', icon: FileText },
+        { id: 'templates', label: 'Plantillas', value: 1228.80, color: 'from-[#1700E6] to-[#009AFF]', icon: LayoutTemplate },
         { id: 'lists', label: 'Listas', value: 307.20, color: 'from-[#1700E6] to-[#009AFF]', icon: Share2 },
         { id: 'campaigns', label: 'Campañas', value: 1536.00, color: 'from-[#1700E6] to-[#009AFF]', icon: Gift },
       ]
@@ -58,7 +58,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
             transition={{ duration: 0.5 }}
         >
             <div className="flex justify-between items-center text-xs">
-                <p className="font-semibold flex items-center gap-2 text-white"><Icon className="size-4 transition-colors duration-300 text-white/70 group-hover:text-[#AD00EC]" />{label}</p>
+                <p className="font-semibold flex items-center gap-2 text-white"><Icon className="size-4 text-white/70" />{label}</p>
                 <p className="font-mono text-white/80">{value.toFixed(2)} MB <span className="text-white/50">({percentage.toFixed(1)}%)</span></p>
             </div>
             <div className="relative h-3 w-full bg-black/30 rounded-full overflow-hidden border border-[#AD00EC]/20">
@@ -68,7 +68,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
                     animate={{ width: `${percentage}%` }}
                     transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }}
                 >
-                    <div className="absolute top-0 left-0 h-full w-full opacity-50 animate-[scan-glare_3s_infinite_linear]"
+                     <div className="absolute top-0 left-0 h-full w-full opacity-50 animate-[scan-glare_3s_infinite_linear]"
                         style={{
                             background: `radial-gradient(circle at 50% 50%, white, transparent 30%)`,
                             backgroundSize: '400% 100%',
