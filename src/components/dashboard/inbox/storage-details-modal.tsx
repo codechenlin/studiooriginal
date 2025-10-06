@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, Image as ImageIcon, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, Box, X, Film, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Separator } from '../ui/separator';
+import { Separator } from '@/components/ui/separator';
 
 const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -47,50 +47,86 @@ const storageData = {
   ]
 };
 
-const SectionItem = ({ label, value, total, color, icon: Icon, delay }: { label: string, value: number, total: number, color: string, icon: React.ElementType, delay: number }) => {
-  const percentage = (value / total) * 100;
-
-  return (
-    <motion.div
-      className="space-y-1.5"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay }}
-    >
-      <div className="flex justify-between items-center text-xs">
-        <p className="font-semibold flex items-center gap-2 text-white/80"><Icon className="size-4" />{label}</p>
-        <p className="font-mono text-cyan-300/80">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
-      </div>
-      <div className="relative h-2 w-full bg-cyan-900/50 rounded-full overflow-hidden">
-        <motion.div
-          className={cn("absolute top-0 left-0 h-full rounded-full bg-gradient-to-r", color)}
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ delay: delay + 0.3, duration: 1, ease: 'easeOut' }}
-        >
-          <div className="absolute inset-0 w-full h-full overflow-hidden rounded-full">
-            <div 
-              className="absolute h-full w-1/2"
-              style={{
-                background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, transparent 80%)',
-                animation: 'scan-glare 2s infinite ease-in-out',
-                animationDelay: `${delay}s`,
-              }}
-            />
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
+const SectionProgressBar = ({ label, value, total, color, icon: Icon, onHover }: { label: string, value: number, total: number, color: string, icon: React.ElementType, onHover: () => void }) => {
+    const percentage = (value / total) * 100;
+  
+    return (
+      <motion.div
+        className="space-y-1.5"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        whileHover={{ scale: 1.05 }}
+        onHoverStart={onHover}
+      >
+        <div className="flex justify-between items-center text-xs">
+          <p className="font-semibold flex items-center gap-2 text-white/80"><Icon className="size-4" />{label}</p>
+          <p className="font-mono text-white/90">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
+        </div>
+        <div className="relative h-2 w-full bg-cyan-900/50 rounded-full overflow-hidden">
+          <motion.div
+            className={cn("absolute top-0 left-0 h-full rounded-full bg-gradient-to-r", color)}
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+          >
+            <div className="absolute inset-0 w-full h-full overflow-hidden rounded-full">
+              <div 
+                className="absolute h-full w-1/2"
+                style={{
+                  background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, transparent 80%)',
+                  animation: 'scan-glare 2s infinite ease-in-out',
+                }}
+              />
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+    );
 };
+  
+const Section = ({ id, label, icon: Icon, items, totalStorage, onHoverItem }: { id: string, label: string, icon: React.ElementType, items: any[], totalStorage: number, onHoverItem: (item: any) => void }) => {
+    const [isOpen, setIsOpen] = useState(true);
 
+    return (
+        <motion.div
+            className="p-4 bg-black/30 rounded-lg border border-[#AD00EC]/30"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+        >
+            <button className="w-full text-left" onClick={() => setIsOpen(!isOpen)}>
+                <div className="flex justify-between items-center">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-[#AD00EC] to-[#1700E6] mb-2 relative overflow-hidden info-grid">
+                        <h3 className="font-semibold flex items-center gap-2 text-white"><Icon />{label}</h3>
+                    </div>
+                    {isOpen ? <ChevronUp/> : <ChevronDown/>}
+                </div>
+            </button>
+            <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                    animate={{ height: 'auto', opacity: 1, marginTop: '16px' }}
+                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                >
+                    <Separator className="bg-[#AD00EC]/20 mb-4"/>
+                    <div className="space-y-4">
+                        {items.map((item, index) => (
+                            <SectionProgressBar key={item.id} {...item} total={totalStorage} onHover={() => onHoverItem(item)} />
+                        ))}
+                    </div>
+                </motion.div>
+            )}
+            </AnimatePresence>
+        </motion.div>
+    )
+}
 
 export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) {
-  const [expandedSection, setExpandedSection] = useState<string | null>('inbox');
   const [hoveredItem, setHoveredItem] = useState<any | null>(null);
 
   const totalUsed = storageData.sections.flatMap(s => s.items).reduce((acc, item) => acc + item.value, 0);
-  const totalPercentage = (totalUsed / storageData.total) * 100;
   
   const displayData = hoveredItem || { 
     label: 'Total Usado', 
@@ -114,10 +150,9 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
               80% { opacity: 0.5; }
               100% { transform: translateX(200%) skewX(-30deg); opacity: 0; }
             }
-             @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-             .particle { position: absolute; width: var(--size); height: var(--size); background: radial-gradient(circle, hsl(var(--primary) / 0.5), transparent 70%); border-radius: 50%; animation: particle-float var(--duration) linear infinite; }
-             @keyframes particle-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-100vh); opacity: 0; } }
-             .info-grid { background-image: linear-gradient(to right, hsl(283 100% 55% / 0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(283 100% 55% / 0.1) 1px, transparent 1px); background-size: 2rem 2rem; }
+            @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            .info-grid { background-image: linear-gradient(to right, hsl(283 100% 55% / 0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(283 100% 55% / 0.1) 1px, transparent 1px); background-size: 2rem 2rem; }
+            @keyframes scan-light { 0% { transform: rotate(0deg) translateX(50px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(50px) rotate(-360deg); } }
         `}</style>
 
         <div className="relative flex flex-col flex-1 p-6 md:p-8">
@@ -140,44 +175,52 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
             </div>
 
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
+                {/* Categories Breakdown */}
+                <div className="lg:col-span-2 space-y-6" onMouseLeave={() => setHoveredItem(null)}>
+                  {storageData.sections.map((section) => (
+                    <Section key={section.id} {...section} totalStorage={storageData.total} onHoverItem={setHoveredItem} />
+                  ))}
+                </div>
+
                 {/* Main Storage Core */}
                 <div className="lg:col-span-1 flex flex-col items-center justify-center p-6 bg-black/30 rounded-2xl border border-primary/20">
-                     <div className="relative w-48 h-48" onMouseLeave={() => setHoveredItem(null)}>
+                     <div className="relative w-48 h-48">
                           <motion.svg className="w-full h-full" viewBox="0 0 100 100">
                              <defs>
                                 <linearGradient id="storage-chart-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
                                   <stop offset="0%" stopColor="#AD00EC" />
                                   <stop offset="100%" stopColor="#1700E6" />
                                 </linearGradient>
-                                <linearGradient id="shine-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="rgba(255,255,255,0.8)" />
-                                    <stop offset="50%" stopColor="rgba(255,255,255,0)" />
-                                    <stop offset="100%" stopColor="rgba(255,255,255,0.8)" />
-                                </linearGradient>
                             </defs>
-                            <circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
-                            <circle cx="50" cy="50" r="42" fill="transparent" stroke="hsl(var(--primary) / 0.15)" strokeWidth="12" />
+                            {/* Animated rings */}
+                             <circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
+                             <circle cx="50" cy="50" r="38" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
+                             <motion.path d="M 50,5 A 45,45 0 0,1 95,50" stroke="hsl(var(--accent) / 0.3)" strokeWidth="1" fill="none" strokeDasharray="2, 8" animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}/>
+
+                            {/* Progress track */}
+                            <circle cx="50" cy="50" r="42" fill="transparent" stroke="hsl(var(--primary) / 0.15)" strokeWidth={16} />
+                            {/* Progress bar */}
                             <motion.circle
-                              cx="50" cy="50" r="42" fill="transparent" stroke="url(#storage-chart-gradient)" strokeWidth="12"
+                              cx="50" cy="50" r="42" fill="transparent" stroke="url(#storage-chart-gradient)" strokeWidth={16}
                               strokeLinecap="round" strokeDasharray={2 * Math.PI * 42}
                               initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
                               animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - (displayPercentage / 100)) }}
                               transition={{ duration: 1, ease: "easeInOut" }}
                               transform="rotate(-90 50 50)"
                             />
-                            <motion.circle
-                                cx="50" cy="50" r="42" fill="transparent" stroke="url(#shine-gradient)" strokeWidth="1"
-                                strokeLinecap="round" strokeDasharray={`1 ${2 * Math.PI * 42}`}
-                                animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                                transform="rotate(-90 50 50)"
+                            {/* Scanning light */}
+                             <motion.circle
+                                cx="50" cy="50" r="42" fill="none" stroke="url(#storage-chart-gradient)" strokeWidth={16}
+                                strokeLinecap="round" strokeDasharray={`1, ${2 * Math.PI * 42}`}
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                             />
-                             <motion.circle cx="50" cy="50" r="32" fill="none" stroke="hsl(var(--accent) / 0.2)" strokeWidth="1" strokeDasharray="1, 10" animate={{ rotate: -360 }} transition={{ duration: 15, repeat: Infinity, ease: 'linear' }} />
                           </motion.svg>
                           
                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                               <AnimatePresence mode="wait">
                                 <motion.div
-                                  key={displayData.id}
+                                  key={displayData.label}
                                   initial={{ opacity: 0, scale: 0.8 }}
                                   animate={{ opacity: 1, scale: 1 }}
                                   exit={{ opacity: 0, scale: 0.8 }}
@@ -190,7 +233,6 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                                       {displayData.value < 1024 ? displayData.value.toFixed(0) : (displayData.value/1024).toFixed(2)}
                                       <span className="text-lg ml-1">{displayData.value < 1024 ? 'MB' : 'GB'}</span>
                                     </p>
-                                    <p className="text-xs text-muted-foreground">{displayPercentage.toFixed(1)}%</p>
                                 </motion.div>
                               </AnimatePresence>
                             </div>
@@ -198,56 +240,17 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                         <div className="mt-6 text-center">
                           <p className="text-sm text-muted-foreground">Capacidad Total: {(storageData.total/1024).toFixed(2)} GB</p>
                         </div>
-                </div>
-
-                {/* Categories Breakdown */}
-                <div className="lg:col-span-2 space-y-6">
-                    {storageData.sections.map((section) => (
-                         <motion.div
-                           key={section.id}
-                           className="p-4 bg-black/30 rounded-lg border border-primary/20"
-                           initial={{ opacity: 0, y: 20 }}
-                           animate={{ opacity: 1, y: 0 }}
-                         >
-                            <button className="w-full text-left" onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}>
-                                <div className="flex justify-between items-center">
-                                    <h3 className="font-semibold flex items-center gap-2">
-                                        <section.icon className="text-primary"/>{section.label}
-                                    </h3>
-                                    {expandedSection === section.id ? <ChevronUp/> : <ChevronDown/>}
-                                </div>
+                        <div className="relative text-xs text-amber-200/90 p-4 mt-6 bg-amber-900/20 rounded-lg border border-amber-400/30 overflow-hidden">
+                            <div className="absolute inset-0 bg-grid-amber-500/10 [mask-image:radial-gradient(ellipse_at_center,white_10%,transparent_100%)] opacity-50"/>
+                            <p className="relative">Puedes libera espacio eliminando archivos, información o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.</p>
+                        </div>
+                        <div className="flex justify-center pt-4 mt-auto">
+                            <button className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-[#AD00EC] to-[#1700E6] px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
+                                <div className="absolute -inset-0.5 -z-10 animate-spin-slow rounded-full bg-gradient-to-r from-[#AD00EC] via-[#009AFF] to-[#AD00EC] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                                <DatabaseZap className="mr-2 text-white"/>
+                                <span className="text-white">Aumentar Almacenamiento</span>
                             </button>
-                            <AnimatePresence>
-                            {expandedSection === section.id && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                    animate={{ height: 'auto', opacity: 1, marginTop: '16px' }}
-                                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="overflow-hidden"
-                                >
-                                    <Separator className="bg-primary/20 mb-4"/>
-                                    <div className="space-y-4">
-                                        {section.items.map((item, index) => (
-                                            <SectionItem key={item.id} {...item} total={storageData.total} delay={index * 0.1} onHover={() => setHoveredItem(item)}/>
-                                        ))}
-                                    </div>
-                                </motion.div>
-                            )}
-                            </AnimatePresence>
-                         </motion.div>
-                    ))}
-                    <div className="relative text-xs text-amber-200/90 p-4 bg-amber-900/20 rounded-lg border border-amber-400/30 overflow-hidden">
-                        <div className="absolute inset-0 bg-grid-amber-500/10 [mask-image:radial-gradient(ellipse_at_center,white_10%,transparent_100%)] opacity-50"/>
-                        <p className="relative">Puedes libera espacio eliminando archivos, información o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.</p>
-                    </div>
-                     <div className="flex justify-center pt-2">
-                        <button className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-[#AD00EC] to-[#1700E6] px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
-                            <div className="absolute -inset-0.5 -z-10 animate-spin-slow rounded-full bg-gradient-to-r from-[#AD00EC] via-[#009AFF] to-[#AD00EC] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                            <DatabaseZap className="mr-2 text-white"/>
-                            <span className="text-white">Aumentar Almacenamiento</span>
-                        </button>
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
