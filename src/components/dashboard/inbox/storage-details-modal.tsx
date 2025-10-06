@@ -89,11 +89,9 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border-2 border-cyan-400/30 text-white overflow-hidden">
-        <DialogHeader className="sr-only">
-          <DialogTitle>Detalles de Almacenamiento</DialogTitle>
-          <DialogDescription>Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border-2 border-cyan-400/30 text-white overflow-hidden" showCloseButton={false}>
+          <DialogTitle className="sr-only">Detalles de Almacenamiento</DialogTitle>
+          <DialogDescription className="sr-only">Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
         <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-cyan-400/20">
           {/* Section 1 */}
           <div className="flex flex-col p-6 bg-black/20">
@@ -142,7 +140,6 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                 </defs>
                 {/* Outer animated rings */}
                 <circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
-                <circle cx="50" cy="50" r="38" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
                 <motion.circle
                   cx="50" cy="50" r="48" fill="none" stroke="hsl(var(--primary) / 0.2)" strokeWidth="1"
                   strokeDasharray="1, 15"
@@ -157,14 +154,14 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                 />
 
                 {/* Main progress track */}
-                <circle cx="50" cy="50" r="42" fill="transparent" stroke="hsl(var(--primary) / 0.1)" strokeWidth="12" />
+                <circle cx="50" cy="50" r="42" fill="transparent" stroke="hsl(var(--primary) / 0.1)" strokeWidth="16" />
                 
                 {/* Main progress bar */}
                 <motion.circle
                   cx="50" cy="50" r="42"
                   fill="transparent"
                   stroke="url(#storage-chart-gradient)"
-                  strokeWidth="12"
+                  strokeWidth="16"
                   strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 42}
                   initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
@@ -198,8 +195,8 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     >
                         {ActiveIcon && <ActiveIcon className="size-6 mb-1 text-cyan-300" />}
                         <p className="text-md font-bold">{displayData.label}</p>
-                        <p className="text-3xl font-bold font-mono text-cyan-300">
-                          {(displayData.value / 1024).toFixed(2)} <span className="text-xl">GB</span>
+                        <p className="text-2xl font-bold font-mono text-cyan-300">
+                          {(displayData.value / 1024).toFixed(2)} <span className="text-lg">GB</span>
                         </p>
                         <p className="text-xs text-muted-foreground">{((displayData.value / storageData.total) * 100).toFixed(1)}%</p>
                     </motion.div>
@@ -227,7 +224,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-3 right-3 h-8 w-8 border border-white text-white hover:bg-[#F00000] hover:text-white hover:border-[#F00000]"
+              className="absolute top-3 right-3 h-8 w-8 border border-white text-white hover:border-white hover:bg-white/10"
               onClick={() => onOpenChange(false)}
             >
               <X className="size-4" />
