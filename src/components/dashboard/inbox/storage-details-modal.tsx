@@ -148,6 +148,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     const ActiveIcon = activeSection ? sectionIcons[activeSection.id] : HardDrive;
                     const percentage = activeSection ? (activeSection.value / storageData.total) * 100 : (totalUsed / storageData.total) * 100;
                     const valueInGB = activeSection ? activeSection.value / 1024 : totalUsed / 1024;
+                    if (!ActiveIcon) return null;
                     return (
                       <>
                         <ActiveIcon className="size-8 mb-2" />
