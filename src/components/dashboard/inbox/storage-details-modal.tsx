@@ -5,11 +5,10 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, Image, Film, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, Users as SocialIcon } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-const BouncesIcon = (props: any) => (
+const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
         <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -35,7 +34,7 @@ const storageData = {
 
 const SectionProgressBar = ({ label, value, total, color, icon, delay }: { label: string, value: number, total: number, color: string, icon: React.ElementType, delay: number }) => {
   const percentage = (value / total) * 100;
-  const Icon = icon || FileText; // Fallback icon
+  const Icon = icon || FileText;
 
   return (
     <motion.div
@@ -55,7 +54,9 @@ const SectionProgressBar = ({ label, value, total, color, icon, delay }: { label
           animate={{ width: `${percentage}%` }}
           transition={{ delay: delay + 0.3, duration: 1, ease: 'easeOut' }}
         >
-           <div className="absolute inset-0 bg-white/20 opacity-50 animate-pulse"/>
+           <div className="absolute inset-0 w-full h-full overflow-hidden">
+             <div className="tech-scanner !w-full !h-full !blur-none !opacity-50" />
+           </div>
         </motion.div>
       </div>
     </motion.div>
@@ -73,92 +74,81 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
   const activeSectionData = hoveredSection ? fullBreakdown.find(item => item.id === hoveredSection) : null;
   const displayData = activeSectionData || { id: 'total', label: 'Total Usado', value: totalUsed, color: 'from-cyan-500 to-blue-500', icon: HardDrive };
 
+  const ActiveIcon = displayData.icon;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full h-[650px] p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border-2 border-cyan-400/30 text-white overflow-hidden">
-        <style>{`
-          .donut-segment { transition: all 0.2s ease-out; }
-          .donut-segment:hover { transform: scale(1.05); filter: drop-shadow(0 0 10px currentColor); }
-        `}</style>
-        
-        <div className="grid grid-cols-3 h-full">
-          {/* Section 1: Inbox Breakdown */}
-          <div className="col-span-1 flex flex-col p-6 border-r border-cyan-400/20 bg-black/20">
+      <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border-2 border-cyan-400/30 text-white overflow-hidden">
+        <div className="sr-only">
+          <DialogHeader>
+            <DialogTitle>Detalles de Almacenamiento</DialogTitle>
+            <DialogDescription>Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
+          </DialogHeader>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-cyan-400/20">
+          <div className="flex flex-col p-6 bg-black/20">
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 shrink-0 text-cyan-300">
                 <Inbox />Desglose del Buzón
             </h3>
-            <div className="flex-1 space-y-4 pr-3 -mr-3 overflow-y-auto custom-scrollbar">
+            <div className="space-y-4">
                 {storageData.breakdown.slice(0, 5).map((item, index) => (
                     <SectionProgressBar key={item.id} {...item} total={storageData.total} delay={index * 0.1} />
                 ))}
             </div>
           </div>
           
-          {/* Section 2: Content Breakdown */}
-          <div className="col-span-1 flex flex-col p-6 border-r border-cyan-400/20 bg-black/20">
+          <div className="flex flex-col p-6 bg-black/20">
              <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 shrink-0 text-cyan-300">
                 <FileText />Desglose de Contenido
             </h3>
-             <div className="flex-1 space-y-4 pr-3 -mr-3 overflow-y-auto custom-scrollbar">
+             <div className="space-y-4">
                 {storageData.breakdown.slice(5).map((item, index) => (
-                    <SectionProgressBar key={item.id} {...item} total={storageData.total} delay={index * 0.1} />
+                    <SectionProgressBar key={item.id} {...item} total={storageData.total} delay={index * 0.1 + 0.5} />
                 ))}
             </div>
           </div>
 
-          {/* Section 3: Main Chart */}
-          <div className="col-span-1 flex flex-col p-6 bg-black/30 relative">
-            <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)]"/>
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="relative w-64 h-64">
-                <svg className="w-full h-full" viewBox="0 0 100 100">
-                  <g transform="rotate(-90 50 50)">
-                    {(() => {
-                      let accumulatedPercentage = 0;
-                      return fullBreakdown.map(item => {
-                        const percentage = (item.value / storageData.total) * 100;
-                        const strokeDasharray = `${percentage} ${100 - percentage}`;
-                        const strokeDashoffset = -accumulatedPercentage;
-                        accumulatedPercentage += percentage;
-                        
-                        const isHovered = hoveredSection === item.id;
-                        
-                        return (
-                          <circle
-                            key={item.id}
-                            className="donut-segment"
-                            cx="50"
-                            cy="50"
-                            r="45"
-                            fill="transparent"
-                            strokeWidth={isHovered ? "12" : "10"}
-                            stroke={`url(#grad-${item.id})`}
-                            strokeDasharray={strokeDasharray}
-                            strokeDashoffset={strokeDashoffset}
-                            onMouseEnter={() => setHoveredSection(item.id)}
-                            onMouseLeave={() => setHoveredSection(null)}
-                            style={{ color: `var(--color-${item.id}-end)` }}
-                          />
-                        );
-                      });
-                    })()}
-                  </g>
-                  <defs>
-                    {fullBreakdown.map(item => {
-                      const [from, to] = item.color.split(' ');
-                      const fromColor = `var(--tw-gradient-from, ${from.replace('from-', '#')})`;
-                      const toColor = `var(--tw-gradient-to, ${to.replace('to-', '#')})`;
-                      return (
-                        <linearGradient key={`grad-${item.id}`} id={`grad-${item.id}`}>
-                          <stop offset="0%" stopColor={fromColor.replace(/\[|\]/g, '')}/>
-                          <stop offset="100%" stopColor={toColor.replace(/\[|\]/g, '')}/>
-                        </linearGradient>
-                      )
-                    })}
-                  </defs>
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+          <div className="flex flex-col p-6 bg-black/30 relative items-center justify-center gap-6">
+             <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)]"/>
+            <div className="relative w-48 h-48">
+              <motion.svg className="w-full h-full" viewBox="0 0 100 100">
+                 <defs>
+                  <linearGradient id="storage-chart-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" />
+                    <stop offset="100%" stopColor="hsl(var(--accent))" />
+                  </linearGradient>
+                </defs>
+                <circle
+                  cx="50" cy="50" r="45"
+                  fill="transparent"
+                  stroke="hsl(var(--primary) / 0.1)"
+                  strokeWidth="8"
+                />
+                <motion.circle
+                  cx="50" cy="50" r="45"
+                  fill="transparent"
+                  stroke="url(#storage-chart-gradient)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 45}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 45 * (1 - (totalUsed / storageData.total)) }}
+                  transition={{ duration: 1.5, ease: "easeInOut", delay: 0.5 }}
+                  transform="rotate(-90 50 50)"
+                />
+                 <motion.circle
+                    cx="50" cy="50" r="45"
+                    fill="transparent"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={`1, ${2 * Math.PI * 45}`}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                />
+              </motion.svg>
+              
+               <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={displayData.id}
@@ -168,28 +158,19 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                       transition={{ duration: 0.2 }}
                       className="flex flex-col items-center justify-center"
                     >
-                      {(() => {
-                        const ActiveIcon = displayData.icon;
-                        const percentage = (displayData.value / storageData.total) * 100;
-                        const valueInGB = displayData.value / 1024;
-                        return (
-                          <>
-                            <ActiveIcon className="size-8 mb-2 text-cyan-300" />
-                            <p className="text-lg font-bold">{displayData.label}</p>
-                            <p className="text-3xl font-bold font-mono text-cyan-300">
-                              {valueInGB.toFixed(2)} <span className="text-xl">GB</span>
-                            </p>
-                            <p className="text-sm text-muted-foreground">{percentage.toFixed(1)}%</p>
-                          </>
-                        )
-                      })()}
+                        {ActiveIcon && <ActiveIcon className="size-6 mb-1 text-cyan-300" />}
+                        <p className="text-md font-bold">{displayData.label}</p>
+                        <p className="text-2xl font-bold font-mono text-cyan-300">
+                          {(displayData.value / 1024).toFixed(2)} <span className="text-lg">GB</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">{((displayData.value / storageData.total) * 100).toFixed(1)}%</p>
                     </motion.div>
                   </AnimatePresence>
                 </div>
-              </div>
             </div>
-            <div className="shrink-0 space-y-4 mt-6 text-center z-10">
-                 <p className="text-xs text-muted-foreground">
+            
+             <div className="space-y-4 text-center z-10">
+                 <p className="text-xs text-muted-foreground max-w-xs">
                     Libera espacio eliminando campañas, listas o plantillas antiguas, o aumenta tu capacidad para seguir creciendo.
                 </p>
                 <button className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-md bg-gradient-to-r from-primary to-accent px-6 font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_theme(colors.purple.500/50%)]">
@@ -204,3 +185,4 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     </Dialog>
   );
 }
+
