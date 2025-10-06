@@ -253,31 +253,31 @@ export default function DemoPage() {
             <div className="w-full max-w-4xl mt-8 p-4 bg-card/50 backdrop-blur-sm border border-border/30 rounded-lg flex items-center justify-center gap-16">
                  <div className="flex flex-col items-center gap-2">
                     <div className="text-blue-400">
-                        <Users2 size={32} />
+                        <Tag size={32} />
                     </div>
                     <span className="font-mono text-xs">1</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
                     <div className="text-green-400">
-                       <UserPlus size={32} />
+                       <DollarSign size={32} />
                     </div>
                     <span className="font-mono text-xs">2</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
                     <div className="text-orange-400">
-                        <ShoppingBag size={32} />
+                        <Mail size={32} />
                     </div>
                     <span className="font-mono text-xs">3</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
                     <div className="text-red-400">
-                        <Gift size={32} />
+                        <ShoppingCart size={32} />
                     </div>
                     <span className="font-mono text-xs">4</span>
                 </div>
                  <div className="flex flex-col items-center gap-2">
                     <div className="text-purple-400">
-                        <Megaphone size={32} />
+                        <Users size={32} />
                     </div>
                     <span className="font-mono text-xs">5</span>
                 </div>
@@ -400,6 +400,8 @@ export default function DemoPage() {
         </>
     );
 }
+    
+
     
 
     
