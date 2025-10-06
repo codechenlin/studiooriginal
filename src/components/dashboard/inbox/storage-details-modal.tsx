@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 
 const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -95,8 +94,8 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
         <div className="flex flex-col items-center gap-1">
             <div className="relative w-28 h-28">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                     <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth={isMain ? "8" : "6"} fill="transparent" r={radius} cx="60" cy="60" />
-                     <motion.circle
+                    <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth={isMain ? "8" : "6"} fill="transparent" r={radius} cx="60" cy="60" />
+                    <motion.circle
                         className="text-white"
                         stroke="url(#progressGradient)"
                         strokeWidth={isMain ? "8" : "6"}
@@ -109,7 +108,7 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                         animate={{ strokeDashoffset: offset }}
                         transition={{ duration: 1.5, ease: "circOut", delay: 0.2 }}
                         strokeDasharray={circumference}
-                     />
+                    />
                     
                     {usedLast30Days !== undefined && (
                         <>
@@ -143,7 +142,7 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                             <animateMotion
                                 dur={`${2 + i * 0.5}s`}
                                 repeatCount="indefinite"
-                                path={`M60,${60 - radius} a ${radius},${radius} 0 1,0 0.001,0 z`}
+                                path={`M 60, ${60 - radius} a ${radius},${radius} 0 1,0 0.001,0`}
                             />
                         </motion.circle>
                     ))}
@@ -158,7 +157,7 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                             <animateMotion
                                 dur={`${3 + i * 0.5}s`}
                                 repeatCount="indefinite"
-                                path={`M60,${60-innerRadius} a ${innerRadius},${innerRadius} 0 1,0 0.001,0 z`}
+                                path={`M 60, ${60-innerRadius} a ${innerRadius},${innerRadius} 0 1,0 0.001,0`}
                             />
                         </motion.circle>
                     ))}
