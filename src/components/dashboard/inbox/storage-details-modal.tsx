@@ -2,9 +2,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { HardDrive, Inbox, FileText, Image as ImageIcon, Film, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, Users as SocialIcon, AlertCircle, X } from 'lucide-react';
+import { HardDrive, Inbox, FileText, Image as ImageIcon, Users, BarChart, DatabaseZap, MailCheck, ShoppingCart, MailWarning, SocialIcon, AlertCircle, X, Film, Box } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -16,36 +16,46 @@ const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-
 const storageData = {
   total: 15 * 1024, // 15 GB in MB
-  breakdown: [
-    { id: 'main', label: 'Buzón Principal', value: 2.1 * 1024, color: 'from-[#AD00EC] to-[#1700E6]', icon: MailCheck },
-    { id: 'shopping', label: 'Compras', value: 1.1 * 1024, color: 'from-[#00CB07] to-[#21F700]', icon: ShoppingCart },
-    { id: 'social', label: 'Redes Sociales', value: 0.8 * 1024, color: 'from-[#00ADEC] to-[#007BA8]', icon: SocialIcon },
-    { id: 'spam', label: 'Spam', value: 0.4 * 1024, color: 'from-[#E18700] to-[#FFAB00]', icon: MailWarning },
-    { id: 'bounces', label: 'Rebotes', value: 0.1 * 1024, color: 'from-[#F00000] to-[#F07000]', icon: BouncesIcon },
-    { id: 'images', label: 'Imágenes', value: 1.8 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: ImageIcon },
-    { id: 'gifs', label: 'GIFs', value: 0.9 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: Film },
-    { id: 'templates', label: 'Plantillas', value: 1.2 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: FileText },
-    { id: 'lists', label: 'Listas', value: 0.3 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: Users },
-    { id: 'campaigns', label: 'Campañas', value: 1.5 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: BarChart },
+  sections: [
+    { 
+      id: 'inbox',
+      label: 'Desglose del Buzón',
+      icon: Inbox,
+      items: [
+        { id: 'main', label: 'Buzón Principal', value: 2.1 * 1024, color: 'from-[#AD00EC] to-[#1700E6]', icon: MailCheck },
+        { id: 'shopping', label: 'Compras', value: 1.1 * 1024, color: 'from-[#00CB07] to-[#21F700]', icon: ShoppingCart },
+        { id: 'social', label: 'Redes Sociales', value: 0.8 * 1024, color: 'from-[#00ADEC] to-[#007BA8]', icon: Users },
+        { id: 'spam', label: 'Spam', value: 0.4 * 1024, color: 'from-[#E18700] to-[#FFAB00]', icon: MailWarning },
+        { id: 'bounces', label: 'Rebotes', value: 0.1 * 1024, color: 'from-[#F00000] to-[#F07000]', icon: BouncesIcon },
+      ]
+    },
+    {
+      id: 'content',
+      label: 'Desglose de Contenido',
+      icon: Box,
+      items: [
+        { id: 'images', label: 'Imágenes', value: 1.8 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: ImageIcon },
+        { id: 'gifs', label: 'GIFs', value: 0.9 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: Film },
+        { id: 'templates', label: 'Plantillas', value: 1.2 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: FileText },
+        { id: 'lists', label: 'Listas', value: 0.3 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: Users },
+        { id: 'campaigns', label: 'Campañas', value: 1.5 * 1024, color: 'from-[#1700E6] to-[#009AFF]', icon: BarChart },
+      ]
+    }
   ]
 };
 
-const SectionProgressBar = ({ label, value, total, color, icon: Icon, delay }: { label: string, value: number, total: number, color: string, icon: React.ElementType, delay: number }) => {
+const SectionProgressBar = ({ label, value, total, color, icon: Icon, delay, onHover }: { label: string, value: number, total: number, color: string, icon: React.ElementType, delay: number, onHover: () => void }) => {
   const percentage = (value / total) * 100;
-  
-  if (!Icon) {
-    Icon = FileText;
-  }
 
   return (
     <motion.div
       className="space-y-1.5"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
       transition={{ delay }}
+      onMouseEnter={onHover}
     >
       <div className="flex justify-between items-center text-xs">
         <p className="font-semibold flex items-center gap-2 text-white/80"><Icon className="size-4" />{label}</p>
@@ -76,74 +86,61 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon, delay }: {
 
 
 export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) {
-  const [hoveredSection, setHoveredSection] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const totalUsed = storageData.breakdown.reduce((acc, item) => acc + item.value, 0);
-  const available = storageData.total - totalUsed;
-  const fullBreakdown = [...storageData.breakdown, { id: 'available', label: 'Disponible', value: available, color: 'from-gray-700 to-gray-600', icon: HardDrive }];
+  const totalUsed = storageData.sections.flatMap(s => s.items).reduce((acc, item) => acc + item.value, 0);
+
+  const allItems = storageData.sections.flatMap(s => s.items);
+  const hoveredItem = hoveredId ? allItems.find(item => item.id === hoveredId) : null;
   
-  const activeSection = hoveredSection ? fullBreakdown.find(item => item.id === hoveredSection) : null;
-  
-  const defaultDisplayData = { id: 'total', label: 'Total Usado', value: totalUsed, color: 'from-[#AD00EC] to-[#1700E6]', icon: HardDrive };
-  
-  const displayData = activeSection || defaultDisplayData;
-  const ActiveIcon = displayData.icon;
+  const displayData = hoveredItem || { id: 'total', label: 'Total Usado', value: totalUsed, icon: HardDrive };
   const valueInGB = displayData.value / 1024;
-
+  const DisplayIcon = displayData.icon;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-900/90 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
-          <DialogTitle className="sr-only">Detalles de Almacenamiento</DialogTitle>
-          <DialogDescription className="sr-only">Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
+      <DialogContent className="max-w-6xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-950/90 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
+        <DialogHeader className="sr-only">
+            <DialogTitle>Detalles de Almacenamiento</DialogTitle>
+            <DialogDescription>Un desglose detallado del uso de almacenamiento de tu cuenta.</DialogDescription>
+        </DialogHeader>
+        <style jsx>{`
+            @keyframes scan-glare {
+              0% { transform: translateX(-100%) skewX(-30deg); opacity: 0; }
+              20% { opacity: 0.5; }
+              80% { opacity: 0.5; }
+              100% { transform: translateX(200%) skewX(-30deg); opacity: 0; }
+            }
+             @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        `}</style>
         <div className="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-[#AD00EC]/20">
-          {/* Section 1 */}
-          <div className="flex flex-col p-6 bg-black/20">
-            <div className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC] to-[#1700E6]">
-               <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)] opacity-50"/>
+          {storageData.sections.map((section, sectionIndex) => (
+            <div key={section.id} className="flex flex-col p-6 bg-black/20" onMouseLeave={() => setHoveredId(null)}>
+              <motion.div 
+                className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC] to-[#1700E6]"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * sectionIndex }}
+              >
+               <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)]"/>
                <h3 className="relative text-lg font-semibold flex items-center justify-center gap-2 shrink-0 text-white">
-                  <Inbox />Desglose del Buzón
+                  <section.icon />{section.label}
                </h3>
-             </div>
-            <div className="space-y-4">
-                {storageData.breakdown.slice(0, 5).map((item, index) => (
-                    <SectionProgressBar key={item.id} {...item} total={storageData.total} delay={index * 0.1} />
+             </motion.div>
+              <div className="space-y-4">
+                {section.items.map((item, index) => (
+                  <SectionProgressBar key={item.id} {...item} total={storageData.total} delay={index * 0.1} onHover={() => setHoveredId(item.id)} />
                 ))}
+              </div>
             </div>
-          </div>
-          
-          {/* Section 2 */}
-          <div className="flex flex-col p-6 bg-black/20">
-             <div className="relative mb-4 text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC] to-[#1700E6]">
-               <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)] opacity-50"/>
-               <h3 className="relative text-lg font-semibold flex items-center justify-center gap-2 shrink-0 text-white">
-                  <FileText />Desglose de Contenido
-               </h3>
-             </div>
-             <div className="space-y-4">
-                {storageData.breakdown.slice(5).map((item, index) => (
-                    <SectionProgressBar key={item.id} {...item} total={storageData.total} delay={index * 0.1 + 0.5} />
-                ))}
-            </div>
-          </div>
+          ))}
 
           {/* Section 3 */}
           <div className="flex flex-col p-6 bg-black/30 relative items-center justify-center gap-6">
              <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:radial-gradient(ellipse_at_center,white_30%,transparent_100%)]"/>
             <div className="relative w-48 h-48">
               <motion.svg className="w-full h-full" viewBox="0 0 100 100">
-                 <defs>
-                  <linearGradient id="storage-chart-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#AD00EC" />
-                    <stop offset="100%" stopColor="#1700E6" />
-                  </linearGradient>
-                   <linearGradient id="shine-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="transparent" />
-                        <stop offset="40%" stopColor="rgba(255, 255, 255, 0.4)" />
-                        <stop offset="60%" stopColor="transparent" />
-                    </linearGradient>
-                </defs>
-                {/* Outer animated rings */}
+                 {/* Outer animated rings */}
                 <motion.circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.5" fill="none" />
                 <motion.circle
                   cx="50" cy="50" r="48" fill="none" stroke="hsl(var(--primary) / 0.2)" strokeWidth="1"
@@ -187,7 +184,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     transform="rotate(-90 50 50)"
                 />
                 
-                {/* Orbiter animation */}
+                 {/* Orbiter animation */}
                  <motion.circle
                     cx="50" cy="50" r="32"
                     fill="transparent"
@@ -210,7 +207,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                       transition={{ duration: 0.2 }}
                       className="flex flex-col items-center justify-center"
                     >
-                        {ActiveIcon && <ActiveIcon className="size-6 mb-1 text-cyan-300" />}
+                        {DisplayIcon && <DisplayIcon className="size-6 mb-1 text-cyan-300" />}
                         <p className="text-md font-bold">{displayData.label}</p>
                          <p className="text-2xl font-bold font-mono text-cyan-300">
                           {valueInGB.toFixed(2)}<span className="text-lg ml-1">GB</span>
@@ -247,14 +244,6 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
               <X className="size-4" />
             </Button>
         </DialogFooter>
-        <style jsx>{`
-            @keyframes scan-glare {
-              0% { transform: translateX(-100%) skewX(-30deg); opacity: 0; }
-              20% { opacity: 0.5; }
-              80% { opacity: 0.5; }
-              100% { transform: translateX(200%) skewX(-30deg); opacity: 0; }
-            }
-        `}</style>
       </DialogContent>
     </Dialog>
   );
