@@ -33,8 +33,10 @@ const storageData = {
   ]
 };
 
-const SectionProgressBar = ({ label, value, total, color, Icon, delay }: { label: string, value: number, total: number, color: string, Icon: React.ElementType, delay: number }) => {
+const SectionProgressBar = ({ label, value, total, color, icon, delay }: { label: string, value: number, total: number, color: string, icon: React.ElementType, delay: number }) => {
   const percentage = (value / total) * 100;
+  const Icon = icon || FileText; // Fallback icon
+
   return (
     <motion.div
       className="space-y-1.5"
@@ -68,7 +70,9 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
   const available = storageData.total - totalUsed;
   const fullBreakdown = [...storageData.breakdown, { id: 'available', label: 'Disponible', value: available, color: 'from-gray-700 to-gray-600', icon: HardDrive }];
   
-  const activeSectionData = hoveredSection ? fullBreakdown.find(item => item.id === hoveredSection) : { id: 'total', label: 'Total Usado', value: totalUsed, color: 'from-cyan-500 to-blue-500', icon: HardDrive };
+  const activeSectionData = hoveredSection ? fullBreakdown.find(item => item.id === hoveredSection) : null;
+  const displayData = activeSectionData || { id: 'total', label: 'Total Usado', value: totalUsed, color: 'from-cyan-500 to-blue-500', icon: HardDrive };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -157,7 +161,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={activeSectionData?.id || 'total'}
+                      key={displayData.id}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
@@ -165,14 +169,13 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                       className="flex flex-col items-center justify-center"
                     >
                       {(() => {
-                        if (!activeSectionData) return null;
-                        const ActiveIcon = activeSectionData.icon;
-                        const percentage = (activeSectionData.value / storageData.total) * 100;
-                        const valueInGB = activeSectionData.value / 1024;
+                        const ActiveIcon = displayData.icon;
+                        const percentage = (displayData.value / storageData.total) * 100;
+                        const valueInGB = displayData.value / 1024;
                         return (
                           <>
                             <ActiveIcon className="size-8 mb-2 text-cyan-300" />
-                            <p className="text-lg font-bold">{activeSectionData.label}</p>
+                            <p className="text-lg font-bold">{displayData.label}</p>
                             <p className="text-3xl font-bold font-mono text-cyan-300">
                               {valueInGB.toFixed(2)} <span className="text-xl">GB</span>
                             </p>
