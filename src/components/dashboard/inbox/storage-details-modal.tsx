@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 
 const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -62,7 +61,7 @@ const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label:
                 <p className="font-semibold flex items-center gap-2 text-white"><Icon className="size-4" />{label}</p>
                 <p className="font-mono text-white/80">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
             </div>
-            <div className="relative h-2 w-full bg-black/30 rounded-full overflow-hidden border border-[#AD00EC]/20">
+            <div className="relative h-3 w-full bg-black/30 rounded-full overflow-hidden border border-[#AD00EC]/20">
                 <motion.div
                     className={cn("absolute top-0 left-0 h-full rounded-full bg-gradient-to-r", color)}
                     initial={{ width: 0 }}
@@ -86,19 +85,19 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
     const offset = circumference - (percentage / 100) * circumference;
 
     const last30DaysPercentage = used > 0 ? ((usedLast30Days || 0) / used) * 100 : 0;
-    const innerRadius = isMain ? radius - 10 : radius - 8;
+    const innerRadius = radius - (isMain ? 10 : 8);
     const innerCircumference = 2 * Math.PI * innerRadius;
     const innerOffset = innerCircumference - (last30DaysPercentage / 100) * innerCircumference;
 
     return (
         <div className="flex flex-col items-center gap-1">
-            <div className={cn("relative", isMain ? "w-28 h-28" : "w-24 h-24")}>
+            <div className="relative w-24 h-24">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth="8" fill="transparent" r={radius} cx="50" cy="50" />
+                     <circle className="text-[#AD00EC]/10" stroke="currentColor" strokeWidth={isMain ? "8" : "6"} fill="transparent" r={radius} cx="50" cy="50" />
                      <motion.circle
                         className="text-white"
                         stroke="url(#progressGradient)"
-                        strokeWidth="8"
+                        strokeWidth={isMain ? "8" : "6"}
                         strokeLinecap="round"
                         fill="transparent"
                         r={radius}
@@ -132,12 +131,12 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                     )}
 
                     {/* Particle Animation */}
-                    {Array.from({ length: 4 }).map((_, i) => (
+                    {Array.from({ length: isMain ? 4 : 2 }).map((_, i) => (
                         <motion.circle
                             key={i}
                             cx="50"
                             cy="50"
-                            r="1.5"
+                            r="1"
                             fill="rgba(255, 255, 255, 0.8)"
                             style={{ filter: 'drop-shadow(0 0 2px white)' }}
                         >
@@ -148,12 +147,12 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                             />
                         </motion.circle>
                     ))}
-                    {usedLast30Days !== undefined && Array.from({ length: 2 }).map((_, i) => (
+                    {usedLast30Days !== undefined && Array.from({ length: 1 }).map((_, i) => (
                         <motion.circle
                             key={i}
                             cx="50"
                             cy="50"
-                            r="1"
+                            r="0.5"
                             fill="rgba(255, 255, 255, 0.6)"
                         >
                             <animateMotion
@@ -163,24 +162,26 @@ const CircularChart = ({ percentage, total, used, label, isMain = false, usedLas
                             />
                         </motion.circle>
                     ))}
+                    <circle cx="50" cy="50" r={radius + (isMain ? 8 : 6)} stroke="url(#shineGradient)" strokeWidth="0.5" fill="none" strokeDasharray="100 400" className="animate-[hud-spin_10s_linear_infinite]" />
+                    <circle cx="50" cy="50" r={radius + (isMain ? 12 : 10)} stroke="url(#shineGradient)" strokeWidth="0.2" fill="none" strokeDasharray="10 50" className="animate-[hud-spin_15s_linear_infinite] [animation-direction:reverse]" />
                 </svg>
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className={cn("font-bold font-mono text-white leading-none", isMain ? "text-xl" : "text-lg")}>
+                     <span className="font-bold font-mono text-white leading-none text-base">
                         {(used / 1024).toFixed(2)}
-                        <span className={cn("font-sans text-white/70 ml-1", isMain ? "text-sm" : "text-xs")}>GB</span>
+                        <span className="font-sans text-white/70 ml-0.5 text-[0.5rem]">GB</span>
                     </span>
                     {isMain && (
-                        <span className="text-xs text-white/50">de {(total / 1024).toFixed(0)} GB</span>
+                        <span className="text-[0.5rem] text-white/50">de {(total / 1024).toFixed(0)} GB</span>
                     )}
                     {usedLast30Days !== undefined && (
-                         <span className="text-[10px] text-cyan-300/70 mt-0.5">
+                         <span className="text-[0.5rem] text-cyan-300/70 mt-0.5">
                             ({(usedLast30Days / 1024).toFixed(2)} GB)
                         </span>
                     )}
                 </div>
             </div>
-            <p className="text-xs font-semibold text-white/90 text-center w-24">{label}</p>
+            <p className="text-[0.6rem] font-semibold text-white/90 text-center w-20">{label}</p>
         </div>
     );
 };
@@ -190,7 +191,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl w-full h-auto flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full h-auto flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
                 <DialogHeader className="sr-only">
                     <DialogTitle>Diagnóstico de Almacenamiento</DialogTitle>
                 </DialogHeader>
@@ -199,6 +200,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
                     .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
                     @keyframes scan-glare { 0% { transform: translateX(-100%) skewX(-30deg); } 100% { transform: translateX(300%) skewX(-30deg); } }
+                    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 `}</style>
                 <svg width="0" height="0" className="absolute">
                      <defs>
@@ -219,9 +221,6 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                         <HardDrive className="size-6 text-[#AD00EC]"/>
                         <h2 className="font-semibold text-xl">Diagnóstico de Almacenamiento</h2>
                     </div>
-                     <Button variant="ghost" size="icon" className="h-8 w-8 border border-white text-white hover:bg-white/10" onClick={() => onOpenChange(false)}>
-                        <X className="size-4" />
-                    </Button>
                 </div>
 
                 <div className="flex flex-col">
@@ -261,7 +260,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                             />
                         </div>
                         <div className="flex flex-col gap-3">
-                             <div className="p-3 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-400/30 text-center">
+                            <div className="p-3 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-400/30 text-center">
                                 <p className="text-xs text-amber-200/90">
                                    Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
                                 </p>
@@ -274,6 +273,9 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                         </div>
                     </div>
                 </div>
+                 <DialogFooter className="p-4 border-t border-[#AD00EC]/20 bg-black/50">
+                    <Button variant="outline" className="border-[#AD00EC]/50 text-white hover:bg-[#AD00EC]/20 hover:text-white" onClick={() => onOpenChange(false)}>Cerrar</Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
