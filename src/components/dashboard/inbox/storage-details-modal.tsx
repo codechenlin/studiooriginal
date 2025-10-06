@@ -1,11 +1,11 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
@@ -22,7 +22,7 @@ const storageData = {
   sections: [
     { 
       id: 'inbox',
-      label: 'Desglose del Buzón',
+      label: 'Análisis del Buzón',
       icon: Inbox,
       color: 'from-[#AD00EC] to-[#1700E6]',
       items: [
@@ -35,7 +35,7 @@ const storageData = {
     },
     {
       id: 'content',
-      label: 'Desglose de Contenido',
+      label: 'Datos de Contenido',
       icon: Box,
       color: 'from-[#1700E6] to-[#009AFF]',
       items: [
@@ -49,129 +49,147 @@ const storageData = {
   ]
 };
 
-const SectionProgressBar = ({ label, value, total, color, icon: Icon }: { label: string, value: number, total: number, color: string, icon: React.ElementType }) => {
-    const percentage = (value / total) * 100;
+const totalUsed = storageData.sections.flatMap(s => s.items).reduce((acc, item) => acc + item.value, 0);
+
+const AnimatedText = ({ text, delay = 0 }: { text: string; delay?: number }) => {
     return (
-        <div className="space-y-1.5 group">
-            <div className="flex justify-between items-center text-xs">
-                <p className="font-semibold flex items-center gap-2 text-white"><Icon className="size-4" />{label}</p>
-                <p className="font-mono text-white">{value.toFixed(2)} MB ({percentage.toFixed(1)}%)</p>
-            </div>
-            <div className="relative h-3 w-full bg-primary/10 rounded-full overflow-hidden border border-[#AD00EC]/30">
-                <motion.div
-                    className={cn("absolute top-0 left-0 h-full rounded-full bg-gradient-to-r", color)}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${percentage}%` }}
-                    transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }}
-                >
-                     <div 
-                        className="absolute top-0 left-0 h-full w-full opacity-50"
-                        style={{
-                            background: `radial-gradient(circle, white, transparent 30%)`,
-                            backgroundSize: '300% 100%',
-                            animation: 'scan-glare 2s infinite linear',
-                            mixBlendMode: 'overlay',
-                        }}
-                    />
-                </motion.div>
-            </div>
-        </div>
+        <span className="inline-block overflow-hidden">
+            <motion.span
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                transition={{ delay, duration: 0.5, ease: 'easeOut' }}
+                className="inline-block"
+            >
+                {text}
+            </motion.span>
+        </span>
     );
 };
 
-const totalUsed = storageData.sections.flatMap(s => s.items).reduce((acc, item) => acc + item.value, 0);
-const totalPercentage = (totalUsed / storageData.total) * 100;
+const EnergyProgressBar = ({ value, total, color }: { value: number, total: number, color: string }) => {
+    const percentage = (value / total) * 100;
+    return (
+        <div className="relative h-2.5 w-full bg-cyan-900/30 rounded-full overflow-hidden border border-cyan-400/20">
+            <motion.div
+                className={cn("absolute top-0 left-0 h-full rounded-full bg-gradient-to-r", color)}
+                initial={{ width: 0 }}
+                animate={{ width: `${percentage}%` }}
+                transition={{ duration: 1, ease: 'easeOut', delay: 0.8 }}
+            >
+                 <div 
+                    className="absolute top-0 left-0 h-full w-full opacity-70"
+                    style={{
+                        background: `radial-gradient(circle, white, transparent 40%)`,
+                        backgroundSize: '400% 100%',
+                        animation: 'scan-glare 3s infinite linear',
+                        mixBlendMode: 'overlay',
+                    }}
+                />
+            </motion.div>
+        </div>
+    );
+}
 
 export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) {
+  const [hoveredItem, setHoveredItem] = useState<{label: string, value: number, color: string} | null>(null);
+
+  const totalPercentage = (totalUsed / storageData.total) * 100;
+  const centralDisplayData = hoveredItem || { label: 'Total Usado', value: totalUsed, color: 'from-[#AD00EC] to-[#1700E6]' };
+  const centralPercentage = (centralDisplayData.value / storageData.total) * 100;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl w-full h-auto max-h-[90vh] flex flex-col p-0 gap-0 bg-zinc-950/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
+      <DialogContent className="max-w-6xl w-full h-[700px] flex flex-col p-0 gap-0 bg-[#0A0F1A]/90 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
         <style>{`
+            @keyframes scan-line-vertical { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+            @keyframes grid-pulse { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.2; } }
             @keyframes scan-glare { 0% { background-position: 200% 50%; } 100% { background-position: -100% 50%; } }
-            @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            .bg-hex-grid { background-image: linear-gradient(rgba(173, 0, 236, 0.05) 1px, transparent 1px), linear-gradient(120deg, transparent 11.5px, rgba(173, 0, 236, 0.05) 12px, transparent 12.5px), linear-gradient(60deg, transparent 11.5px, rgba(173, 0, 236, 0.05) 12px, transparent 12.5px); background-size: 24px 42px; }
         `}</style>
-
-        <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 h-8 w-8 border border-white text-white hover:border-white hover:bg-white/10 z-20"
-            onClick={() => onOpenChange(false)}
-        >
-            <X className="size-4" />
-        </Button>
         
-        <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-0 p-8 flex-1 overflow-hidden">
-            <div className="absolute inset-0 bg-hex-grid opacity-50"/>
-            <div className="absolute inset-0 bg-gradient-to-br from-background via-transparent to-transparent opacity-30"/>
-            
-            {/* Left Panel */}
-            <div className="lg:col-span-3 flex flex-col gap-4">
-               <div className="text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC]/30 to-[#1700E6]/30 border border-[#AD00EC]/50">
-                    <h2 className="text-lg font-bold flex items-center justify-center gap-2"><Inbox className="text-white"/> <span className="text-white">Desglose del Buzón</span></h2>
-                </div>
-                {storageData.sections[0].items.map(item => (
-                    <SectionProgressBar key={item.id} {...item} total={storageData.total} />
-                ))}
+        {/* Main Header */}
+        <div className="flex items-center justify-between p-4 border-b border-[#AD00EC]/20 shrink-0">
+             <div className="flex items-center gap-3">
+                 <HardDrive className="size-6 text-[#AD00EC]"/>
+                <h2 className="font-mono text-xl tracking-wider uppercase"><AnimatedText text="Diagnóstico de Almacenamiento" /></h2>
             </div>
-            
-            {/* Middle Panel - Core */}
-            <div className="lg:col-span-6 flex flex-col items-center justify-center relative px-8">
-                <div className="relative w-80 h-80">
-                    {/* Animated Rings */}
-                    <svg className="absolute inset-0 w-full h-full animate-[hud-spin_30s_linear_infinite]" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="48" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.25" fill="none" />
-                        <circle cx="50" cy="50" r="38" stroke="hsl(var(--primary) / 0.1)" strokeWidth="0.25" fill="none" />
-                    </svg>
-                    <svg className="absolute inset-0 w-full h-full animate-[hud-spin_20s_linear_infinite]" style={{animationDirection: 'reverse'}} viewBox="0 0 100 100">
-                        <path d="M 50,5 A 45,45 0 0,1 95,50" stroke="hsl(var(--accent) / 0.2)" strokeWidth="0.5" fill="none" strokeDasharray="2, 8" />
-                        <path d="M 5,50 A 45,45 0 0,1 50,95" stroke="hsl(var(--accent) / 0.2)" strokeWidth="0.5" fill="none" strokeDasharray="2, 8" />
-                    </svg>
-
-                     {/* Progress Ring */}
-                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-                        <defs>
-                            <linearGradient id="storage-chart-gradient" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#AD00EC" /><stop offset="100%" stopColor="#1700E6" /></linearGradient>
-                            <linearGradient id="storage-light-gradient"><stop offset="0%" stopColor="rgba(255,255,255,0.7)" /><stop offset="100%" stopColor="rgba(255,255,255,0)" /></linearGradient>
-                        </defs>
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="hsl(var(--primary) / 0.15)" strokeWidth="10" />
-                        <motion.circle
-                            cx="50" cy="50" r="45" fill="transparent" stroke="url(#storage-chart-gradient)" strokeWidth="10"
-                            strokeLinecap="round" strokeDasharray={2 * Math.PI * 45}
-                            initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
-                            animate={{ strokeDashoffset: 2 * Math.PI * 45 * (1 - (totalPercentage / 100)) }}
-                            transition={{ duration: 1.5, ease: "easeInOut" }}
-                            transform="rotate(-90 50 50)"
-                        />
-                         {/* Animated light glare */}
-                        <circle
-                            cx="50" cy="50" r="45" fill="transparent" stroke="url(#storage-light-gradient)" strokeWidth="10"
-                            strokeLinecap="round" strokeDasharray={`2, ${2 * Math.PI * 45}`}
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                        />
-                    </svg>
-                    
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                        <p className="font-bold font-mono text-cyan-300">
-                            <span className="text-5xl">{ (totalUsed/1024).toFixed(2) }</span>
-                            <span className="text-2xl ml-1">GB</span>
-                        </p>
-                         <p className="text-sm">Usado de {storageData.total / 1024} GB</p>
+            <Button variant="ghost" size="icon" className="h-8 w-8 border border-white/50 text-white/70 hover:border-white hover:bg-white/10" onClick={() => onOpenChange(false)}>
+                <X className="size-4" />
+            </Button>
+        </div>
+        
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-0 overflow-hidden">
+            {/* Left Panel: Core Usage */}
+            <div className="md:col-span-4 flex flex-col items-center justify-center p-6 border-r border-[#AD00EC]/20 relative">
+                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(283,100%,55%,0.1)_0%,_transparent_60%)]"/>
+                 <h3 className="font-mono uppercase tracking-widest text-sm text-[#AD00EC] mb-4">Carga del Núcleo</h3>
+                 <div className="w-full flex-1 flex items-center justify-center">
+                    <div className="w-full max-w-xs h-64 flex justify-around items-end gap-2 p-4 rounded-lg bg-black/30 border border-[#AD00EC]/20">
+                        {storageData.sections.flatMap(s => s.items).map((item, i) => {
+                            const itemPercentage = (item.value / storageData.total) * 100;
+                            return (
+                                <div key={item.id} className="w-full h-full flex flex-col justify-end items-center group" onMouseEnter={() => setHoveredItem(item)} onMouseLeave={() => setHoveredItem(null)}>
+                                    <motion.div 
+                                        className={cn("w-full rounded-t-sm bg-gradient-to-t", item.color)}
+                                        initial={{ height: '0%' }}
+                                        animate={{ height: `${(itemPercentage / totalPercentage) * 100}%` }}
+                                        transition={{ duration: 1, delay: i * 0.05 + 0.5, ease: 'easeOut' }}
+                                    >
+                                        <div className="w-full h-full bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-size-8" />
+                                    </motion.div>
+                                    <div className="h-1 rounded-full bg-white/50 mt-1 w-1/2 group-hover:bg-white transition-colors" />
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             </div>
 
-            {/* Right Panel */}
-             <div className="lg:col-span-3 flex flex-col gap-4">
-                <div className="text-center p-3 rounded-lg bg-gradient-to-r from-[#AD00EC]/30 to-[#1700E6]/30 border border-[#AD00EC]/50">
-                    <h2 className="text-lg font-bold flex items-center justify-center gap-2"><Box className="text-white"/> <span className="text-white">Desglose de Contenido</span></h2>
-                </div>
-                 {storageData.sections[1].items.map(item => (
-                    <SectionProgressBar key={item.id} {...item} total={storageData.total} />
+            {/* Center Panel: Main Display */}
+            <div className="md:col-span-4 flex flex-col items-center justify-center p-6 border-r border-[#AD00EC]/20 relative bg-black/20">
+                 <div className="absolute inset-0 bg-grid-purple" style={{ animation: `grid-pulse 4s infinite` }}/>
+                 <AnimatePresence mode="wait">
+                    <motion.div
+                        key={centralDisplayData.label}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-center"
+                    >
+                        <p className={cn("text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r", centralDisplayData.color)}>{centralDisplayData.label}</p>
+                        <p className="text-5xl font-bold font-mono text-cyan-300 my-2">{(centralDisplayData.value / 1024).toFixed(2)}<span className="text-3xl">GB</span></p>
+                        <p className="text-lg font-mono text-white/80">{centralPercentage.toFixed(2)}%</p>
+                    </motion.div>
+                 </AnimatePresence>
+            </div>
+
+            {/* Right Panel: Breakdowns */}
+            <div className="md:col-span-4 flex flex-col p-6 space-y-6">
+                {storageData.sections.map(section => (
+                    <motion.div key={section.id} initial={{opacity: 0}} animate={{opacity: 1}} transition={{delay: 0.4}}>
+                        <h3 className="font-mono uppercase tracking-widest text-sm text-[#AD00EC] mb-3 flex items-center gap-2"><section.icon className="size-4"/>{section.label}</h3>
+                        <div className="space-y-3">
+                            {section.items.map((item, index) => (
+                                <motion.div 
+                                    key={item.id} 
+                                    className="space-y-1"
+                                    initial={{opacity: 0, x: 20}}
+                                    animate={{opacity: 1, x: 0}}
+                                    transition={{delay: index * 0.1 + 0.6}}
+                                    onMouseEnter={() => setHoveredItem(item)} 
+                                    onMouseLeave={() => setHoveredItem(null)}
+                                >
+                                    <div className="flex justify-between items-center text-xs font-mono">
+                                        <p className="flex items-center gap-2 text-white/80"><item.icon className="size-3.5"/>{item.label}</p>
+                                        <p className="text-white">{(item.value / 1024).toFixed(2)} GB</p>
+                                    </div>
+                                    <EnergyProgressBar value={item.value} total={storageData.total} color={item.color}/>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </motion.div>
                 ))}
-                 <Separator className="my-4 bg-[#AD00EC]/30" />
+                 <Separator className="my-4 bg-[#AD00EC]/20"/>
                  <div className="relative p-4 bg-amber-900/20 rounded-lg border border-amber-400/30 overflow-hidden text-center mt-auto">
                     <p className="relative text-xs text-amber-200/90">Puedes libera espacio eliminando archivos, información o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.</p>
                 </div>
@@ -188,5 +206,3 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     </Dialog>
   );
 }
-
-    
