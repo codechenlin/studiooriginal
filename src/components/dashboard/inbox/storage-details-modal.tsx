@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { HardDrive, Inbox, FileText, ImageIcon, Users, BarChart, MailCheck, ShoppingCart, MailWarning, Box, X, Film, DatabaseZap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 const BouncesIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -191,22 +192,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full h-auto flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-2 border-[#AD00EC]/30 text-white overflow-hidden">
-                <div className="absolute inset-0 w-full h-full animated-grid opacity-30"/>
-                <div className="p-4 flex items-center justify-between border-b border-[#AD00EC]/20 bg-black/50">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-3">
-                            <HardDrive className="size-6 text-[#AD00EC]"/>
-                            <span className="font-semibold text-xl">Diagnóstico de Almacenamiento</span>
-                        </DialogTitle>
-                    </DialogHeader>
-                </div>
-
-                <style>{`
-                    @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-                    .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
-                    @keyframes scan-glare { 0% { transform: translateX(-100%) skewX(-30deg); } 100% { transform: translateX(300%) skewX(-30deg); } }
-                    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                `}</style>
+                
                 <svg width="0" height="0" className="absolute">
                     <defs>
                          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -220,6 +206,26 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                         </linearGradient>
                     </defs>
                 </svg>
+
+                <div className="p-4 flex items-center justify-between border-b border-[#AD00EC]/20 bg-black/50">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3">
+                            <HardDrive className="size-6 text-[#AD00EC]"/>
+                            <span className="font-semibold text-xl">Diagnóstico de Almacenamiento</span>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white/70 hover:text-white hover:bg-white/10">
+                        <X className="size-5"/>
+                    </Button>
+                </div>
+
+                <style>{`
+                    @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+                    .animated-grid { background-image: linear-gradient(hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
+                    @keyframes scan-glare { 0% { transform: translateX(-100%) skewX(-30deg); } 100% { transform: translateX(300%) skewX(-30deg); } }
+                    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                `}</style>
+                
 
                 <div className="flex flex-col">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#AD00EC]/20">
@@ -271,9 +277,6 @@ export function StorageDetailsModal({ isOpen, onOpenChange }: { isOpen: boolean;
                         </div>
                     </div>
                 </div>
-                 <DialogFooter className="p-4 border-t border-[#AD00EC]/20 bg-black/50">
-                    <Button variant="outline" className="border-[#AD00EC]/50 text-white hover:bg-[#AD00EC]/20 hover:text-white" onClick={() => onOpenChange(false)}>Cerrar</Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
