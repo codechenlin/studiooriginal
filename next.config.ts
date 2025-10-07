@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
         hostname: 't3.ftcdn.net',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'th.bing.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
