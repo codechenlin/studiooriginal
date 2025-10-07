@@ -1,6 +1,9 @@
 
 import type {NextConfig} from 'next';
 
+// @ts-ignore
+const supabaseHostname = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname;
+
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
@@ -31,13 +34,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 't3.ftcdn.net',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'th.bing.com',
+        hostname: supabaseHostname,
         port: '',
         pathname: '/**',
       }

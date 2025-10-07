@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -12,7 +12,8 @@ import {
   LogOut,
   LayoutDashboard,
   Image as ImageIcon,
-  HardDrive
+  HardDrive,
+  File as FileIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Preloader } from "@/components/common/preloader";
+import { FileManagerModal } from '@/components/dashboard/file-manager-modal';
+
 
 const menuItems = [
   { href: "/d92y02b11u/dashboard", label: "Escritorio", icon: LayoutDashboard },
@@ -39,8 +42,11 @@ function AdminPanelContent({
   user: any;
 }) {
   const pathname = usePathname();
+  const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
 
   return (
+    <>
+    <FileManagerModal open={isFileManagerOpen} onOpenChange={setIsFileManagerOpen} />
     <div className="flex min-h-screen bg-muted/30">
       <aside className="w-64 flex-shrink-0 border-r border-border bg-card p-4 flex flex-col">
         <div className="mb-8">
@@ -63,6 +69,15 @@ function AdminPanelContent({
               </Link>
             );
           })}
+            <button
+                onClick={() => setIsFileManagerOpen(true)}
+                className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-foreground/80 transition-all hover:bg-muted w-full"
+                )}
+              >
+                <FileIcon className="h-5 w-5" />
+                <span className="font-medium">Gestor de Archivos</span>
+            </button>
         </nav>
         <div className="mt-auto">
              <DropdownMenu>
@@ -73,7 +88,7 @@ function AdminPanelContent({
                     </div>
                     <div className="text-left">
                         <p className="font-semibold">Super Admin</p>
-                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                     </div>
                </Button>
             </DropdownMenuTrigger>
@@ -92,6 +107,7 @@ function AdminPanelContent({
         {children}
       </main>
     </div>
+    </>
   );
 }
 
@@ -132,7 +148,7 @@ export default function AdminPanelLayout({
             setIsLoading(false);
         };
 
-        // Only run security check on panel pages, not the login page
+        // Only run security check on panel pages, not the login page.
         if (pathname.startsWith('/d92y02b11u/dashboard')) {
             checkUser();
         } else {

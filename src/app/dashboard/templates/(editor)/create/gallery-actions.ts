@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
@@ -22,7 +21,7 @@ export type StorageFile = {
     };
 };
 
-const BUCKET_NAME = 'template_backgrounds';
+const BUCKET_NAME = 'admin_assets';
 
 export async function listFiles() {
     const supabase = createClient();

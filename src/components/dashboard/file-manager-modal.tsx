@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
@@ -114,7 +113,7 @@ export function FileManagerModal({ open, onOpenChange }: { open: boolean; onOpen
     };
 
     const getPublicUrl = (path: string) => {
-        return `${supabaseUrl}/storage/v1/object/public/template_backgrounds/${path}`;
+        return `${supabaseUrl}/storage/v1/object/public/admin_assets/${path}`;
     }
 
     const filteredFiles = files.filter(file => file.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -240,4 +239,3 @@ export function FileManagerModal({ open, onOpenChange }: { open: boolean; onOpen
         </>
     );
 }
-

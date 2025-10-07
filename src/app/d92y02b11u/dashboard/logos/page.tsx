@@ -27,7 +27,7 @@ function CoverSection({ title, description, icon: Icon, imageUrl, setImageUrl, t
             setImageUrl(newUrl);
             toast({
                 title: "Fondo actualizado",
-                description: `La portada de ${title.toLowerCase()} se ha actualizado desde la URL.`,
+                description: `La portada de ${title.toLowerCase()} se ha actualizado.`,
             });
         }
     };
@@ -51,38 +51,14 @@ function CoverSection({ title, description, icon: Icon, imageUrl, setImageUrl, t
                     <div>
                         <h3 className="font-semibold mb-2">Subir Nuevo Archivo</h3>
                         <div className="flex flex-col items-center justify-center w-full">
-                            <Label htmlFor={`picture-${title}`} className="flex flex-col items-center justify-center w-full h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
+                            <Label htmlFor={`picture-${title}`} className="flex flex-col items-center justify-center w-full h-48 border-2 border-border border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                     <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                                    <p className="mb-2 text-sm text-muted-foreground">Haz clic para subir</p>
+                                    <p className="mb-2 text-sm text-muted-foreground">Haz clic para subir un archivo</p>
                                     <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, GIF, WEBM, AVI</p>
                                 </div>
                                 <Input id={`picture-${title}`} type="file" className="hidden" />
                             </Label>
-                        </div>
-                    </div>
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-card px-2 text-muted-foreground">O</span>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 className="font-semibold mb-2">Actualizar desde URL</h3>
-                        <div className="flex w-full items-center space-x-2">
-                            <div className="relative flex-grow">
-                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                <Input
-                                    type="url"
-                                    placeholder="https://example.com/media.mp4"
-                                    className="pl-10"
-                                    value={newUrl}
-                                    onChange={(e) => setNewUrl(e.target.value)}
-                                />
-                            </div>
-                            <Button type="button" onClick={handleUpdateByUrl}>Actualizar</Button>
                         </div>
                     </div>
                 </div>

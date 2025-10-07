@@ -1,5 +1,5 @@
 {
-    "loginBackgroundImageUrl": "https://t3.ftcdn.net/jpg/05/85/86/44/360_F_585864419_kgIYUcDQ0yiLOCo1aRjeu7kRxndcoitz.jpg",
-    "signupBackgroundImageUrl": "https://t3.ftcdn.net/jpg/05/85/86/44/360_F_585864419_kgIYUcDQ0yiLOCo1aRjeu7kRxndcoitz.jpg",
-    "forgotPasswordBackgroundImageUrl": "https://t3.ftcdn.net/jpg/05/85/86/44/360_F_585864419_kgIYUcDQ0yiLOCo1aRjeu7kRxndcoitz.jpg"
+    "loginBackgroundImageUrl": "https://picsum.photos/seed/1/1200/800",
+    "signupBackgroundImageUrl": "https://picsum.photos/seed/2/1200/800",
+    "forgotPasswordBackgroundImageUrl": "https://picsum.photos/seed/3/1200/800"
 }
