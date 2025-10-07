@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
           .eq('id', loginData.user.id)
           .single();
 
-        if (profileError || !profile) {
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116: row not found
             await supabase.auth.signOut();
             toast({
                 title: "Acceso Denegado",
@@ -82,13 +82,13 @@ export default function AdminLoginPage() {
             return;
         }
         
-        if (profile.role === 'super-admin') {
+        if (profile?.role === 'super-admin') {
           toast({
             title: "Acceso Concedido",
             description: "Bienvenido, Super Administrador. Redirigiendo al panel...",
             className: 'bg-success-login border-none text-white'
           });
-          router.push("/d92y02b11u");
+          router.push("/d92y02b11u/panel");
         } else {
           // If not super-admin, sign them out and show an error
           await supabase.auth.signOut();
