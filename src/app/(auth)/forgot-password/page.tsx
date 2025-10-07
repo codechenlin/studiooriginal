@@ -33,7 +33,7 @@ import { SphereAnimation } from "@/components/login/sphere-animation";
 import { Logo } from "@/components/common/logo";
 import { motion } from 'framer-motion';
 import { MediaPreview } from "@/components/admin/media-preview";
-import appConfig from '@/app/lib/app-config.json';
+import { useAuthPages } from "../auth-pages-provider";
 
 
 const formSchema = z.object({
@@ -44,6 +44,7 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { forgotPasswordImageUrl } = useAuthPages();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -154,7 +155,7 @@ export default function ForgotPasswordPage() {
             </div>
         </div>
         <div className="w-1/2 h-full relative overflow-hidden">
-            <MediaPreview src={appConfig.forgotPasswordBackgroundImageUrl} />
+            <MediaPreview src={forgotPasswordImageUrl} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
       </div>

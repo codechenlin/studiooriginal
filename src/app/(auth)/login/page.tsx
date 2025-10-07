@@ -34,7 +34,7 @@ import { SphereAnimation } from "@/components/login/sphere-animation";
 import { Logo } from "@/components/common/logo";
 import { motion } from 'framer-motion';
 import { MediaPreview } from "@/components/admin/media-preview";
-import appConfig from '@/app/lib/app-config.json';
+import { useAuthPages } from "../auth-pages-provider";
 
 
 const formSchema = z.object({
@@ -46,6 +46,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { loginImageUrl } = useAuthPages();
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -221,7 +222,7 @@ export default function LoginPage() {
             </div>
         </div>
         <div className="w-1/2 h-full relative overflow-hidden">
-             <MediaPreview src={appConfig.loginBackgroundImageUrl} />
+             <MediaPreview src={loginImageUrl} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
       </div>

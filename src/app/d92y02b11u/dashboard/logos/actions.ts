@@ -8,12 +8,21 @@ import { revalidatePath } from 'next/cache';
 const configPath = path.join(process.cwd(), 'src', 'app', 'lib', 'app-config.json');
 
 async function readConfig() {
-  const fileContent = await fs.readFile(configPath, 'utf-8');
-  return JSON.parse(fileContent);
+  try {
+    const fileContent = await fs.readFile(configPath, 'utf-8');
+    return JSON.parse(fileContent);
+  } catch (error) {
+     console.error("Failed to read app-config.json, returning default. Error:", error);
+     return {
+        loginBackgroundImageUrl: '',
+        signupBackgroundImageUrl: '',
+        forgotPasswordBackgroundImageUrl: ''
+     }
+  }
 }
 
 async function writeConfig(config: any) {
-  await fs.writeFile(configPath, JSON.stringify(config, null, 4));
+  await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 }
 
 export async function uploadLogoAndGetUrl(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
@@ -55,11 +64,10 @@ export async function updateAppConfig(key: string, value: string): Promise<{ suc
         config[key] = value;
         await writeConfig(config);
         
-        // Revalidate the pages that use this config
-        if(key === 'loginBackgroundImageUrl') revalidatePath('/login');
-        if(key === 'signupBackgroundImageUrl') revalidatePath('/signup');
-        if(key === 'forgotPasswordBackgroundImageUrl') revalidatePath('/forgot-password');
-        revalidatePath('/d92y02b11u/dashboard/logos');
+        revalidatePath('/(auth)/login', 'page');
+        revalidatePath('/(auth)/signup', 'page');
+        revalidatePath('/(auth)/forgot-password', 'page');
+        revalidatePath('/d92y02b11u/dashboard/logos', 'page');
 
         return { success: true };
     } catch (error: any) {
