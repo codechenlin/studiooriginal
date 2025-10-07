@@ -90,7 +90,7 @@ const QuantumProgressBar = ({ used, total, themeColors }: { used: number; total:
     <div className="w-full text-center">
       <div className="relative h-8 w-full bg-black/30 rounded-lg border overflow-hidden" style={{ borderColor: `${themeColors[0]}4D` }}>
         <motion.div
-          className="absolute top-0 left-0 h-full"
+          className="absolute top-0 left-0 h-full overflow-hidden"
           style={gradientStyle}
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
@@ -128,7 +128,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
                     
                     @keyframes light-scan {
                       0% { transform: translateX(-100%); }
-                      100% { transform: translateX(200%); }
+                      100% { transform: translateX(100%); }
                     }
                      @keyframes led-glow {
                         0%, 100% { box-shadow: 0 0 5px 2px ${themeColors[0]}66; }
@@ -156,7 +156,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-px" style={{backgroundColor: `${themeColors[0]}4D`}}>
                   {storageData.sections.map(section => (
                       <div key={section.id} className="bg-background p-6">
-                          <div className="relative text-left mb-4 p-3 rounded-lg bg-black/50 border" style={{borderColor: `${themeColors[0]}4D`}}>
+                           <div className="relative text-left mb-4 p-3 rounded-lg bg-black/50 border" style={{borderColor: `${themeColors[0]}4D`}}>
                               <h3 className="font-bold text-lg flex items-center gap-2 text-white">
                                   <section.icon className="size-5" />
                                   {section.label}
@@ -178,14 +178,15 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
                         <p className="text-xs text-amber-200/90 flex-1">
                             Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
                         </p>
-                        <Button className="group relative h-11 overflow-hidden bg-gradient-to-r text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px] shrink-0"
-                         style={{'--tw-gradient-from': themeColors[0], '--tw-gradient-to': themeColors[1], boxShadow: `0 0 20px ${themeColors[0]}80`, borderColor: themeColors[0]} as React.CSSProperties}>
-                            <div className="absolute inset-0 w-full h-full" style={{
-                                background: `linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)`,
-                                animation: 'light-scan 3s infinite linear'
-                            }}/>
-                            <DatabaseZap className="mr-2"/>
-                            Aumentar Almacenamiento
+                        <Button className="group/btn relative h-11 overflow-hidden bg-transparent border-2 text-white font-bold text-base transition-all duration-300 shrink-0 hover:bg-transparent"
+                         style={{'--theme-color-start': themeColors[0], '--theme-color-end': themeColors[1], borderColor: 'var(--theme-color-start)'} as React.CSSProperties}>
+                            <div 
+                                className="absolute inset-0 w-0 bg-gradient-to-r from-[var(--theme-color-start)] to-[var(--theme-color-end)] transition-all duration-300 ease-in-out group-hover/btn:w-full"
+                            />
+                            <div className="relative flex items-center gap-2">
+                               <DatabaseZap className="mr-2"/>
+                                Aumentar Almacenamiento
+                            </div>
                         </Button>
                     </div>
                 </div>
