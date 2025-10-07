@@ -70,7 +70,6 @@ function CoverSection({ title, description, icon: Icon, imageUrl, setImageUrl, t
 export default function LogosPage() {
     const { toast } = useToast();
     const [loginBg, setLoginBg] = useState(appConfig.loginBackgroundImageUrl);
-    const [signupBg, setSignupBg] = useState(appConfig.signupBackgroundImageUrl);
     const [forgotPasswordBg, setForgotPasswordBg] = useState(appConfig.forgotPasswordBackgroundImageUrl);
 
     return (
@@ -83,17 +82,6 @@ export default function LogosPage() {
                 icon={ImageIcon}
                 imageUrl={loginBg}
                 setImageUrl={setLoginBg}
-                toast={toast}
-            />
-
-            <Separator />
-
-            <CoverSection
-                title="Portada de Registro"
-                description="Este fondo se mostrará en la página de registro de nuevos usuarios."
-                icon={User}
-                imageUrl={signupBg}
-                setImageUrl={setSignupBg}
                 toast={toast}
             />
 

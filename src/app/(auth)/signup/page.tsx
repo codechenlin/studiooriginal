@@ -32,9 +32,6 @@ import { useLanguage } from "@/context/language-context";
 import { Logo } from "@/components/common/logo";
 import { SphereAnimation } from "@/components/login/sphere-animation";
 import { motion } from 'framer-motion';
-import appConfig from '@/app/lib/app-config.json';
-import Image from "next/image";
-import { MediaPreview } from "@/components/admin/media-preview";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -86,133 +83,127 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="w-screen h-screen flex">
-      <div className="w-1/2 h-full relative flex flex-col justify-center items-center p-10 overflow-hidden bg-background">
-        <div className="absolute top-8 left-8 z-20">
-            <Logo />
-        </div>
-        <SphereAnimation />
-
-        <div className="w-full max-w-sm z-10">
-            <Card className="bg-card/60 dark:bg-zinc-900/60 backdrop-blur-lg border-border/20 shadow-2xl overflow-hidden">
-            <CardHeader className="text-center px-6 pt-6">
-                <motion.div
-                className="inline-block p-3 mx-auto border-2 border-cyan-400/20 rounded-full bg-cyan-500/10 mb-4"
-                animate={{
-                    scale: [1, 1.05, 1],
-                    boxShadow: [
-                    '0 0 15px #00ADEC00',
-                    '0 0 25px #00ADEC',
-                    '0 0 15px #00ADEC00',
-                    ]
-                }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                <User className="size-8" style={{ color: '#00ADEC' }} />
-                </motion.div>
-                <CardTitle className="text-3xl font-bold">{t('signup_create_account')}</CardTitle>
-                <CardDescription>
-                    {t('signup_description')}
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>{t('full_name')}</FormLabel>
-                            <FormControl>
-                                <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                <Input
-                                    placeholder={t('your_name_placeholder')}
-                                    {...field}
-                                    className="pl-10 bg-background/70 border-border/50"
-                                />
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>{t('email')}</FormLabel>
-                            <FormControl>
-                                <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="you@example.com"
-                                    {...field}
-                                    className="pl-10 bg-background/70 border-border/50"
-                                />
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>{t('password')}</FormLabel>
-                            <FormControl>
-                                <div className="relative">
-                                <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
-                                    {isPasswordVisible ? <EyeOff className="size-4 text-muted-foreground" /> : <Eye className="size-4 text-muted-foreground" />}
-                                </button>
-                                <Input
-                                    type={isPasswordVisible ? "text" : "password"}
-                                    placeholder="••••••••"
-                                    {...field}
-                                    className="pr-10 bg-background/70 border-border/50"
-                                />
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90 transition-opacity" disabled={form.formState.isSubmitting}>
-                            {form.formState.isSubmitting ? t('signup_creating_account') : t('signup_create_account_button')}
-                        </Button>
-                    </form>
-                </Form>
-            </CardContent>
-            <CardFooter className="px-6 pb-6">
-                <div className="text-center text-sm text-muted-foreground w-full">
-                    <p>
-                    {t('signup_already_account')}{" "}
-                        <Link
-                            href="/login"
-                            className="font-medium text-primary hover:underline"
-                        >
-                            {t('sign_in_link')}
-                        </Link>
-                    </p>
-                </div>
-            </CardFooter>
-            <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
-                <motion.div
-                className="h-full bg-gradient-to-r from-primary to-accent"
-                animate={{ x: ['-100%', '100%'] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                />
-            </div>
-            </Card>
-        </div>
+    <div className="w-screen h-screen flex flex-col items-center justify-center p-10 overflow-hidden bg-background">
+      <div className="absolute top-8 left-8 z-20">
+          <Logo />
       </div>
-      <div className="w-1/2 h-full relative overflow-hidden">
-        <MediaPreview src={appConfig.signupBackgroundImageUrl} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+      <SphereAnimation />
+
+      <div className="w-full max-w-sm z-10">
+          <Card className="bg-card/60 dark:bg-zinc-900/60 backdrop-blur-lg border-border/20 shadow-2xl overflow-hidden">
+          <CardHeader className="text-center px-6 pt-6">
+              <motion.div
+              className="inline-block p-3 mx-auto border-2 border-cyan-400/20 rounded-full bg-cyan-500/10 mb-4"
+              animate={{
+                  scale: [1, 1.05, 1],
+                  boxShadow: [
+                  '0 0 15px #00ADEC00',
+                  '0 0 25px #00ADEC',
+                  '0 0 15px #00ADEC00',
+                  ]
+              }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              >
+              <User className="size-8" style={{ color: '#00ADEC' }} />
+              </motion.div>
+              <CardTitle className="text-3xl font-bold">{t('signup_create_account')}</CardTitle>
+              <CardDescription>
+                  {t('signup_description')}
+              </CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6">
+              <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>{t('full_name')}</FormLabel>
+                          <FormControl>
+                              <div className="relative">
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                              <Input
+                                  placeholder={t('your_name_placeholder')}
+                                  {...field}
+                                  className="pl-10 bg-background/70 border-border/50"
+                              />
+                              </div>
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                      />
+                      <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>{t('email')}</FormLabel>
+                          <FormControl>
+                              <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                              <Input
+                                  placeholder="you@example.com"
+                                  {...field}
+                                  className="pl-10 bg-background/70 border-border/50"
+                              />
+                              </div>
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                      />
+                      <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>{t('password')}</FormLabel>
+                          <FormControl>
+                              <div className="relative">
+                              <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+                                  {isPasswordVisible ? <EyeOff className="size-4 text-muted-foreground" /> : <Eye className="size-4 text-muted-foreground" />}
+                              </button>
+                              <Input
+                                  type={isPasswordVisible ? "text" : "password"}
+                                  placeholder="••••••••"
+                                  {...field}
+                                  className="pr-10 bg-background/70 border-border/50"
+                              />
+                              </div>
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                      />
+                      <Button type="submit" className="w-full bg-foreground text-background hover:bg-foreground/90 transition-opacity" disabled={form.formState.isSubmitting}>
+                          {form.formState.isSubmitting ? t('signup_creating_account') : t('signup_create_account_button')}
+                      </Button>
+                  </form>
+              </Form>
+          </CardContent>
+          <CardFooter className="px-6 pb-6">
+              <div className="text-center text-sm text-muted-foreground w-full">
+                  <p>
+                  {t('signup_already_account')}{" "}
+                      <Link
+                          href="/login"
+                          className="font-medium text-primary hover:underline"
+                      >
+                          {t('sign_in_link')}
+                      </Link>
+                  </p>
+              </div>
+          </CardFooter>
+          <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-900 overflow-hidden">
+              <motion.div
+              className="h-full bg-gradient-to-r from-primary to-accent"
+              animate={{ x: ['-100%', '100%'] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              />
+          </div>
+          </Card>
       </div>
     </div>
   );
