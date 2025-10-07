@@ -93,7 +93,11 @@ const QuantumProgressBar = ({ used, total, themeColors }: { used: number, total:
           transition={{ duration: 1.5, ease: "circOut" }}
         >
           <div className="h-full w-full bg-gradient-to-r" style={{'--tw-gradient-from': themeColors[0], '--tw-gradient-to': themeColors[1]} as React.CSSProperties}>
-             <div className="progress-bar-shine absolute top-0 left-0 w-full h-full" />
+             <div className="absolute inset-0 w-full h-full" style={{
+                background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)`,
+                backgroundSize: '200% 100%',
+                animation: 'light-scan 2.5s infinite linear'
+             }} />
           </div>
         </motion.div>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -113,22 +117,13 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border-border/30 text-white overflow-hidden"
-             style={{'--tw-border-opacity': '0.3', borderColor: themeColors[0]} as React.CSSProperties}
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl text-white overflow-hidden border"
+             style={{borderColor: `${themeColors[0]}B3`} as React.CSSProperties}
             >
                 <style>{`
                     @keyframes grid-pan { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
                     .animated-grid { background-image: linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--primary)/0.1) 1px, transparent 1px); background-size: 3rem 3rem; animation: grid-pan 60s linear infinite; }
-                    .progress-bar-shine::after {
-                        content: '';
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 50%;
-                        height: 100%;
-                        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-                        animation: light-scan 2.5s infinite linear;
-                    }
+                    
                     @keyframes light-scan {
                       0% { transform: translateX(-100%); }
                       100% { transform: translateX(200%); }
@@ -142,7 +137,7 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
                     }
                 `}</style>
                 
-                <div className="p-4 flex items-center justify-between border-b bg-black/50" style={{borderColor: `${themeColors[0]}33`}}>
+                <div className="p-4 flex items-center justify-between border-b bg-black/50" style={{borderColor: `${themeColors[0]}4D`}}>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-3">
                              <div className="relative p-2 rounded-full bg-primary/20 led-animation" style={{backgroundColor: `${themeColors[0]}33`}}>
@@ -156,10 +151,10 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
                     </Button>
                 </div>
                 
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-px" style={{backgroundColor: `${themeColors[0]}33`}}>
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-px" style={{backgroundColor: `${themeColors[0]}4D`}}>
                   {storageData.sections.map(section => (
                       <div key={section.id} className="bg-background p-6">
-                          <div className="relative text-left mb-4 p-3 rounded-lg bg-black/50 border" style={{borderColor: `${themeColors[0]}33`}}>
+                          <div className="relative text-left mb-4 p-3 rounded-lg bg-black/50 border" style={{borderColor: `${themeColors[0]}4D`}}>
                               <h3 className="font-bold text-lg flex items-center gap-2 text-white">
                                   <section.icon className="size-5" />
                                   {section.label}
@@ -181,9 +176,12 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
                         <p className="text-xs text-amber-200/90 flex-1">
                             Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumenta tu capacidad de almacenamiento.
                         </p>
-                        <Button className="group relative h-11 overflow-hidden bg-gradient-to-r text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px] shrink-0"
-                         style={{'--tw-gradient-from': themeColors[0], '--tw-gradient-to': themeColors[1], boxShadow: `0 0 20px ${themeColors[0]}80`} as React.CSSProperties}>
-                            <div className="absolute inset-0 w-full h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] animate-[button-scan_3s_infinite_linear]"/>
+                        <Button className="group relative h-11 overflow-hidden bg-gradient-to-r text-white font-bold text-base transition-all duration-300 hover:shadow-[0_0_20px] shrink-0 border-2"
+                         style={{'--tw-gradient-from': themeColors[0], '--tw-gradient-to': themeColors[1], boxShadow: `0 0 20px ${themeColors[0]}80`, borderColor: themeColors[0]} as React.CSSProperties}>
+                            <div className="absolute inset-0 w-full h-full" style={{
+                                background: `linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)`,
+                                animation: 'light-scan 3s infinite linear'
+                            }}/>
                             <DatabaseZap className="mr-2"/>
                             Aumentar Almacenamiento
                         </Button>
