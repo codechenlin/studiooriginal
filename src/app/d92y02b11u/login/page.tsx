@@ -65,10 +65,24 @@ export default function AdminLoginPage() {
       }
 
       if (loginData.user) {
-        // Check for super-admin role in user metadata
-        const userRole = loginData.user.user_metadata?.role;
+        // Check for super-admin role in the 'profiles' table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', loginData.user.id)
+          .single();
+
+        if (profileError || !profile) {
+            await supabase.auth.signOut();
+            toast({
+                title: "Acceso Denegado",
+                description: "No se pudo verificar el rol del usuario.",
+                variant: "destructive",
+            });
+            return;
+        }
         
-        if (userRole === 'super-admin') {
+        if (profile.role === 'super-admin') {
           toast({
             title: "Acceso Concedido",
             description: "Bienvenido, Super Administrador. Redirigiendo al panel...",
