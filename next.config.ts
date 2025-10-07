@@ -1,9 +1,6 @@
 
 import type {NextConfig} from 'next';
 
-// @ts-ignore
-const supabaseHostname = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname;
-
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
@@ -32,11 +29,13 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+       {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
       {
         protocol: 'https',
-        hostname: supabaseHostname,
-        port: '',
-        pathname: '/**',
+        hostname: '*.fanton.cloud',
       }
     ],
   },
