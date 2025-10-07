@@ -196,7 +196,13 @@ export default function MainInboxPage() {
                     </p>
                 </div>
             </div>
-            <StorageIndicator used={10.2} total={15} gradientColors={['#AD00EC', '#1700E6']} onClick={() => setIsStorageModalOpen(true)} />
+            <StorageIndicator 
+                used={10.2} 
+                total={15} 
+                gradientColors={['#AD00EC', '#1700E6']} 
+                hoverBorderColor='#AD00EC'
+                onClick={() => setIsStorageModalOpen(true)} 
+            />
           </header>
 
            <Card className={cn(

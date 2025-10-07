@@ -110,7 +110,7 @@ export default function SpamPage() {
                 used={10.2} 
                 total={15} 
                 gradientColors={['#E18700', '#FFAB00']} 
-                hoverGradientColors={['#E18700', '#FFAB00']}
+                hoverBorderColor='#E18700'
                 onClick={() => setIsStorageModalOpen(true)} 
             />
         </header>

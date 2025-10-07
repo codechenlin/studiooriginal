@@ -106,7 +106,7 @@ export default function BouncesPage() {
             used={10.2} 
             total={15} 
             gradientColors={['#F00000', '#F07000']} 
-            hoverGradientColors={['#F00000', '#F07000']}
+            hoverBorderColor='#F00000'
             onClick={() => setIsStorageModalOpen(true)} 
         />
         </header>

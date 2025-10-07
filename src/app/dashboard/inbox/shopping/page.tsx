@@ -107,7 +107,7 @@ export default function ShoppingPage() {
                 used={10.2} 
                 total={15} 
                 gradientColors={['#00EF10', '#A6EE00']} 
-                hoverGradientColors={['#00CB07', '#21F700']}
+                hoverBorderColor='#00CB07'
                 onClick={() => setIsStorageModalOpen(true)} 
             />
         </header>

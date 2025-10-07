@@ -102,7 +102,7 @@ export default function SocialPage() {
                 used={10.2} 
                 total={15} 
                 gradientColors={['#007BA8', '#00ADEC']} 
-                hoverGradientColors={['#00ACEB', '#00ADEC']}
+                hoverBorderColor='#00ACEB'
                 onClick={() => setIsStorageModalOpen(true)} 
             />
         </header>
