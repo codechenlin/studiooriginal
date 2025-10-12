@@ -4,12 +4,17 @@
 import Image from 'next/image';
 
 interface MediaPreviewProps {
-    src: string;
+    src: string | null | undefined;
     alt?: string;
     className?: string;
 }
 
 export function MediaPreview({ src, alt = "Media background", className }: MediaPreviewProps) {
+    if (!src) {
+        // Do not render anything if src is empty, null, or undefined
+        return null;
+    }
+
     const isVideo = src.endsWith('.mp4') || src.endsWith('.webm') || src.endsWith('.avi');
 
     if (isVideo) {
