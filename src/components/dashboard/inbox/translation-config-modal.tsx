@@ -58,7 +58,9 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
         const selectedIndex = filteredLanguages.findIndex(l => l.code === langCode);
         if (selectedIndex !== -1 && scrollContainerRef.current) {
             const element = scrollContainerRef.current.children[selectedIndex] as HTMLElement;
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     };
 
@@ -134,8 +136,9 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                 </Button>
                              </div>
                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-12 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
-                             <ScrollArea className="h-full w-full" viewportRef={scrollContainerRef}>
-                                <div className="py-[calc(50%-1.5rem)]">
+                             <ScrollArea className="h-full w-full">
+                                <div className="flex-1" />
+                                <div ref={scrollContainerRef}>
                                     {filteredLanguages.map(lang => (
                                         <button
                                             key={lang.code}
@@ -154,6 +157,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                         </button>
                                     ))}
                                 </div>
+                                <div className="flex-1" />
                             </ScrollArea>
                         </div>
                     </div>
