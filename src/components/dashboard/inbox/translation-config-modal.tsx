@@ -75,15 +75,17 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-6 z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                    {/* From Language */}
-                    <div className="space-y-4 text-center">
-                        <Label className="font-semibold text-sm text-purple-200">Idioma Original</Label>
-                         <div className="relative p-3 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center justify-center gap-3 text-sm font-semibold">
-                            <CheckCircle className="size-5 text-green-400"/>
-                            <span className="text-green-300">Detección Automática</span>
+                <div className="py-6 z-10 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Left Panel: From Language */}
+                    <div className="flex flex-col text-center">
+                        <Label className="font-semibold text-sm text-purple-200 mb-4">Idioma Original</Label>
+                        <div className="min-h-[52px]">
+                            <div className="relative p-3 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center justify-center gap-3 text-sm font-semibold">
+                                <CheckCircle className="size-5 text-green-400"/>
+                                <span className="text-green-300">Detección Automática</span>
+                            </div>
                         </div>
-                        <div className="relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-48">
+                        <div className="mt-4 relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-48">
                              <motion.div
                                 className="absolute inset-0 opacity-50"
                                 style={{ backgroundImage: `radial-gradient(circle at 50% 50%, hsl(283 100% 55% / 0.2), transparent 70%)` }}
@@ -95,9 +97,9 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                         </div>
                     </div>
                     {/* To Language */}
-                     <div className="space-y-4 text-center flex flex-col">
-                        <Label className="font-semibold text-sm text-purple-200">Traducir a</Label>
-                        <div className="flex gap-2 justify-center">
+                     <div className="flex flex-col text-center">
+                        <Label className="font-semibold text-sm text-purple-200 mb-4">Traducir a</Label>
+                        <div className="flex gap-2 justify-center min-h-[52px]">
                             <div className="relative flex-1 flex items-center">
                                 <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => setIsSearchVisible(!isSearchVisible)}>
                                   <Search/>
@@ -128,7 +130,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
                         </div>
-                         <div className="relative h-48 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
+                         <div className="mt-4 relative h-48 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
                            <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
                             <motion.div 
                                 className="w-full" 
