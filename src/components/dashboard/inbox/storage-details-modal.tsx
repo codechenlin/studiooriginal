@@ -178,12 +178,11 @@ export function StorageDetailsModal({ isOpen, onOpenChange, themeColors = ['#AD0
                         <p className="text-xs text-amber-200/90 flex-1">
                             Puedes libera espacio eliminando archivos, correos electrónicos o plantillas antiguas, también puedes aumentar tu capacidad de almacenamiento.
                         </p>
-                         <Button
-                            className="relative h-11 px-6 bg-[#E1E1E1] border-2 border-white text-black font-bold text-base transition-colors duration-300
-                                       hover:bg-white hover:border-white"
+                        <Button
+                            className="relative h-11 px-6 bg-[#E1E1E1] border-2 border-white text-black font-bold text-base transition-colors duration-300 hover:bg-white hover:border-white"
                         >
                             <span className="relative z-10 flex items-center gap-2">
-                                <div className="relative size-6">
+                                <div className="relative flex items-center justify-center size-6">
                                     <DatabaseZap className="size-6 text-black" />
                                     <div className="absolute inset-0 rounded-full border-2 border-dashed border-black/50 animate-spin-slow"/>
                                 </div>
