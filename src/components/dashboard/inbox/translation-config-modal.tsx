@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Languages, BrainCircuit, Check, X, Loader2, Search } from 'lucide-react';
+import { Languages, BrainCircuit, Check, X, Loader2, Search, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,6 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     const [isSaving, setIsSaving] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
     
     const filteredLanguages = useMemo(() => 
         availableLanguages.filter(lang => 
@@ -41,26 +40,14 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
       [searchTerm]
     );
 
-    useEffect(() => {
-        if (isOpen && scrollContainerRef.current) {
-            const selectedIndex = filteredLanguages.findIndex(l => l.code === targetLanguage);
-            if (selectedIndex !== -1) {
-                const element = scrollContainerRef.current.children[selectedIndex] as HTMLElement;
-                if (element) {
-                    element.scrollIntoView({ block: 'center' });
-                }
-            }
-        }
-    }, [isOpen, filteredLanguages, targetLanguage, isSearchOpen]);
+    const activeIndex = useMemo(() => {
+        return filteredLanguages.findIndex(l => l.code === targetLanguage);
+    }, [filteredLanguages, targetLanguage]);
 
-    const handleLanguageClick = (langCode: string) => {
-        setTargetLanguage(langCode);
-        const selectedIndex = filteredLanguages.findIndex(l => l.code === langCode);
-        if (selectedIndex !== -1 && scrollContainerRef.current) {
-            const element = scrollContainerRef.current.children[selectedIndex] as HTMLElement;
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+    const handleLanguageClick = (direction: 'up' | 'down') => {
+        const newIndex = direction === 'up' ? activeIndex - 1 : activeIndex + 1;
+        if (newIndex >= 0 && newIndex < filteredLanguages.length) {
+            setTargetLanguage(filteredLanguages[newIndex].code);
         }
     };
 
@@ -71,6 +58,8 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
             onOpenChange(false);
         }, 1500);
     }
+    
+    const itemHeight = 48; // Corresponds to h-12 in Tailwind
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -106,7 +95,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     {/* To Language */}
                     <div className="space-y-2 text-center flex flex-col">
                         <Label htmlFor="target-lang" className="font-semibold text-sm text-purple-200">Traducir a</Label>
-                        <div className="relative rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden h-48">
+                        <div className="relative rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-between overflow-hidden h-48">
                              <div className="absolute top-4 right-4 z-20 flex items-center justify-end">
                                 <AnimatePresence>
                                 {isSearchOpen && (
@@ -135,30 +124,34 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                     <Search className="size-4" />
                                 </Button>
                              </div>
-                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-12 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
-                             <ScrollArea className="h-full w-full">
-                                <div className="flex-1" />
-                                <div ref={scrollContainerRef}>
-                                    {filteredLanguages.map(lang => (
-                                        <button
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute top-2 left-1/2 -translate-x-1/2 z-10" onClick={() => handleLanguageClick('up')}><ChevronUp/></Button>
+                             
+                             <div className="w-full h-full relative overflow-hidden">
+                                <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
+                                <div
+                                    className="w-full transition-transform duration-300 ease-in-out"
+                                    style={{ transform: `translateY(calc(50% - ${activeIndex * itemHeight}px - ${itemHeight/2}px))` }}
+                                >
+                                    {filteredLanguages.map((lang, index) => (
+                                        <div
                                             key={lang.code}
-                                            onClick={() => handleLanguageClick(lang.code)}
                                             className={cn(
-                                                "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center",
-                                                targetLanguage === lang.code ? "font-bold text-white scale-110" : "text-purple-200/50 scale-90"
+                                                "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer",
+                                                activeIndex === index ? "font-bold text-white scale-100" : "text-purple-200/50 scale-90"
                                             )}
+                                            onClick={() => setTargetLanguage(lang.code)}
                                         >
                                            <div className="flex items-center justify-center gap-3">
-                                               {targetLanguage === lang.code && (
+                                               {activeIndex === index && (
                                                  <div className="w-2.5 h-2.5 rounded-full bg-[#00CB07] shadow-[0_0_8px_#00CB07]" />
                                                )}
                                               <span>{lang.name}</span>
                                            </div>
-                                        </button>
+                                        </div>
                                     ))}
                                 </div>
-                                <div className="flex-1" />
-                            </ScrollArea>
+                             </div>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute bottom-2 left-1/2 -translate-x-1/2 z-10" onClick={() => handleLanguageClick('down')}><ChevronDown/></Button>
                         </div>
                     </div>
                 </div>
