@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UploadCloud, Image as ImageIcon, KeyRound as KeyIcon, GalleryVertical, Loader2, Palette, Sun, Moon } from "lucide-react";
+import { UploadCloud, Image as ImageIcon, KeyRound as KeyIcon, GalleryVertical, Loader2, Palette, Sun, Moon, Trash2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { Separator } from '@/components/ui/separator';
