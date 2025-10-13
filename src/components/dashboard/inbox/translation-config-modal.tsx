@@ -1,14 +1,15 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Languages, BrainCircuit, Check, X, Loader2, Search, ChevronUp, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Languages, BrainCircuit, Check, X, Loader2, Search, ChevronUp, ChevronDown, CheckCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const availableLanguages = [
     { code: 'es', name: 'Español' },
@@ -26,12 +27,11 @@ const availableLanguages = [
 ];
 
 export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) {
-    const [detectedLanguage] = useState('Inglés (Detectado)');
     const [targetLanguage, setTargetLanguage] = useState('es');
     const [isSaving, setIsSaving] = useState(false);
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
     const filteredLanguages = useMemo(() => 
         availableLanguages.filter(lang => 
             lang.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -40,12 +40,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     );
 
     const activeIndex = useMemo(() => {
-        const index = filteredLanguages.findIndex(l => l.code === targetLanguage);
-        if (index === -1 && filteredLanguages.length > 0) {
-            setTargetLanguage(filteredLanguages[0].code);
-            return 0;
-        }
-        return index;
+        return filteredLanguages.findIndex(l => l.code === targetLanguage);
     }, [filteredLanguages, targetLanguage]);
 
     const handleLanguageClick = (direction: 'up' | 'down') => {
@@ -55,7 +50,16 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
             setTargetLanguage(filteredLanguages[newIndex].code);
         }
     };
-    
+
+    useEffect(() => {
+        if (activeIndex !== -1 && scrollContainerRef.current) {
+            const element = scrollContainerRef.current.children[activeIndex] as HTMLElement;
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }, [activeIndex, filteredLanguages]); // Re-run effect when list is filtered
+
     const handleSave = () => {
         setIsSaving(true);
         setTimeout(() => {
@@ -64,9 +68,6 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
         }, 1500);
     }
     
-    const itemHeight = 48; // Corresponds to h-12 in Tailwind
-    const offset = `calc(50% - ${itemHeight / 2}px - ${activeIndex * itemHeight}px)`;
-
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-xl bg-zinc-900/90 backdrop-blur-xl border border-purple-500/20 text-white overflow-hidden" showCloseButton={false}>
@@ -83,83 +84,65 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-6 z-10 grid grid-cols-2 gap-6 items-center">
+                <div className="py-6 z-10 grid grid-cols-2 gap-6 items-start">
                     {/* From Language */}
-                    <div className="space-y-2 text-center">
+                    <div className="space-y-4 text-center">
                         <Label className="font-semibold text-sm text-purple-200">Idioma Original</Label>
-                        <div className="relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-48">
+                         <div className="relative p-3 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center gap-3 text-sm font-semibold">
+                            <CheckCircle className="size-5 text-green-400"/>
+                            <span className="text-green-300">Detección Automática</span>
+                        </div>
+                        <div className="relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-28">
                              <motion.div
                                 className="absolute inset-0 opacity-50"
                                 style={{ backgroundImage: `radial-gradient(circle at 50% 50%, hsl(283 100% 55% / 0.2), transparent 70%)` }}
                                 animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.7, 0.3] }}
                                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                             />
-                            <p className="font-bold text-lg text-white">{detectedLanguage}</p>
-                            <p className="text-xs text-purple-300/80">Detectado por IA</p>
+                            <p className="font-bold text-lg text-white">Detectar Idioma</p>
                         </div>
                     </div>
                     {/* To Language */}
-                    <div className="space-y-2 text-center flex flex-col">
+                    <div className="space-y-4 text-center flex flex-col">
                         <Label htmlFor="target-lang" className="font-semibold text-sm text-purple-200">Traducir a</Label>
-                        <div className="relative rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-between overflow-hidden h-48">
-                            <div className="absolute top-4 right-4 z-20 flex items-center justify-end">
-                                <AnimatePresence>
-                                {isSearchOpen && (
-                                    <motion.div
-                                        initial={{ width: 0, opacity: 0 }}
-                                        animate={{ width: 150, opacity: 1 }}
-                                        exit={{ width: 0, opacity: 0 }}
-                                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                        className="relative mr-2"
-                                    >
-                                        <Input
-                                            type="text"
-                                            placeholder="Buscar idioma..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="h-8 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50"
-                                            autoFocus
-                                        />
-                                        <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-8 w-8 text-purple-200 hover:text-white" onClick={() => { setSearchTerm(''); setIsSearchOpen(false); }}>
-                                            <X className="size-4" />
-                                        </Button>
-                                    </motion.div>
-                                )}
-                                </AnimatePresence>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-200 hover:text-white" onClick={() => setIsSearchOpen(!isSearchOpen)}>
-                                    <Search className="size-4" />
-                                </Button>
-                             </div>
-                             <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute top-2 left-1/2 -translate-x-1/2 z-20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
-                             
-                              <div className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
+                            <Input
+                                type="text"
+                                placeholder="Buscar idioma..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
+                            />
+                        </div>
+                        <div className="relative rounded-lg bg-black/30 border border-purple-400/20 flex items-center justify-between overflow-hidden h-28">
+                             <div className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center">
                                 <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
-                                <div
-                                    className="w-full transition-transform duration-300 ease-in-out"
-                                    style={{ transform: `translateY(${offset})` }}
-                                >
-                                    {filteredLanguages.map((lang, index) => (
-                                        <div
-                                            key={lang.code}
-                                            className={cn(
-                                                "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer"
-                                            )}
-                                            onClick={() => setTargetLanguage(lang.code)}
-                                        >
-                                           <div className={cn(
-                                                "flex items-center justify-center gap-3 transition-all duration-300",
-                                                activeIndex === index ? "font-bold text-white scale-100" : "text-purple-200/50 scale-90"
-                                            )}>
-                                               {activeIndex === index && (
-                                                 <div className="w-2.5 h-2.5 rounded-full bg-[#00CB07] shadow-[0_0_8px_#00CB07]" />
-                                               )}
-                                              <span>{lang.name}</span>
-                                           </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <ScrollArea className="h-full w-full" viewportRef={scrollContainerRef}>
+                                    <div className="py-[calc(50%-1.5rem)]">
+                                        {filteredLanguages.map((lang, index) => (
+                                            <div
+                                                key={lang.code}
+                                                className={cn(
+                                                    "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer"
+                                                )}
+                                                onClick={() => setTargetLanguage(lang.code)}
+                                            >
+                                               <div className={cn(
+                                                    "flex items-center justify-center gap-3 transition-all duration-300",
+                                                    activeIndex === index ? "font-bold scale-100" : "text-purple-200/50 scale-90"
+                                                )}>
+                                                  <span style={{ color: activeIndex === index ? '#FFFFFF' : ''}}>{lang.name}</span>
+                                               </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
                              </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute bottom-2 left-1/2 -translate-x-1/2 z-20" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-2">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
+                             </div>
                         </div>
                     </div>
                 </div>
