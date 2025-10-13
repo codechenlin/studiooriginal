@@ -126,11 +126,11 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                              </div>
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute top-2 left-1/2 -translate-x-1/2 z-10" onClick={() => handleLanguageClick('up')}><ChevronUp/></Button>
                              
-                             <div className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center">
+                             <div className="w-full h-full relative overflow-hidden flex items-center">
                                 <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
                                 <div
                                     className="w-full transition-transform duration-300 ease-in-out"
-                                    style={{ transform: `translateY(calc(-${activeIndex * itemHeight}px))` }}
+                                    style={{ transform: `translateY(calc(-${activeIndex * itemHeight}px + ${itemHeight * 1.5}px))` }}
                                 >
                                     {filteredLanguages.map((lang, index) => (
                                         <div
@@ -170,3 +170,4 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
         </Dialog>
     );
 }
+
