@@ -30,9 +30,8 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     const [targetLanguage, setTargetLanguage] = useState('es');
     const [isSaving, setIsSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
     
-    const listRef = useRef<HTMLDivElement>(null);
-
     const filteredLanguages = useMemo(() => 
         availableLanguages.filter(lang => 
             lang.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -41,8 +40,16 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     );
 
     const activeIndex = useMemo(() => {
-        return filteredLanguages.findIndex(l => l.code === targetLanguage);
+        const index = filteredLanguages.findIndex(l => l.code === targetLanguage);
+        return index === -1 ? 0 : index;
     }, [filteredLanguages, targetLanguage]);
+
+    useEffect(() => {
+        if (!filteredLanguages.some(l => l.code === targetLanguage)) {
+            setTargetLanguage(filteredLanguages[0]?.code || 'es');
+        }
+    }, [filteredLanguages, targetLanguage]);
+
 
     const handleLanguageClick = (direction: 'up' | 'down') => {
         const newIndex = direction === 'up' ? activeIndex - 1 : activeIndex + 1;
@@ -96,40 +103,61 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     {/* To Language */}
                     <div className="space-y-4 text-center flex flex-col">
                         <Label className="font-semibold text-sm text-purple-200">Traducir a</Label>
-                         <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
-                                <Input
-                                    type="text"
-                                    placeholder="Buscar idioma..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
-                                />
-                            </div>
-                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
+                        <div className="flex gap-2">
+                             <motion.div layout className="relative flex-1 flex items-center">
+                                <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => setIsSearchVisible(!isSearchVisible)}>
+                                  <Search/>
+                                </Button>
+                                <AnimatePresence>
+                                {isSearchVisible && (
+                                    <motion.div
+                                        className="absolute left-0 w-full"
+                                        initial={{ width: 40, opacity: 0 }}
+                                        animate={{ width: '100%', opacity: 1 }}
+                                        exit={{ width: 40, opacity: 0 }}
+                                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                    >
+                                        <div className="relative w-full">
+                                        <Input
+                                            type="text"
+                                            placeholder="Buscar idioma..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
+                                        />
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
+                                        </div>
+                                    </motion.div>
+                                )}
+                                </AnimatePresence>
+                            </motion.div>
+                            <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
                         </div>
-                        <div className="relative h-[280px] rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
+                        <div className="relative h-48 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
                            <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
                             <div 
                                 className="w-full transition-transform duration-300 ease-in-out" 
-                                style={{ transform: `translateY(calc(50% - ${activeIndex * 3}rem + 1.5rem))`}}
+                                style={{ transform: `translateY(calc(50% - ${activeIndex * 3}rem - 1.5rem))`}}
                             >
                                 {filteredLanguages.map((lang, index) => (
                                     <div
                                         key={lang.code}
-                                        className={cn(
-                                            "w-full text-center text-lg p-2 transition-all duration-300 h-12 flex items-center justify-center cursor-pointer"
-                                        )}
+                                        className="w-full text-center text-lg p-2 transition-all duration-300 h-12 flex items-center justify-center cursor-pointer"
                                         onClick={() => setTargetLanguage(lang.code)}
                                     >
-                                        <span className={cn(
-                                            "transition-all duration-300",
-                                            activeIndex === index ? "font-bold scale-100 text-white" : "text-purple-200/50 scale-90"
+                                        <div className={cn(
+                                            "flex items-center gap-3 transition-all duration-300",
+                                            activeIndex === index ? "text-white scale-100" : "text-purple-200/50 scale-90"
                                         )}>
-                                            {lang.name}
-                                        </span>
+                                            <div className={cn(
+                                                "size-2 rounded-full transition-all duration-300",
+                                                activeIndex === index ? "bg-[#00CB07] shadow-[0_0_8px_#00CB07]" : "bg-transparent"
+                                            )}/>
+                                            <span className={activeIndex === index ? "font-bold" : ""}>
+                                              {lang.name}
+                                            </span>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
