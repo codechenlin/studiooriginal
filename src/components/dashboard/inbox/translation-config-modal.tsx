@@ -30,7 +30,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     const [targetLanguage, setTargetLanguage] = useState('es');
     const [isSaving, setIsSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+    const listRef = useRef<HTMLDivElement>(null);
 
     const filteredLanguages = useMemo(() => 
         availableLanguages.filter(lang => 
@@ -55,13 +55,13 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     };
 
     useEffect(() => {
-        if (activeIndex !== -1 && scrollContainerRef.current) {
-            const element = scrollContainerRef.current.children[activeIndex] as HTMLElement;
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+        if (activeIndex !== -1 && listRef.current) {
+            const listElement = listRef.current;
+            const itemHeight = listElement.children[0]?.clientHeight || 48; // Assuming each item is 48px high (h-12)
+            const targetScrollTop = activeIndex * itemHeight;
+            listElement.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
         }
-    }, [activeIndex, filteredLanguages]);
+    }, [activeIndex]);
 
     const handleSave = () => {
         setIsSaving(true);
@@ -91,11 +91,11 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     {/* From Language */}
                     <div className="space-y-4 text-center">
                         <Label className="font-semibold text-sm text-purple-200">Idioma Original</Label>
-                        <div className="relative p-3 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center justify-center gap-3 text-sm font-semibold">
+                         <div className="relative p-3 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center justify-center gap-3 text-sm font-semibold">
                             <CheckCircle className="size-5 text-green-400"/>
                             <span className="text-green-300">Detección Automática</span>
                         </div>
-                        <div className="relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-28">
+                        <div className="relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-[236px]">
                              <motion.div
                                 className="absolute inset-0 opacity-50"
                                 style={{ backgroundImage: `radial-gradient(circle at 50% 50%, hsl(283 100% 55% / 0.2), transparent 70%)` }}
@@ -108,7 +108,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     {/* To Language */}
                     <div className="space-y-4 text-center flex flex-col">
                         <Label className="font-semibold text-sm text-purple-200">Traducir a</Label>
-                        <div className="relative">
+                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
                             <Input
                                 type="text"
@@ -118,36 +118,30 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                 className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
                             />
                         </div>
-                        <div className="relative rounded-lg bg-black/30 border border-purple-400/20 flex items-center justify-between overflow-hidden h-28">
-                             <div className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center">
-                                <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
-                                <ScrollArea className="h-full w-full" viewportRef={scrollContainerRef}>
-                                    <div className="flex flex-col items-center justify-center h-full">
-                                        <div className="h-[calc(50%-1.5rem)]"></div> {/* Spacer top */}
-                                            {filteredLanguages.map((lang, index) => (
-                                                <div
-                                                    key={lang.code}
-                                                    className={cn(
-                                                        "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer"
-                                                    )}
-                                                    onClick={() => setTargetLanguage(lang.code)}
-                                                >
-                                                <div className={cn(
-                                                        "flex items-center justify-center gap-3 transition-all duration-300",
-                                                        activeIndex === index ? "font-bold scale-100 text-white" : "text-purple-200/50 scale-90"
-                                                    )}>
-                                                    <span>{lang.name}</span>
-                                                </div>
-                                                </div>
-                                            ))}
-                                        <div className="h-[calc(50%-1.5rem)]"></div> {/* Spacer bottom */}
-                                    </div>
-                                </ScrollArea>
-                             </div>
-                              <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
-                             </div>
+                        <div className="relative h-[236px] rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-between overflow-hidden">
+                           <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white z-20 absolute top-2" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
+                            <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
+                            <div className="h-full w-full overflow-y-scroll custom-scrollbar" ref={listRef}>
+                                <div className="flex flex-col items-center justify-start h-full pt-[calc(50%-1.5rem)] pb-[calc(50%-1.5rem)]">
+                                    {filteredLanguages.map((lang, index) => (
+                                        <div
+                                            key={lang.code}
+                                            className={cn(
+                                                "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer"
+                                            )}
+                                            onClick={() => setTargetLanguage(lang.code)}
+                                        >
+                                            <div className={cn(
+                                                "flex items-center justify-center gap-3 transition-all duration-300",
+                                                activeIndex === index ? "font-bold scale-100 text-white" : "text-purple-200/50 scale-90"
+                                            )}>
+                                                <span>{lang.name}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                           <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white z-20 absolute bottom-2" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
                         </div>
                     </div>
                 </div>
