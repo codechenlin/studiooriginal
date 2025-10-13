@@ -30,6 +30,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     const [targetLanguage, setTargetLanguage] = useState('es');
     const [isSaving, setIsSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
     
     const filteredLanguages = useMemo(() => 
         availableLanguages.filter(lang => 
@@ -89,7 +90,9 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                 
                 <DialogHeader className="z-10">
                     <DialogTitle className="flex items-center gap-3 text-2xl text-purple-300">
-                        <BrainCircuit className="size-8"/>
+                        <div className="relative p-3 rounded-full bg-purple-900/50 border-2 border-purple-500/50">
+                           <BrainCircuit className="relative size-6"/>
+                        </div>
                         Configuración de Traducción con IA
                     </DialogTitle>
                     <DialogDescription className="text-purple-200/70 pt-2">
@@ -100,7 +103,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                 <div className="py-6 z-10 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="flex flex-col text-center">
                         <Label className="font-semibold text-sm text-purple-200 mb-4">Idioma Original</Label>
-                        <div className="min-h-[52px]">
+                        <div className="min-h-[52px] flex items-center justify-center">
                             <div className="relative p-3 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center justify-center gap-3 text-sm font-semibold">
                                 <CheckCircle className="size-5 text-green-400 icon-check-pulse"/>
                                 <span className="text-green-300">Detección Automática</span>
@@ -129,23 +132,33 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
 
                      <div className="flex flex-col text-center">
                         <Label className="font-semibold text-sm text-purple-200 mb-4">Traducir a</Label>
-                        <div className="flex gap-2 justify-center min-h-[52px]">
+                        <div className="flex gap-2 justify-center min-h-[52px] items-center">
                             <div className="relative flex-1 flex items-center">
-                                <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => setSearchTerm('')}>
+                                <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => setIsSearchVisible(!isSearchVisible)}>
                                   <Search/>
                                 </Button>
-                                 <div className="absolute left-0 w-full z-10">
-                                    <div className="relative w-full">
-                                    <Input
-                                        type="text"
-                                        placeholder="Buscar idioma..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
-                                    />
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
-                                    </div>
-                                </div>
+                                <AnimatePresence>
+                                {isSearchVisible && (
+                                    <motion.div
+                                        className="absolute left-0 w-full z-10"
+                                        initial={{ width: 0, opacity: 0 }}
+                                        animate={{ width: '100%', opacity: 1 }}
+                                        exit={{ width: 0, opacity: 0 }}
+                                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                    >
+                                        <div className="relative w-full">
+                                        <Input
+                                            type="text"
+                                            placeholder="Buscar idioma..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
+                                        />
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
+                                        </div>
+                                    </motion.div>
+                                )}
+                                </AnimatePresence>
                             </div>
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
