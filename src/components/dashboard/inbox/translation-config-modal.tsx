@@ -30,6 +30,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     const [targetLanguage, setTargetLanguage] = useState('es');
     const [isSaving, setIsSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    
     const listRef = useRef<HTMLDivElement>(null);
 
     const filteredLanguages = useMemo(() => 
@@ -44,25 +45,12 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     }, [filteredLanguages, targetLanguage]);
 
     const handleLanguageClick = (direction: 'up' | 'down') => {
-        if (activeIndex === -1 && filteredLanguages.length > 0) {
-            setTargetLanguage(filteredLanguages[0].code);
-            return;
-        }
         const newIndex = direction === 'up' ? activeIndex - 1 : activeIndex + 1;
         if (newIndex >= 0 && newIndex < filteredLanguages.length) {
             setTargetLanguage(filteredLanguages[newIndex].code);
         }
     };
-
-    useEffect(() => {
-        if (activeIndex !== -1 && listRef.current) {
-            const listElement = listRef.current;
-            const itemHeight = listElement.children[0]?.clientHeight || 48; // Assuming each item is 48px high (h-12)
-            const targetScrollTop = activeIndex * itemHeight;
-            listElement.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-        }
-    }, [activeIndex]);
-
+    
     const handleSave = () => {
         setIsSaving(true);
         setTimeout(() => {
@@ -73,7 +61,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl bg-zinc-900/90 backdrop-blur-xl border border-purple-500/20 text-white overflow-hidden" showCloseButton={false}>
+            <DialogContent className="sm:max-w-2xl bg-zinc-900/90 backdrop-blur-xl border border-purple-500/20 text-white overflow-hidden" showCloseButton={false}>
                 <div className="absolute inset-0 z-0 opacity-10 bg-grid-purple-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
                 
@@ -87,7 +75,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-6 z-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div className="py-6 z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                     {/* From Language */}
                     <div className="space-y-4 text-center">
                         <Label className="font-semibold text-sm text-purple-200">Idioma Original</Label>
@@ -95,7 +83,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                             <CheckCircle className="size-5 text-green-400"/>
                             <span className="text-green-300">Detección Automática</span>
                         </div>
-                        <div className="relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-[236px]">
+                        <div className="relative p-4 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center h-[280px]">
                              <motion.div
                                 className="absolute inset-0 opacity-50"
                                 style={{ backgroundImage: `radial-gradient(circle at 50% 50%, hsl(283 100% 55% / 0.2), transparent 70%)` }}
@@ -108,40 +96,43 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     {/* To Language */}
                     <div className="space-y-4 text-center flex flex-col">
                         <Label className="font-semibold text-sm text-purple-200">Traducir a</Label>
-                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
-                            <Input
-                                type="text"
-                                placeholder="Buscar idioma..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
-                            />
-                        </div>
-                        <div className="relative h-[236px] rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-between overflow-hidden">
-                           <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white z-20 absolute top-2" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
-                            <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
-                            <div className="h-full w-full overflow-y-scroll custom-scrollbar" ref={listRef}>
-                                <div className="flex flex-col items-center justify-start h-full pt-[calc(50%-1.5rem)] pb-[calc(50%-1.5rem)]">
-                                    {filteredLanguages.map((lang, index) => (
-                                        <div
-                                            key={lang.code}
-                                            className={cn(
-                                                "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer"
-                                            )}
-                                            onClick={() => setTargetLanguage(lang.code)}
-                                        >
-                                            <div className={cn(
-                                                "flex items-center justify-center gap-3 transition-all duration-300",
-                                                activeIndex === index ? "font-bold scale-100 text-white" : "text-purple-200/50 scale-90"
-                                            )}>
-                                                <span>{lang.name}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                         <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300/70" />
+                                <Input
+                                    type="text"
+                                    placeholder="Buscar idioma..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="h-10 bg-black/50 border-purple-400/50 text-white placeholder:text-purple-200/50 pl-10"
+                                />
                             </div>
-                           <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white z-20 absolute bottom-2" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
+                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
+                            <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
+                        </div>
+                        <div className="relative h-[280px] rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
+                           <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
+                            <div 
+                                className="w-full transition-transform duration-300 ease-in-out" 
+                                style={{ transform: `translateY(calc(50% - ${activeIndex * 3}rem + 1.5rem))`}}
+                            >
+                                {filteredLanguages.map((lang, index) => (
+                                    <div
+                                        key={lang.code}
+                                        className={cn(
+                                            "w-full text-center text-lg p-2 transition-all duration-300 h-12 flex items-center justify-center cursor-pointer"
+                                        )}
+                                        onClick={() => setTargetLanguage(lang.code)}
+                                    >
+                                        <span className={cn(
+                                            "transition-all duration-300",
+                                            activeIndex === index ? "font-bold scale-100 text-white" : "text-purple-200/50 scale-90"
+                                        )}>
+                                            {lang.name}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
