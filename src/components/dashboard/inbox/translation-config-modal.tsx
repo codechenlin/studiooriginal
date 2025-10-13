@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Languages, BrainCircuit, Check, X, Loader2, Search, ChevronUp, ChevronDown } from 'lucide-react';
@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 const availableLanguages = [
     { code: 'es', name: 'Español' },
@@ -42,22 +41,21 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
 
     const activeIndex = useMemo(() => {
         const index = filteredLanguages.findIndex(l => l.code === targetLanguage);
-        return index === -1 ? 0 : index;
+        if (index === -1 && filteredLanguages.length > 0) {
+            setTargetLanguage(filteredLanguages[0].code);
+            return 0;
+        }
+        return index;
     }, [filteredLanguages, targetLanguage]);
 
     const handleLanguageClick = (direction: 'up' | 'down') => {
+        if (activeIndex === -1) return;
         const newIndex = direction === 'up' ? activeIndex - 1 : activeIndex + 1;
         if (newIndex >= 0 && newIndex < filteredLanguages.length) {
             setTargetLanguage(filteredLanguages[newIndex].code);
         }
     };
     
-     useEffect(() => {
-      if (!filteredLanguages.some(l => l.code === targetLanguage)) {
-        setTargetLanguage(filteredLanguages[0]?.code || 'es');
-      }
-    }, [searchTerm, filteredLanguages, targetLanguage]);
-
     const handleSave = () => {
         setIsSaving(true);
         setTimeout(() => {
@@ -67,6 +65,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     }
     
     const itemHeight = 48; // Corresponds to h-12 in Tailwind
+    const offset = `calc(50% - ${itemHeight / 2}px - ${activeIndex * itemHeight}px)`;
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -103,7 +102,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                     <div className="space-y-2 text-center flex flex-col">
                         <Label htmlFor="target-lang" className="font-semibold text-sm text-purple-200">Traducir a</Label>
                         <div className="relative rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-between overflow-hidden h-48">
-                             <div className="absolute top-4 right-4 z-20 flex items-center justify-end">
+                            <div className="absolute top-4 right-4 z-20 flex items-center justify-end">
                                 <AnimatePresence>
                                 {isSearchOpen && (
                                     <motion.div
@@ -131,24 +130,26 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                     <Search className="size-4" />
                                 </Button>
                              </div>
-                             <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute top-2 left-1/2 -translate-x-1/2 z-10" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute top-2 left-1/2 -translate-x-1/2 z-20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
                              
                               <div className="w-full h-full relative overflow-hidden flex flex-col items-center justify-center">
                                 <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
                                 <div
                                     className="w-full transition-transform duration-300 ease-in-out"
-                                    style={{ transform: `translateY(calc(-${activeIndex * itemHeight}px + ${itemHeight / 2}px))` }}
+                                    style={{ transform: `translateY(${offset})` }}
                                 >
                                     {filteredLanguages.map((lang, index) => (
                                         <div
                                             key={lang.code}
                                             className={cn(
-                                                "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer",
-                                                activeIndex === index ? "font-bold text-white scale-100" : "text-purple-200/50 scale-90"
+                                                "w-full text-center text-lg p-2 transition-all duration-300 rounded-md h-12 flex items-center justify-center cursor-pointer"
                                             )}
                                             onClick={() => setTargetLanguage(lang.code)}
                                         >
-                                           <div className="flex items-center justify-center gap-3">
+                                           <div className={cn(
+                                                "flex items-center justify-center gap-3 transition-all duration-300",
+                                                activeIndex === index ? "font-bold text-white scale-100" : "text-purple-200/50 scale-90"
+                                            )}>
                                                {activeIndex === index && (
                                                  <div className="w-2.5 h-2.5 rounded-full bg-[#00CB07] shadow-[0_0_8px_#00CB07]" />
                                                )}
@@ -158,7 +159,7 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                     ))}
                                 </div>
                              </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute bottom-2 left-1/2 -translate-x-1/2 z-10" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-300 hover:text-white absolute bottom-2 left-1/2 -translate-x-1/2 z-20" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
                         </div>
                     </div>
                 </div>
