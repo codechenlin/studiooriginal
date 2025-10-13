@@ -37,7 +37,7 @@ const allTags: TaggableTag[] = [
   { name: 'Anuncios', color: '#eab308' },
   { name: 'Reunión', color: '#4f46e5' },
   { name: 'Personal', color: '#7c3aed' },
-  { name_LT: 'Investigación', color: '#db2777' },
+  { name: 'Investigación', color: '#db2777' },
   { name: 'Desarrollo', color: '#1d4ed8' },
   { name: 'Ventas', color: '#9f1239' },
   { name: 'Finanzas', color: '#166534' },
