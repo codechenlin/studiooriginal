@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Languages, BrainCircuit, Check, X, Loader2, Search, ChevronUp, ChevronDown, CheckCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -42,12 +42,6 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
     const activeIndex = useMemo(() => {
         const index = filteredLanguages.findIndex(l => l.code === targetLanguage);
         return index === -1 ? 0 : index;
-    }, [filteredLanguages, targetLanguage]);
-
-    useEffect(() => {
-        if (!filteredLanguages.some(l => l.code === targetLanguage)) {
-            setTargetLanguage(filteredLanguages[0]?.code || 'es');
-        }
     }, [filteredLanguages, targetLanguage]);
 
     const handleLanguageClick = (direction: 'up' | 'down') => {
@@ -97,20 +91,21 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                             />
                             <p className="font-bold text-lg text-white">Detectar Idioma</p>
+                            <p className="text-xs text-muted-foreground mt-1">Detectado por IA</p>
                         </div>
                     </div>
                     {/* To Language */}
                      <div className="space-y-4 text-center flex flex-col">
                         <Label className="font-semibold text-sm text-purple-200">Traducir a</Label>
                         <div className="flex gap-2 justify-center">
-                            <motion.div layout className="relative flex-1 flex items-center">
+                            <div className="relative flex-1 flex items-center">
                                 <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => setIsSearchVisible(!isSearchVisible)}>
                                   <Search/>
                                 </Button>
                                 <AnimatePresence>
                                 {isSearchVisible && (
                                     <motion.div
-                                        className="absolute left-0 w-full"
+                                        className="absolute left-0 w-full z-10"
                                         initial={{ width: 40, opacity: 0 }}
                                         animate={{ width: '100%', opacity: 1 }}
                                         exit={{ width: 40, opacity: 0 }}
@@ -129,20 +124,21 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                     </motion.div>
                                 )}
                                 </AnimatePresence>
-                            </motion.div>
+                            </div>
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('up')} disabled={activeIndex === 0}><ChevronUp/></Button>
                             <Button variant="outline" size="icon" className="h-10 w-10 text-purple-300 hover:text-white bg-black/50 border-purple-400/50 hover:bg-purple-500/20" onClick={() => handleLanguageClick('down')} disabled={activeIndex === filteredLanguages.length - 1}><ChevronDown/></Button>
                         </div>
                          <div className="relative h-48 rounded-lg bg-black/30 border border-purple-400/20 flex flex-col items-center justify-center overflow-hidden">
                            <div className="absolute top-1/2 left-0 w-full h-12 -translate-y-1/2 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
-                            <div 
-                                className="w-full transition-transform duration-300 ease-in-out" 
-                                style={{ transform: `translateY(calc(50% - ${activeIndex * 3}rem - 1.5rem))`}}
+                            <motion.div 
+                                className="w-full" 
+                                animate={{ y: `calc(50% - ${activeIndex * 3}rem - 1.5rem)`}}
+                                transition={{ duration: 0.3, ease: 'circOut' }}
                             >
                                 {filteredLanguages.map((lang, index) => (
                                     <div
                                         key={lang.code}
-                                        className="w-full text-center text-lg p-2 transition-all duration-300 h-12 flex items-center justify-center cursor-pointer"
+                                        className="w-full text-center text-lg p-2 h-12 flex items-center justify-center cursor-pointer"
                                         onClick={() => setTargetLanguage(lang.code)}
                                     >
                                         <div className={cn(
@@ -159,13 +155,13 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                                         </div>
                                     </div>
                                 ))}
-                            </div>
+                            </motion.div>
                         </div>
                     </div>
                 </div>
 
                 <DialogFooter className="z-10 pt-4 flex justify-between w-full">
-                    <Button variant="ghost" className="text-white hover:bg-white/10" onClick={() => onOpenChange(false)}>
+                    <Button variant="outline" className="border-white text-white hover:bg-[#F00000] hover:border-[#F00000] hover:text-white" onClick={() => onOpenChange(false)}>
                         <X className="mr-2"/>
                         Cerrar
                     </Button>
