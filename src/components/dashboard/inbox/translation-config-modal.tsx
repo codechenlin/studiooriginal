@@ -135,25 +135,29 @@ export function TranslationConfigModal({ isOpen, onOpenChange }: { isOpen: boole
                              </div>
                              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[90%] border-x-2 border-purple-400/50 rounded-full" />
                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-12 bg-purple-500/20 border-y-2 border-purple-400 rounded-lg" style={{ filter: 'blur(5px)' }}/>
-                             <ScrollArea className="h-full w-full" viewportRef={scrollContainerRef}>
-                                <div className="py-[calc(50%-1.5rem)] space-y-2">
-                                {filteredLanguages.map(lang => (
-                                    <button
-                                        key={lang.code}
-                                        onClick={() => handleLanguageClick(lang.code)}
-                                        className={cn(
-                                            "w-full text-center text-lg p-2 transition-all duration-300 rounded-md",
-                                            targetLanguage === lang.code ? "font-bold text-white scale-110" : "text-purple-200/50 scale-90"
-                                        )}
-                                    >
-                                       <div className="flex items-center justify-center gap-3">
-                                           {targetLanguage === lang.code && (
-                                             <div className="w-2.5 h-2.5 rounded-full bg-[#00CB07] shadow-[0_0_8px_#00CB07]" />
-                                           )}
-                                          <span>{lang.name}</span>
-                                       </div>
-                                    </button>
-                                ))}
+                             <ScrollArea className="h-full w-full">
+                                <div className="flex flex-col h-full">
+                                    <div className="flex-1"></div>
+                                    <div ref={scrollContainerRef} className="space-y-2">
+                                        {filteredLanguages.map(lang => (
+                                            <button
+                                                key={lang.code}
+                                                onClick={() => handleLanguageClick(lang.code)}
+                                                className={cn(
+                                                    "w-full text-center text-lg p-2 transition-all duration-300 rounded-md",
+                                                    targetLanguage === lang.code ? "font-bold text-white scale-110" : "text-purple-200/50 scale-90"
+                                                )}
+                                            >
+                                               <div className="flex items-center justify-center gap-3">
+                                                   {targetLanguage === lang.code && (
+                                                     <div className="w-2.5 h-2.5 rounded-full bg-[#00CB07] shadow-[0_0_8px_#00CB07]" />
+                                                   )}
+                                                  <span>{lang.name}</span>
+                                               </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="flex-1"></div>
                                 </div>
                             </ScrollArea>
                         </div>
