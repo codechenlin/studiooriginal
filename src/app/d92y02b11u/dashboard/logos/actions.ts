@@ -17,7 +17,9 @@ async function readConfig() {
      return {
         loginBackgroundImageUrl: '',
         signupBackgroundImageUrl: '',
-        forgotPasswordBackgroundImageUrl: ''
+        forgotPasswordBackgroundImageUrl: '',
+        logoLightUrl: null,
+        logoDarkUrl: null,
      }
   }
 }
@@ -68,7 +70,7 @@ export async function uploadLogoAndGetUrl(formData: FormData): Promise<{ success
   }
 }
 
-export async function updateAppConfig(key: string, value: string): Promise<{ success: boolean; error?: string }> {
+export async function updateAppConfig(key: string, value: string | null): Promise<{ success: boolean; error?: string }> {
     try {
         const config = await readConfig();
         config[key] = value;
@@ -78,6 +80,8 @@ export async function updateAppConfig(key: string, value: string): Promise<{ suc
         revalidatePath('/(auth)/signup', 'page');
         revalidatePath('/(auth)/forgot-password', 'page');
         revalidatePath('/d92y02b11u/dashboard/logos', 'page');
+        revalidatePath('/dashboard', 'layout'); // To re-render logo in sidebar
+        revalidatePath('/d92y02b11u/dashboard', 'layout'); // To re-render logo in admin sidebar
 
         return { success: true };
     } catch (error: any) {

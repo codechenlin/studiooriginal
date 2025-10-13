@@ -51,7 +51,7 @@ function AdminPanelContent({
     <FileManagerModal open={isFileManagerOpen} onOpenChange={setIsFileManagerOpen} />
     <div className="flex min-h-screen bg-muted/30">
       <aside className="w-64 flex-shrink-0 border-r border-border bg-card p-4 flex flex-col">
-        <div className="mb-8">
+        <div className="mb-8 p-2">
             <Logo />
         </div>
         <nav className="flex-grow space-y-2">
@@ -174,5 +174,3 @@ export default function AdminPanelLayout({
 
     return <AdminPanelContent user={user}>{children}</AdminPanelContent>;
 }
-
-    

@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { type StorageFile, listFiles, uploadFile, renameFile, deleteFiles } from '@/app/dashboard/templates/(editor)/create/gallery-actions';
 import { Skeleton } from '../ui/skeleton';
+import { MediaPreview } from '../admin/media-preview';
+import { Separator } from '../ui/separator';
 
 const getFileIcon = (mimeType: string) => {
     if (mimeType.startsWith('image/')) return ImageIcon;
@@ -37,6 +39,7 @@ const formatBytes = (bytes: number, decimals = 2) => {
 export function FileManagerModal({ open, onOpenChange, onFileSelect }: { open: boolean; onOpenChange: (open: boolean) => void, onFileSelect?: (url: string) => void }) {
     const { toast } = useToast();
     const [files, setFiles] = useState<StorageFile[]>([]);
+    const [selectedFile, setSelectedFile] = useState<StorageFile | null>(null);
     const [isLoading, startLoading] = useTransition();
     const [isUploading, startUploading] = useTransition();
     const [searchTerm, setSearchTerm] = useState('');
@@ -60,6 +63,9 @@ export function FileManagerModal({ open, onOpenChange, onFileSelect }: { open: b
     useEffect(() => {
         if (open) {
             fetchFiles();
+        } else {
+            // Reset state when modal is closed
+            setSelectedFile(null);
         }
     }, [open, fetchFiles]);
     
@@ -121,65 +127,60 @@ export function FileManagerModal({ open, onOpenChange, onFileSelect }: { open: b
     return (
         <>
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="max-w-4xl w-full h-[90vh] flex flex-col p-0 gap-0">
+                <DialogContent className="max-w-6xl w-full h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-4 border-b">
                         <DialogTitle>Gestor de Archivos</DialogTitle>
                         <DialogDescription>Administra los archivos de tu proyecto.</DialogDescription>
                     </DialogHeader>
-                    <div className="flex-1 flex flex-col min-h-0">
-                        <div className="p-4 border-b flex items-center justify-between gap-4">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                <Input placeholder="Buscar archivos..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                            </div>
-                            <Button asChild>
-                                <label htmlFor="file-upload-manager" className="cursor-pointer">
-                                    <UploadCloud className="mr-2" />
-                                    {isUploading ? <Loader2 className="animate-spin" /> : 'Subir Archivo'}
-                                </label>
-                            </Button>
-                            <Input id="file-upload-manager" type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
-                        </div>
-                        <ScrollArea className="flex-1">
-                            {isLoading ? (
-                                <div className="p-4 space-y-2">
-                                    {Array.from({length: 5}).map((_, i) => <Skeleton key={i} className="h-12 w-full"/>)}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-3 min-h-0">
+                        <div className="col-span-1 md:col-span-2 flex flex-col min-h-0">
+                            <div className="p-4 border-b flex items-center justify-between gap-4">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                    <Input placeholder="Buscar archivos..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                                 </div>
-                            ) : filteredFiles.length > 0 ? (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-[60px]"></TableHead>
-                                            <TableHead>Nombre</TableHead>
-                                            <TableHead>Tamaño</TableHead>
-                                            <TableHead>Última Modificación</TableHead>
-                                            <TableHead className="text-right">Acciones</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredFiles.map(file => {
-                                            const Icon = getFileIcon(file.metadata.mimetype);
-                                            const fileName = file.name.split('/').pop() || '';
-                                            return (
-                                                <TableRow key={file.id} className={onFileSelect ? "cursor-pointer" : ""} onClick={() => onFileSelect && onFileSelect(getPublicUrl(file.name))}>
-                                                    <TableCell>
-                                                        <div className="size-8 rounded-md bg-muted flex items-center justify-center">
-                                                            <Icon className="size-5 text-muted-foreground"/>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="font-medium">{fileName}</TableCell>
-                                                    <TableCell>{formatBytes(file.metadata.size)}</TableCell>
-                                                    <TableCell>{formatDistanceToNow(new Date(file.updated_at), { addSuffix: true, locale: es })}</TableCell>
-                                                    <TableCell className="text-right">
-                                                         {onFileSelect ? (
-                                                            <Button size="sm" onClick={() => onFileSelect(getPublicUrl(file.name))}>
-                                                                <Check className="mr-2"/>
-                                                                Seleccionar
-                                                            </Button>
-                                                         ) : (
+                                <Button asChild>
+                                    <label htmlFor="file-upload-manager" className="cursor-pointer">
+                                        <UploadCloud className="mr-2" />
+                                        {isUploading ? <Loader2 className="animate-spin" /> : 'Subir Archivo'}
+                                    </label>
+                                </Button>
+                                <Input id="file-upload-manager" type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
+                            </div>
+                            <ScrollArea className="flex-1">
+                                {isLoading ? (
+                                    <div className="p-4 space-y-2">
+                                        {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-12 w-full"/>)}
+                                    </div>
+                                ) : filteredFiles.length > 0 ? (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="w-[50px]"></TableHead>
+                                                <TableHead>Nombre</TableHead>
+                                                <TableHead className="hidden lg:table-cell">Tamaño</TableHead>
+                                                <TableHead className="hidden sm:table-cell">Modificación</TableHead>
+                                                <TableHead className="text-right w-[60px]">Acciones</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredFiles.map(file => {
+                                                const Icon = getFileIcon(file.metadata.mimetype);
+                                                const fileName = file.name.split('/').pop() || '';
+                                                return (
+                                                    <TableRow key={file.id} onClick={() => setSelectedFile(file)} className={cn("cursor-pointer", selectedFile?.id === file.id && "bg-muted")}>
+                                                        <TableCell>
+                                                            <div className="size-8 rounded-md bg-muted flex items-center justify-center">
+                                                                <Icon className="size-5 text-muted-foreground"/>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="font-medium truncate max-w-xs">{fileName}</TableCell>
+                                                        <TableCell className="hidden lg:table-cell">{formatBytes(file.metadata.size)}</TableCell>
+                                                        <TableCell className="hidden sm:table-cell">{formatDistanceToNow(new Date(file.updated_at), { addSuffix: true, locale: es })}</TableCell>
+                                                        <TableCell className="text-right">
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="icon"><MoreHorizontal /></Button>
+                                                                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><MoreHorizontal /></Button>
                                                                 </DropdownMenuTrigger>
                                                                 <DropdownMenuContent>
                                                                     <DropdownMenuItem onSelect={() => window.open(getPublicUrl(file.name), '_blank')}><Eye className="mr-2"/>Ver</DropdownMenuItem>
@@ -187,24 +188,51 @@ export function FileManagerModal({ open, onOpenChange, onFileSelect }: { open: b
                                                                     <DropdownMenuItem className="text-destructive" onSelect={(e) => { e.preventDefault(); setDeletingFile(file)}}><Trash2 className="mr-2"/>Eliminar</DropdownMenuItem>
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>
-                                                         )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            ) : (
-                                <div className="text-center text-muted-foreground p-12 flex flex-col items-center justify-center">
-                                    <FolderOpen className="size-16 mb-4 text-primary/50" />
-                                    <h3 className="text-xl font-semibold text-foreground">No se encontraron archivos</h3>
-                                    <p className="mt-2">Sube tu primer archivo para empezar a gestionar tus recursos.</p>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                ) : (
+                                    <div className="text-center text-muted-foreground p-12 flex flex-col items-center justify-center">
+                                        <FolderOpen className="size-16 mb-4 text-primary/50" />
+                                        <h3 className="text-xl font-semibold text-foreground">No se encontraron archivos</h3>
+                                        <p className="mt-2">Sube tu primer archivo para empezar a gestionar tus recursos.</p>
+                                    </div>
+                                )}
+                            </ScrollArea>
+                        </div>
+                        <div className="col-span-1 md:col-span-1 flex flex-col border-l bg-muted/30 p-4">
+                            <h3 className="font-semibold mb-4 text-center">Vista Previa</h3>
+                            <div className="flex-1 w-full relative bg-background rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden">
+                                {selectedFile ? (
+                                    <MediaPreview src={getPublicUrl(selectedFile.name)} />
+                                ) : (
+                                    <div className="text-muted-foreground text-center">
+                                        <Eye className="mx-auto size-12 mb-2"/>
+                                        <p>Selecciona un archivo</p>
+                                    </div>
+                                )}
+                            </div>
+                             {selectedFile && (
+                                <div className="text-xs text-muted-foreground mt-4 space-y-1">
+                                    <p className="font-bold text-foreground truncate">{selectedFile.name.split('/').pop()}</p>
+                                    <p><strong>Tipo:</strong> {selectedFile.metadata.mimetype}</p>
+                                    <p><strong>Tamaño:</strong> {formatBytes(selectedFile.metadata.size)}</p>
+                                    <p><strong>Subido:</strong> {format(new Date(selectedFile.created_at), "PPp", { locale: es })}</p>
                                 </div>
-                            )}
-                        </ScrollArea>
+                             )}
+                        </div>
                     </div>
                     <DialogFooter className="p-4 border-t">
                         <Button variant="outline" onClick={() => onOpenChange(false)}>Cerrar</Button>
+                        {onFileSelect && (
+                             <Button onClick={() => { if(selectedFile) onFileSelect(getPublicUrl(selectedFile.name)) }} disabled={!selectedFile}>
+                                <Check className="mr-2"/>
+                                Usar Archivo Seleccionado
+                            </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

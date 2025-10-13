@@ -1,7 +1,57 @@
-import { type SVGProps } from "react";
+
+"use client";
+
+import { type SVGProps, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+
+interface AppConfig {
+  logoLightUrl: string | null;
+  logoDarkUrl: string | null;
+}
 
 export function Logo({ className, ...props }: SVGProps<SVGSVGElement>) {
+  const [config, setConfig] = useState<AppConfig | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // This component now runs on the client, so we can fetch the config
+    // and check the theme.
+    import('@/app/lib/app-config.json')
+      .then((mod) => setConfig(mod.default))
+      .catch(() => setConfig(null));
+      
+    const checkTheme = () => {
+        setIsDarkMode(document.documentElement.classList.contains('dark'));
+    }
+    
+    setMounted(true);
+    checkTheme();
+
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
+
+  if (!mounted) {
+    // Render a placeholder or nothing during server-side rendering
+    // and before client-side hydration is complete.
+    return <div className="h-8 w-48" />; 
+  }
+
+  const logoUrl = isDarkMode ? config?.logoDarkUrl : config?.logoLightUrl;
+
+  if (logoUrl) {
+    return (
+      <div className={cn("relative h-10 w-40", className)}>
+        <Image src={logoUrl} alt="Mailflow AI Logo" fill className="object-contain" priority />
+      </div>
+    );
+  }
+
+  // Fallback to SVG logo if no custom URL is set
   return (
     <div className="flex items-center gap-2">
       <svg
