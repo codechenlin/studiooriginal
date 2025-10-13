@@ -4,12 +4,15 @@ import fs from 'fs/promises';
 import path from 'path';
 import { LanguageProvider } from '@/context/language-context';
 import { AuthPagesProvider } from './auth-pages-provider';
+import { LogoProvider } from '@/context/logo-context';
 
 interface AppConfig {
   loginBackgroundImageUrl: string;
   signupBackgroundImageUrl: string;
   forgotPasswordBackgroundImageUrl: string;
-  [key: string]: string;
+  logoLightUrl: string | null;
+  logoDarkUrl: string | null;
+  [key: string]: string | null;
 }
 
 async function getAuthConfig() {
@@ -24,6 +27,8 @@ async function getAuthConfig() {
       loginBackgroundImageUrl: '',
       signupBackgroundImageUrl: '',
       forgotPasswordBackgroundImageUrl: '',
+      logoLightUrl: null,
+      logoDarkUrl: null,
     };
   }
 }
@@ -33,13 +38,15 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
 
   return (
     <LanguageProvider>
-      <AuthPagesProvider
-        loginImageUrl={config.loginBackgroundImageUrl}
-        signupImageUrl={config.signupBackgroundImageUrl}
-        forgotPasswordImageUrl={config.forgotPasswordBackgroundImageUrl}
-      >
-        {children}
-      </AuthPagesProvider>
+      <LogoProvider logoLightUrl={config.logoLightUrl} logoDarkUrl={config.logoDarkUrl}>
+        <AuthPagesProvider
+          loginImageUrl={config.loginBackgroundImageUrl}
+          signupImageUrl={config.signupBackgroundImageUrl}
+          forgotPasswordImageUrl={config.forgotPasswordBackgroundImageUrl}
+        >
+          {children}
+        </AuthPagesProvider>
+      </LogoProvider>
     </LanguageProvider>
   );
 }

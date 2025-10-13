@@ -28,7 +28,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Preloader } from "@/components/common/preloader";
 import { FileManagerModal } from '@/components/dashboard/file-manager-modal';
-
+import { LogoProvider } from "@/context/logo-context";
+import fs from 'fs/promises';
+import path from 'path';
 
 const menuItems = [
   { href: "/d92y02b11u/dashboard", label: "Escritorio", icon: LayoutDashboard },
@@ -123,6 +125,25 @@ export default function AdminPanelLayout({
     const pathname = usePathname();
     const [user, setUser] = React.useState<any>(null);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [logoConfig, setLogoConfig] = React.useState({ logoLightUrl: null, logoDarkUrl: null });
+
+    React.useEffect(() => {
+        async function fetchConfig() {
+            // Since this is a client component, we fetch config on the client
+            try {
+                const response = await fetch('/app-config.json');
+                const config = await response.json();
+                setLogoConfig({
+                    logoLightUrl: config.logoLightUrl,
+                    logoDarkUrl: config.logoDarkUrl,
+                });
+            } catch (e) {
+                console.error("Could not fetch app-config for logos");
+            }
+        }
+        fetchConfig();
+    }, []);
+
 
     useEffect(() => {
         const checkUser = async () => {
@@ -160,7 +181,7 @@ export default function AdminPanelLayout({
 
     // If it's the login page, render children directly without the panel layout.
     if (pathname === '/d92y02b11u') {
-        return <>{children}</>;
+        return <LogoProvider {...logoConfig}>{children}</LogoProvider>;
     }
 
     if (isLoading) {
@@ -172,5 +193,9 @@ export default function AdminPanelLayout({
         return null; 
     }
 
-    return <AdminPanelContent user={user}>{children}</AdminPanelContent>;
+    return (
+      <LogoProvider {...logoConfig}>
+        <AdminPanelContent user={user}>{children}</AdminPanelContent>
+      </LogoProvider>
+    );
 }

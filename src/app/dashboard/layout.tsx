@@ -68,6 +68,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { LogoProvider } from "@/context/logo-context";
 
 
 const menuItems = [
@@ -358,15 +359,39 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [logoConfig, setLogoConfig] = React.useState({ logoLightUrl: null, logoDarkUrl: null });
+
+  React.useEffect(() => {
+    async function fetchConfig() {
+      // Since this is a client component, we fetch config on the client
+      try {
+        const response = await fetch('/app-config.json');
+        const config = await response.json();
+        setLogoConfig({
+          logoLightUrl: config.logoLightUrl,
+          logoDarkUrl: config.logoDarkUrl,
+        });
+      } catch (e) {
+        console.error("Could not fetch app-config for logos");
+      }
+    }
+    fetchConfig();
+  }, []);
 
   // This prevents the main dashboard layout from wrapping the template editor or demo page
   if (pathname.startsWith('/dashboard/templates/create')) {
-    return <>{children}</>;
+    return (
+        <LogoProvider {...logoConfig}>
+            {children}
+        </LogoProvider>
+    );
   }
   
   return (
-    <SidebarProvider>
-      <LayoutContent>{children}</LayoutContent>
-    </SidebarProvider>
+    <LogoProvider {...logoConfig}>
+      <SidebarProvider>
+        <LayoutContent>{children}</LayoutContent>
+      </SidebarProvider>
+    </LogoProvider>
   );
 }
