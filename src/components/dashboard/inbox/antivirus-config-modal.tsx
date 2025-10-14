@@ -102,11 +102,11 @@ export function AntivirusConfigModal({ isOpen, onOpenChange }: AntivirusConfigMo
                 <ShieldQuestion />
                 Protocolo de Respuesta a Amenazas
             </h3>
-            <div className="space-y-4">
+            <RadioGroup value={actionOnThreat} onValueChange={(value) => setActionOnThreat(value as any)} className="space-y-4">
                 <motion.div variants={{ initial: { opacity: 0, x: -20 }, animate: { opacity: 1, x: 0, transition: { delay: 0.2 } } }} initial="initial" animate="animate">
                     <Label htmlFor="quarantine" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all", actionOnThreat === 'quarantine' ? 'border-blue-400 bg-blue-900/40' : 'border-blue-500/20 bg-black/20 hover:bg-blue-900/20')}>
                         <div className="flex items-center gap-3 mb-2">
-                             <RadioGroupItem value="quarantine" id="quarantine" onClick={() => setActionOnThreat('quarantine')}/>
+                             <RadioGroupItem value="quarantine" id="quarantine" />
                              <span className="font-bold text-base">Poner en Cuarentena (Recomendado)</span>
                         </div>
                         <p className="text-sm text-blue-200/80 pl-8">Mueve correos o archivos infectados a una zona segura para revisión manual. No podrán ser abiertos o descargados.</p>
@@ -115,7 +115,7 @@ export function AntivirusConfigModal({ isOpen, onOpenChange }: AntivirusConfigMo
                 <motion.div variants={{ initial: { opacity: 0, x: -20 }, animate: { opacity: 1, x: 0, transition: { delay: 0.3 } } }} initial="initial" animate="animate">
                     <Label htmlFor="delete" className={cn("flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all", actionOnThreat === 'delete' ? 'border-red-400 bg-red-900/40' : 'border-red-500/20 bg-black/20 hover:bg-red-900/20')}>
                         <div className="flex items-center gap-3 mb-2">
-                            <RadioGroupItem value="delete" id="delete" onClick={() => setActionOnThreat('delete')} />
+                            <RadioGroupItem value="delete" id="delete" />
                              <span className="font-bold text-base text-red-300 flex items-center gap-2"><Trash2 /> Eliminar Automáticamente</span>
                         </div>
                         <p className="text-sm text-red-200/80 pl-8">
@@ -124,7 +124,7 @@ export function AntivirusConfigModal({ isOpen, onOpenChange }: AntivirusConfigMo
                         </p>
                     </Label>
                 </motion.div>
-            </div>
+            </RadioGroup>
           </div>
           
           {/* Right Panel */}
@@ -193,7 +193,14 @@ export function AntivirusConfigModal({ isOpen, onOpenChange }: AntivirusConfigMo
           </div>
         </div>
         
-        <DialogFooter className="p-4 bg-black/30 border-t border-blue-500/20 z-10 flex justify-end">
+        <DialogFooter className="p-4 bg-black/30 border-t border-blue-500/20 z-10 flex justify-between">
+          <div className="relative p-2 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 flex items-center gap-3">
+              <Eye className="size-6 shrink-0 text-amber-300"/>
+              <div className="text-left">
+                  <p className="font-bold text-amber-300 text-sm">MONITOREO ACTIVO 24/7</p>
+                  <p className="text-xs text-amber-200/80">Los demás sistemas de la IA siempre están activos para garantizar tu protección.</p>
+              </div>
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" className="hover:bg-[#F00000] hover:text-white hover:border-[#F00000]" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button 
@@ -210,5 +217,3 @@ export function AntivirusConfigModal({ isOpen, onOpenChange }: AntivirusConfigMo
     </Dialog>
   );
 }
-
-    
