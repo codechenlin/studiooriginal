@@ -12,7 +12,6 @@ import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-set
 import { SpamFilterSettingsModal } from '@/components/dashboard/inbox/spam-filter-settings-modal';
 import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
-import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
 import { AntivirusConfigModal } from '@/components/dashboard/inbox/antivirus-config-modal';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
