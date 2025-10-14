@@ -102,12 +102,14 @@ export default function ServersPage() {
   const [isDnsModalOpen, setIsDnsModalOpen] = useState(false);
   const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
-  const [providers, setProviders] = useState(initialProviders);
+  const [providers, setProviders] = useState(initialProviders.map(p => ({ ...p, formattedEmailsCount: '...' })));
 
   useEffect(() => {
     setIsClient(true);
-    // Set formatted numbers on client-side to avoid hydration errors
-    setProviders(initialProviders.map(p => ({...p, emailsCount: p.emailsCount})));
+    setProviders(initialProviders.map(p => ({
+      ...p,
+      formattedEmailsCount: p.emailsCount.toLocaleString()
+    })));
   }, []);
   
   const handleConnectClick = (providerId: string) => {
@@ -244,7 +246,7 @@ export default function ServersPage() {
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Send className="size-4"/>
-                            <span className="font-semibold text-foreground">{provider.emailsCount.toLocaleString()}</span>
+                            <span className="font-semibold text-foreground">{provider.formattedEmailsCount}</span>
                             <span>Correos</span>
                           </div>
                       </div>
@@ -274,4 +276,3 @@ export default function ServersPage() {
     </>
   );
 }
-
