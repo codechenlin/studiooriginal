@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Eye, ShieldAlert, DollarSign, Mail, ShoppingCart } from 'lucide-react';
+import { Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Eye, ShieldAlert, DollarSign, Mail, ShoppingCart, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -154,10 +154,32 @@ export default function ShoppingPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input placeholder="Buscar en compras..." className="pl-10 bg-background/70 border-[#00CB07]/30" />
             </div>
-             <Button variant="outline" className="w-full md:w-auto bg-background/70 border-[#00CB07]/30 hover:bg-cyan-500 hover:text-white" onClick={() => setIsTagFilterModalOpen(true)}>
-                <Tag className="mr-2 size-4" />
-                Etiquetas
-            </Button>
+             <div className="flex items-center gap-2">
+                <Button variant="outline" className="w-full md:w-auto bg-background/70 border-[#00CB07]/30 hover:bg-cyan-500 hover:text-white" onClick={() => setIsTagFilterModalOpen(true)}>
+                    <Tag className="mr-2 size-4" />
+                    Etiquetas
+                </Button>
+                <AnimatePresence>
+                  {selectedTags.length > 0 && (
+                      <motion.div
+                          initial={{ opacity: 0, scale: 0.8, width: 0 }}
+                          animate={{ opacity: 1, scale: 1, width: 'auto' }}
+                          exit={{ opacity: 0, scale: 0.8, width: 0 }}
+                          className="relative"
+                      >
+                          <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setSelectedTags([])}
+                              className="relative group/reset-btn rounded-full size-10 border-2 border-red-500/50 text-red-400 bg-red-900/20 hover:bg-red-900/40 hover:text-red-300 hover:border-red-500"
+                          >
+                              <div className="absolute inset-0 rounded-full border-2 border-dashed border-red-500 animate-spin-slow group-hover/reset-btn:animate-[spin-slow_2s_linear_infinite]" />
+                              <XCircle className="size-5 transition-transform group-hover/reset-btn:scale-110" style={{ filter: 'drop-shadow(0 0 5px #F00000)'}}/>
+                          </Button>
+                      </motion.div>
+                  )}
+              </AnimatePresence>
+            </div>
           </CardContent>
         </Card>
         
