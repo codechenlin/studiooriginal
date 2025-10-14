@@ -11,7 +11,6 @@ import { Switch } from '@/components/ui/switch';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 
 interface AntivirusConfigModalProps {
   isOpen: boolean;
@@ -66,7 +65,7 @@ export function AntivirusConfigModal({ isOpen, onOpenChange }: AntivirusConfigMo
 
         <div className="grid grid-cols-1 md:grid-cols-3 flex-1 overflow-hidden">
           {/* Left Panel */}
-          <div className="md:col-span-1 flex flex-col items-center justify-between p-8 border-r border-blue-500/20 bg-black/20">
+          <div className="md:col-span-1 flex flex-col items-center justify-between p-8 border-r border-blue-500/20 bg-black/20 z-10">
               <div className="text-center">
                   <h3 className="text-xl font-bold text-blue-300">Núcleo de IA</h3>
                   <p className="text-xs text-blue-200/60">Análisis y Protección Activa</p>
@@ -87,17 +86,20 @@ export function AntivirusConfigModal({ isOpen, onOpenChange }: AntivirusConfigMo
                         </div>
                     </div>
               </motion.div>
-              <div className="relative p-4 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 flex items-center gap-3">
-                  <Eye className="size-8 shrink-0 text-amber-300"/>
+              <div className="relative p-4 rounded-lg bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-400/30 flex items-center gap-3">
+                  <div className="relative size-8 shrink-0 flex items-center justify-center">
+                     <div className="absolute w-full h-full border-2 border-dashed border-[#00CB07] rounded-full animate-spin" style={{ animationDuration: '4s' }} />
+                     <Eye className="size-6 text-[#00CB07]"/>
+                  </div>
                   <div className="text-left">
-                      <p className="font-bold text-amber-300">MONITOREO ACTIVO 24/7</p>
-                      <p className="text-xs text-amber-200/80">El núcleo de IA siempre está activo, analizando en segundo plano para garantizar una protección total.</p>
+                      <p className="font-bold text-[#00CB07]">MONITOREO ACTIVO 24/7</p>
+                      <p className="text-xs text-green-200/80">El núcleo de IA siempre está activo, analizando en segundo plano para garantizar una protección total.</p>
                   </div>
               </div>
           </div>
           
           {/* Middle Panel */}
-          <div className="md:col-span-1 flex flex-col p-8 border-r border-blue-500/20 bg-black/10">
+          <div className="md:col-span-1 flex flex-col p-8 border-r border-blue-500/20 bg-black/10 z-10">
             <h3 className="font-semibold text-lg text-blue-300 flex items-center gap-2 mb-6">
                 <ShieldQuestion />
                 Protocolo de Respuesta a Amenazas
@@ -128,7 +130,7 @@ export function AntivirusConfigModal({ isOpen, onOpenChange }: AntivirusConfigMo
           </div>
           
           {/* Right Panel */}
-          <div className="md:col-span-1 flex flex-col p-8 bg-black/10">
+          <div className="md:col-span-1 flex flex-col p-8 bg-black/10 z-10">
             <h3 className="font-semibold text-lg text-blue-300 flex items-center gap-2 mb-6">
                 <Bell />
                 Canal de Notificaciones
@@ -193,14 +195,7 @@ export function AntivirusConfigModal({ isOpen, onOpenChange }: AntivirusConfigMo
           </div>
         </div>
         
-        <DialogFooter className="p-4 bg-black/30 border-t border-blue-500/20 z-10 flex justify-between">
-          <div className="relative p-2 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/30 flex items-center gap-3">
-              <Eye className="size-6 shrink-0 text-amber-300"/>
-              <div className="text-left">
-                  <p className="font-bold text-amber-300 text-sm">MONITOREO ACTIVO 24/7</p>
-                  <p className="text-xs text-amber-200/80">Los demás sistemas de la IA siempre están activos para garantizar tu protección.</p>
-              </div>
-          </div>
+        <DialogFooter className="p-4 bg-black/30 border-t border-blue-500/20 z-10 flex justify-end">
           <div className="flex gap-2">
             <Button variant="outline" className="hover:bg-[#F00000] hover:text-white hover:border-[#F00000]" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button 
