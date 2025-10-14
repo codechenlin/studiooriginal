@@ -47,7 +47,6 @@ export default function ShoppingPage() {
   const [emails, setEmails] = useState(initialShoppingEmails);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
-  const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [showStarred, setShowStarred] = useState(false);
@@ -226,7 +225,7 @@ export default function ShoppingPage() {
                          </svg>
                     </Button>
                     <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 text-amber-500 hover:text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 text-blue-500 hover:text-blue-500" onClick={() => setIsAntivirusModalOpen(true)}>
+                    <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 text-blue-500 hover:text-blue-500">
                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
                           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -267,7 +266,7 @@ export default function ShoppingPage() {
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
-    <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+    <AntivirusStatusModal isOpen={false} onOpenChange={() => {}} />
     <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} themeColors={['#00EF10', '#A6EE00']} />
     <TagFilterModal isOpen={isTagFilterModalOpen} onOpenChange={setIsTagFilterModalOpen} onFilter={handleFilterByTags} initialSelectedTags={selectedTags} />
     </>
