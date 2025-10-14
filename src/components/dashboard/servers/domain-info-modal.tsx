@@ -122,12 +122,14 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                                 >
                                     <div className="flex items-center justify-center gap-8">
                                         <Globe className="size-16" />
-                                        <div className="relative w-24 h-px bg-cyan-400/30">
+                                         <div className="relative w-24 h-px bg-cyan-400/30 overflow-hidden">
                                             <motion.div
-                                                className="absolute top-0 left-0 h-full bg-cyan-400"
-                                                initial={{ width: 0 }}
-                                                animate={{ width: '100%' }}
-                                                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                                                className="absolute top-0 left-0 h-full w-1/3"
+                                                style={{
+                                                    background: 'linear-gradient(to right, transparent, hsl(190 100% 50% / 0.8), transparent)'
+                                                }}
+                                                animate={{ x: ['-100%', '300%'] }}
+                                                transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
                                             />
                                         </div>
                                         <Mail className="size-16" />
@@ -139,7 +141,11 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                         </AnimatePresence>
                     </ScrollArea>
                     <DialogFooter className="p-4 border-t border-cyan-400/20 bg-black/50 z-10">
-                        <Button variant="outline" className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white" onClick={() => onOpenChange(false)}>
+                        <Button 
+                            variant="outline" 
+                            className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white" 
+                            onClick={() => onOpenChange(false)}
+                        >
                             <X className="mr-2"/> Cerrar
                         </Button>
                     </DialogFooter>
