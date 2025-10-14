@@ -54,12 +54,14 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                         0% { transform: translateY(-10px); }
                         100% { transform: translateY(100vh); }
                     }
-                     @keyframes ping-pong-scanner {
+                    @keyframes scanner-beam {
                       from {
-                        transform: translateX(-25%);
+                        left: 0;
+                        width: 0;
                       }
                       to {
-                        transform: translateX(125%);
+                        left: 0;
+                        width: 100%;
                       }
                     }
                 `}</style>
@@ -130,12 +132,13 @@ export function DomainInfoModal({ isOpen, onOpenChange }: DomainInfoModalProps) 
                                 >
                                     <div className="flex items-center justify-center gap-8">
                                         <Globe className="size-16" />
-                                         <div className="relative w-24 h-px bg-cyan-400/30 overflow-hidden">
-                                            <div
-                                                className="absolute top-0 left-0 h-full w-1/3"
+                                        <div className="relative w-24 h-px bg-cyan-400/30 overflow-hidden">
+                                           <div
+                                                className="absolute top-0 h-full"
                                                 style={{
+                                                    width: '33.33%',
                                                     background: 'linear-gradient(to right, transparent, hsl(190 100% 50% / 0.8), transparent)',
-                                                    animation: 'ping-pong-scanner 1.5s infinite linear alternate'
+                                                    animation: 'scanner-beam 1.5s infinite linear alternate'
                                                 }}
                                             />
                                         </div>
