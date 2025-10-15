@@ -100,7 +100,7 @@ export default function AiConfigPage() {
                     <CardTitle className="flex items-center gap-2"><Key />Proveedor del Modelo (DeepSeek)</CardTitle>
                     <CardDescription>
                        Configura las credenciales y el modelo para conectarte con la API de DeepSeek.
-                    </pre>
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="flex items-center justify-between p-4 rounded-lg bg-background border">
