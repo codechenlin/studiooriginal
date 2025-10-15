@@ -8,9 +8,10 @@
  * - OptionalDnsHealthOutput - The return type for the verifyOptionalDnsHealth function.
  */
 
-import { ai, isDnsAnalysisEnabled } from '@/ai/genkit';
-import { z } from 'genkit';
+import { isDnsAnalysisEnabled, getAiConfigForFlows } from '@/ai/genkit';
+import { z } from 'zod';
 import dns from 'node:dns/promises';
+import { deepseekChat } from '@/ai/deepseek';
 
 export type OptionalDnsHealthInput = z.infer<typeof OptionalDnsHealthInputSchema>;
 const OptionalDnsHealthInputSchema = z.object({
@@ -24,44 +25,6 @@ const OptionalDnsHealthOutputSchema = z.object({
   vmcStatus: z.enum(['verified', 'unverified', 'not-found']).describe('Status of the VMC record.'),
   analysis: z.string().describe('A natural language analysis of the optional records, explaining their purpose and how to fix them if they are misconfigured. Be concise and direct. Respond in Spanish and always use emojis.'),
 });
-
-async function withRetries<T>(
-  fn: () => Promise<T>,
-  retries: number = 2,
-  delay: number = 1500
-): Promise<T> {
-  let lastError: any;
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (error: any) {
-      lastError = error;
-      if (error.message && (error.message.includes('503') || error.message.includes('429'))) {
-        console.warn(`Attempt ${i + 1} failed with retriable error. Retrying in ${delay / 1000}s...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      } else {
-        throw error; // Not a retriable error
-      }
-    }
-  }
-  console.error("Flow failed after multiple retries:", lastError);
-  throw lastError;
-}
-
-export async function verifyOptionalDnsHealth(
-  input: OptionalDnsHealthInput
-): Promise<OptionalDnsHealthOutput | null> {
-  if (!isDnsAnalysisEnabled()) {
-    throw new Error('DNS analysis with AI is disabled by the administrator.');
-  }
-  
-  try {
-    return await withRetries(() => optionalDnsHealthCheckFlow(input));
-  } catch (error) {
-    console.error("Optional DNS flow execution failed after retries:", error);
-    throw error;
-  }
-}
 
 const getTxtRecords = async (name: string): Promise<string[]> => {
   try {
@@ -86,24 +49,38 @@ const getMxRecords = async (domain: string): Promise<dns.MxRecord[]> => {
     }
 }
 
+export async function verifyOptionalDnsHealth(
+  input: OptionalDnsHealthInput
+): Promise<OptionalDnsHealthOutput | null> {
+  if (!isDnsAnalysisEnabled()) {
+    throw new Error('DNS analysis with AI is disabled by the administrator.');
+  }
 
-const optionalDnsHealthCheckFlow = ai.defineFlow(
-  {
-    name: 'optionalDnsHealthCheckFlow',
-    inputSchema: OptionalDnsHealthInputSchema,
-    outputSchema: OptionalDnsHealthOutputSchema,
+  const aiConfig = getAiConfigForFlows();
+  if (!aiConfig || !aiConfig.enabled || aiConfig.provider !== 'deepseek' || !aiConfig.apiKey) {
+      throw new Error('Deepseek AI is not configured or enabled.');
+  }
+
+  const { domain } = input;
+  
+  const [mxRecords, bimiRecords] = await Promise.all([
+    getMxRecords(domain),
+    getTxtRecords(`daybuu._bimi.${domain}`),
+  ]);
+
+  const prompt = `Analiza los registros DNS opcionales de un dominio y responde en español usando emojis. No incluyas enlaces a documentación externa. Tu respuesta DEBE ser un objeto JSON válido que cumpla con este esquema Zod:
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "mxStatus": { "type": "string", "enum": ["verified", "unverified", "not-found"] },
+    "bimiStatus": { "type": "string", "enum": ["verified", "unverified", "not-found"] },
+    "vmcStatus": { "type": "string", "enum": ["verified", "unverified", "not-found"] },
+    "analysis": { "type": "string" }
   },
-  async ({ domain }) => {
-    
-    const [mxRecords, bimiRecords] = await Promise.all([
-      getMxRecords(domain),
-      getTxtRecords(`daybuu._bimi.${domain}`),
-    ]);
-
-    const expertPrompt = ai.definePrompt({
-        name: 'optionalDnsHealthExpertPrompt',
-        output: { schema: OptionalDnsHealthOutputSchema },
-        prompt: `Analiza los registros DNS opcionales de un dominio y responde en español usando emojis. No incluyas enlaces a documentación externa.
+  "required": ["mxStatus", "bimiStatus", "vmcStatus", "analysis"]
+}
+\`\`\`
 
 Análisis del Registro MX:
 
@@ -141,22 +118,28 @@ Análisis del Registro VMC:
     *   Si no se encuentra ningún registro para 'daybuu._bimi', marca 'vmcStatus' como 'not-found' 🧐.
 
 Registros a analizar:
-- Dominio: {{{domain}}}
-- Registros MX: {{{mxRecords}}}
-- Registros BIMI (daybuu._bimi): {{{bimiRecords}}}
-`,
+- Dominio: ${domain}
+- Registros MX: ${mxRecords.map(r => `Prioridad: ${r.priority}, Servidor: ${r.exchange}`).join('; ')}
+- Registros BIMI (daybuu._bimi): ${bimiRecords.join('; ')}
+`;
+  
+  try {
+    const rawResponse = await deepseekChat(prompt, {
+      apiKey: aiConfig.apiKey,
+      model: aiConfig.modelName,
     });
 
-    const { output } = await expertPrompt({
-        domain,
-        mxRecords: mxRecords.map(r => `Prioridad: ${r.priority}, Servidor: ${r.exchange}`).join('; '),
-        bimiRecords: bimiRecords.join('; '),
-    });
-
-    if (!output) {
-      throw new Error("La IA no pudo generar un análisis para los registros opcionales.");
+    const jsonMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
+    if (!jsonMatch || !jsonMatch[1]) {
+      throw new Error("La IA no devolvió un JSON válido.");
     }
     
-    return output;
+    const parsedJson = JSON.parse(jsonMatch[1]);
+    const validatedOutput = OptionalDnsHealthOutputSchema.parse(parsedJson);
+
+    return validatedOutput;
+  } catch (error: any) {
+    console.error('Error in optional DNS health check with Deepseek:', error);
+    throw new Error(`Error al analizar los registros DNS opcionales: ${error.message}`);
   }
-);
+}

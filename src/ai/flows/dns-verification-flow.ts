@@ -8,9 +8,10 @@
  * - DnsHealthOutput - The return type for the verifyDnsHealth function.
  */
 
-import { ai, isDnsAnalysisEnabled } from '@/ai/genkit';
-import { z } from 'genkit';
+import { isDnsAnalysisEnabled, getAiConfigForFlows } from '@/ai/genkit';
+import { z } from 'zod';
 import dns from 'node:dns/promises';
+import { deepseekChat } from '@/ai/deepseek';
 
 export type DnsHealthInput = z.infer<typeof DnsHealthInputSchema>;
 const DnsHealthInputSchema = z.object({
@@ -26,29 +27,17 @@ const DnsHealthOutputSchema = z.object({
   analysis: z.string().describe('A natural language analysis of the findings, explaining what is wrong and how to fix it, if needed. Be concise and direct. Respond in Spanish and always use emojis.'),
 });
 
-async function withRetries<T>(
-  fn: () => Promise<T>,
-  retries: number = 2,
-  delay: number = 1500
-): Promise<T> {
-  let lastError: any;
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (error: any) {
-      lastError = error;
-      if (error.message && (error.message.includes('503') || error.message.includes('429'))) {
-        console.warn(`Attempt ${i + 1} failed with retriable error. Retrying in ${delay / 1000}s...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      } else {
-        throw error; // Not a retriable error
-      }
+const getTxtRecords = async (name: string): Promise<string[]> => {
+  try {
+    const records = await dns.resolveTxt(name);
+    return records.map(rec => rec.join(''));
+  } catch (error: any) {
+    if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
+      return [];
     }
+    throw error;
   }
-  console.error("Flow failed after multiple retries:", lastError);
-  throw lastError;
-}
-
+};
 
 export async function verifyDnsHealth(
   input: DnsHealthInput
@@ -57,49 +46,32 @@ export async function verifyDnsHealth(
     throw new Error('DNS analysis with AI is disabled by the administrator.');
   }
 
-  try {
-    return await withRetries(() => dnsHealthCheckFlow(input));
-  } catch (error) {
-    console.error("Flow execution failed after retries:", error);
-    // Propagate the original error message
-    throw error;
+  const aiConfig = getAiConfigForFlows();
+  if (!aiConfig || !aiConfig.enabled || aiConfig.provider !== 'deepseek' || !aiConfig.apiKey) {
+      throw new Error('Deepseek AI is not configured or enabled.');
   }
-}
 
-const getTxtRecords = async (name: string): Promise<string[]> => {
-  try {
-    // resolveTxt can return string[][]
-    const records = await dns.resolveTxt(name);
-    // Flatten and join to handle split TXT records
-    return records.map(rec => rec.join(''));
-  } catch (error: any) {
-    if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
-      return [];
-    }
-    // Re-throw other errors
-    throw error;
-  }
-};
+  const { domain, dkimPublicKey } = input;
 
+  const [txtRecords, dkimRecords, dmarcRecords] = await Promise.all([
+    getTxtRecords(domain),
+    getTxtRecords(`daybuu._domainkey.${domain}`),
+    getTxtRecords(`_dmarc.${domain}`),
+  ]);
 
-const dnsHealthCheckFlow = ai.defineFlow(
-  {
-    name: 'dnsHealthCheckFlow',
-    inputSchema: DnsHealthInputSchema,
-    outputSchema: DnsHealthOutputSchema,
+  const prompt = `Analiza los registros DNS de un dominio y responde en español usando emojis. No incluyas enlaces a documentación externa. Tu respuesta DEBE ser un objeto JSON válido que cumpla con este esquema Zod:
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "spfStatus": { "type": "string", "enum": ["verified", "unverified", "not-found"] },
+    "dkimStatus": { "type": "string", "enum": ["verified", "unverified", "not-found"] },
+    "dmarcStatus": { "type": "string", "enum": ["verified", "unverified", "not-found"] },
+    "analysis": { "type": "string" }
   },
-  async ({ domain, dkimPublicKey }) => {
-    
-    const [txtRecords, dkimRecords, dmarcRecords] = await Promise.all([
-      getTxtRecords(domain),
-      getTxtRecords(`daybuu._domainkey.${domain}`),
-      getTxtRecords(`_dmarc.${domain}`),
-    ]);
-
-    const expertPrompt = ai.definePrompt({
-        name: 'dnsHealthExpertPrompt',
-        output: { schema: DnsHealthOutputSchema },
-        prompt: `Analiza los registros DNS de un dominio y responde en español usando emojis. No incluyas enlaces a documentación externa.
+  "required": ["spfStatus", "dkimStatus", "dmarcStatus", "analysis"]
+}
+\`\`\`
 
 Análisis del Registro SPF:
 
@@ -141,26 +113,31 @@ Formato de Respuesta:
 Genera un análisis en formato de lista, explicando el estado de cada registro (SPF, DKIM, DMARC) de forma clara, directa y siempre usando emojis.
 
 Registros a analizar:
-- Dominio: {{{domain}}}
-- Clave DKIM esperada: {{{dkimPublicKey}}}
-- Registros TXT del dominio: {{{txtRecords}}}
-- Registros DKIM (daybuu._domainkey): {{{dkimRecords}}}
-- Registros DMARC (_dmarc): {{{dmarcRecords}}}
-`,
+- Dominio: ${domain}
+- Clave DKIM esperada: ${dkimPublicKey}
+- Registros TXT del dominio: ${txtRecords.join('\\n')}
+- Registros DKIM (daybuu._domainkey): ${dkimRecords.join('\\n')}
+- Registros DMARC (_dmarc): ${dmarcRecords.join('\\n')}
+`;
+  
+  try {
+    const rawResponse = await deepseekChat(prompt, {
+      apiKey: aiConfig.apiKey,
+      model: aiConfig.modelName,
     });
-
-    const { output } = await expertPrompt({
-        domain,
-        dkimPublicKey,
-        txtRecords: txtRecords.join('\n'),
-        dkimRecords: dkimRecords.join('\n'),
-        dmarcRecords: dmarcRecords.join('\n'),
-    });
-
-    if (!output) {
-      throw new Error("La IA no pudo generar un análisis.");
+    
+    // Extract JSON from the response
+    const jsonMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
+    if (!jsonMatch || !jsonMatch[1]) {
+      throw new Error("La IA no devolvió un JSON válido.");
     }
     
-    return output;
+    const parsedJson = JSON.parse(jsonMatch[1]);
+    const validatedOutput = DnsHealthOutputSchema.parse(parsedJson);
+
+    return validatedOutput;
+  } catch (error: any) {
+    console.error('Error in DNS health check with Deepseek:', error);
+    throw new Error(`Error al analizar la salud del DNS: ${error.message}`);
   }
-);
+}

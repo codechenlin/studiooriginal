@@ -1,9 +1,11 @@
 
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-import { deepseekPlugin } from './deepseek';
 import fs from 'fs';
 import path from 'path';
+
+// Note: The Deepseek plugin is now a direct API client and is not a Genkit plugin anymore.
+// It will be called directly from the flows that need it, based on the config file.
 
 interface AiConfig {
     provider: 'google' | 'deepseek';
@@ -29,28 +31,15 @@ try {
 
 const plugins = [];
 
-if (aiConfig?.enabled) {
-    if (aiConfig.provider === 'deepseek' && aiConfig.apiKey) {
-        plugins.push(deepseekPlugin({ apiKey: aiConfig.apiKey }));
-    } else if (aiConfig.provider === 'google' && process.env.GEMINI_API_KEY) {
-        plugins.push(googleAI());
-    }
-}
-
-// Fallback to Google AI if no config or if provider is Google but no specific API key is in config
-if (plugins.length === 0 && process.env.GEMINI_API_KEY) {
+// Keep Google AI plugin for any flows that might still use it or for future use.
+if (process.env.GEMINI_API_KEY) {
     plugins.push(googleAI());
 }
 
-let model = 'googleai/gemini-1.5-flash-latest'; // Default model
+let model = 'googleai/gemini-1.5-flash-latest'; // Default model remains Google's
 
-if (aiConfig?.enabled && aiConfig.modelName) {
-    if (aiConfig.provider === 'deepseek') {
-        model = `deepseek/${aiConfig.modelName}`;
-    } else {
-        model = `googleai/${aiConfig.modelName}`;
-    }
-}
+// The logic to select the model will now live inside each flow,
+// checking the aiConfig directly.
 
 export const ai = genkit({
   plugins,
@@ -59,4 +48,8 @@ export const ai = genkit({
 
 export function isDnsAnalysisEnabled() {
     return aiConfig?.enabled && aiConfig.functions?.dnsAnalysis;
+}
+
+export function getAiConfigForFlows() {
+    return aiConfig;
 }

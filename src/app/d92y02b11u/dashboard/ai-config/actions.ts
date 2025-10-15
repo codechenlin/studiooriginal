@@ -78,29 +78,20 @@ const testConnectionSchema = z.object({
 
 export async function testAiConnection(input: z.infer<typeof testConnectionSchema>): Promise<{ success: boolean; error?: string }> {
     try {
-        const { provider, apiKey, modelName } = testConnectionSchema.parse(input);
+        const { apiKey, modelName } = testConnectionSchema.parse(input);
         
-        // This is a bit of a workaround to test the connection without re-initializing genkit
-        // We will call the test flow which will use the currently configured AI provider.
-        // We must save the config first to ensure the test uses the new credentials.
-        const currentConfig = await readAiConfig();
-        const testConfig = { ...currentConfig, provider: 'deepseek' as const, apiKey, modelName, enabled: true };
-        await writeAiConfig(testConfig);
-
-        const response = await testChat("Hola, ¿puedes confirmar que estás funcionando?");
+        // Directly call the test function with the provided credentials
+        const response = await testChat("Hola, ¿puedes confirmar que estás funcionando?", {
+            apiKey: apiKey,
+            model: modelName,
+        });
         
-        // Restore original config after test
-        await writeAiConfig(currentConfig);
-
         if (response && typeof response === 'string' && response.length > 0) {
             return { success: true };
         } else {
             return { success: false, error: 'La IA respondió con un formato inesperado.' };
         }
     } catch (error: any) {
-        // Restore original config in case of error
-        const currentConfig = await readAiConfig();
-        await writeAiConfig(currentConfig);
         console.error("AI connection test error:", error);
         return { success: false, error: `Error de conexión con la IA: ${error.message}` };
     }

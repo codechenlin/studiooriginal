@@ -1,21 +1,15 @@
 
-/**
- * @fileoverview A Genkit plugin for DeepSeek models.
- */
-'use strict';
+'use server';
 
-import {
-  definePlugin,
-  type Plugin,
-  type ModelAction,
-  GenerateRequest,
-  Candidate,
-  finishReason,
-} from 'genkit';
+/**
+ * @fileoverview A simple client for the DeepSeek API.
+ */
+
 import { z } from 'zod';
 
 const DeepSeekConfigSchema = z.object({
   apiKey: z.string(),
+  model: z.string(),
 });
 type DeepSeekConfig = z.infer<typeof DeepSeekConfigSchema>;
 
@@ -41,113 +35,54 @@ interface DeepSeekResponse {
   }>;
 }
 
-function toDeepSeekMessages(
-  request: GenerateRequest
-): {
-  system?: string;
-  messages: DeepSeekMessage[];
-} {
-  let system: string | undefined = undefined;
-  if (request.config?.systemPrompt) {
-    throw new Error('systemPrompt is not supported, use messages instead.');
+/**
+ * Sends a chat prompt to the DeepSeek API.
+ * @param prompt The user's prompt.
+ * @param config The DeepSeek API configuration.
+ * @returns The text response from the model.
+ */
+export async function deepseekChat(prompt: string, config: DeepSeekConfig): Promise<string> {
+  const { apiKey, model } = config;
+
+  if (!apiKey) {
+    throw new Error('DeepSeek API key is not provided.');
   }
 
-  const messages: DeepSeekMessage[] = [];
-  for (const message of request.messages) {
-    if (message.role === 'system') {
-      system = message.content[0].text;
-      continue;
-    }
-    const msg: DeepSeekMessage = {
-      role: message.role,
-      content: message.content[0].text || '',
-    };
-    messages.push(msg);
-  }
-  return { system, messages };
-}
-
-function fromDeepSeekResponse(response: DeepSeekResponse): Candidate[] {
-  return response.choices.map((choice) => {
-    const candidate: Candidate = {
-      index: choice.index,
-      finishReason: finishReason(choice.finish_reason) || 'other',
-      message: {
-        role: 'assistant',
-        content: [{ text: choice.message.content }],
-      },
-    };
-    return candidate;
-  });
-}
-
-async function deepseekGenerate(
-  request: GenerateRequest,
-  config: DeepSeekConfig
-) {
-  const modelName = request.model.name;
-  if (!modelName.startsWith('deepseek/')) {
-    throw new Error(`Not a DeepSeek model: ${request.model.name}`);
-  }
-
-  const { messages } = toDeepSeekMessages(request);
+  const messages: DeepSeekMessage[] = [
+    { role: 'system', content: 'You are a helpful assistant. Respond concisely.' },
+    { role: 'user', content: prompt },
+  ];
 
   const req: DeepSeekRequest = {
-    model: modelName.substring('deepseek/'.length),
+    model: model,
     messages: messages,
-    stream: false,
   };
 
-  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify(req),
-  });
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(req),
+    });
 
-  if (!response.ok) {
-    const errBody = await response.text();
-    throw new Error(`DeepSeek error: ${response.status} ${errBody}`);
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`DeepSeek API Error: ${response.status}`, errorBody);
+      throw new Error(`Error con la API de DeepSeek: ${response.statusText}`);
+    }
+
+    const deepseekResponse: DeepSeekResponse = await response.json();
+    
+    if (deepseekResponse.choices && deepseekResponse.choices.length > 0) {
+      return deepseekResponse.choices[0].message.content;
+    } else {
+      throw new Error('La respuesta de la API de DeepSeek no contiene una elección válida.');
+    }
+  } catch (error: any) {
+    console.error('Failed to call DeepSeek API:', error);
+    throw new Error(`No se pudo conectar con la API de DeepSeek: ${error.message}`);
   }
-
-  const deepseekResponse: DeepSeekResponse = await response.json();
-  const candidates = fromDeepSeekResponse(deepseekResponse);
-  return { candidates };
 }
-
-export const deepseekPlugin: Plugin<[DeepSeekConfig] | []> = definePlugin(
-  {
-    name: 'deepseek',
-    configSchema: DeepSeekConfigSchema,
-  },
-  async (config) => {
-    const model: ModelAction = (req) => {
-      // All `deepseek/...` models will be handled by this function.
-      return deepseekGenerate(req, config);
-    };
-
-    return {
-      models: [
-        {
-          name: 'deepseek/deepseek-chat', // This is a default, `onFirstRequest` will handle dynamic models.
-          action: model,
-        },
-      ],
-      // This informs Genkit that any model starting with `deepseek/` should use our plugin.
-      onFirstRequest: (modelRef) => {
-        if (modelRef.name.startsWith('deepseek/')) {
-            return {
-                model: {
-                    name: modelRef.name,
-                    action: model,
-                }
-            }
-        }
-      }
-    };
-  }
-);
-
-export default deepseekPlugin;
