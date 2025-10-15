@@ -26,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { KeyRound } from "lucide-react";
-import React, { useTransition } from "react";
+import React, { useTransition, useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/context/language-context";
 import { SphereAnimation } from "@/components/login/sphere-animation";
@@ -44,8 +44,20 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { forgotPasswordImageUrl } = useAuthPages();
+  const { forgotPasswordImages } = useAuthPages();
   const [isPending, startTransition] = useTransition();
+  const [theme, setTheme] = useState("dark");
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setTheme(isDark ? 'dark' : 'light');
+    };
+    handleThemeChange();
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,6 +88,8 @@ export default function ForgotPasswordPage() {
         }
     });
   }
+
+  const imageUrl = theme === 'dark' ? forgotPasswordImages.dark : forgotPasswordImages.light;
 
   return (
     <>
@@ -155,7 +169,7 @@ export default function ForgotPasswordPage() {
             </div>
         </div>
         <div className="w-1/2 h-full relative overflow-hidden">
-            <MediaPreview src={forgotPasswordImageUrl} />
+            <MediaPreview src={imageUrl} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </div>
       </div>

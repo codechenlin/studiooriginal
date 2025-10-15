@@ -4,29 +4,34 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import AuthLayoutClient from './auth-layout-client';
 
+interface BackgroundImageConfig {
+  light: string;
+  dark: string;
+}
+
 interface AuthPagesContextType {
-  loginImageUrl: string;
-  signupImageUrl: string;
-  forgotPasswordImageUrl: string;
+  loginImages: BackgroundImageConfig;
+  signupImages: BackgroundImageConfig;
+  forgotPasswordImages: BackgroundImageConfig;
 }
 
 const AuthPagesContext = createContext<AuthPagesContextType | undefined>(undefined);
 
 export function AuthPagesProvider({
   children,
-  loginImageUrl,
-  signupImageUrl,
-  forgotPasswordImageUrl,
+  loginImages,
+  signupImages,
+  forgotPasswordImages,
 }: {
   children: ReactNode;
-  loginImageUrl: string;
-  signupImageUrl: string;
-  forgotPasswordImageUrl: string;
+  loginImages: BackgroundImageConfig;
+  signupImages: BackgroundImageConfig;
+  forgotPasswordImages: BackgroundImageConfig;
 }) {
   const value = {
-    loginImageUrl,
-    signupImageUrl,
-    forgotPasswordImageUrl,
+    loginImages,
+    signupImages,
+    forgotPasswordImages,
   };
 
   return (

@@ -16,9 +16,9 @@ async function readConfig() {
   } catch (error) {
      console.error("Failed to read app-config.json, returning default. Error:", error);
      return {
-        loginBackgroundImageUrl: '',
-        signupBackgroundImageUrl: '',
-        forgotPasswordBackgroundImageUrl: '',
+        loginBackgroundImage: { light: '', dark: '' },
+        signupBackgroundImage: { light: '', dark: '' },
+        forgotPasswordBackgroundImage: { light: '', dark: '' },
         logoLightUrl: null,
         logoDarkUrl: null,
      }
@@ -45,13 +45,9 @@ export async function getAppConfig() {
 }
 
 export async function uploadLogoAndGetUrl(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
-  // Use the client-side client for file uploads from client components
   const supabase = createClient();
-  
-  // We still need the server client to get the user securely
   const supabaseServer = createServerClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
-
 
   if (!user) {
     return { success: false, error: 'Usuario no autenticado.' };
@@ -82,18 +78,28 @@ export async function uploadLogoAndGetUrl(formData: FormData): Promise<{ success
   }
 }
 
-export async function updateAppConfig(key: string, value: string | null): Promise<{ success: boolean; error?: string }> {
+export async function updateAppConfig(key: string, value: any): Promise<{ success: boolean; error?: string }> {
     try {
         const config = await readConfig();
-        config[key] = value;
+        
+        const keys = key.split('.');
+        if (keys.length === 2) {
+          if (!config[keys[0]]) {
+            config[keys[0]] = {};
+          }
+          config[keys[0]][keys[1]] = value;
+        } else {
+          config[key] = value;
+        }
+
         await writeConfig(config);
         
         revalidatePath('/(auth)/login', 'page');
         revalidatePath('/(auth)/signup', 'page');
         revalidatePath('/(auth)/forgot-password', 'page');
         revalidatePath('/d92y02b11u/dashboard/logos', 'page');
-        revalidatePath('/dashboard', 'layout'); // To re-render logo in sidebar
-        revalidatePath('/d92y02b11u/dashboard', 'layout'); // To re-render logo in admin sidebar
+        revalidatePath('/dashboard', 'layout'); 
+        revalidatePath('/d92y02b11u/dashboard', 'layout');
 
         return { success: true };
     } catch (error: any) {

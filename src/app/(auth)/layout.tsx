@@ -6,13 +6,18 @@ import { LanguageProvider } from '@/context/language-context';
 import { AuthPagesProvider } from './auth-pages-provider';
 import { LogoProvider } from '@/context/logo-context';
 
+interface BackgroundImageConfig {
+  light: string;
+  dark: string;
+}
+
 interface AppConfig {
-  loginBackgroundImageUrl: string;
-  signupBackgroundImageUrl: string;
-  forgotPasswordBackgroundImageUrl: string;
+  loginBackgroundImage: BackgroundImageConfig;
+  signupBackgroundImage: BackgroundImageConfig;
+  forgotPasswordBackgroundImage: BackgroundImageConfig;
   logoLightUrl: string | null;
   logoDarkUrl: string | null;
-  [key: string]: string | null;
+  [key: string]: any; 
 }
 
 async function getAuthConfig() {
@@ -24,9 +29,9 @@ async function getAuthConfig() {
     console.error("Failed to read app-config.json:", error);
     // Return a default config to prevent build errors if the file is missing
     return {
-      loginBackgroundImageUrl: '',
-      signupBackgroundImageUrl: '',
-      forgotPasswordBackgroundImageUrl: '',
+      loginBackgroundImage: { light: '', dark: '' },
+      signupBackgroundImage: { light: '', dark: '' },
+      forgotPasswordBackgroundImage: { light: '', dark: '' },
       logoLightUrl: null,
       logoDarkUrl: null,
     };
@@ -40,9 +45,9 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     <LanguageProvider>
       <LogoProvider logoLightUrl={config.logoLightUrl} logoDarkUrl={config.logoDarkUrl}>
         <AuthPagesProvider
-          loginImageUrl={config.loginBackgroundImageUrl}
-          signupImageUrl={config.signupBackgroundImageUrl}
-          forgotPasswordImageUrl={config.forgotPasswordBackgroundImageUrl}
+          loginImages={config.loginBackgroundImage}
+          signupImages={config.signupBackgroundImage}
+          forgotPasswordImages={config.forgotPasswordBackgroundImage}
         >
           {children}
         </AuthPagesProvider>

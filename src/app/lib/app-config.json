@@ -1,7 +1,16 @@
 {
-  "loginBackgroundImageUrl": "https://supabasekong-ec8gs0woo84wwsgwc8owc80o.fanton.cloud/storage/v1/object/public/admin_assets/885c0c81-e275-49cc-934f-fbb5c1086011/1760513819013_loop 3d GIF by Doze Studio (1).gif",
-  "signupBackgroundImageUrl": "https://picsum.photos/seed/2/1200/800",
-  "forgotPasswordBackgroundImageUrl": "https://picsum.photos/seed/3/1200/800",
+  "loginBackgroundImage": {
+    "light": "https://supabasekong-ec8gs0woo84wwsgwc8owc80o.fanton.cloud/storage/v1/object/public/admin_assets/885c0c81-e275-49cc-934f-fbb5c1086011/1760513819013_loop 3d GIF by Doze Studio (1).gif",
+    "dark": "https://supabasekong-ec8gs0woo84wwsgwc8owc80o.fanton.cloud/storage/v1/object/public/admin_assets/885c0c81-e275-49cc-934f-fbb5c1086011/1760513819013_loop 3d GIF by Doze Studio (1).gif"
+  },
+  "signupBackgroundImage": {
+    "light": "https://picsum.photos/seed/2/1200/800",
+    "dark": "https://picsum.photos/seed/signup_dark/1200/800"
+  },
+  "forgotPasswordBackgroundImage": {
+    "light": "https://picsum.photos/seed/3/1200/800",
+    "dark": "https://picsum.photos/seed/forgot_dark/1200/800"
+  },
   "logoLightUrl": "https://supabasekong-ec8gs0woo84wwsgwc8owc80o.fanton.cloud/storage/v1/object/public/admin_assets/885c0c81-e275-49cc-934f-fbb5c1086011/1760314520786_654712B800.png",
   "logoDarkUrl": "https://supabasekong-ec8gs0woo84wwsgwc8owc80o.fanton.cloud/storage/v1/object/public/admin_assets/885c0c81-e275-49cc-934f-fbb5c1086011/1760314760731_5475N6877.png"
 }
