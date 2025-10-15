@@ -3,7 +3,8 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { createClient } from '@/lib/supabase/server';
+import { createClient as createServerClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client';
 import { revalidatePath } from 'next/cache';
 
 const configPath = path.join(process.cwd(), 'src', 'app', 'lib', 'app-config.json');
@@ -44,8 +45,13 @@ export async function getAppConfig() {
 }
 
 export async function uploadLogoAndGetUrl(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  // Use the client-side client for file uploads from client components
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  
+  // We still need the server client to get the user securely
+  const supabaseServer = createServerClient();
+  const { data: { user } } = await supabaseServer.auth.getUser();
+
 
   if (!user) {
     return { success: false, error: 'Usuario no autenticado.' };

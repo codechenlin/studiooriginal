@@ -11,7 +11,5 @@ export function createClient() {
     throw new Error("Supabase URL or Anon Key is missing from .env file.");
   }
   
-  // Utiliza createBrowserClient sin la lógica de cookies para evitar conflictos
-  // con FormData en Server Actions, que es una causa común del error "unexpected response".
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
