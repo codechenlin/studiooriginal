@@ -11,7 +11,6 @@ interface BackgroundImageConfig {
 
 interface AuthPagesContextType {
   loginImages: BackgroundImageConfig;
-  signupImages: BackgroundImageConfig;
   forgotPasswordImages: BackgroundImageConfig;
 }
 
@@ -20,17 +19,14 @@ const AuthPagesContext = createContext<AuthPagesContextType | undefined>(undefin
 export function AuthPagesProvider({
   children,
   loginImages,
-  signupImages,
   forgotPasswordImages,
 }: {
   children: ReactNode;
   loginImages: BackgroundImageConfig;
-  signupImages: BackgroundImageConfig;
   forgotPasswordImages: BackgroundImageConfig;
 }) {
   const value = {
     loginImages,
-    signupImages,
     forgotPasswordImages,
   };
 

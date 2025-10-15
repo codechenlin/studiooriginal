@@ -17,7 +17,6 @@ async function readConfig() {
      console.error("Failed to read app-config.json, returning default. Error:", error);
      return {
         loginBackgroundImage: { light: '', dark: '' },
-        signupBackgroundImage: { light: '', dark: '' },
         forgotPasswordBackgroundImage: { light: '', dark: '' },
         logoLightUrl: null,
         logoDarkUrl: null,

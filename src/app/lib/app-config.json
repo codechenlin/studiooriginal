@@ -1,11 +1,7 @@
 {
   "loginBackgroundImage": {
-    "light": "https://supabasekong-ec8gs0woo84wwsgwc8owc80o.fanton.cloud/storage/v1/object/public/admin_assets/885c0c81-e275-49cc-934f-fbb5c1086011/1760513819013_loop 3d GIF by Doze Studio (1).gif",
-    "dark": "https://supabasekong-ec8gs0woo84wwsgwc8owc80o.fanton.cloud/storage/v1/object/public/admin_assets/885c0c81-e275-49cc-934f-fbb5c1086011/1760513819013_loop 3d GIF by Doze Studio (1).gif"
-  },
-  "signupBackgroundImage": {
-    "light": "https://picsum.photos/seed/2/1200/800",
-    "dark": "https://picsum.photos/seed/signup_dark/1200/800"
+    "light": "https://supabasekong-ec8gs0woo84wwsgwc8owc80o.fanton.cloud/storage/v1/object/public/admin_assets/885c0c81-e275-49cc-934f-fbb5c1086011/1759818431165_loop 3d GIF by Doze Studio.gif",
+    "dark": "https://supabasekong-ec8gs0woo84wwsgwc8owc80o.fanton.cloud/storage/v1/object/public/admin_assets/885c0c81-e275-49cc-934f-fbb5c1086011/1760513179984_art GIF by Patakk.gif"
   },
   "forgotPasswordBackgroundImage": {
     "light": "https://picsum.photos/seed/3/1200/800",

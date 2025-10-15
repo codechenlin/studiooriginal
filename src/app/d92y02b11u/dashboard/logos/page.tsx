@@ -21,7 +21,6 @@ export const dynamic = 'force-dynamic';
 
 type AppConfig = {
     loginBackgroundImage: { light: string; dark: string; };
-    signupBackgroundImage: { light: string; dark: string; };
     forgotPasswordBackgroundImage: { light: string; dark: string; };
     logoLightUrl: string | null;
     logoDarkUrl: string | null;
@@ -147,7 +146,7 @@ function CoverSection({
     title: string;
     description: string;
     icon: React.ElementType;
-    configKey: 'loginBackgroundImage' | 'signupBackgroundImage' | 'forgotPasswordBackgroundImage';
+    configKey: 'loginBackgroundImage' | 'forgotPasswordBackgroundImage';
     initialImageUrls: { light: string; dark: string; };
     onConfigChange: (key: string, value: string) => void;
     isLoading: boolean;
@@ -279,7 +278,6 @@ export default function LogosPage() {
     const { toast } = useToast();
     const [config, setConfig] = useState<AppConfig>({ 
         loginBackgroundImage: { light: '', dark: '' }, 
-        signupBackgroundImage: { light: '', dark: '' }, 
         forgotPasswordBackgroundImage: { light: '', dark: '' },
         logoLightUrl: null,
         logoDarkUrl: null,
@@ -292,7 +290,6 @@ export default function LogosPage() {
          if (result.success && result.data) {
              const defaultConfig = {
                 loginBackgroundImage: { light: '', dark: '' }, 
-                signupBackgroundImage: { light: '', dark: '' }, 
                 forgotPasswordBackgroundImage: { light: '', dark: '' },
                 logoLightUrl: null,
                 logoDarkUrl: null,
@@ -368,16 +365,6 @@ export default function LogosPage() {
                 icon={Monitor}
                 configKey="loginBackgroundImage"
                 initialImageUrls={config.loginBackgroundImage}
-                onConfigChange={handleConfigChange}
-                isLoading={isLoading}
-            />
-            
-             <CoverSection
-                title="Portada de Registro de Cuenta"
-                description="Este fondo se mostrará en la página de signup del usuario."
-                icon={ImageIcon}
-                configKey="signupBackgroundImage"
-                initialImageUrls={config.signupBackgroundImage}
                 onConfigChange={handleConfigChange}
                 isLoading={isLoading}
             />
