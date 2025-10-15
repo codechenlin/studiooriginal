@@ -1,10 +1,9 @@
-
 {
   "provider": "deepseek",
-  "apiKey": "",
+  "apiKey": "sk-c89cfcae25f343e39af8f5127a0c8ce6",
   "modelName": "deepseek-chat",
-  "enabled": false,
+  "enabled": true,
   "functions": {
-    "dnsAnalysis": false
+    "dnsAnalysis": true
   }
 }

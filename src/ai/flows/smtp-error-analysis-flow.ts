@@ -8,7 +8,7 @@
  * - SmtpErrorAnalysisOutput - The return type for the analyzeSmtpError function.
  */
 
-import { isDnsAnalysisEnabled, getAiConfigForFlows } from '@/ai/genkit';
+import { getAiConfigForFlows } from '@/ai/genkit';
 import { z } from 'zod';
 import { deepseekChat } from '@/ai/deepseek';
 
@@ -26,12 +26,13 @@ const SmtpErrorAnalysisOutputSchema = z.object({
 export async function analyzeSmtpError(
   input: SmtpErrorAnalysisInput
 ): Promise<SmtpErrorAnalysisOutput | null> {
-  if (!isDnsAnalysisEnabled()) {
+  const aiConfig = getAiConfigForFlows();
+
+  if (!aiConfig?.enabled || !aiConfig.functions?.dnsAnalysis) {
     throw new Error('SMTP error analysis with AI is disabled by the administrator.');
   }
 
-  const aiConfig = getAiConfigForFlows();
-  if (!aiConfig || !aiConfig.enabled || aiConfig.provider !== 'deepseek' || !aiConfig.apiKey) {
+  if (aiConfig.provider !== 'deepseek' || !aiConfig.apiKey) {
       throw new Error('Deepseek AI is not configured or enabled.');
   }
   

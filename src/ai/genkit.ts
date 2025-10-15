@@ -17,17 +17,7 @@ interface AiConfig {
     };
 }
 
-let aiConfig: AiConfig | null = null;
-
-try {
-    const configPath = path.join(process.cwd(), 'src', 'app', 'lib', 'ai-config.json');
-    if (fs.existsSync(configPath)) {
-        const configFile = fs.readFileSync(configPath, 'utf-8');
-        aiConfig = JSON.parse(configFile);
-    }
-} catch (error) {
-    console.warn("Could not read or parse ai-config.json. AI features will be disabled.", error);
-}
+const configPath = path.join(process.cwd(), 'src', 'app', 'lib', 'ai-config.json');
 
 const plugins = [];
 
@@ -46,10 +36,15 @@ export const ai = genkit({
   model,
 });
 
-export function isDnsAnalysisEnabled() {
-    return aiConfig?.enabled && aiConfig.functions?.dnsAnalysis;
-}
-
-export function getAiConfigForFlows() {
-    return aiConfig;
+export function getAiConfigForFlows(): AiConfig | null {
+    try {
+        if (fs.existsSync(configPath)) {
+            const configFile = fs.readFileSync(configPath, 'utf-8');
+            return JSON.parse(configFile) as AiConfig;
+        }
+        return null;
+    } catch (error) {
+        console.warn("Could not read or parse ai-config.json for flow.", error);
+        return null;
+    }
 }

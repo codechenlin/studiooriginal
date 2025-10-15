@@ -8,7 +8,7 @@
  * - DnsHealthOutput - The return type for the verifyDnsHealth function.
  */
 
-import { isDnsAnalysisEnabled, getAiConfigForFlows } from '@/ai/genkit';
+import { getAiConfigForFlows } from '@/ai/genkit';
 import { z } from 'zod';
 import dns from 'node:dns/promises';
 import { deepseekChat } from '@/ai/deepseek';
@@ -42,12 +42,13 @@ const getTxtRecords = async (name: string): Promise<string[]> => {
 export async function verifyDnsHealth(
   input: DnsHealthInput
 ): Promise<DnsHealthOutput | null> {
-  if (!isDnsAnalysisEnabled()) {
+  const aiConfig = getAiConfigForFlows();
+  
+  if (!aiConfig?.enabled || !aiConfig.functions?.dnsAnalysis) {
     throw new Error('DNS analysis with AI is disabled by the administrator.');
   }
-
-  const aiConfig = getAiConfigForFlows();
-  if (!aiConfig || !aiConfig.enabled || aiConfig.provider !== 'deepseek' || !aiConfig.apiKey) {
+  
+  if (aiConfig.provider !== 'deepseek' || !aiConfig.apiKey) {
       throw new Error('Deepseek AI is not configured or enabled.');
   }
 
