@@ -16,6 +16,9 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 
+export const maxDuration = 60; // Aumentar el tiempo de espera a 60 segundos
+export const dynamic = 'force-dynamic';
+
 type AppConfig = {
     loginBackgroundImageUrl: string;
     signupBackgroundImageUrl: string;
