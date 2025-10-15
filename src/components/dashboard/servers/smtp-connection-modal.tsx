@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -11,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -26,6 +25,7 @@ import { type OptionalDnsHealthOutput } from '@/ai/flows/optional-dns-verificati
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
+import { PauseVerificationModal } from './pause-verification-modal';
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -75,6 +75,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
   
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
+  const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
 
   useEffect(() => {
     if (domain && !dkimData) {
@@ -254,30 +255,32 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     });
   }
 
+  const resetState = () => {
+    setCurrentStep(1);
+    setDomain('');
+    setVerificationCode('');
+    setVerificationStatus('idle');
+    setHealthCheckStatus('idle');
+    setDnsAnalysis(null);
+    setTestStatus('idle');
+    setDeliveryStatus('idle');
+    form.reset();
+    setTestError('');
+    setActiveInfoModal(null);
+    setIsCancelConfirmOpen(false);
+    setDkimData(null);
+    setShowNotification(false);
+    setHealthCheckStep('mandatory');
+    setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
+    setIsSmtpErrorAnalysisModalOpen(false);
+    setSmtpErrorAnalysis(null);
+    setAcceptedDkimKey(null);
+    setIsConnectionSecure(false);
+  }
+
   const handleClose = () => {
     onOpenChange(false);
-    setTimeout(() => {
-        setCurrentStep(1);
-        setDomain('');
-        setVerificationCode('');
-        setVerificationStatus('idle');
-        setHealthCheckStatus('idle');
-        setDnsAnalysis(null);
-        setTestStatus('idle');
-        setDeliveryStatus('idle');
-        form.reset();
-        setTestError('');
-        setActiveInfoModal(null);
-        setIsCancelConfirmOpen(false);
-        setDkimData(null);
-        setShowNotification(false);
-        setHealthCheckStep('mandatory');
-        setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
-        setIsSmtpErrorAnalysisModalOpen(false);
-        setSmtpErrorAnalysis(null);
-        setAcceptedDkimKey(null);
-        setIsConnectionSecure(false);
-    }, 300);
+    setTimeout(resetState, 300);
   }
   
   async function onSubmitSmtp(values: z.infer<typeof smtpFormSchema>) {
@@ -328,6 +331,23 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         setSmtpErrorAnalysis(result.error || 'No se pudo generar un análisis.');
     }
   };
+  
+  const handlePauseProcess = () => {
+    // Here you would save the state to your backend.
+    // For now, we'll just close the modals.
+    toast({
+        title: "Proceso Pausado",
+        description: "Tu progreso ha sido guardado. Tienes 24 horas para continuar.",
+        className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white'
+    });
+    setIsPauseModalOpen(false);
+    handleClose();
+  }
+
+  const handleCancelProcess = () => {
+    setIsPauseModalOpen(false);
+    setIsCancelConfirmOpen(true);
+  }
 
   const cardAnimation = {
       initial: { opacity: 0, y: 20 },
@@ -415,6 +435,19 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   </div>
 
                   {currentStep > 1 && <DomainStatusIndicator />}
+
+                  {currentStep > 1 && (
+                      <div className="mt-4 p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
+                          <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
+                          <Button 
+                            onClick={() => setIsPauseModalOpen(true)}
+                            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
+                          >
+                            <Pause className="mr-2"/> Pausar Proceso
+                          </Button>
+                      </div>
+                  )}
+
               </div>
 
               <div className="text-xs text-muted-foreground mt-4">
@@ -424,23 +457,25 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       )
   }
 
+  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
+
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
-      <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-          <span className='font-semibold'>{name}</span>
-          <div className="flex items-center gap-2">
-            {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
-            <div className="relative">
-              <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
-              {recordKey === 'dkim' && showDkimAcceptWarning && (
-                 <div className="absolute -top-1 -right-1">
-                    <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
-                        <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
-                    </div>
-                </div>
-              )}
-            </div>
+    <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
+        <span className='font-semibold'>{name}</span>
+        <div className="flex items-center gap-2">
+          {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
+          <div className="relative">
+            <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
+            {recordKey === 'dkim' && showDkimAcceptWarning && (
+               <div className="absolute -top-1 -right-1">
+                  <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
+                      <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
+                  </div>
+              </div>
+            )}
           </div>
-      </div>
+        </div>
+    </div>
   );
 
   const renderStep4 = () => (
@@ -490,7 +525,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderContent = () => {
     return (
       <Form {...form}>
-        <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]" showCloseButton={false}>
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
@@ -959,9 +994,20 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   return (
     <>
       <ToastProvider>
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            if (!open) {
+                // If user clicks outside or presses Esc, confirm before closing.
+                setIsCancelConfirmOpen(true);
+            }
+        }}>
             {renderContent()}
         </Dialog>
+        <PauseVerificationModal
+          isOpen={isPauseModalOpen}
+          onOpenChange={setIsPauseModalOpen}
+          onPause={handlePauseProcess}
+          onCancelProcess={handleCancelProcess}
+        />
         <AlertDialog open={isCancelConfirmOpen} onOpenChange={setIsCancelConfirmOpen}>
             <AlertDialogContent>
                 <AlertDialogHeader>
@@ -1563,6 +1609,7 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
 }
 
     
+
 
 
 
