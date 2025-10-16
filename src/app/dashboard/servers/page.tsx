@@ -29,6 +29,7 @@ const initialProviders = [
     emailsCount: 5234,
     lastDnsCheck: 'hace 4h',
     status: 'ok' as ProviderStatus,
+    hasVerifiedDomains: true,
   },
   {
     id: 'blastengine',
@@ -42,6 +43,7 @@ const initialProviders = [
     emailsCount: 8912,
     lastDnsCheck: 'hace 2h',
     status: 'error' as ProviderStatus,
+    hasVerifiedDomains: false, // Simulate disabled state
   },
   {
     id: 'sparkpost',
@@ -55,6 +57,7 @@ const initialProviders = [
     emailsCount: 3489,
     lastDnsCheck: 'hace 8h',
      status: 'ok' as ProviderStatus,
+     hasVerifiedDomains: true,
   },
   {
     id: 'elasticemail',
@@ -68,6 +71,7 @@ const initialProviders = [
     emailsCount: 9102,
     lastDnsCheck: 'hace 1h',
     status: 'error' as ProviderStatus,
+    hasVerifiedDomains: true,
   },
 ];
 
@@ -106,9 +110,19 @@ export default function ServersPage() {
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
   const [providers, setProviders] = useState(initialProviders.map(p => ({ ...p, formattedEmailsCount: '...' })));
   
-  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(true); // SIMULATED STATE
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
+  const [currentModalContext, setCurrentModalContext] = useState({ hasVerifiedDomains: false });
+
+  const handleSubdomainClick = (hasVerified: boolean) => {
+    setCurrentModalContext({ hasVerifiedDomains: hasVerified });
+    setIsSubdomainModalOpen(true);
+  };
+  
+  const handleAddEmailClick = (hasVerified: boolean) => {
+    setCurrentModalContext({ hasVerifiedDomains: hasVerified });
+    setIsAddEmailModalOpen(true);
+  };
 
 
   useEffect(() => {
@@ -140,8 +154,8 @@ export default function ServersPage() {
       status={selectedStatus}
     />
     <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} />
-    <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} hasVerifiedDomains={hasVerifiedDomains} />
-    <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} hasVerifiedDomains={hasVerifiedDomains} />
+    <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} hasVerifiedDomains={currentModalContext.hasVerifiedDomains} />
+    <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} hasVerifiedDomains={currentModalContext.hasVerifiedDomains} />
 
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background relative overflow-hidden">
        <style>{`
@@ -277,17 +291,25 @@ export default function ServersPage() {
                       Conectar Ahora <ChevronRight className="size-4" />
                     </span>
                  </Button>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                     <Button variant="outline" className="w-full text-xs h-9" onClick={() => setIsSubdomainModalOpen(true)}>
+                 <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Button
+                        variant="outline"
+                        className="w-full text-xs h-9 border-white/50 hover:bg-white hover:text-black dark:text-white"
+                        onClick={() => handleSubdomainClick(provider.hasVerifiedDomains)}
+                    >
                         <Plus className="mr-1"/>
                         Sub Dominio
-                         <div className={cn("ml-auto size-2.5 rounded-full transition-all", hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
-                     </Button>
-                     <Button variant="outline" className="w-full text-xs h-9" onClick={() => setIsAddEmailModalOpen(true)}>
+                        <div className={cn("ml-auto size-2.5 rounded-full transition-all", provider.hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="w-full text-xs h-9 border-white/50 hover:bg-white hover:text-black dark:text-white"
+                        onClick={() => handleAddEmailClick(provider.hasVerifiedDomains)}
+                    >
                         <MailPlus className="mr-1"/>
                         Correos
-                        <div className={cn("ml-auto size-2.5 rounded-full transition-all", hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
-                     </Button>
+                        <div className={cn("ml-auto size-2.5 rounded-full transition-all", provider.hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
+                    </Button>
                   </div>
               </div>
             </div>
@@ -298,3 +320,4 @@ export default function ServersPage() {
     </>
   );
 }
+
