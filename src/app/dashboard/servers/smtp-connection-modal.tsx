@@ -76,6 +76,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); // New state for subdomain feature
+  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
 
   useEffect(() => {
     if (domain && !dkimData) {
@@ -139,6 +141,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
     if (result.success) {
       setVerificationStatus('verified');
+      setHasVerifiedDomains(true); // Simulate that a domain is now verified
       form.setValue('username', `ejemplo@${domain}`);
     } else {
       setVerificationStatus('failed');
@@ -361,7 +364,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     const isConfigFinished = currentStep === 4 && testStatus === 'success';
 
     return (
-        <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
+        <div className="p-3 mb-4 rounded-lg border border-white/10 bg-black/20 text-center">
             <p className="text-xs text-muted-foreground">Dominio en configuración</p>
             <div className="flex items-center justify-center gap-2 mt-1">
                  <motion.div
@@ -430,10 +433,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         );
                     })}
                   </ul>
-
-                  {currentStep > 1 && <DomainStatusIndicator />}
+                  
+                  {currentStep > 1 && (
+                    <div className="mt-4">
+                        <DomainStatusIndicator />
+                        <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
+                            <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
+                            <Button
+                                onClick={() => setIsPauseModalOpen(true)}
+                                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
+                            >
+                                <Pause className="mr-2"/> Pausar Proceso
+                            </Button>
+                        </div>
+                    </div>
+                  )}
 
               </div>
+
           </div>
       )
   }
@@ -510,7 +527,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
-            <div className="md:col-span-1 h-full p-8 flex flex-col justify-start overflow-hidden">
+            <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
               <AnimatePresence mode="wait">
               <motion.div
                   key={currentStep}
@@ -525,11 +542,42 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
                       <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
                       <div className="space-y-2 pt-4 flex-grow">
-                      <Label htmlFor="domain">Tu Dominio</Label>
-                      <div className="relative">
-                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                          <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
-                      </div>
+                        <Label htmlFor="domain">Tu Dominio</Label>
+                        <div className="relative">
+                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                            <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
+                        </div>
+                        {/* New Subdomain Section */}
+                        <div className="pt-4 space-y-3">
+                          <p className="text-sm text-muted-foreground">¿Necesitas añadir un subdominio a un dominio ya verificado?</p>
+                          <div className="flex items-center gap-3">
+                             <Button
+                                onClick={() => {
+                                    if (!hasVerifiedDomains) {
+                                        setIsSubdomainModalOpen(true);
+                                    } else {
+                                        // TODO: Implement subdomain adding logic
+                                    }
+                                }}
+                                className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
+                              >
+                                  <div className="ai-core-border-animation group-hover:hidden"></div>
+                                  <div className="ai-core group-hover:scale-125"></div>
+                                  <div className="relative z-10 flex items-center justify-center gap-2 text-white">
+                                      <div className="flex gap-1 items-end h-4">
+                                          <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
+                                          <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
+                                          <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
+                                      </div>
+                                      <span className="text-sm font-semibold">Añadir subdominio</span>
+                                  </div>
+                              </Button>
+                              <div className="relative flex items-center justify-center size-5">
+                                 <div className={cn("absolute w-full h-full rounded-full animate-pulse", hasVerifiedDomains ? 'bg-green-400' : 'bg-yellow-400')} style={{filter: `blur(3px)`}}/>
+                                 <div className={cn("w-2 h-2 rounded-full", hasVerifiedDomains ? 'bg-green-400' : 'bg-yellow-400')} />
+                              </div>
+                          </div>
+                        </div>
                       </div>
                   </>
                   )}
@@ -1000,6 +1048,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+        <Dialog open={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen}>
+            <DialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-amber-400" />Acción Requerida</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        No puedes añadir un subdominio porque aún no has verificado un dominio principal.
+                        <br /><br />
+                        <strong>Ejemplo:</strong> Primero debes verificar `ejemplo.com` antes de poder añadir `marketing.ejemplo.com`.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <Button onClick={() => setIsSubdomainModalOpen(false)}>Entendido</Button>
+                </AlertDialogFooter>
+            </DialogContent>
+        </Dialog>
         <DnsInfoModal
             recordType={activeInfoModal}
             domain={domain}
@@ -1561,10 +1624,468 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
                 {deliveryStatus === 'delivered' && '¡Confirmado! La IA ha verificado la entrega exitosa del correo de prueba.'}
                 {deliveryStatus === 'bounced' && '¡Fallo en la entrega! El correo fue rebotado.'}
             </motion.p>
+            {deliveryStatus === 'bounced' && (
+                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2 }} className="flex justify-center">
+                    <button
+                        onClick={async () => {
+                            if (!testError) return;
+                            setIsSmtpErrorAnalysisModalOpen(true);
+                            setSmtpErrorAnalysis(null);
+                            const result = await analyzeSmtpErrorAction({ error: testError });
+                            setSmtpErrorAnalysis(result.success && result.data ? result.data.analysis : result.error || 'No se pudo generar un análisis.');
+                        }}
+                        className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white"
+                        style={{ background: 'linear-gradient(to right, #F00000, #F07000)' }}
+                    >
+                        <div className="ai-button-scan absolute inset-0"/>
+                        <div className="relative z-10 flex items-center justify-center gap-2">
+                            <BrainCircuit className="size-4"/>
+                            <span className="text-sm font-semibold">Analizar Rebote con IA</span>
+                        </div>
+                    </button>
+                 </motion.div>
+            )}
         </motion.div>
+    );
+}
+
+// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
+// The copy of these modals is omitted for brevity but they are part of the file
+function DnsInfoModal({
+  recordType,
+  domain,
+  isOpen,
+  onOpenChange,
+  onCopy,
+  dkimData,
+  isGeneratingDkim,
+  onRegenerateDkim,
+  acceptedKey,
+  onAcceptKey,
+}: {
+  recordType: InfoViewRecord | null,
+  domain: string,
+  isOpen: boolean,
+  onOpenChange: () => void,
+  onCopy: (text: string) => void,
+  dkimData: DkimGenerationOutput | null,
+  isGeneratingDkim: boolean,
+  onRegenerateDkim: () => void;
+  acceptedKey: string | null;
+  onAcceptKey: (key: string) => void;
+}) {
+    const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+    if(!recordType) return null;
+
+    const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
+    
+    const infoMap: Record<InfoViewRecord, { title: string, description: string }> = {
+      spf: {
+        title: "Registro SPF",
+        description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
+      },
+      dkim: {
+        title: "Registro DKIM",
+        description: "DKIM es como una firmar digital para cada correo con un sello único que solo tú puedes poner, El receptor verifica esa firma con una clave pública que está en tu DNS. Si la firma coincide, sabe que el mensaje no fue alterado y que realmente salió de tu dominio. Ejemplo real: Garantiza que el contenido del correo no fue modificado en el camino."
+      },
+      dmarc: {
+        title: "Registro DMARC",
+        description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude."
+      },
+       mx: {
+        title: "Registro MX",
+        description: "MX es un registro que dice “Aquí es donde deben entregarse los correos que envían a mi dominio”. Indica el servidor de correo que recibe tus mensajes. Ejemplo real: Permite que Daybuu, Outlook o cualquier otro servicio sepa a qué servidor entregar tus correos electrónicos.",
+      },
+      bimi: {
+        title: "Registro BIMI",
+        description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
+      },
+      vmc: {
+        title: "Certificado VMC",
+        description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
+      },
+    }
+
+    const renderSpfContent = () => {
+        const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
+        return (
+            <div className="space-y-4 text-sm">
+                <p>Añade el siguiente registro TXT a la configuración de tu dominio en tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
+                    <span>@</span>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Tipo de Registro:</p>
+                    <span>TXT</span>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                   <p className="font-bold text-white/90">Valor del Registro:</p>
+                   <div className="w-full flex justify-between items-center">
+                     <span className="truncate">{recordValue}</span>
+                     <Button size="icon" variant="ghost" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                   </div>
+                </div>
+                 <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
+                    <p className="font-bold mb-1">Importante: Unificación de SPF</p>
+                    <p>Si ya usas otros servicios de correo (ej. Daybuu.com, Workspace, etc.), debes unificar los registros. Solo puede existir un registro SPF por dominio. Unifica los valores `include` en un solo registro.</p>
+                    <p className="mt-2 font-mono text-white/90">Ejemplo: `v=spf1 include:_spf.daybuu.com include:spf.otrodominio.com -all`</p>
+                </div>
+            </div>
+        );
+    };
+
+    const renderDkimContent = () => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div className="space-y-4">
+           <h4 className="font-semibold text-base mb-2">Paso 1: Genera y Acepta tu Clave</h4>
+            <p>Genera una clave única para tu dominio y acéptala para que nuestro sistema la use en las verificaciones.</p>
+             <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20 flex items-start gap-2">
+              <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+              <div>
+                <p className="font-bold mb-1 text-amber-300">¡Atención!</p>
+                <p>Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación DKIM funcione.</p>
+              </div>
+            </div>
+            <div className={cn(baseClass, "flex-col items-start gap-1")}>
+               <div className="font-bold text-white/90 flex justify-between w-full items-center">
+                <span>Clave Aceptada:</span>
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-xs font-semibold", acceptedKey ? "text-green-400" : "text-amber-400")}>
+                    {acceptedKey ? "SÍ" : "NO"}
+                  </span>
+                  <div className="relative flex items-center justify-center w-4 h-4">
+                    <div className={cn('absolute w-full h-full rounded-full', acceptedKey ? 'bg-green-500' : 'bg-amber-500', 'animate-pulse')} style={{filter: `blur(4px)`}}/>
+                    <div className={cn('w-2 h-2 rounded-full', acceptedKey ? 'bg-green-500' : 'bg-amber-500')} />
+                  </div>
+                </div>
+               </div>
+            </div>
+            <div className="flex gap-2">
+                <Button onClick={() => setConfirmRegenerate(true)} disabled={isGeneratingDkim} className="w-full" variant="outline">
+                  {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
+                  Generar Nueva
+                </Button>
+                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:from-[#00CE07] hover:to-[#A6EE00] text-white">
+                  <CheckCheck className="mr-2"/>
+                  {dkimData?.publicKeyRecord === acceptedKey ? 'Clave Aceptada' : 'Aceptar y Usar esta Clave'}
+                </Button>
+            </div>
+        </div>
+        <div className="space-y-4">
+           <h4 className="font-semibold text-base mb-2">Paso 2: Añade el Registro a tu DNS</h4>
+            <p>Una vez aceptada, copia y pega estos valores en la configuración de tu proveedor de dominio.</p>
+            <AnimatePresence>
+            {dkimData ? (
+                <motion.div initial={{opacity: 0, height: 0}} animate={{opacity: 1, height: 'auto'}} exit={{opacity: 0, height: 0}} className="space-y-2 overflow-hidden">
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`${dkimData.selector}._domainkey`)}><Copy className="size-4"/></Button></p>
+                    <div className="w-full flex justify-between items-center">
+                    <span>{dkimData.selector}._domainkey</span>
+                    </div>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Tipo de Registro:</p>
+                    <span>TXT</span>
+                </div>
+                <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                    <p className="font-bold text-white/90">Valor del Registro:</p>
+                    <div className="w-full flex justify-between items-start">
+                    <p className="break-all pr-2">{dkimData.publicKeyRecord}</p>
+                    <Button size="icon" variant="ghost" className="shrink-0 self-start size-6 -mr-2 flex-shrink-0" onClick={() => onCopy(dkimData.publicKeyRecord)}><Copy className="size-4"/></Button>
+                    </div>
+                </div>
+                </motion.div>
+            ) : (
+                <div className="flex items-center justify-center p-4">
+                    <Loader2 className="animate-spin" />
+                    <p className="ml-2">Generando clave DKIM...</p>
+                </div>
+            )}
+            </AnimatePresence>
+        </div>
+         <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <Button 
+                    onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
+                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
+                >
+                    Sí, generar nueva
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </div>
+    );
+    
+    const renderDmarcContent = () => {
+        const recordValue = `v=DMARC1; p=reject; pct=100; rua=mailto:reportes@${domain}; ruf=mailto:fallas@${domain}; sp=reject; aspf=s; adkim=s`;
+        return (
+             <div className="grid md:grid-cols-3 gap-6 text-sm">
+               <div className="md:col-span-2 space-y-4">
+                 <h4 className="font-semibold text-base mb-2">Paso 1: Añade el Registro a tu DNS</h4>
+                 <p className="mb-4">Añade un registro DMARC con política `reject` para máxima seguridad y entregabilidad.</p>
+                 <div className="space-y-3">
+                    <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span> <Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('_dmarc')}><Copy className="size-4"/></Button></p>
+                       <span>_dmarc</span>
+                   </div>
+                   <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90">Tipo de Registro:</p>
+                       <span>TXT</span>
+                   </div>
+                   <div className={cn(baseClass, "flex-col items-start gap-1")}>
+                       <p className="font-bold text-white/90">Valor del Registro:</p>
+                       <div className="w-full flex justify-between items-start">
+                       <p className="break-all pr-2">{recordValue}</p>
+                       <Button size="icon" variant="ghost" className="shrink-0 size-6 -mr-2" onClick={() => onCopy(recordValue)}><Copy className="size-4"/></Button>
+                       </div>
+                   </div>
+                 </div>
+               </div>
+                <div className="md:col-span-1 text-xs text-cyan-300/80 p-4 bg-cyan-500/10 rounded-lg border border-cyan-400/20 space-y-3">
+                   <h4 className="font-bold text-base text-white/90 mb-2">Paso 2: Entiende las Etiquetas</h4>
+                   <div className="space-y-1">
+                       <p><strong className="text-white/90">v=DMARC1</strong> → Versión.</p>
+                       <p><strong className="text-white/90">p=reject</strong> → Política estricta que rechaza correos fallidos.</p>
+                       <p><strong className="text-white/90">pct=100</strong> → Aplica la política al 100%.</p>
+                       <p><strong className="text-white/90">rua=...</strong> → Recibe reportes agregados.</p>
+                       <p><strong className="text-white/90">ruf=...</strong> → Recibe reportes forenses.</p>
+                       <p><strong className="text-white/90">sp=reject</strong> → Política para subdominios.</p>
+                       <p><strong className="text-white/90">aspf=s</strong> → Alineación SPF estricta.</p>
+                       <p><strong className="text-white/90">adkim=s</strong> → Alineación DKIM estricta.</p>
+                   </div>
+                </div>
+                 <div className="md:col-span-3 mt-4 p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                     <MailQuestion className="size-10 shrink-0 text-amber-400 mt-1" />
+                     <div>
+                         <h5 className="font-bold text-amber-300 mb-1">Paso 3: ¡Importante! Crea los Buzones de Correo</h5>
+                         <p>Debes crear los buzones de correo que especificaste en las etiquetas `rua` y `ruf` para poder recibir los informes de DMARC. Puedes personalizarlos, pero asegúrate de que existan y estén en tu registro DNS.</p>
+                         <ul className="list-disc pl-4 mt-2 font-mono">
+                             <li>`rua=mailto:<strong className="text-white">reportes@{domain}</strong>`</li>
+                             <li>`ruf=mailto:<strong className="text-white">fallas@{domain}</strong>`</li>
+                         </ul>
+                     </div>
+                 </div>
+           </div>
+       );
+   }
+
+    const renderMxContent = () => (
+      <div className="space-y-4 text-sm">
+        <p>Añade este registro MX para usar nuestro servicio de correo entrante.</p>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
+          <span>@</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Tipo de Registro:</p><span>MX</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Prioridad:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('0')}><Copy className="size-4"/></Button></p>
+          <span>0</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Valor/Destino:</p>
+          <div className="w-full flex justify-between items-center"><span className="truncate">daybuu.com</span><Button size="icon" variant="ghost" onClick={() => onCopy('daybuu.com')}><Copy className="size-4"/></Button></div>
+        </div>
+      </div>
+    );
+    
+    const renderBimiContent = () => (
+      <div className="space-y-4 text-sm">
+        <p>Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Valor del Registro:</p>
+          <div className="w-full flex justify-between items-center"><span className="truncate">v=BIMI1; l=https://tudominio.com/logo.svg</span><Button size="icon" variant="ghost" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg')}><Copy className="size-4"/></Button></div>
+        </div>
+      </div>
+    );
+
+    const renderVmcContent = () => (
+      <div className="space-y-4 text-sm">
+        <p>Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
+        </div>
+        <div className={cn(baseClass, "flex-col items-start gap-1")}>
+          <p className="font-bold text-white/90">Valor del Registro:</p>
+          <div className="w-full flex justify-between items-center"><span className="break-all pr-2">v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado.pem</span><Button size="icon" variant="ghost" className="shrink-0" onClick={() => onCopy('v=BIMI1; l=https://tudominio.com/logo.svg; a=https://tudominio.com/certificado.pem')}><Copy className="size-4"/></Button></div>
+        </div>
+      </div>
+    );
+    
+
+    const contentMap = {
+        spf: { title: "Registro SPF", content: renderSpfContent() },
+        dkim: { title: "Registro DKIM", content: renderDkimContent() },
+        dmarc: { title: "Registro DMARC", content: renderDmarcContent() },
+        mx: { title: "Registro MX", content: renderMxContent() },
+        bimi: { title: "Registro BIMI", content: renderBimiContent() },
+        vmc: { title: "Certificado VMC", content: renderVmcContent() },
+    };
+
+    const { title, content } = contentMap[recordType];
+    const { title: infoTitle, description: infoDescription } = infoMap[recordType];
+    const isSpecialLayout = recordType === 'dmarc' || recordType === 'dkim';
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className={cn("bg-black/50 backdrop-blur-xl border-primary/20 text-white", isSpecialLayout ? "sm:max-w-4xl" : "sm:max-w-xl")}>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-3 text-lg">
+                        <div className="p-2 rounded-full bg-primary/20"><Dna className="text-primary"/></div>
+                        Instrucciones para {title}
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    {content}
+                </div>
+                <DialogFooter className="sm:justify-between">
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" className="flex items-center gap-2 text-cyan-300">
+                                <HelpCircle />
+                                Cómo funciona
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 bg-black/70 border-cyan-400/20 text-white backdrop-blur-md">
+                            <div className="grid gap-4">
+                                <h4 className="font-medium leading-none text-cyan-300">{infoTitle}</h4>
+                                <p className="text-sm text-cyan-100/90">{infoDescription}</p>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                     <Button type="button" variant="outline" onClick={onOpenChange}>
+                       Cerrar
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#00ADEC_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-cyan-500/10 border-2 border-cyan-400/20 rounded-full icon-pulse-animation">
+                           <BrainCircuit className="text-cyan-400" />
+                        </div>
+                        Diagnóstico Detallado de la IA
+                        <div className="flex items-end gap-0.5 h-6">
+                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                             <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                        </div>
+                    </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
+                </DialogHeader>
+                 <div className="z-10 my-4 p-3 border border-amber-400/30 bg-amber-500/10 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="size-8 text-amber-400 shrink-0" />
+                    <p className="text-xs text-amber-200/90">
+                        <strong>¡Atención!</strong> La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas. Si acabas de hacer un cambio, un nuevo análisis podría mostrar "falsos duplicados" hasta que la propagación se complete.
+                    </p>
+                </div>
+                 <ScrollArea className="max-h-[50vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-cyan-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-cyan-400/10 custom-scrollbar break-words">
+                        {analysis ? analysis : "No hay análisis disponible en este momento. Por favor, ejecuta el escaneo de nuevo."}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10 pt-4">
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
+                    >
+                        Entendido
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
+                <div className="absolute inset-0 z-0 opacity-10">
+                    <div className="absolute h-full w-full bg-[radial-gradient(#F00000_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+                </div>
+                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <DialogHeader className="z-10 flex flex-row justify-between items-center">
+                    <DialogTitle className="flex items-center gap-3 text-xl">
+                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
+                           <BrainCircuit className="text-red-400" />
+                        </div>
+                        Análisis de Error SMTP
+                        <div className="flex items-end gap-0.5 h-6">
+                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
+                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
+                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
+                            <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
+                        </div>
+                    </DialogTitle>
+                     <div className="flex items-center gap-2 text-sm text-green-300">
+                        EN LÍNEA
+                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
+                    </div>
+                </DialogHeader>
+                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
+                     <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
+                        {analysis ? analysis : <div className="flex items-center gap-2"><Loader2 className="animate-spin"/> Generando análisis...</div>}
+                    </div>
+                </ScrollArea>
+                <DialogFooter className="z-10">
+                    <Button 
+                        onClick={() => onOpenChange(false)} 
+                        className="text-white bg-green-800 hover:bg-[#00CB07]"
+                    >
+                        Entendido
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
     
 
-    
+
+
+
+
+
+
+
