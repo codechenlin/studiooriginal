@@ -294,21 +294,21 @@ export default function ServersPage() {
                  <div className="grid grid-cols-2 gap-2 mt-2">
                     <Button
                         variant="outline"
-                        className="w-full text-xs h-9 border-white/50 hover:bg-white hover:text-black dark:text-white"
+                        className="w-full text-xs h-9 border-white/50 hover:bg-white hover:text-black dark:text-white dark:hover:text-black"
                         onClick={() => handleSubdomainClick(provider.hasVerifiedDomains)}
                     >
                         <Plus className="mr-1"/>
                         Sub Dominio
-                        <div className={cn("ml-auto size-2.5 rounded-full transition-all", provider.hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
+                        <div className={cn("ml-auto size-2.5 rounded-full transition-all animate-pulse", provider.hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
                     </Button>
                     <Button
                         variant="outline"
-                        className="w-full text-xs h-9 border-white/50 hover:bg-white hover:text-black dark:text-white"
+                        className="w-full text-xs h-9 border-white/50 hover:bg-white hover:text-black dark:text-white dark:hover:text-black"
                         onClick={() => handleAddEmailClick(provider.hasVerifiedDomains)}
                     >
                         <MailPlus className="mr-1"/>
                         Correos
-                        <div className={cn("ml-auto size-2.5 rounded-full transition-all", provider.hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
+                        <div className={cn("ml-auto size-2.5 rounded-full transition-all animate-pulse", provider.hasVerifiedDomains ? "bg-green-400 shadow-[0_0_8px_#39FF14]" : "bg-yellow-400 shadow-[0_0_8px_#facc15]")} />
                     </Button>
                   </div>
               </div>
@@ -320,4 +320,3 @@ export default function ServersPage() {
     </>
   );
 }
-
