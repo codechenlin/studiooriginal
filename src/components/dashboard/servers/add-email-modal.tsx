@@ -4,7 +4,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Eye, Check } from 'lucide-react';
+import { AlertTriangle, Eye, Check, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface AddEmailModalProps {
@@ -23,6 +23,10 @@ export function AddEmailModal({ isOpen, onOpenChange, hasVerifiedDomains }: AddE
             <DialogContent className="sm:max-w-md bg-zinc-900/80 backdrop-blur-xl border border-amber-400/20 text-white overflow-hidden p-0">
                  <div className="absolute inset-0 z-0 opacity-10 bg-grid-amber-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
                  <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-amber-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <Button variant="ghost" size="icon" className="absolute top-4 right-4 z-20 text-white/70 hover:text-white hover:bg-white/10 rounded-full" onClick={() => onOpenChange(false)}>
+                    <X className="size-6" />
+                </Button>
 
                 <div className="p-8 text-center flex flex-col items-center z-10">
                     <motion.div
