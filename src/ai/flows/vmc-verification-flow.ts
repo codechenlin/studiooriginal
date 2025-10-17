@@ -79,50 +79,50 @@ export async function verifyVmcAuthenticity(
 
   let dmarcRecords: string[] = [];
   let bimiRecord: string | undefined;
-  let svgUrl = '';
-  let pemUrl = '';
-  let svgContent = '';
-  let pemContent = '';
+  let svgContent = 'No se encontró registro BIMI.';
+  let pemContent = 'No se encontró registro BIMI.';
   
   try {
-    const [dmarcResult, bimiResult] = await Promise.all([
-        getTxtRecords(`_dmarc.${domain}`),
-        getTxtRecords(`${selector}._bimi.${domain}`)
-    ]);
-
-    dmarcRecords = dmarcResult;
+    // Step 1: Fetch DMARC and BIMI records
+    dmarcRecords = await getTxtRecords(`_dmarc.${domain}`);
+    const bimiResult = await getTxtRecords(`${selector}._bimi.${domain}`);
     bimiRecord = bimiResult.length > 0 ? bimiResult.join('') : undefined;
 
+    // Step 2: If BIMI exists, fetch SVG and PEM content
     if (bimiRecord && bimiRecord.includes('v=BIMI1')) {
       const lMatch = bimiRecord.match(/l=([^;]+)/);
-      svgUrl = lMatch ? lMatch[1].trim() : '';
-
       const aMatch = bimiRecord.match(/a=([^;]+)/);
-      pemUrl = aMatch ? aMatch[1].trim() : '';
+      
+      const svgUrl = lMatch ? lMatch[1].trim() : '';
+      const pemUrl = aMatch ? aMatch[1].trim() : '';
 
-      const contentPromises: Promise<string>[] = [];
+      const fetchPromises: Promise<string>[] = [];
+
       if (svgUrl) {
-          contentPromises.push(fetchUrlContent(svgUrl));
+          fetchPromises.push(fetchUrlContent(svgUrl));
       } else {
-          contentPromises.push(Promise.resolve(''));
+          fetchPromises.push(Promise.resolve('Error: No SVG URL found in BIMI record.'));
       }
       
       if (pemUrl) {
-          contentPromises.push(fetchUrlContent(pemUrl));
+          fetchPromises.push(fetchUrlContent(pemUrl));
       } else {
-          contentPromises.push(Promise.resolve(''));
+          fetchPromises.push(Promise.resolve('Error: No VMC URL found in BIMI record.'));
       }
       
-      const [fetchedSvgContent, fetchedPemContent] = await Promise.all(contentPromises);
+      const [fetchedSvgContent, fetchedPemContent] = await Promise.all(fetchPromises);
+      svgContent = fetchedSvgContent;
+      pemContent = fetchedPemContent;
 
-      svgContent = fetchedSvgContent || '';
-      pemContent = fetchedPemContent || '';
+    } else {
+      svgContent = bimiRecord ? 'Registro BIMI inválido (falta v=BIMI1).' : 'No se encontró registro BIMI.';
+      pemContent = bimiRecord ? 'Registro BIMI inválido (falta v=BIMI1).' : 'No se encontró registro BIMI.';
     }
 
   } catch(e: any) {
      console.error("An error occurred during DNS resolution or content fetching:", e);
-     svgContent = svgContent || `Failed to fetch: ${e.message}`;
-     pemContent = pemContent || `Failed to fetch: ${e.message}`;
+     svgContent = svgContent.startsWith('Error:') ? svgContent : `Failed to fetch: ${e.message}`;
+     pemContent = pemContent.startsWith('Error:') ? pemContent : `Failed to fetch: ${e.message}`;
   }
 
 
