@@ -100,3 +100,5 @@ export function DnsAnalysisModal({ isOpen, onOpenChange, domain }: DnsAnalysisMo
         </Dialog>
     );
 }
+
+    

@@ -105,7 +105,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                         <div className="w-2/3 flex flex-col p-8 bg-black/30 backdrop-blur-sm relative">
                             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(0,100,255,0.1)_0%,_transparent_60%)] opacity-70" />
                             <DialogHeader className="text-left z-10">
-                                <DialogTitle className="text-2xl font-bold text-green-300">
+                                <DialogTitle className="text-2xl font-bold" style={{color: '#00CB07'}}>
                                     Estado del Sistema: Óptimo
                                 </DialogTitle>
                                 <DialogDescription className="text-green-200/70">
@@ -152,7 +152,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                         @keyframes glitch-line { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(${Math.random() * 600}px); } }
                         .glitch-line { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,0,0,0.3); animation: glitch-line ${Math.random() * 2 + 1}s infinite; }
                         @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                        @keyframes ai-wave { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+                        @keyframes ai-wave { 0%, 100% { opacity: 0.3; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1); } }
                      `}</style>
 
                      <div className="w-1/3 bg-gray-900/50 relative flex items-center justify-center overflow-hidden border-r border-red-500/20">
@@ -210,7 +210,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                             style={{ background: 'linear-gradient(to right, #AD00EC, #1700E6)' }}
                                         >
                                             <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg blur opacity-0 group-hover/btn:opacity-75 transition duration-200" />
-                                            <div className="relative flex items-center gap-2">
+                                            <div className="relative flex items-center justify-center gap-2">
                                                 <div className="relative size-5">
                                                     <div className="absolute inset-0 bg-white/20 rounded-full animate-[ai-wave_2s_infinite_ease-out]"/>
                                                     <Bot className="relative size-5"/>
@@ -233,3 +233,5 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
         </>
     );
 }
+
+    
