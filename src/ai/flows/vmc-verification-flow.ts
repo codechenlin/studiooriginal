@@ -33,12 +33,14 @@ const VmcVerificationOutputSchema = z.object({
 const getTxtRecords = async (name: string): Promise<string[]> => {
   try {
     const records = await dns.resolveTxt(name);
-    return records.map(rec => rec.join(''));
+    return records.flat(); // Flatten the array of arrays
   } catch (error: any) {
     if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
       return [];
     }
-    throw error;
+    // Re-throw other errors to be caught by the main try-catch
+    console.error(`DNS lookup failed for ${name}:`, error);
+    throw new Error(`DNS lookup for ${name} failed: ${error.message}`);
   }
 };
 
@@ -46,7 +48,8 @@ const fetchUrlContent = async (url: string): Promise<string> => {
     try {
         const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+            console.error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+            return `Error: Failed to fetch with status ${response.status}`;
         }
         return await response.text();
     } catch (error: any) {
@@ -70,25 +73,43 @@ export async function verifyVmcAuthenticity(
 
   const { domain, selector } = input;
 
-  const [dmarcRecords, bimiRecords] = await Promise.all([
-    getTxtRecords(`_dmarc.${domain}`),
-    getTxtRecords(`${selector}._bimi.${domain}`),
-  ]);
-
+  let dmarcRecords: string[] = [];
+  let bimiRecord: string | undefined;
   let svgUrl = '';
   let pemUrl = '';
-  const bimiRecord = bimiRecords[0] || '';
-  if (bimiRecord.includes('v=BIMI1')) {
-    const lMatch = bimiRecord.match(/l=([^;]+)/);
-    const aMatch = bimiRecord.match(/a=([^;]+)/);
-    svgUrl = lMatch ? lMatch[1] : '';
-    pemUrl = aMatch ? aMatch[1] : '';
+  let svgContent = '';
+  let pemContent = '';
+  
+  try {
+    [dmarcRecords, bimiRecord] = await Promise.all([
+      getTxtRecords(`_dmarc.${domain}`),
+      getTxtRecords(`${selector}._bimi.${domain}`).then(records => records[0]) // Get the first BIMI record if it exists
+    ]);
+
+    if (bimiRecord && bimiRecord.includes('v=BIMI1')) {
+      const lMatch = bimiRecord.match(/l=([^;]+)/);
+      svgUrl = lMatch ? lMatch[1] : '';
+
+      const aMatch = bimiRecord.match(/a=([^;]+)/);
+      pemUrl = aMatch ? aMatch[1] : '';
+
+      const contentPromises = [];
+      if (svgUrl) contentPromises.push(fetchUrlContent(svgUrl));
+      if (pemUrl) contentPromises.push(fetchUrlContent(pemUrl));
+      
+      const [fetchedSvgContent, fetchedPemContent] = await Promise.all(contentPromises);
+
+      svgContent = fetchedSvgContent || '';
+      pemContent = fetchedPemContent || '';
+    }
+
+  } catch(e: any) {
+     console.error("An error occurred during DNS resolution or content fetching:", e);
+     // We will still pass this to the AI to analyze why it might have failed.
+     svgContent = svgContent || `Failed to fetch: ${e.message}`;
+     pemContent = pemContent || `Failed to fetch: ${e.message}`;
   }
 
-  const [svgContent, pemContent] = await Promise.all([
-      svgUrl ? fetchUrlContent(svgUrl) : Promise.resolve(''),
-      pemUrl ? fetchUrlContent(pemUrl) : Promise.resolve(''),
-  ]);
 
   const prompt = `Actúa como un experto en ciberseguridad y DNS. Valida la autenticidad de un registro BIMI/VMC para un dominio. Responde en español y usa emojis. Tu respuesta DEBE ser un objeto JSON válido que cumpla este esquema Zod:
 \`\`\`json
@@ -111,7 +132,7 @@ Realiza las siguientes validaciones paso a paso:
 
 1.  **Registro BIMI (bimiRecordValid)**:
     *   Verifica que el \`bimiRecord\` exista y contenga \`v=BIMI1;\`.
-    *   Debe tener una URL de logo en \`l=\` y una URL de certificado VMC en \`a=\`.
+    *   Debe tener una URL de logo en \`l=\` y una URL de certificado VMC en \`a=\`. Si alguna falta, marca como inválido.
     *   Resultado: \`true\` si todo es correcto, sino \`false\`.
 
 2.  **Política DMARC (dmarcPolicyOk)**:
@@ -119,24 +140,26 @@ Realiza las siguientes validaciones paso a paso:
     *   Resultado: \`true\` si la política es estricta, sino \`false\`.
 
 3.  **Seguridad del SVG (svgSecure)**:
-    *   Analiza el \`svgContent\`. Debe ser un archivo SVG válido y cumplir con la especificación "SVG Tiny P/S".
+    *   Analiza el \`svgContent\`. Si contiene un error de fetch, es inválido.
+    *   Debe ser un archivo SVG válido y cumplir con la especificación "SVG Tiny P/S".
     *   **Prohibido**: No debe contener scripts, referencias a archivos externos (excepto a los espacios de nombre de W3C), ni elementos interactivos.
     *   Resultado: \`true\` si es un SVG seguro y válido, sino \`false\`.
 
 4.  **Cadena de Confianza del VMC (vmcChainValid)**:
-    *   Analiza el \`pemContent\`. Es un certificado X.509.
+    *   Analiza el \`pemContent\`. Si contiene un error de fetch, es inválido.
+    *   Debe ser un certificado X.509 válido en formato PEM.
     *   Valida su firma digital y su cadena de confianza. Debe estar emitido por una Autoridad de Certificación (CA) de confianza para VMC, como **DigiCert** o **Entrust**.
     *   Verifica que no esté expirado.
     *   Resultado: \`true\` si la cadena es válida y confiable, sino \`false\`.
 
 5.  **Identidad del VMC (vmcIdentityMatch)**:
     *   Dentro del \`pemContent\`, extrae el campo "Subject" (Sujeto) y busca el nombre de la organización (\`O=\`).
-    *   Compara el nombre de esa organización con el dominio principal. Deben estar razonablemente relacionados. Por ejemplo, si el dominio es "mailflow.ai", la organización podría ser "Mailflow Inc.".
+    *   Compara el nombre de esa organización con el dominio principal. Deben estar razonablemente relacionados. Por ejemplo, si el dominio es "google.com", la organización podría ser "Google LLC".
     *   Resultado: \`true\` si hay una coincidencia clara, sino \`false\`.
 
 6.  **Estado General (overallStatus)**:
     *   Si **TODAS** las validaciones anteriores son \`true\`, el estado es \`verified\` ✅.
-    *   Si el registro BIMI no se encuentra, el estado es \`not-found\` 🧐.
+    *   Si el registro BIMI no se encuentra o está vacío, el estado es \`not-found\` 🧐.
     *   En cualquier otro caso (si alguna validación falla), el estado es \`unverified\` ❌.
 
 7.  **Análisis (analysis)**:
@@ -145,10 +168,10 @@ Realiza las siguientes validaciones paso a paso:
 **Datos a Analizar:**
 - Dominio: ${domain}
 - Selector: ${selector}
-- Registro DMARC: ${dmarcRecords.join('\\n')}
-- Registro BIMI: ${bimiRecord}
-- Contenido SVG (primeros 500 caracteres): ${svgContent.substring(0, 500)}
-- Contenido PEM (primeros 500 caracteres): ${pemContent.substring(0, 500)}
+- Registro DMARC: ${dmarcRecords.join('\\n') || 'No encontrado'}
+- Registro BIMI: ${bimiRecord || 'No encontrado'}
+- Contenido SVG (primeros 500 caracteres): ${svgContent.substring(0, 500) || 'No encontrado o no se pudo descargar'}
+- Contenido PEM (primeros 500 caracteres): ${pemContent.substring(0, 500) || 'No encontrado o no se pudo descargar'}
 `;
   
   try {
