@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, Bot, Shield, AlertTriangle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Bot, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DnsAnalysisModal } from './dns-analysis-modal';
@@ -97,7 +97,7 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                     <CheckCircle className="absolute bottom-4 right-2 size-8 text-white bg-green-500 rounded-full border-4 border-gray-900" />
                                 </div>
                                 <h2 className="text-3xl font-bold text-white mt-6">Todo en Orden</h2>
-                                <p className="text-green-200/70 text-lg mt-1">Sistema Íntegro</p>
+                                <p className="text-lg mt-1" style={{color: '#00CB07'}}>Sistema Íntegro</p>
                             </motion.div>
                         </div>
 
@@ -205,13 +205,13 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                     className={cn("p-4 rounded-lg border", domain.status === 'ok' ? 'border-green-500/20 bg-green-500/10' : 'border-red-500/20 bg-red-500/10')}
                                 >
                                     <div className="flex items-center justify-between gap-3">
-                                      <div className="flex items-center gap-3">
-                                        {domain.status === 'ok' ? <CheckCircle className="size-5 text-green-400" /> : <AlertCircle className="size-5 text-red-400" />}
-                                        <span className="font-mono text-white/90">{domain.name}</span>
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        {domain.status === 'ok' ? <CheckCircle className="size-5 text-green-400 flex-shrink-0" /> : <AlertCircle className="size-5 text-red-400 flex-shrink-0" />}
+                                        <span className="font-mono text-white/90 truncate">{domain.name.length > 20 ? `${domain.name.substring(0, 20)}...` : domain.name}</span>
                                       </div>
                                       {domain.status === 'error' && (
                                         <button
-                                            onClick={() => handleAnalyzeDomain(domain.name)}
+                                            onClick={() => handleAnalyzeDomain(domain.name === 'mi-dominio-super-largo-para-probar-el-truncado.com' ? 'mi-dominio-super-largo-para-probar-el-truncado.com' : domain.name)}
                                             className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white h-9"
                                             style={{
                                                 background: 'linear-gradient(to right, #AD00EC, #1700E6)',
