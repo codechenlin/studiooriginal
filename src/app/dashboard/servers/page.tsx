@@ -120,12 +120,18 @@ export default function ServersPage() {
 
   const handleSubdomainClick = (hasVerified: boolean) => {
     setCurrentModalContext({ hasVerifiedDomains: hasVerified });
-    setIsSubdomainModalOpen(true);
+    if (!hasVerified) {
+      setIsSubdomainModalOpen(true);
+    }
+    // TODO: Add logic for when domains are verified
   };
   
   const handleAddEmailClick = (hasVerified: boolean) => {
     setCurrentModalContext({ hasVerifiedDomains: hasVerified });
-    setIsAddEmailModalOpen(true);
+    if (!hasVerified) {
+      setIsAddEmailModalOpen(true);
+    }
+    // TODO: Add logic for when domains are verified
   };
 
 
@@ -158,25 +164,12 @@ export default function ServersPage() {
       status={selectedStatus}
     />
     <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} />
-    <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} hasVerifiedDomains={currentModalContext.hasVerifiedDomains} />
-    <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} hasVerifiedDomains={currentModalContext.hasVerifiedDomains} />
+    <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
+    <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
 
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background relative overflow-hidden">
        <style>{`
-        @keyframes particle-move {
-          0% { transform: translate(var(--x-start), var(--y-start)); opacity: 1; }
-          100% { transform: translate(var(--x-end), var(--y-end)); opacity: 0; }
-        }
-        .particle {
-          position: absolute;
-          width: var(--size);
-          height: var(--size);
-          background: hsl(var(--primary) / 0.5);
-          border-radius: 50%;
-          animation: particle-move var(--duration) var(--delay) linear infinite;
-          will-change: transform, opacity;
-        }
-         @keyframes scanner {
+        @keyframes scanner {
           0% {
             transform: translateX(-150%) skewX(-15deg);
           }
@@ -187,10 +180,6 @@ export default function ServersPage() {
             transform: translateX(-150%) skewX(-15deg);
           }
         }
-        @keyframes led-glow-green { 0%, 100% { box-shadow: 0 0 6px #39FF14, 0 0 12px #39FF14; transform: scale(1); } 50% { box-shadow: 0 0 12px #39FF14, 0 0 24px #39FF14; transform: scale(1.1); } }
-        @keyframes led-glow-yellow { 0%, 100% { box-shadow: 0 0 6px #facc15, 0 0 12px #facc15; transform: scale(1); } 50% { box-shadow: 0 0 12px #facc15, 0 0 24px #facc15; transform: scale(1.1); } }
-        .led-pulse-green { animation: led-glow-green 2s infinite ease-in-out; }
-        .led-pulse-yellow { animation: led-glow-yellow 2s infinite ease-in-out; }
       `}</style>
       
       <div className="absolute inset-0 z-0 opacity-20 dark:opacity-30 pointer-events-none">
@@ -312,7 +301,16 @@ export default function ServersPage() {
                     >
                         <Plus className="mr-1"/>
                         <span>Sub Dominio</span>
-                        <div className={cn("ml-auto size-2.5 rounded-full", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
+                        <div className="relative ml-auto size-2.5 rounded-full led-indicator"
+                             style={provider.hasVerifiedDomains ? {
+                                '--led-glow-color': '#39FF14',
+                                '--led-wave-color': '#39FF14'
+                             } : {
+                                '--led-glow-color': '#facc15',
+                                '--led-wave-color': '#facc15'
+                             }}>
+                          <div className="absolute inset-0 rounded-full" style={{ background: 'var(--led-glow-color)' }}/>
+                        </div>
                     </Button>
                     <Button
                         variant="outline"
@@ -321,7 +319,16 @@ export default function ServersPage() {
                     >
                         <MailPlus className="mr-1"/>
                         <span>Correos</span>
-                        <div className={cn("ml-auto size-2.5 rounded-full", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
+                        <div className="relative ml-auto size-2.5 rounded-full led-indicator"
+                             style={provider.hasVerifiedDomains ? {
+                                '--led-glow-color': '#39FF14',
+                                '--led-wave-color': '#39FF14'
+                             } : {
+                                '--led-glow-color': '#facc15',
+                                '--led-wave-color': '#facc15'
+                             }}>
+                          <div className="absolute inset-0 rounded-full" style={{ background: 'var(--led-glow-color)' }}/>
+                        </div>
                     </Button>
                   </div>
               </div>
