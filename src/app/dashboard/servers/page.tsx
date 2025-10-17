@@ -307,20 +307,20 @@ export default function ServersPage() {
                  <div className="grid grid-cols-2 gap-2 mt-2">
                     <Button
                         variant="outline"
-                        className="group w-full text-xs h-9 border-white/50 bg-transparent text-white hover:bg-white hover:text-black"
+                        className="w-full text-xs h-9 border-white/50 bg-transparent text-white hover:bg-white hover:text-black"
                         onClick={() => handleSubdomainClick(provider.hasVerifiedDomains)}
                     >
-                        <Plus className="mr-1 group-hover:text-black"/>
-                        <span className="group-hover:text-black">Sub Dominio</span>
+                        <Plus className="mr-1"/>
+                        <span>Sub Dominio</span>
                         <div className={cn("ml-auto size-2.5 rounded-full led-pulse", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
                     </Button>
                     <Button
                         variant="outline"
-                        className="group w-full text-xs h-9 border-white/50 bg-transparent text-white hover:bg-white hover:text-black"
+                        className="w-full text-xs h-9 border-white/50 bg-transparent text-white hover:bg-white hover:text-black"
                         onClick={() => handleAddEmailClick(provider.hasVerifiedDomains)}
                     >
-                        <MailPlus className="mr-1 group-hover:text-black"/>
-                        <span className="group-hover:text-black">Correos</span>
+                        <MailPlus className="mr-1"/>
+                        <span>Correos</span>
                         <div className={cn("ml-auto size-2.5 rounded-full led-pulse", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
                     </Button>
                   </div>
@@ -333,5 +333,3 @@ export default function ServersPage() {
     </>
   );
 }
-
-    
