@@ -49,7 +49,9 @@ export function SubdomainModal({ isOpen, onOpenChange, hasVerifiedDomains }: Sub
                     </DialogHeader>
                 </div>
                 <DialogFooter className="p-4 bg-black/20 border-t border-amber-400/20">
-                    <Button onClick={() => onOpenChange(false)} className="w-full bg-amber-600 hover:bg-amber-500 text-white">Entendido</Button>
+                    <Button onClick={() => onOpenChange(false)} className="w-full bg-amber-600 hover:bg-amber-500 text-white">
+                        Entendido
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
