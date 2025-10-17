@@ -435,38 +435,14 @@ body {
       filter: drop-shadow(0 0 2px #A6EE00);
     }
     
-    @keyframes radar-pulse {
-        0% {
-            transform: scale(0.2);
-            opacity: 1;
-        }
-        100% {
-            transform: scale(2.5);
-            opacity: 0;
-        }
+    @keyframes led-glow {
+        0%, 100% { box-shadow: 0 0 2px #A6EE00; }
+        50% { box-shadow: 0 0 8px #A6EE00; }
+    }
+    .led-pulse {
+        animation: led-pulse 1.5s infinite ease-in-out;
     }
 
-    .led-indicator::before, .led-indicator::after {
-      content: '';
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      border-radius: 50%;
-    }
-    .led-indicator::before {
-      width: 100%;
-      height: 100%;
-      background: var(--led-glow-color);
-      filter: blur(3px);
-    }
-    .led-indicator::after {
-      animation: radar-pulse 1.5s infinite linear;
-      border: 1px solid var(--led-wave-color);
-      width: 100%;
-      height: 100%;
-    }
-    
     .energy-path {
       stroke-dasharray: 5, 5;
       animation: energy-flow 2s linear infinite;
@@ -479,7 +455,7 @@ body {
     .node-pulse {
       animation: node-pulse 3s infinite ease-in-out;
     }
-    
+
     .animation-wrapper-1 .icon1 { animation: neural-pulse 3s infinite ease-in-out; }
     @keyframes neural-pulse { 0%, 100% { filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 10px currentColor); transform: scale(1); } 50% { filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 25px currentColor); transform: scale(1.1); } }
     
@@ -498,7 +474,36 @@ body {
     @keyframes seismic-pulse { 0% { transform: scale(0.95); opacity: 0.7; } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.7; } }
     .animation-wrapper-13::after { content: ''; position: absolute; inset: 0; border: 2px solid currentColor; border-radius: 50%; animation: seismic-ring 2s infinite cubic-bezier(0.4, 0, 0.2, 1); }
     @keyframes seismic-ring { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+
+    .led-indicator::before, .led-indicator::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      border-radius: 50%;
+    }
+    .led-indicator::before {
+      width: 100%;
+      height: 100%;
+      background: var(--led-glow-color);
+      filter: blur(3px);
+      transform: translate(-50%, -50%);
+    }
+    .led-indicator::after {
+      animation: radar-pulse 1.5s infinite linear;
+      border: 1px solid var(--led-wave-color);
+      width: 100%;
+      height: 100%;
+    }
+
+    @keyframes radar-pulse {
+        0% {
+            transform: translate(-50%, -50%) scale(0.2);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(-50%, -50%) scale(2.5);
+            opacity: 0;
+        }
+    }
 }
-
-    
-
