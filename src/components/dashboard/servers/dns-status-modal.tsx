@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, Bot, Shield } from 'lucide-react';
+import { CheckCircle, AlertCircle, Bot, Shield, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DnsAnalysisModal } from './dns-analysis-modal';
