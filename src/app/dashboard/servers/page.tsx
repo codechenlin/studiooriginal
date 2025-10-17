@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertCircle, Info, Plus, MailPlus, GitBranch } from "lucide-react";
+import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertTriangle, Info, Plus, MailPlus, GitBranch } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { SmtpConnectionModal } from '@/components/dashboard/servers/smtp-connection-modal';
@@ -261,7 +261,7 @@ export default function ServersPage() {
                               {provider.status === 'ok' ? (
                                 <CheckCircle className="size-5 text-[#00CB07]" style={{filter: 'drop-shadow(0 0 3px #00CB07)'}}/>
                               ) : (
-                                <AlertCircle className="size-5 text-[#F00000]" style={{filter: 'drop-shadow(0 0 3px #F00000)'}}/>
+                                <AlertTriangle className="size-5 text-[#F00000]" style={{filter: 'drop-shadow(0 0 3px #F00000)'}}/>
                               )}
                             </Button>
                         </div>
@@ -307,20 +307,20 @@ export default function ServersPage() {
                  <div className="grid grid-cols-2 gap-2 mt-2">
                     <Button
                         variant="outline"
-                        className="w-full text-xs h-9 border-white/50 hover:bg-white text-white hover:text-black group"
+                        className="w-full text-xs h-9 border-white/50 hover:bg-white text-white group"
                         onClick={() => handleSubdomainClick(provider.hasVerifiedDomains)}
                     >
-                        <Plus className="mr-1 text-white group-hover:text-black"/>
-                        <span className="text-white group-hover:text-black">Sub Dominio</span>
+                        <Plus className="mr-1 text-white"/>
+                        <span className="text-white">Sub Dominio</span>
                         <div className={cn("ml-auto size-2.5 rounded-full", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
                     </Button>
                     <Button
                         variant="outline"
-                        className="w-full text-xs h-9 border-white/50 hover:bg-white text-white hover:text-black group"
+                        className="w-full text-xs h-9 border-white/50 hover:bg-white text-white group"
                         onClick={() => handleAddEmailClick(provider.hasVerifiedDomains)}
                     >
-                        <MailPlus className="mr-1 text-white group-hover:text-black"/>
-                        <span className="text-white group-hover:text-black">Correos</span>
+                        <MailPlus className="mr-1 text-white"/>
+                        <span className="text-white">Correos</span>
                         <div className={cn("ml-auto size-2.5 rounded-full", provider.hasVerifiedDomains ? "bg-green-400 led-pulse-green" : "bg-yellow-400 led-pulse-yellow")} />
                     </Button>
                   </div>
@@ -333,3 +333,5 @@ export default function ServersPage() {
     </>
   );
 }
+
+    
