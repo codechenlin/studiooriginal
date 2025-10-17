@@ -9,6 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { getDnsConfigForFlows } from '@/ai/genkit';
 import { z } from 'genkit';
 import { generateKeyPair } from 'node:crypto';
 import { promisify } from 'node:util';
@@ -18,7 +19,7 @@ const generateKeyPairAsync = promisify(generateKeyPair);
 export type DkimGenerationInput = z.infer<typeof DkimGenerationInputSchema>;
 const DkimGenerationInputSchema = z.object({
   domain: z.string().describe('The domain for which to generate DKIM keys.'),
-  selector: z.string().default('daybuu').describe('The DKIM selector to use.'),
+  selector: z.string().optional().describe('The DKIM selector to use. If not provided, it will use the one from config.'),
 });
 
 export type DkimGenerationOutput = z.infer<typeof DkimGenerationOutputSchema>;
@@ -38,8 +39,11 @@ const dkimGenerationFlow = ai.defineFlow(
     inputSchema: DkimGenerationInputSchema,
     outputSchema: DkimGenerationOutputSchema,
   },
-  async ({ domain, selector }) => {
+  async ({ domain, selector: inputSelector }) => {
     try {
+      const dnsConfig = getDnsConfigForFlows();
+      const selector = inputSelector || dnsConfig.dkimSelector;
+
       const { publicKey, privateKey } = await generateKeyPairAsync('rsa', {
         modulusLength: 2048,
         publicKeyEncoding: {
@@ -71,5 +75,3 @@ const dkimGenerationFlow = ai.defineFlow(
     }
   }
 );
-
-    

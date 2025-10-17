@@ -8,7 +8,7 @@
  * - OptionalDnsHealthOutput - The return type for the verifyOptionalDnsHealth function.
  */
 
-import { getAiConfigForFlows } from '@/ai/genkit';
+import { getAiConfigForFlows, getDnsConfigForFlows } from '@/ai/genkit';
 import { z } from 'zod';
 import dns from 'node:dns/promises';
 import { deepseekChat } from '@/ai/deepseek';
@@ -53,6 +53,7 @@ export async function verifyOptionalDnsHealth(
   input: OptionalDnsHealthInput
 ): Promise<OptionalDnsHealthOutput | null> {
   const aiConfig = getAiConfigForFlows();
+  const dnsConfig = getDnsConfigForFlows();
   
   if (!aiConfig?.enabled || !aiConfig.functions?.dnsAnalysis) {
     throw new Error('DNS analysis with AI is disabled by the administrator.');
@@ -63,10 +64,11 @@ export async function verifyOptionalDnsHealth(
   }
 
   const { domain } = input;
+  const bimiSelector = dnsConfig.bimiSelector;
   
   const [mxRecords, bimiRecords] = await Promise.all([
     getMxRecords(domain),
-    getTxtRecords(`daybuu._bimi.${domain}`),
+    getTxtRecords(`${bimiSelector}._bimi.${domain}`),
   ]);
 
   const prompt = `Analiza los registros DNS opcionales de un dominio y responde en español usando emojis. No incluyas enlaces a documentación externa. Tu respuesta DEBE ser un objeto JSON válido que cumpla con este esquema Zod:
@@ -88,7 +90,7 @@ Análisis del Registro MX:
 1.  **Identificación**: Busca en 'mxRecords' los registros para el dominio principal. Puede haber varios.
 2.  **Validación**: Para que la verificación sea exitosa, al menos uno de los registros MX encontrados debe cumplir con estas dos condiciones simultáneamente:
     *   El Host/Nombre debe pertenecer al dominio principal (sin subdominios ni selectores).
-    *   La propiedad 'exchange' debe ser exactamente \`daybuu.com\`.
+    *   La propiedad 'exchange' debe ser exactamente \`${dnsConfig.mxTargetDomain}\`.
     *   La propiedad 'priority' debe ser exactamente \`0\`.
 3.  **Resultado**: 
     *   Si encuentras un registro que cumple ambas condiciones, marca 'mxStatus' como 'verified' ✅.
@@ -97,7 +99,7 @@ Análisis del Registro MX:
 
 Análisis del Registro BIMI:
 
-1.  **Identificación**: Busca en 'bimiRecords' un registro para el selector 'daybuu._bimi'. Solo puede existir uno con este selector.
+1.  **Identificación**: Busca en 'bimiRecords' un registro para el selector '${bimiSelector}._bimi'. Solo puede existir uno con este selector.
 2.  **Validación de Contenido**: El registro encontrado debe contener las siguientes cadenas:
     *   \`v=BIMI1;\`
     *   \`l=https:\` (para el enlace del logotipo). No valides el dominio de la URL del logo, solo la presencia de la etiqueta.
@@ -108,7 +110,7 @@ Análisis del Registro BIMI:
 
 Análisis del Registro VMC:
 
-1.  **Identificación**: El VMC es parte del registro BIMI. Busca dentro de 'bimiRecords' para el selector 'daybuu._bimi'.
+1.  **Identificación**: El VMC es parte del registro BIMI. Busca dentro de 'bimiRecords' para el selector '${bimiSelector}._bimi'.
 2.  **Validación**: Para que un VMC se considere válido, el registro BIMI debe contener AMBAS cadenas:
     *   \`v=BIMI1;\`
     *   \`a=https:\` (esta es la parte del certificado VMC).
@@ -116,12 +118,12 @@ Análisis del Registro VMC:
 4.  **Resultado**: 
     *   Si el registro existe y contiene ambas cadenas ('v=BIMI1;' y 'a=https:'), marca 'vmcStatus' como 'verified' ✅.
     *   Si el registro existe pero no contiene la cadena 'a=https:', marca 'vmcStatus' como 'unverified' ❌.
-    *   Si no se encuentra ningún registro para 'daybuu._bimi', marca 'vmcStatus' como 'not-found' 🧐.
+    *   Si no se encuentra ningún registro para '${bimiSelector}._bimi', marca 'vmcStatus' como 'not-found' 🧐.
 
 Registros a analizar:
 - Dominio: ${domain}
 - Registros MX: ${mxRecords.map(r => `Prioridad: ${r.priority}, Servidor: ${r.exchange}`).join('; ')}
-- Registros BIMI (daybuu._bimi): ${bimiRecords.join('; ')}
+- Registros BIMI (${bimiSelector}._bimi): ${bimiRecords.join('; ')}
 `;
   
   try {

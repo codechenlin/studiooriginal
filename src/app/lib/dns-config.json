@@ -1,0 +1,6 @@
+{
+  "spfIncludeDomain": "_spf.daybuu.com",
+  "mxTargetDomain": "daybuu.com",
+  "dkimSelector": "daybuu",
+  "bimiSelector": "daybuu"
+}

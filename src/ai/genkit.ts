@@ -18,7 +18,16 @@ interface AiConfig {
     };
 }
 
-const configPath = path.join(process.cwd(), 'src', 'app', 'lib', 'ai-config.json');
+interface DnsConfig {
+  spfIncludeDomain: string;
+  mxTargetDomain: string;
+  dkimSelector: string;
+  bimiSelector: string;
+}
+
+
+const aiConfigPath = path.join(process.cwd(), 'src', 'app', 'lib', 'ai-config.json');
+const dnsConfigPath = path.join(process.cwd(), 'src', 'app', 'lib', 'dns-config.json');
 
 const plugins = [];
 
@@ -39,8 +48,8 @@ export const ai = genkit({
 
 export function getAiConfigForFlows(): AiConfig | null {
     try {
-        if (fs.existsSync(configPath)) {
-            const configFile = fs.readFileSync(configPath, 'utf-8');
+        if (fs.existsSync(aiConfigPath)) {
+            const configFile = fs.readFileSync(aiConfigPath, 'utf-8');
             return JSON.parse(configFile) as AiConfig;
         }
         return null;
@@ -48,4 +57,22 @@ export function getAiConfigForFlows(): AiConfig | null {
         console.warn("Could not read or parse ai-config.json for flow.", error);
         return null;
     }
+}
+
+export function getDnsConfigForFlows(): DnsConfig {
+    try {
+        if (fs.existsSync(dnsConfigPath)) {
+            const configFile = fs.readFileSync(dnsConfigPath, 'utf-8');
+            return JSON.parse(configFile) as DnsConfig;
+        }
+    } catch (error) {
+        console.warn("Could not read or parse dns-config.json for flow, using defaults.", error);
+    }
+    // Return default config if file doesn't exist or is invalid
+    return {
+        spfIncludeDomain: '_spf.daybuu.com',
+        mxTargetDomain: 'daybuu.com',
+        dkimSelector: 'daybuu',
+        bimiSelector: 'daybuu',
+    };
 }

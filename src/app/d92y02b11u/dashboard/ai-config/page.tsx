@@ -156,10 +156,10 @@ export default function AiConfigPage() {
                     </div>
                     <div className="flex items-center justify-between p-4 rounded-lg bg-background border">
                         <div className="space-y-1">
-                            <Label htmlFor="vmcVerification" className="font-semibold flex items-center gap-2"><ShieldCheck/>Validación de Certificados VMC</Label>
+                            <Label htmlFor="vmc-verification" className="font-semibold flex items-center gap-2"><ShieldCheck/>Validación de Certificados VMC</Label>
                             <p className="text-sm text-muted-foreground">Utiliza la IA para verificar la autenticidad de los certificados VMC en los registros BIMI.</p>
                         </div>
-                         <Switch id="vmcVerification" checked={config?.functions.vmcVerification} onCheckedChange={(checked) => updateFunctionToggle('vmcVerification', checked)} />
+                         <Switch id="vmc-verification" checked={config?.functions.vmcVerification} onCheckedChange={(checked) => updateFunctionToggle('vmcVerification', checked)} />
                     </div>
                 </CardContent>
             </Card>

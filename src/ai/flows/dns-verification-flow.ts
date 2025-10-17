@@ -8,7 +8,7 @@
  * - DnsHealthOutput - The return type for the verifyDnsHealth function.
  */
 
-import { getAiConfigForFlows } from '@/ai/genkit';
+import { getAiConfigForFlows, getDnsConfigForFlows } from '@/ai/genkit';
 import { z } from 'zod';
 import dns from 'node:dns/promises';
 import { deepseekChat } from '@/ai/deepseek';
@@ -16,7 +16,7 @@ import { deepseekChat } from '@/ai/deepseek';
 export type DnsHealthInput = z.infer<typeof DnsHealthInputSchema>;
 const DnsHealthInputSchema = z.object({
   domain: z.string().describe('The domain name to check.'),
-  dkimPublicKey: z.string().describe('The expected DKIM public key for the "daybuu" selector.'),
+  dkimPublicKey: z.string().describe('The expected DKIM public key for the configured selector.'),
 });
 
 export type DnsHealthOutput = z.infer<typeof DnsHealthOutputSchema>;
@@ -43,6 +43,7 @@ export async function verifyDnsHealth(
   input: DnsHealthInput
 ): Promise<DnsHealthOutput | null> {
   const aiConfig = getAiConfigForFlows();
+  const dnsConfig = getDnsConfigForFlows();
   
   if (!aiConfig?.enabled || !aiConfig.functions?.dnsAnalysis) {
     throw new Error('DNS analysis with AI is disabled by the administrator.');
@@ -53,10 +54,11 @@ export async function verifyDnsHealth(
   }
 
   const { domain, dkimPublicKey } = input;
+  const dkimSelector = dnsConfig.dkimSelector;
 
   const [txtRecords, dkimRecords, dmarcRecords] = await Promise.all([
     getTxtRecords(domain),
-    getTxtRecords(`daybuu._domainkey.${domain}`),
+    getTxtRecords(`${dkimSelector}._domainkey.${domain}`),
     getTxtRecords(`_dmarc.${domain}`),
   ]);
 
@@ -79,7 +81,7 @@ Análisis del Registro SPF:
 1.  **Identificación y Filtrado**: De todos los registros TXT proporcionados en 'txtRecords', considera únicamente aquellos que comiencen exactamente con la cadena "v=spf1 ". Ignora completamente cualquier otro registro TXT para el análisis de SPF.
 2.  **Validación de Unicidad**: Una vez filtrados, si hay más de un registro que cumpla la condición anterior, la verificación falla ❌. Solo puede existir un único registro SPF.
 3.  **Validación de Contenido**: Si existe un único registro SPF, verifica las siguientes reglas:
-    *   Debe contener \`include:_spf.daybuu.com\`.
+    *   Debe contener \`include:${dnsConfig.spfIncludeDomain}\`.
     *   Debe terminar con \`-all\`.
     *   Puede contener otros mecanismos como \`include:\`, \`ip4:\`, \`ip6:\`, \`a:\`, \`mx:\`.
 4.  **Límite de Búsquedas DNS**: Si el registro SPF es válido, advierte al usuario sobre el límite de 10 búsquedas DNS. Explica que mecanismos como 'include' consumen búsquedas y que superar el límite causa fallos de entrega. Sugiere que si tiene muchos 'include', podría necesitar optimizarlo.
@@ -89,7 +91,7 @@ Análisis del Registro SPF:
 
 Análisis del Registro DKIM:
 
-1.  **Identificación**: Busca en 'dkimRecords' un registro para el selector 'daybuu._domainkey'.
+1.  **Identificación**: Busca en 'dkimRecords' un registro para el selector '${dkimSelector}._domainkey'.
 2.  **Validación de Contenido**: El registro encontrado debe contener:
     *   La cadena \`v=DKIM1;\`
     *   La cadena \`k=rsa;\`
@@ -117,7 +119,7 @@ Registros a analizar:
 - Dominio: ${domain}
 - Clave DKIM esperada: ${dkimPublicKey}
 - Registros TXT del dominio: ${txtRecords.join('\\n')}
-- Registros DKIM (daybuu._domainkey): ${dkimRecords.join('\\n')}
+- Registros DKIM (${dkimSelector}._domainkey): ${dkimRecords.join('\\n')}
 - Registros DMARC (_dmarc): ${dmarcRecords.join('\\n')}
 `;
   
