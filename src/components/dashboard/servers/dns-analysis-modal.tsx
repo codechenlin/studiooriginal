@@ -44,10 +44,19 @@ export function DnsAnalysisModal({ isOpen, onOpenChange, domain }: DnsAnalysisMo
             <DialogContent className="max-w-2xl bg-zinc-900/90 backdrop-blur-xl border border-purple-500/30 text-white overflow-hidden" showCloseButton={false}>
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-500 animate-pulse" />
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-3 text-xl">
-                        <Bot className="text-purple-400" />
-                        Análisis de IA para: <span className="font-mono text-purple-300">{domain}</span>
-                    </DialogTitle>
+                    <div className="flex justify-between items-start">
+                        <DialogTitle className="flex items-center gap-3 text-xl">
+                            <Bot className="text-purple-400" />
+                            Análisis de IA para: <span className="font-mono text-purple-300">{domain}</span>
+                        </DialogTitle>
+                         <div className="flex items-center gap-2 text-sm font-semibold text-green-300">
+                            <div className="relative flex items-center justify-center size-3">
+                                <div className="absolute w-full h-full rounded-full bg-[#39FF14] animate-pulse" style={{filter: 'blur(3px)'}} />
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#39FF14]"/>
+                            </div>
+                            EN LÍNEA
+                        </div>
+                    </div>
                     <DialogDescription className="text-purple-200/70">
                         Nuestra inteligencia artificial ha examinado tus registros DNS y ha generado el siguiente diagnóstico.
                     </DialogDescription>
@@ -87,12 +96,8 @@ export function DnsAnalysisModal({ isOpen, onOpenChange, domain }: DnsAnalysisMo
                     )}
                 </div>
 
-                <DialogFooter className="flex justify-between items-center w-full">
-                    <div className="flex items-center gap-2 text-sm text-green-300">
-                        <div className="relative size-3 rounded-full bg-[#39FF14] led-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
-                        <span>EN LÍNEA</span>
-                    </div>
-                    <Button onClick={() => onOpenChange(false)} className="bg-purple-800 hover:bg-purple-700 text-white">
+                <DialogFooter>
+                    <Button onClick={() => onOpenChange(false)} className="w-full bg-purple-800 hover:bg-purple-700 text-white">
                         Entendido
                     </Button>
                 </DialogFooter>
@@ -100,5 +105,3 @@ export function DnsAnalysisModal({ isOpen, onOpenChange, domain }: DnsAnalysisMo
         </Dialog>
     );
 }
-
-    

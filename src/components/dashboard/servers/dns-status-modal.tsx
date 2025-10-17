@@ -152,7 +152,13 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                         @keyframes glitch-line { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(${Math.random() * 600}px); } }
                         .glitch-line { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,0,0,0.3); animation: glitch-line ${Math.random() * 2 + 1}s infinite; }
                         @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                        @keyframes ai-wave { 0%, 100% { opacity: 0.3; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1); } }
+                        @keyframes ai-wave { 0% { opacity: 0.3; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1); } 100% { opacity: 0.3; transform: scale(0.5); } }
+                        .ai-button-scan {
+                          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+                          background-size: 200% 100%;
+                          animation: button-scan 2s linear infinite;
+                        }
+                        @keyframes button-scan { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
                      `}</style>
 
                      <div className="w-1/3 bg-gray-900/50 relative flex items-center justify-center overflow-hidden border-r border-red-500/20">
@@ -206,14 +212,17 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
                                       {domain.status === 'error' && (
                                         <button
                                             onClick={() => handleAnalyzeDomain(domain.name)}
-                                            className="relative group/btn inline-flex items-center justify-center overflow-hidden rounded-md p-2 text-white h-9"
-                                            style={{ background: 'linear-gradient(to right, #AD00EC, #1700E6)' }}
+                                            className="relative group/error-btn inline-flex items-center justify-center overflow-hidden rounded-lg p-3 text-white h-9"
+                                            style={{
+                                                background: 'linear-gradient(to right, #AD00EC, #1700E6)',
+                                            }}
                                         >
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg blur opacity-0 group-hover/btn:opacity-75 transition duration-200" />
-                                            <div className="relative flex items-center justify-center gap-2">
-                                                <div className="relative size-5">
-                                                    <div className="absolute inset-0 bg-white/20 rounded-full animate-[ai-wave_2s_infinite_ease-out]"/>
-                                                    <Bot className="relative size-5"/>
+                                            <div className="ai-button-scan absolute inset-0"/>
+                                            <div className="relative z-10 flex items-center justify-center gap-2">
+                                                <div className="relative flex items-end gap-0.5 h-4">
+                                                    <div className="w-1 h-2/5 bg-white rounded-full" style={{animation: 'ai-wave 1.2s infinite ease-in-out 0s'}}/>
+                                                    <div className="w-1 h-full bg-white rounded-full" style={{animation: 'ai-wave 1.2s infinite ease-in-out 0.2s'}}/>
+                                                    <div className="w-1 h-3/5 bg-white rounded-full" style={{animation: 'ai-wave 1.2s infinite ease-in-out 0.4s'}}/>
                                                 </div>
                                                 <span className="text-sm font-semibold">Analizar con IA</span>
                                             </div>
@@ -233,5 +242,3 @@ export function DnsStatusModal({ isOpen, onOpenChange, status }: DnsStatusModalP
         </>
     );
 }
-
-    
