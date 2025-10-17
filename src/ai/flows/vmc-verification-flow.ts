@@ -32,10 +32,14 @@ const VmcVerificationOutputSchema = z.object({
 
 const getTxtRecords = async (name: string): Promise<string[]> => {
   try {
-    const records = await dns.resolveTxt(name);
+    // Force using a reliable public DNS resolver
+    const resolver = new dns.Resolver();
+    resolver.setServers(['8.8.8.8', '8.8.4.4']);
+    const records = await resolver.resolveTxt(name);
     return records.flat(); // Flatten the array of arrays
   } catch (error: any) {
-    if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
+    if (error.code === 'ENODATA' || error.code === 'ENOTFOUND' || error.code === 'ESERVFAIL') {
+      console.warn(`DNS lookup for ${name} returned no data.`);
       return [];
     }
     // Re-throw other errors to be caught by the main try-catch
@@ -81,21 +85,33 @@ export async function verifyVmcAuthenticity(
   let pemContent = '';
   
   try {
-    [dmarcRecords, bimiRecord] = await Promise.all([
-      getTxtRecords(`_dmarc.${domain}`),
-      getTxtRecords(`${selector}._bimi.${domain}`).then(records => records[0]) // Get the first BIMI record if it exists
+    const [dmarcResult, bimiResult] = await Promise.all([
+        getTxtRecords(`_dmarc.${domain}`),
+        getTxtRecords(`${selector}._bimi.${domain}`)
     ]);
+
+    dmarcRecords = dmarcResult;
+    bimiRecord = bimiResult.length > 0 ? bimiResult.join('') : undefined;
 
     if (bimiRecord && bimiRecord.includes('v=BIMI1')) {
       const lMatch = bimiRecord.match(/l=([^;]+)/);
-      svgUrl = lMatch ? lMatch[1] : '';
+      svgUrl = lMatch ? lMatch[1].trim() : '';
 
       const aMatch = bimiRecord.match(/a=([^;]+)/);
-      pemUrl = aMatch ? aMatch[1] : '';
+      pemUrl = aMatch ? aMatch[1].trim() : '';
 
-      const contentPromises = [];
-      if (svgUrl) contentPromises.push(fetchUrlContent(svgUrl));
-      if (pemUrl) contentPromises.push(fetchUrlContent(pemUrl));
+      const contentPromises: Promise<string>[] = [];
+      if (svgUrl) {
+          contentPromises.push(fetchUrlContent(svgUrl));
+      } else {
+          contentPromises.push(Promise.resolve(''));
+      }
+      
+      if (pemUrl) {
+          contentPromises.push(fetchUrlContent(pemUrl));
+      } else {
+          contentPromises.push(Promise.resolve(''));
+      }
       
       const [fetchedSvgContent, fetchedPemContent] = await Promise.all(contentPromises);
 
@@ -105,7 +121,6 @@ export async function verifyVmcAuthenticity(
 
   } catch(e: any) {
      console.error("An error occurred during DNS resolution or content fetching:", e);
-     // We will still pass this to the AI to analyze why it might have failed.
      svgContent = svgContent || `Failed to fetch: ${e.message}`;
      pemContent = pemContent || `Failed to fetch: ${e.message}`;
   }
