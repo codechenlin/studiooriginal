@@ -4,7 +4,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Eye } from 'lucide-react';
+import { AlertTriangle, Eye, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface SubdomainModalProps {
@@ -48,8 +48,14 @@ export function SubdomainModal({ isOpen, onOpenChange, hasVerifiedDomains }: Sub
                         </DialogDescription>
                     </DialogHeader>
                 </div>
-                <DialogFooter className="p-4 bg-black/20 border-t border-amber-400/20">
-                    
+                <DialogFooter className="p-4 bg-black/20 border-t border-amber-400/20 flex justify-center">
+                    <Button
+                      onClick={() => onOpenChange(false)}
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold"
+                    >
+                      <Check className="mr-2" />
+                      Entendido
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
