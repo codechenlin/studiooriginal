@@ -5,6 +5,7 @@ import { checkSpam, type SpamCheckerInput } from '@/ai/flows/spam-checker-flow';
 import { scanFileForVirus } from '@/ai/flows/virus-scan-flow';
 import { type VirusScanOutput, VirusScanInputSchema } from '@/ai/flows/virus-scan-types';
 import { z } from 'zod';
+import { checkApiHealth } from '@/ai/flows/api-health-check-flow';
 
 const SpamCheckerInputSchema = z.object({
   text: z.string().describe('The text content to be analyzed for spam.'),
@@ -44,5 +45,18 @@ export async function scanFileForVirusAction(formData: FormData): Promise<{ succ
   } catch (error: any) {
     console.error('Virus scan action error:', error);
     return { success: false, error: `Error al escanear con ClamAV: ${error.message}` };
+  }
+}
+
+export async function checkApiHealthAction() {
+  try {
+    const result = await checkApiHealth();
+    if (result.status === 'ok') {
+        return { success: true, data: result };
+    }
+    return { success: false, error: `API returned status: ${result.status}` };
+  } catch (error: any) {
+    console.error('API health check action error:', error);
+    return { success: false, error: error.message };
   }
 }
