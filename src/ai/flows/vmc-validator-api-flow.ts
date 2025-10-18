@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
+import { z } from 'genkit';
 import https from 'https';
 
 const VmcApiValidationInputSchema = z.object({
