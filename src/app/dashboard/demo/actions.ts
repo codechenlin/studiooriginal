@@ -4,8 +4,6 @@
 import { checkSpam, type SpamCheckerInput } from '@/ai/flows/spam-checker-flow';
 import { scanFileForVirus } from '@/ai/flows/virus-scan-flow';
 import { type VirusScanOutput, VirusScanInputSchema } from '@/ai/flows/virus-scan-types';
-import { validateVmcWithApi, type VmcApiValidationInput } from '@/ai/flows/vmc-validator-api-flow';
-import { checkApiHealth } from '@/ai/flows/api-health-check-flow';
 import { z } from 'zod';
 
 const SpamCheckerInputSchema = z.object({
@@ -47,29 +45,4 @@ export async function scanFileForVirusAction(formData: FormData): Promise<{ succ
     console.error('Virus scan action error:', error);
     return { success: false, error: `Error al escanear con ClamAV: ${error.message}` };
   }
-}
-
-const VmcApiValidationInputSchema = z.object({
-  domain: z.string().describe('The domain to validate.'),
-});
-
-export async function validateVmcWithApiAction(input: VmcApiValidationInput) {
-    try {
-        const validatedInput = VmcApiValidationInputSchema.parse(input);
-        const result = await validateVmcWithApi(validatedInput);
-        return { success: true, data: result };
-    } catch (error: any) {
-        console.error('VMC validation via API action error:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-export async function checkApiHealthAction() {
-    try {
-        const result = await checkApiHealth();
-        return { success: true, data: result };
-    } catch (error: any) {
-        console.error('API health check action error:', error);
-        return { success: false, error: error.message };
-    }
 }
