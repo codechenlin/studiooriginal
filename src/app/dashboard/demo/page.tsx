@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate, Globe, X, ShieldQuestion, ChevronDown, ChevronRight, Server, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { checkSpamAction, validateVmcWithApiAction } from './actions';
+import { checkSpamAction, validateVmcWithApiAction, checkApiHealthAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
 import { scanFileForVirusAction } from './actions';
 import { type VirusScanOutput } from '@/ai/flows/virus-scan-types';
@@ -78,6 +78,11 @@ export default function DemoPage() {
     const [vmcResult, setVmcResult] = useState<VmcApiValidationOutput | null>(null);
     const [vmcError, setVmcError] = useState<string | null>(null);
 
+    // API Health Check State
+    const [isCheckingHealth, startHealthCheck] = useTransition();
+    const [healthStatus, setHealthStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
+    const [healthError, setHealthError] = useState<string | null>(null);
+
     const handleSpamCheck = () => {
         if (!spamText) {
             toast({ title: 'Campo vacío', description: 'Por favor, introduce texto para analizar.', variant: 'destructive' });
@@ -135,6 +140,20 @@ export default function DemoPage() {
                 setVmcResult(result.data);
             } else {
                 setVmcError(result.error || 'Ocurrió un error desconocido.');
+            }
+        });
+    };
+    
+    const handleHealthCheck = () => {
+        setHealthStatus('checking');
+        setHealthError(null);
+        startHealthCheck(async () => {
+            const result = await checkApiHealthAction();
+            if (result.success && result.data?.status === 'ok') {
+                setHealthStatus('ok');
+            } else {
+                setHealthStatus('error');
+                setHealthError(result.error || 'El API devolvió un estado no saludable.');
             }
         });
     };
@@ -274,6 +293,50 @@ export default function DemoPage() {
                          )}
                     </CardFooter>
                 )}
+            </div>
+            
+            {/* API Health Check Panel */}
+            <div className="w-full max-w-6xl p-6 bg-background/50 backdrop-blur-sm border-2 border-purple-500/20 rounded-2xl shadow-xl relative">
+                <div className="absolute inset-0 z-0 opacity-5 bg-grid-purple-500/20" />
+                <CardHeader className="p-0 mb-6">
+                    <CardTitle className="flex items-center gap-3 text-2xl">
+                        <div className="p-2 rounded-full bg-purple-900 border border-purple-500/50"><Activity className="text-purple-400"/></div>
+                        Prueba de Conexión del Sistema API
+                    </CardTitle>
+                    <CardDescription className="text-zinc-400 pt-1">Verifica la conectividad con el endpoint `/health` de tu API de validación.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <Button onClick={handleHealthCheck} disabled={isCheckingHealth} className="w-full sm:w-auto h-12 px-6 text-base bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90">
+                        {isCheckingHealth ? <Loader2 className="mr-2 animate-spin"/> : <Server className="mr-2"/>}
+                        Verificar Estado del Sistema
+                    </Button>
+                    <div className="w-full sm:w-auto flex-1 p-3 rounded-lg bg-black/30 border border-purple-400/20 text-center min-h-[48px] flex items-center justify-center">
+                        {healthStatus === 'checking' && (
+                            <div className="flex items-center gap-2 text-purple-300">
+                                <Loader2 className="animate-spin"/>
+                                <span>Verificando...</span>
+                            </div>
+                        )}
+                        {healthStatus === 'ok' && (
+                            <div className="flex items-center gap-2 text-green-300 font-bold">
+                                <CheckCircleIcon/>
+                                <span>Sistema en Línea (status: ok)</span>
+                            </div>
+                        )}
+                        {healthStatus === 'error' && (
+                            <div className="flex items-center gap-2 text-red-400 text-xs text-left">
+                                <AlertTriangle className="size-8 shrink-0"/>
+                                <div>
+                                    <span className="font-bold">Error de Conexión</span>
+                                    <p className="break-all">{healthError}</p>
+                                </div>
+                            </div>
+                        )}
+                        {healthStatus === 'idle' && (
+                            <span className="text-zinc-500">Esperando prueba...</span>
+                        )}
+                    </div>
+                </CardContent>
             </div>
 
             <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -425,5 +488,3 @@ export default function DemoPage() {
         </>
     );
 }
-
-    
