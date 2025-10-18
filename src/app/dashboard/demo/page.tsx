@@ -233,6 +233,7 @@ export default function DemoPage() {
                          )}
                          {vmcError && <div className="w-full text-destructive text-sm p-4 bg-destructive/10 rounded-md border border-destructive/50 flex items-center gap-3"><AlertTriangle/>{vmcError}</div>}
                          {vmcResult && (
+                             <ScrollArea className="w-full max-h-[500px] pr-4 -mr-4">
                              <div className="w-full space-y-6">
                                 <div className="p-4 rounded-lg flex items-center justify-center gap-3" style={{ background: `radial-gradient(ellipse at center, ${getStatusColor(vmcResult.status)}33, transparent 70%)`, border: `2px solid ${getStatusColor(vmcResult.status)}80`}}>
                                     <h3 className="text-xl font-bold tracking-wider" style={{color: getStatusColor(vmcResult.status)}}>
@@ -247,21 +248,21 @@ export default function DemoPage() {
                                             <div className="space-y-3 font-mono text-xs">
                                                 <div className="p-3 rounded bg-zinc-800/50">
                                                     <p className="font-bold text-cyan-300">BIMI ({vmcResult.dns.bimi.name}):</p>
-                                                    <p className="text-white/80 break-all">{vmcResult.dns.bimi.values?.join(' ') || 'No encontrado'}</p>
+                                                    <p className="text-white/80 break-words">{vmcResult.dns.bimi.values?.join(' ') || 'No encontrado'}</p>
                                                 </div>
                                                 <div className="p-3 rounded bg-zinc-800/50">
                                                     <p className="font-bold text-cyan-300">DMARC ({vmcResult.dns.dmarc.name}):</p>
-                                                    <p className="text-white/80 break-all">{vmcResult.dns.dmarc.values?.join(' ') || 'No encontrado'}</p>
+                                                    <p className="text-white/80 break-words">{vmcResult.dns.dmarc.values?.join(' ') || 'No encontrado'}</p>
                                                 </div>
                                                 <div className="p-3 rounded bg-zinc-800/50">
                                                     <p className="font-bold text-cyan-300">MX:</p>
-                                                    <p className="text-white/80 break-all">{vmcResult.dns.mx.exchanges?.join(', ') || 'No encontrado'}</p>
+                                                    <p className="text-white/80 break-words">{vmcResult.dns.mx.exchanges?.join(', ') || 'No encontrado'}</p>
                                                 </div>
                                             </div>
                                         </AccordionContent>
                                     </AccordionItem>
                                      <AccordionItem value="bimi" className="bg-black/30 border-zinc-700/80 rounded-lg">
-                                        <AccordionTrigger className="p-4 font-bold text-lg"><div className="flex items-center gap-2"><FileText className="text-cyan-400"/>Análisis BIMI</div></AccordionTrigger>
+                                        <AccordionTrigger className="p-4 font-bold text-lg"><div className="flex items-center gap-2"><FileWarning className="text-cyan-400"/>Análisis BIMI</div></AccordionTrigger>
                                         <AccordionContent className="p-4 pt-0 space-y-2">
                                             <StatusBadge status={vmcResult.bimi.exists} text="Registro Existe" />
                                             <StatusBadge status={vmcResult.bimi.syntax_ok} text="Sintaxis OK" />
@@ -273,7 +274,7 @@ export default function DemoPage() {
                                         <AccordionContent className="p-4 pt-0 space-y-2">
                                             <StatusBadge status={vmcResult.svg.exists} text="Logo Existe" />
                                             <StatusBadge status={vmcResult.svg.compliant} text="Cumple Especificación" />
-                                            <p className="text-xs text-zinc-400 pt-2 break-all">Mensaje: {vmcResult.svg.message}</p>
+                                            <p className="text-xs text-zinc-400 pt-2 break-words">Mensaje: {vmcResult.svg.message}</p>
                                         </AccordionContent>
                                     </AccordionItem>
                                      <AccordionItem value="vmc" className="bg-black/30 border-zinc-700/80 rounded-lg">
@@ -285,11 +286,12 @@ export default function DemoPage() {
                                             <StatusBadge status={vmcResult.vmc.valid_now} text="Vigente" />
                                             <StatusBadge status={vmcResult.vmc.revocation_ok} text="No Revocado" trueText="OK" falseText="REVOCADO" />
                                             <StatusBadge status={vmcResult.vmc.logo_hash_match} text="Hash del Logo Coincide" />
-                                            <p className="text-xs text-zinc-400 pt-2 break-all">Mensaje: {vmcResult.vmc.message}</p>
+                                            <p className="text-xs text-zinc-400 pt-2 break-words">Mensaje: {vmcResult.vmc.message}</p>
                                         </AccordionContent>
                                     </AccordionItem>
                                 </Accordion>
                              </div>
+                             </ScrollArea>
                          )}
                     </CardFooter>
                 )}
@@ -487,4 +489,5 @@ export default function DemoPage() {
         </main>
         </>
     );
-}
+
+    
