@@ -2,7 +2,8 @@
 'use server';
 
 import { checkApiHealth, type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
-import { validateVmcWithApi, type VmcApiValidationInput, type VmcApiValidationOutput } from '@/ai/flows/vmc-validator-api-flow';
+import { validateVmcWithApi } from '@/ai/flows/vmc-validator-api-flow';
+import { type VmcApiValidationInput, type VmcApiValidationOutput } from '@/ai/flows/vmc-validator-api-types';
 
 export async function checkApiHealthAction() {
   try {
