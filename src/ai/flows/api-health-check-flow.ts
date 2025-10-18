@@ -13,7 +13,7 @@ const HealthCheckOutputSchema = z.object({
 });
 export type HealthCheckOutput = z.infer<typeof HealthCheckOutputSchema>;
 
-const API_BASE = "http://8b3i4m6i39303g2k432u.fanton.cloud";
+const API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud";
 
 export async function checkApiHealth(): Promise<HealthCheckOutput> {
   return apiHealthCheckFlow();
