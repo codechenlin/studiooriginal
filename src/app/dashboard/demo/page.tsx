@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate, Globe, X, ShieldQuestion } from 'lucide-react';
+import { Flame, Loader2, AlertTriangle, CheckCircle as CheckCircleIcon, Microscope, FileWarning, ShieldCheck, ShieldAlert, UploadCloud, Copy, MailWarning, KeyRound, Shield, Eye, Dna, Bot, Activity, GitBranch, Binary, Heart, Diamond, Star, Gift, Tags, Check, DollarSign, Tag, Mail, ShoppingCart, Users, Users2, ShoppingBag, ShoppingBasket, XCircle, Share2, Package, PackageCheck, UserPlus, UserCog, CreditCard, Receipt, Briefcase, Store, Megaphone, Volume2, ScrollText, GitCommit, LayoutTemplate, Globe, X, ShieldQuestion, ChevronDown, ChevronRight, Server, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { checkSpamAction, validateVmcWithApiAction } from './actions';
 import { type SpamCheckerOutput } from '@/ai/flows/spam-checker-flow';
@@ -18,6 +18,7 @@ import { type VmcApiValidationOutput } from '@/ai/flows/vmc-validator-api-flow';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const spamExamples = [
     "¡¡¡GANA DINERO RÁPIDO!!! Haz clic aquí para obtener tu premio millonario. Oferta por tiempo limitado. No te lo pierdas.",
@@ -171,95 +172,109 @@ export default function DemoPage() {
             </div>
             
             {/* VMC Verifier Panel */}
-            <Card className="w-full max-w-6xl bg-card/50 backdrop-blur-sm border-purple-500/30 shadow-xl">
-                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><ShieldCheck className="text-purple-400"/>Prueba de Verificador BIMI/VMC</CardTitle>
-                    <CardDescription>Introduce un dominio para validar su autenticidad con el nuevo sistema API.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="grid grid-cols-1 gap-4">
-                        <div>
-                            <Label htmlFor="vmc-domain">Dominio</Label>
-                            <div className="relative">
-                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"/>
-                                <Input id="vmc-domain" placeholder="google.com" value={vmcDomain} onChange={e => setVmcDomain(e.target.value)} className="pl-10"/>
+            <div className="w-full max-w-6xl p-6 bg-zinc-900/50 backdrop-blur-sm border border-zinc-700/80 rounded-2xl shadow-2xl relative overflow-hidden">
+                 <div className="absolute inset-0 z-0 opacity-10 bg-grid-zinc-400/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+                 <div className="absolute -top-1/2 -left-1/4 w-full h-full bg-[radial-gradient(ellipse_at_center,_#00ADEC55,_transparent_60%)] animate-pulse" style={{animationDuration: '5s'}} />
+
+                <div className="relative z-10">
+                    <CardHeader className="p-0 mb-6">
+                        <CardTitle className="flex items-center gap-3 text-2xl">
+                            <div className="p-2 rounded-full bg-cyan-900 border border-cyan-500/50"><ShieldCheck className="text-cyan-400"/></div>
+                            Validador VMC con API Externa
+                        </CardTitle>
+                        <CardDescription className="text-zinc-400 pt-1">Introduce un dominio para validar su autenticidad y configuración BIMI/VMC.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0 space-y-4">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="relative flex-1">
+                                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-zinc-400"/>
+                                <Input id="vmc-domain" placeholder="google.com" value={vmcDomain} onChange={e => setVmcDomain(e.target.value)} className="h-14 pl-12 text-lg bg-black/30 border-zinc-700 focus:border-cyan-500 focus:ring-cyan-500"/>
                             </div>
+                            <Button onClick={handleVmcVerification} disabled={isVmcVerifying} className="h-14 px-8 text-lg bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:opacity-90">
+                                {isVmcVerifying ? <Loader2 className="mr-2 animate-spin"/> : <Server className="mr-2"/>}
+                                Validar Dominio
+                            </Button>
                         </div>
-                    </div>
-                     <Button onClick={handleVmcVerification} disabled={isVmcVerifying} className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90">
-                        {isVmcVerifying ? <Loader2 className="mr-2 animate-spin"/> : <ShieldCheck className="mr-2"/>}
-                        Validar Dominio con API
-                    </Button>
-                </CardContent>
+                    </CardContent>
+                </div>
+
                 {(isVmcVerifying || vmcResult || vmcError) && (
-                    <CardFooter className="flex flex-col items-start gap-4">
-                        <Separator />
+                    <CardFooter className="p-0 mt-8">
+                         <Separator className="bg-zinc-700/50 mb-6"/>
                          {isVmcVerifying && (
-                            <div className="w-full flex flex-col items-center justify-center gap-2 text-muted-foreground py-8">
-                                <Loader2 className="animate-spin text-purple-400 size-8" />
-                                <p className="font-semibold">Contactando el servidor de validación...</p>
+                            <div className="w-full flex flex-col items-center justify-center gap-3 text-zinc-400 py-12">
+                                <div className="relative w-16 h-16">
+                                    <div className="absolute inset-0 border-2 border-dashed border-cyan-500/50 rounded-full animate-spin-slow"/>
+                                    <div className="absolute inset-2 border-2 border-dashed border-blue-500/50 rounded-full animate-spin-slow" style={{animationDirection: 'reverse'}} />
+                                    <Loader2 className="absolute inset-0 m-auto text-cyan-400 size-8 animate-spin" />
+                                </div>
+                                <p className="font-semibold text-lg">Contactando el servidor de validación...</p>
+                                <p className="text-sm">Puede tardar unos segundos.</p>
                             </div>
                          )}
-                         {vmcError && <p className="text-destructive text-sm p-4 bg-destructive/10 rounded-md w-full">{vmcError}</p>}
+                         {vmcError && <div className="w-full text-destructive text-sm p-4 bg-destructive/10 rounded-md border border-destructive/50 flex items-center gap-3"><AlertTriangle/>{vmcError}</div>}
                          {vmcResult && (
-                             <div className="w-full space-y-4">
-                                <div className="p-4 rounded-lg flex items-center justify-center gap-3" style={{ background: `radial-gradient(ellipse at center, ${getStatusColor(vmcResult.status)}33, transparent 70%)`, border: `1px solid ${getStatusColor(vmcResult.status)}80`}}>
+                             <div className="w-full space-y-6">
+                                <div className="p-4 rounded-lg flex items-center justify-center gap-3" style={{ background: `radial-gradient(ellipse at center, ${getStatusColor(vmcResult.status)}33, transparent 70%)`, border: `2px solid ${getStatusColor(vmcResult.status)}80`}}>
                                     <h3 className="text-xl font-bold tracking-wider" style={{color: getStatusColor(vmcResult.status)}}>
                                         ESTADO GLOBAL: {vmcResult.status.toUpperCase().replace(/_/g, ' ')}
                                     </h3>
                                 </div>
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                    {/* DNS Info Card */}
-                                    <div className="lg:col-span-2 space-y-3 p-4 bg-black/30 rounded-lg">
-                                        <h4 className="font-bold text-lg text-purple-300">Registros DNS</h4>
-                                        <div className="space-y-2 text-xs font-mono">
-                                            <div className="p-2 rounded bg-black/20">
-                                                <p className="font-bold text-purple-200">BIMI ({vmcResult.dns.bimi.name}):</p>
-                                                <p className="text-white/80 break-all">{vmcResult.dns.bimi.values?.join(' ') || 'No encontrado'}</p>
+                                
+                                <Accordion type="single" collapsible className="w-full space-y-4" defaultValue="dns">
+                                    <AccordionItem value="dns" className="bg-black/30 border-zinc-700/80 rounded-lg">
+                                        <AccordionTrigger className="p-4 font-bold text-lg"><div className="flex items-center gap-2"><Dna className="text-cyan-400"/>Registros DNS</div></AccordionTrigger>
+                                        <AccordionContent className="p-4 pt-0">
+                                            <div className="space-y-3 font-mono text-xs">
+                                                <div className="p-3 rounded bg-zinc-800/50">
+                                                    <p className="font-bold text-cyan-300">BIMI ({vmcResult.dns.bimi.name}):</p>
+                                                    <p className="text-white/80 break-all">{vmcResult.dns.bimi.values?.join(' ') || 'No encontrado'}</p>
+                                                </div>
+                                                <div className="p-3 rounded bg-zinc-800/50">
+                                                    <p className="font-bold text-cyan-300">DMARC ({vmcResult.dns.dmarc.name}):</p>
+                                                    <p className="text-white/80 break-all">{vmcResult.dns.dmarc.values?.join(' ') || 'No encontrado'}</p>
+                                                </div>
+                                                <div className="p-3 rounded bg-zinc-800/50">
+                                                    <p className="font-bold text-cyan-300">MX:</p>
+                                                    <p className="text-white/80 break-all">{vmcResult.dns.mx.exchanges?.join(', ') || 'No encontrado'}</p>
+                                                </div>
                                             </div>
-                                            <div className="p-2 rounded bg-black/20">
-                                                <p className="font-bold text-purple-200">DMARC ({vmcResult.dns.dmarc.name}):</p>
-                                                <p className="text-white/80 break-all">{vmcResult.dns.dmarc.values?.join(' ') || 'No encontrado'}</p>
-                                            </div>
-                                            <div className="p-2 rounded bg-black/20">
-                                                <p className="font-bold text-purple-200">MX:</p>
-                                                <p className="text-white/80 break-all">{vmcResult.dns.mx.exchanges?.join(', ') || 'No encontrado'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* BIMI Card */}
-                                    <div className="space-y-3 p-4 bg-black/30 rounded-lg">
-                                        <h4 className="font-bold text-lg text-purple-300">BIMI</h4>
-                                        <StatusBadge status={vmcResult.bimi.exists} text="Registro Existe" />
-                                        <StatusBadge status={vmcResult.bimi.syntax_ok} text="Sintaxis OK" />
-                                        <StatusBadge status={vmcResult.bimi.dmarc_enforced} text="DMARC Forzado" />
-                                    </div>
-                                    {/* SVG Card */}
-                                    <div className="space-y-3 p-4 bg-black/30 rounded-lg">
-                                        <h4 className="font-bold text-lg text-purple-300">SVG</h4>
-                                        <StatusBadge status={vmcResult.svg.exists} text="Logo Existe" />
-                                        <StatusBadge status={vmcResult.svg.compliant} text="Cumple Especificación" />
-                                        <p className="text-xs text-muted-foreground pt-2 break-all">Mensaje: {vmcResult.svg.message}</p>
-                                    </div>
-                                    {/* VMC Card */}
-                                    <div className="lg:col-span-2 space-y-3 p-4 bg-black/30 rounded-lg">
-                                        <h4 className="font-bold text-lg text-purple-300">VMC</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                          <StatusBadge status={vmcResult.vmc.exists} text="Certificado Existe" />
-                                          <StatusBadge status={vmcResult.vmc.authentic} text="Auténtico" />
-                                          <StatusBadge status={vmcResult.vmc.chain_ok} text="Cadena OK" />
-                                          <StatusBadge status={vmcResult.vmc.valid_now} text="Vigente" />
-                                          <StatusBadge status={vmcResult.vmc.revocation_ok} text="No Revocado" trueText="OK" falseText="REVOCADO" />
-                                          <StatusBadge status={vmcResult.vmc.logo_hash_match} text="Hash del Logo Coincide" />
-                                        </div>
-                                         <p className="text-xs text-muted-foreground pt-2 break-all">Mensaje: {vmcResult.vmc.message}</p>
-                                    </div>
-                                </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                     <AccordionItem value="bimi" className="bg-black/30 border-zinc-700/80 rounded-lg">
+                                        <AccordionTrigger className="p-4 font-bold text-lg"><div className="flex items-center gap-2"><FileText className="text-cyan-400"/>Análisis BIMI</div></AccordionTrigger>
+                                        <AccordionContent className="p-4 pt-0 space-y-2">
+                                            <StatusBadge status={vmcResult.bimi.exists} text="Registro Existe" />
+                                            <StatusBadge status={vmcResult.bimi.syntax_ok} text="Sintaxis OK" />
+                                            <StatusBadge status={vmcResult.bimi.dmarc_enforced} text="DMARC Forzado" />
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                     <AccordionItem value="svg" className="bg-black/30 border-zinc-700/80 rounded-lg">
+                                        <AccordionTrigger className="p-4 font-bold text-lg"><div className="flex items-center gap-2"><ImageIcon className="text-cyan-400"/>Análisis SVG</div></AccordionTrigger>
+                                        <AccordionContent className="p-4 pt-0 space-y-2">
+                                            <StatusBadge status={vmcResult.svg.exists} text="Logo Existe" />
+                                            <StatusBadge status={vmcResult.svg.compliant} text="Cumple Especificación" />
+                                            <p className="text-xs text-zinc-400 pt-2 break-all">Mensaje: {vmcResult.svg.message}</p>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                     <AccordionItem value="vmc" className="bg-black/30 border-zinc-700/80 rounded-lg">
+                                        <AccordionTrigger className="p-4 font-bold text-lg"><div className="flex items-center gap-2"><Shield className="text-cyan-400"/>Análisis VMC</div></AccordionTrigger>
+                                        <AccordionContent className="p-4 pt-0 space-y-2">
+                                            <StatusBadge status={vmcResult.vmc.exists} text="Certificado Existe" />
+                                            <StatusBadge status={vmcResult.vmc.authentic} text="Auténtico" />
+                                            <StatusBadge status={vmcResult.vmc.chain_ok} text="Cadena OK" />
+                                            <StatusBadge status={vmcResult.vmc.valid_now} text="Vigente" />
+                                            <StatusBadge status={vmcResult.vmc.revocation_ok} text="No Revocado" trueText="OK" falseText="REVOCADO" />
+                                            <StatusBadge status={vmcResult.vmc.logo_hash_match} text="Hash del Logo Coincide" />
+                                            <p className="text-xs text-zinc-400 pt-2 break-all">Mensaje: {vmcResult.vmc.message}</p>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
                              </div>
                          )}
                     </CardFooter>
                 )}
-            </Card>
+            </div>
 
             <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Spam Checker Panel */}
@@ -410,3 +425,5 @@ export default function DemoPage() {
         </>
     );
 }
+
+    
