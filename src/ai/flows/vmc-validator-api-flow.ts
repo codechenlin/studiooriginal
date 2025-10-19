@@ -10,7 +10,7 @@ import { ai } from '@/ai/genkit';
 import { VmcApiValidationInputSchema, VmcApiValidationOutputSchema, type VmcApiValidationInput, type VmcApiValidationOutput } from './vmc-validator-api-types';
 
 const API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud";
-const API_KEY = process.env.VMC_VALIDATOR_API_KEY;
+const API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32";
 
 async function callApi(domain: string): Promise<VmcApiValidationOutput> {
   if (!API_KEY) {
@@ -32,7 +32,9 @@ async function callApi(domain: string): Promise<VmcApiValidationOutput> {
     });
 
     if (!response.ok) {
-      throw new Error(`API returned an error: ${response.status} ${response.statusText}`);
+       const errorBody = await response.text();
+       console.error(`API Error: ${response.status}`, errorBody);
+       throw new Error(`API returned an error: ${response.status} ${response.statusText}. Body: ${errorBody}`);
     }
 
     const result = await response.json();
