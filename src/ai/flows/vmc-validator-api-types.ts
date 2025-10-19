@@ -32,6 +32,15 @@ const SvgInfoSchema = z.object({
   message: z.string(),
 });
 
+const OpenSslInfoSchema = z.object({
+    status: z.enum(["pass", "fail", "error"]),
+    format: z.string().nullable(),
+    chain_ok: z.boolean().nullable(),
+    detail: z.string().nullable(),
+    stdout: z.string().nullable(),
+    stderr: z.string().nullable(),
+});
+
 const VmcInfoSchema = z.object({
   exists: z.boolean(),
   authentic: z.boolean(),
@@ -47,6 +56,7 @@ const VmcInfoSchema = z.object({
     retry_after_seconds: z.number(),
     max_retries: z.number(),
   }).nullable().optional(),
+  openssl: OpenSslInfoSchema.optional(),
 });
 
 export const VmcApiValidationInputSchema = z.object({
@@ -60,7 +70,7 @@ export const VmcApiValidationOutputSchema = z.object({
   bimi: BimiInfoSchema,
   svg: SvgInfoSchema,
   vmc: VmcInfoSchema,
-  status: z.enum(['pass', 'pass_without_vmc', 'indeterminate_revocation', 'fail']),
+  status: z.enum(['pass', 'pass_without_vmc', 'indeterminate_revocation', 'fail', 'partial']),
   recommendations: z.record(z.any()).optional(),
 });
 export type VmcApiValidationOutput = z.infer<typeof VmcApiValidationOutputSchema>;
