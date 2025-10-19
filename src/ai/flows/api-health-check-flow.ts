@@ -32,7 +32,7 @@ export async function checkApiHealth(): Promise<ApiHealthOutput> {
     const response = await fetch(`${API_BASE}/health`, {
       method: 'GET',
       headers: {
-        'X-API-KEY': API_KEY,
+        'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
       },
       // agent: API_BASE.startsWith('https') ? httpsAgent : undefined, // This might cause issues in some environments.

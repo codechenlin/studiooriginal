@@ -157,7 +157,7 @@ export default function DemoPage() {
                     )}
                 </Card>
 
-                 {/* Panel 2: Validador VMC */}
+                 {/* Panel 3: Validador VMC con OpenSSL */}
                 <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-3 text-xl">
