@@ -9,7 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import https from 'https';
 
 const API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud";
 const API_KEY = process.env.VMC_VALIDATOR_API_KEY;
@@ -18,10 +17,6 @@ const ApiHealthOutputSchema = z.object({
   status: z.string(),
 });
 export type ApiHealthOutput = z.infer<typeof ApiHealthOutputSchema>;
-
-const httpsAgent = new https.Agent({
-    rejectUnauthorized: false,
-});
 
 export async function checkApiHealth(): Promise<ApiHealthOutput> {
   if (!API_KEY) {
@@ -35,7 +30,6 @@ export async function checkApiHealth(): Promise<ApiHealthOutput> {
         'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
       },
-      // agent: API_BASE.startsWith('https') ? httpsAgent : undefined, // This might cause issues in some environments.
     });
 
     if (!response.ok) {
