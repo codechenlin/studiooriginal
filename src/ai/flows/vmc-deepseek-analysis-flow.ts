@@ -12,7 +12,7 @@ import { getAiConfigForFlows } from '@/ai/genkit';
 import { type VmcAnalysisInput, VmcAnalysisOutputSchema } from '@/app/dashboard/demo/actions';
 
 
-const EXTERNAL_API_BASE = "http://8b3i4m6i39303g2k432u.fanton.cloud:9090";
+const EXTERNAL_API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud:9090";
 const EXTERNAL_API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32";
 
 /**

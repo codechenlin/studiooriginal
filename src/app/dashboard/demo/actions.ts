@@ -5,7 +5,6 @@ import { checkApiHealth, type ApiHealthOutput } from '@/ai/flows/api-health-chec
 import { validateAndAnalyzeDomain } from '@/ai/flows/vmc-deepseek-analysis-flow';
 import { z } from 'zod';
 
-
 // Input schema for our main flow
 export const VmcAnalysisInputSchema = z.object({
   domain: z.string().describe('The domain to validate and analyze.'),
