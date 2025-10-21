@@ -52,46 +52,50 @@ export default function DemoPage() {
     };
 
     const renderAnalysisResult = (result: VmcAnalysisOutput) => {
-        const getStatusClasses = (isValid: boolean) => 
-            isValid 
-            ? "bg-green-900/40 border-green-500/50 text-green-300" 
-            : "bg-red-900/40 border-red-500/50 text-red-300";
-
-        const getStatusIcon = (isValid: boolean) => 
-            isValid 
-            ? <CheckCircle className="size-8 shrink-0 text-green-400" />
-            : <AlertTriangle className="size-8 shrink-0 text-red-400" />;
         
+        const analysisItems = [
+            {
+                title: "Registro BIMI",
+                isValid: result.bimi_is_valid,
+                description: result.bimi_description,
+                verdict: result.bimi_is_valid ? "VÁLIDO" : "FALSO/INVÁLIDO"
+            },
+            {
+                title: "Imagen SVG",
+                isValid: result.svg_is_valid,
+                description: result.svg_description,
+                verdict: result.svg_is_valid ? "CORRECTA" : "FALSA"
+            },
+            {
+                title: "Certificado VMC",
+                isValid: result.vmc_is_authentic,
+                description: result.vmc_description,
+                verdict: result.vmc_is_authentic ? "AUTÉNTICO" : "FALSO"
+            }
+        ]
+
         return (
-             <div className="space-y-4">
-                <div className={cn("p-4 rounded-lg border", getStatusClasses(result.bimi_is_valid))}>
-                    <div className="flex items-start gap-4">
-                        {getStatusIcon(result.bimi_is_valid)}
-                        <div>
-                            <h4 className="font-bold">Registro BIMI: {result.bimi_is_valid ? "VÁLIDO" : "FALSO/INVÁLIDO"}</h4>
-                            <p className="text-sm">{result.bimi_description}</p>
-                        </div>
-                    </div>
-                </div>
-                 <div className={cn("p-4 rounded-lg border", getStatusClasses(result.svg_is_valid))}>
-                    <div className="flex items-start gap-4">
-                        {getStatusIcon(result.svg_is_valid)}
-                        <div>
-                            <h4 className="font-bold">Imagen SVG: {result.svg_is_valid ? "CORRECTA" : "FALSA"}</h4>
-                            <p className="text-sm">{result.svg_description}</p>
-                        </div>
-                    </div>
-                </div>
-                 <div className={cn("p-4 rounded-lg border", getStatusClasses(result.vmc_is_authentic))}>
-                    <div className="flex items-start gap-4">
-                        {getStatusIcon(result.vmc_is_authentic)}
-                        <div>
-                            <h4 className="font-bold">Certificado VMC: {result.vmc_is_authentic ? "AUTÉNTICO" : "FALSO"}</h4>
-                            <p className="text-sm">{result.vmc_description}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <Accordion type="single" collapsible defaultValue="item-0" className="w-full space-y-2">
+                {analysisItems.map((item, index) => (
+                    <AccordionItem key={index} value={`item-${index}`} className="bg-black/20 border-border/30 rounded-lg">
+                        <AccordionTrigger className="p-4 text-base font-semibold hover:no-underline">
+                           <div className="flex items-center gap-3">
+                            {item.isValid 
+                                ? <CheckCircle className="size-6 text-green-400" />
+                                : <AlertTriangle className="size-6 text-red-400" />
+                            }
+                            <span>{item.title}:</span>
+                             <span className={cn("font-bold", item.isValid ? "text-green-400" : "text-red-400")}>{item.verdict}</span>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4">
+                           <div className="p-3 bg-black/40 rounded-md font-mono text-xs text-white/80 whitespace-pre-wrap border border-border/20">
+                             {item.description}
+                           </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
+            </Accordion>
         )
     }
 
@@ -203,5 +207,7 @@ export default function DemoPage() {
         </main>
     );
 }
+
+    
 
     
