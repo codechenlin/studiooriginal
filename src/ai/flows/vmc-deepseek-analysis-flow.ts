@@ -91,12 +91,18 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     // Robust JSON parsing logic
     let jsonString = rawResponse;
     
-    // Attempt to find a JSON object within the string, even if it has leading/trailing text.
-    const firstBrace = jsonString.indexOf('{');
-    const lastBrace = jsonString.lastIndexOf('}');
+    // First, try to extract from a markdown block if it exists
+    const markdownMatch = jsonString.match(/```json\n([\s\S]*?)\n```/);
+    if (markdownMatch && markdownMatch[1]) {
+        jsonString = markdownMatch[1];
+    } else {
+        // If no markdown block, try to find the JSON object within the string
+        const firstBrace = jsonString.indexOf('{');
+        const lastBrace = jsonString.lastIndexOf('}');
 
-    if (firstBrace !== -1 && lastBrace > firstBrace) {
-      jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+          jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+        }
     }
     
     try {
@@ -112,3 +118,4 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     throw new Error(`Error al analizar los datos con la IA: ${error.message}`);
   }
 }
+
