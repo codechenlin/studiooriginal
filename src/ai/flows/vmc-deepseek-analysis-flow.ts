@@ -23,7 +23,7 @@ const EXTERNAL_API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32
  * @returns The full JSON response from the external API.
  */
 async function fetchDomainValidation(domain: string): Promise<any> {
-  const url = `${EXTERNAL_API_BASE}/validate/raw?domain=${encodeURIComponent(domain)}`;
+  const url = `${EXTERNAL_API_BASE}/validate/full?domain=${encodeURIComponent(domain)}`;
   
   try {
     const response = await fetch(url, {
@@ -90,7 +90,7 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     
     // Improved JSON extraction logic
     let jsonString = '';
-    const jsonBlockMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
+    const jsonBlockMatch = rawResponse.match(/<<<JSON_START>>>([\s\S]*?)<<<JSON_END>>>/);
     
     if (jsonBlockMatch && jsonBlockMatch[1]) {
         jsonString = jsonBlockMatch[1];
