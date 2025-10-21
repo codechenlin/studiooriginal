@@ -23,7 +23,7 @@ const EXTERNAL_API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32
  * @returns The full JSON response from the external API.
  */
 async function fetchDomainValidation(domain: string): Promise<any> {
-  const url = `${EXTERNAL_API_BASE}/validate?domain=${encodeURIComponent(domain)}`;
+  const url = `${EXTERNAL_API_BASE}/validate/raw?domain=${encodeURIComponent(domain)}`;
   
   try {
     const response = await fetch(url, {
@@ -88,19 +88,28 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
       model: "deepseek-coder",
     });
     
-    const jsonStartMarker = '<<<JSON_START>>>';
-    const jsonEndMarker = '<<<JSON_END>>>';
-
-    const jsonStartIndex = rawResponse.indexOf(jsonStartMarker);
-    const jsonEndIndex = rawResponse.indexOf(jsonEndMarker);
-
-    if (jsonStartIndex === -1 || jsonEndIndex === -1) {
-      throw new Error("La IA no devolvió los delimitadores JSON esperados.");
+    // Improved JSON extraction logic
+    let jsonString = '';
+    const jsonBlockMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
+    
+    if (jsonBlockMatch && jsonBlockMatch[1]) {
+        jsonString = jsonBlockMatch[1];
+    } else {
+        // Fallback: Find the first '{' and the last '}'
+        const firstBrace = rawResponse.indexOf('{');
+        const lastBrace = rawResponse.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+            jsonString = rawResponse.substring(firstBrace, lastBrace + 1);
+        }
     }
     
-    const analysisText = rawResponse.substring(0, jsonStartIndex).trim();
-    const jsonString = rawResponse.substring(jsonStartIndex + jsonStartMarker.length, jsonEndIndex).trim();
+    if (!jsonString) {
+        throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
+    }
     
+    const analysisTextMatch = rawResponse.match(/(.*?)(?:<<<JSON_START>>>|```json)/s);
+    const analysisText = analysisTextMatch ? analysisTextMatch[1].trim() : 'Análisis no proporcionado.';
+
     try {
         const parsedJson = JSON.parse(jsonString);
         const validatedOutput = VmcAnalysisOutputSchema.parse(parsedJson);
