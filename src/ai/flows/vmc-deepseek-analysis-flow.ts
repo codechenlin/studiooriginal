@@ -6,10 +6,9 @@
  * - validateAndAnalyzeDomain: Fetches validation data from an external API and sends it to DeepSeek for analysis.
  */
 
-import { z } from 'genkit';
 import { deepseekChat } from '@/ai/deepseek';
 import { getAiConfigForFlows } from '@/ai/genkit';
-import { type VmcAnalysisInput, VmcAnalysisOutputSchema } from '@/app/dashboard/demo/actions';
+import { type VmcAnalysisInput, type VmcAnalysisOutput, VmcAnalysisOutputSchema } from '@/app/dashboard/demo/types';
 
 
 const EXTERNAL_API_BASE = "http://8b3i4m6i39303g2k432u.fanton.cloud:9090";
@@ -49,7 +48,7 @@ async function fetchDomainValidation(domain: string): Promise<any> {
  * @param input The domain to be processed.
  * @returns An analysis object from the AI.
  */
-export async function validateAndAnalyzeDomain(input: VmcAnalysisInput) {
+export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise<VmcAnalysisOutput> {
   const aiConfig = getAiConfigForFlows();
 
   if (!aiConfig?.enabled || !aiConfig.functions?.vmcVerification) {
