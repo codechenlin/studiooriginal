@@ -155,59 +155,7 @@ export default function DemoPage() {
                         </CardFooter>
                     )}
                 </Card>
-
-                 {/* Panel 2: Validador VMC con Análisis IA */}
-                <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-3 text-xl">
-                            <Bot className="text-primary"/>
-                            Mini Panel de Prueba 02: Análisis con IA
-                        </CardTitle>
-                        <CardDescription>
-                           Valida un dominio y obtén un análisis de la IA sobre su autenticidad.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                         <div>
-                            <Label htmlFor="domain-input">Dominio a Validar</Label>
-                            <div className="flex gap-2 mt-1">
-                                <Input
-                                    id="domain-input"
-                                    value={domainToAnalyze}
-                                    onChange={(e) => setDomainToAnalyze(e.target.value)}
-                                    placeholder="ejemplo.com"
-                                />
-                                <Button onClick={handleAnalysis} disabled={isAnalyzing || !domainToAnalyze}>
-                                    {isAnalyzing ? <Loader2 className="mr-2 animate-spin"/> : <Globe className="mr-2"/>}
-                                    Analizar
-                                </Button>
-                            </div>
-                        </div>
-                         {(isAnalyzing || analysisResult || analysisError) && (
-                            <div className="pt-4">
-                                {isAnalyzing && (
-                                    <div className="w-full flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
-                                        <Loader2 className="animate-spin mb-2" />
-                                        <p>Contactando API externa...</p>
-                                        <p>Enviando respuesta a DeepSeek para análisis...</p>
-                                    </div>
-                                )}
-                                {analysisError && (
-                                    <div className="w-full text-sm p-4 rounded-md border bg-destructive/10 text-destructive border-destructive">
-                                        <p className="font-bold flex items-center gap-2"><AlertTriangle/>Error de Análisis</p>
-                                        <p className="mt-1 font-mono text-xs">{analysisError}</p>
-                                    </div>
-                                )}
-                                {analysisResult && renderAnalysisResult(analysisResult)}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
             </div>
         </main>
     );
 }
-
-    
-
-    
