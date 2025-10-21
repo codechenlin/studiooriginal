@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { testChat } from '@/ai/flows/test-chat-flow';
 
 const configPath = path.join(process.cwd(), 'src', 'app', 'lib', 'ai-config.json');
+const promptsPath = path.join(process.cwd(), 'src', 'app', 'lib', 'prompts.json');
 
 const AiConfigSchema = z.object({
   provider: z.literal('deepseek'),
@@ -20,15 +21,37 @@ const AiConfigSchema = z.object({
   }),
 });
 
-export type AiConfig = z.infer<typeof AiConfigSchema>;
+const PromptsSchema = z.object({
+  vmcAnalysis: z.string(),
+});
 
-async function readAiConfig(): Promise<AiConfig> {
+export type AiConfig = z.infer<typeof AiConfigSchema>;
+export type PromptsConfig = z.infer<typeof PromptsSchema>;
+
+async function readConfigFile<T>(filePath: string, schema: z.ZodSchema<T>, defaultConfig: T): Promise<T> {
   try {
-    const fileContent = await fs.readFile(configPath, 'utf-8');
-    return AiConfigSchema.parse(JSON.parse(fileContent));
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    return schema.parse(JSON.parse(fileContent));
   } catch (error) {
-    // If file doesn't exist or is invalid, return a default config
-    return {
+    console.warn(`Failed to read or parse ${path.basename(filePath)}, returning default. Error:`, error);
+    return defaultConfig;
+  }
+}
+
+async function writeConfigFile<T>(filePath: string, schema: z.ZodSchema<T>, config: T) {
+  try {
+    const validatedConfig = schema.parse(config);
+    await fs.writeFile(filePath, JSON.stringify(validatedConfig, null, 2), 'utf-8');
+  } catch (error: any) {
+    console.error(`Failed to write to ${path.basename(filePath)}:`, error);
+    throw new Error(`No se pudo guardar el archivo de configuración.`);
+  }
+}
+
+// AI Config Actions
+export async function getAiConfig(): Promise<{ success: boolean, data?: AiConfig, error?: string }> {
+  try {
+    const config = await readConfigFile(configPath, AiConfigSchema, {
       provider: 'deepseek',
       apiKey: '',
       modelName: 'deepseek-chat',
@@ -37,23 +60,7 @@ async function readAiConfig(): Promise<AiConfig> {
         dnsAnalysis: false,
         vmcVerification: false,
       },
-    };
-  }
-}
-
-async function writeAiConfig(config: AiConfig) {
-  try {
-    const validatedConfig = AiConfigSchema.parse(config);
-    await fs.writeFile(configPath, JSON.stringify(validatedConfig, null, 2), 'utf-8');
-  } catch (error: any) {
-    console.error("Failed to write to ai-config.json:", error);
-    throw new Error('No se pudo guardar el archivo de configuración de IA.');
-  }
-}
-
-export async function getAiConfig(): Promise<{ success: boolean, data?: AiConfig, error?: string }> {
-  try {
-    const config = await readAiConfig();
+    });
     return { success: true, data: config };
   } catch (error: any) {
     return { success: false, error: 'No se pudo leer la configuración de IA.' };
@@ -62,15 +69,37 @@ export async function getAiConfig(): Promise<{ success: boolean, data?: AiConfig
 
 export async function saveAiConfig(config: AiConfig): Promise<{ success: boolean, error?: string }> {
   try {
-    await writeAiConfig(config);
+    await writeConfigFile(configPath, AiConfigSchema, config);
     revalidatePath('/d92y02b11u/dashboard/ai-config', 'page');
-    // Revalidate other paths that might use AI config
     revalidatePath('/dashboard/servers', 'page');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
+
+// Prompts Actions
+export async function getPrompts(): Promise<{ success: boolean, data?: PromptsConfig, error?: string }> {
+  try {
+    const prompts = await readConfigFile(promptsPath, PromptsSchema, {
+      vmcAnalysis: 'Prompt por defecto para VMC si el archivo no existe.',
+    });
+    return { success: true, data: prompts };
+  } catch (error: any) {
+    return { success: false, error: 'No se pudo leer el archivo de prompts.' };
+  }
+}
+
+export async function savePrompts(prompts: PromptsConfig): Promise<{ success: boolean, error?: string }> {
+  try {
+    await writeConfigFile(promptsPath, PromptsSchema, prompts);
+    revalidatePath('/d92y02b11u/dashboard/ai-config', 'page');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 
 const testConnectionSchema = z.object({
     provider: z.string(),
@@ -82,7 +111,6 @@ export async function testAiConnection(input: z.infer<typeof testConnectionSchem
     try {
         const { apiKey, modelName } = testConnectionSchema.parse(input);
         
-        // Directly call the test function with the provided credentials
         const response = await testChat("Hola, ¿puedes confirmar que estás funcionando?", {
             apiKey: apiKey,
             model: modelName,

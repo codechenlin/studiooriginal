@@ -9,7 +9,10 @@
 import { deepseekChat } from '@/ai/deepseek';
 import { getAiConfigForFlows } from '@/ai/genkit';
 import { type VmcAnalysisInput, type VmcAnalysisOutput, VmcAnalysisOutputSchema } from '@/app/dashboard/demo/types';
+import fs from 'fs/promises';
+import path from 'path';
 
+const promptsPath = path.join(process.cwd(), 'src', 'app', 'lib', 'prompts.json');
 
 const EXTERNAL_API_BASE = "http://8b3i4m6i39303g2k432u.fanton.cloud:9090";
 const EXTERNAL_API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32";
@@ -43,6 +46,17 @@ async function fetchDomainValidation(domain: string): Promise<any> {
   }
 }
 
+async function getVmcAnalysisPrompt(): Promise<string> {
+    try {
+        const fileContent = await fs.readFile(promptsPath, 'utf-8');
+        const prompts = JSON.parse(fileContent);
+        return prompts.vmcAnalysis;
+    } catch (error) {
+        console.error("Error reading VMC analysis prompt, using fallback.", error);
+        return "Eres un validador técnico de autenticidad BIMI/VMC. Analiza el JSON y da un veredicto."; // Fallback prompt
+    }
+}
+
 /**
  * Main flow that validates a domain and then sends the result to an AI for analysis.
  * @param input The domain to be processed.
@@ -61,63 +75,12 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
 
   // 1. Fetch data from the external API
   const validationData = await fetchDomainValidation(input.domain);
+  
+  // 2. Get the prompt from the config file
+  const vmcPrompt = await getVmcAnalysisPrompt();
 
-  // 2. Prepare and send data to DeepSeek AI
-  const prompt = `
-    Eres un experto en seguridad de correo electrónico y autenticación de marca. Analiza el siguiente objeto JSON, que contiene los resultados de una validación de BIMI, SVG y VMC para el dominio '${input.domain}'. Tu tarea es determinar la validez de cada componente y proporcionar un análisis técnico detallado de tu razonamiento.
-    El JSON de entrada puede contener dos ramas principales de datos: 'python_method' y 'openssl_method'. Debes considerar la información de ambas para formar tu veredicto.
-
-    Tu respuesta DEBE ser un objeto JSON válido que cumpla con este esquema Zod:
-    \`\`\`json
-    {
-        "type": "object",
-        "properties": {
-            "bimi_is_valid": { "type": "boolean" },
-            "bimi_description": { "type": "string" },
-            "svg_is_valid": { "type": "boolean" },
-            "svg_description": { "type": "string" },
-            "vmc_is_authentic": { "type": "boolean" },
-            "vmc_description": { "type": "string" }
-        },
-        "required": ["bimi_is_valid", "bimi_description", "svg_is_valid", "svg_description", "vmc_is_authentic", "vmc_description"]
-    }
-    \`\`\`
-
-    **Datos a analizar:**
-    \`\`\`json
-    ${JSON.stringify(validationData, null, 2)}
-    \`\`\`
-
-    **Reglas de Análisis Detallado:**
-
-    1.  **Registro BIMI (bimi_is_valid):**
-        *   **Veredicto Final (true/false):** ¿Existe el registro? ¿Es correcta su sintaxis? ¿La política DMARC es segura ('reject' o 'quarantine')? El veredicto es **VÁLIDO** solo si se cumplen TODAS estas condiciones.
-        *   **Análisis Detallado (bimi_description):** Explica tu razonamiento paso a paso.
-            *   Menciona si el registro BIMI fue encontrado (\`dns.bimi.exists\`).
-            *   Verifica y cita la sintaxis encontrada (ej. \`v=BIMI1; l=...\`).
-            *   Verifica y cita la política DMARC encontrada (\`dns.dmarc.record\`) y si cumple con ser 'reject' o 'quarantine'.
-            *   Concluye explicando cómo estos puntos llevaron a tu veredicto final. Si no se encontró el registro, indícalo claramente como la razón principal.
-
-    2.  **Imagen SVG (svg_is_valid):**
-        *   **Veredicto Final (true/false):** ¿Se encontró el archivo SVG? ¿Es compatible con las estrictas reglas de seguridad de BIMI-safe? El veredicto es **VÁLIDO** solo si ambas son ciertas.
-        *   **Análisis Detallado (svg_description):**
-            *   Indica si el SVG fue localizado (\`svg.exists\`).
-            *   Reporta el estado de compatibilidad (\`svg.compliant\`).
-            *   Si no es compatible, cita los errores específicos encontrados en el array \`svg.errors\` para justificar por qué falló.
-            *   Concluye resumiendo si el logo es seguro para ser usado con BIMI o no, y por qué.
-
-    3.  **Certificado VMC (vmc_is_authentic):**
-        *   **Veredicto Final (true/false):** ¿Existe el VMC? ¿Es criptográficamente auténtico? ¿La cadena de confianza está completa y es válida? ¿El estado de revocación es "bueno"? El veredicto es **AUTÉNTICO** solo si TODAS estas condiciones son verdaderas.
-        *   **Análisis Detallado (vmc_description):**
-            *   Menciona si se encontró un certificado VMC (\`vmc.exists\`).
-            *   Verifica la autenticidad (\`vmc.authentic\`) y la cadena de confianza (\`vmc.chain_ok\` / \`openssl.chain_ok\`). Cita la salida de OpenSSL si es relevante, especialmente \`stderr\` si hay errores.
-            *   Verifica el estado de revocación (\`vmc.revocation_ok\`).
-            *   Explica cómo la combinación de estos factores (autenticidad, confianza, revocación) te llevó a concluir si el VMC fue emitido por una autoridad oficial y es seguro. Si no se encontró, indícalo como la razón.
-
-    **Instrucciones Adicionales:**
-    - Sé directo y técnico en tus descripciones.
-    - Tu respuesta final DEBE ser únicamente el objeto JSON solicitado.
-  `;
+  // 3. Prepare and send data to DeepSeek AI
+  const prompt = `${vmcPrompt}\n\n**Datos a analizar:**\n\`\`\`json\n${JSON.stringify(validationData, null, 2)}\n\`\`\``;
   
   try {
     const rawResponse = await deepseekChat(prompt, {
@@ -128,7 +91,13 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     // Extract JSON from the response
     const jsonMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
     if (!jsonMatch || !jsonMatch[1]) {
-      throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
+      // Fallback for when the model doesn't use markdown code blocks
+      try {
+        const parsedJson = JSON.parse(rawResponse);
+        return VmcAnalysisOutputSchema.parse(parsedJson);
+      } catch (e) {
+         throw new Error("La IA no devolvió un objeto JSON válido en su respuesta.");
+      }
     }
     
     const parsedJson = JSON.parse(jsonMatch[1]);
