@@ -6,12 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Terminal, Server, Dna } from 'lucide-react';
+import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Server, Dna } from 'lucide-react';
 import { checkApiHealthAction } from './actions';
 import { type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
 import { validateDomainWithAI } from './actions';
-import { type VmcAnalysisOutput } from './actions';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { type VmcAnalysisOutput } from './types';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -204,3 +203,5 @@ export default function DemoPage() {
         </main>
     );
 }
+
+    
