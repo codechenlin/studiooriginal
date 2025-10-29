@@ -12,19 +12,14 @@ import { getAiConfigForFlows, getDnsConfigForFlows } from '@/ai/genkit';
 import { z } from 'zod';
 import dns from 'node:dns/promises';
 import { deepseekChat } from '@/ai/deepseek';
+import { VmcAnalysisInputSchema, VmcAnalysisOutputSchema, type VmcAnalysisInput, type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
 
-export type OptionalDnsHealthInput = z.infer<typeof OptionalDnsHealthInputSchema>;
-const OptionalDnsHealthInputSchema = z.object({
-  domain: z.string().describe('The domain name to check.'),
-});
+export type OptionalDnsHealthInput = VmcAnalysisInput;
+export const OptionalDnsHealthInputSchema = VmcAnalysisInputSchema;
 
-export type OptionalDnsHealthOutput = z.infer<typeof OptionalDnsHealthOutputSchema>;
-const OptionalDnsHealthOutputSchema = z.object({
-  mxStatus: z.enum(['verified', 'unverified', 'not-found']).describe('Status of the MX record.'),
-  bimiStatus: z.enum(['verified', 'unverified', 'not-found']).describe('Status of the BIMI record.'),
-  vmcStatus: z.enum(['verified', 'unverified', 'not-found']).describe('Status of the VMC record.'),
-  analysis: z.string().describe('A natural language analysis of the optional records, explaining their purpose and how to fix them if they are misconfigured. Be concise and direct. Respond in Spanish and always use emojis.'),
-});
+export type OptionalDnsHealthOutput = VmcAnalysisOutput;
+export const OptionalDnsHealthOutputSchema = VmcAnalysisOutputSchema;
+
 
 const getTxtRecords = async (name: string): Promise<string[]> => {
   try {
@@ -73,52 +68,30 @@ export async function verifyOptionalDnsHealth(
 
   const prompt = `Analiza los registros DNS opcionales de un dominio y responde en español usando emojis. No incluyas enlaces a documentación externa. Tu respuesta DEBE ser un objeto JSON válido que cumpla con este esquema Zod:
 \`\`\`json
-{
-  "type": "object",
-  "properties": {
-    "mxStatus": { "type": "string", "enum": ["verified", "unverified", "not-found"] },
-    "bimiStatus": { "type": "string", "enum": ["verified", "unverified", "not-found"] },
-    "vmcStatus": { "type": "string", "enum": ["verified", "unverified", "not-found"] },
-    "analysis": { "type": "string" }
-  },
-  "required": ["mxStatus", "bimiStatus", "vmcStatus", "analysis"]
-}
+${JSON.stringify(OptionalDnsHealthOutputSchema.shape, null, 2)}
 \`\`\`
 
 Análisis del Registro MX:
-
-1.  **Identificación**: Busca en 'mxRecords' los registros para el dominio principal. Puede haber varios.
-2.  **Validación**: Para que la verificación sea exitosa, al menos uno de los registros MX encontrados debe cumplir con estas dos condiciones simultáneamente:
-    *   El Host/Nombre debe pertenecer al dominio principal (sin subdominios ni selectores).
-    *   La propiedad 'exchange' debe ser exactamente \`${dnsConfig.mxTargetDomain}\`.
-    *   La propiedad 'priority' debe ser exactamente \`0\`.
-3.  **Resultado**: 
-    *   Si encuentras un registro que cumple ambas condiciones, marca 'mxStatus' como 'verified' ✅.
-    *   Si existen registros MX pero ninguno cumple las condiciones, marca 'mxStatus' como 'unverified' ❌.
-    *   Si no se encuentra ningún registro MX, marca 'mxStatus' como 'not-found' 🧐.
+1.  **Identificación**: Busca en 'mxRecords' los registros para el dominio principal.
+2.  **Validación**: Para que mx_is_valid sea true, al menos un registro MX debe tener 'exchange' igual a \`${dnsConfig.mxTargetDomain}\` y 'priority' igual a \`0\`.
+3.  **Resultado**: Si se encuentra dicho registro, 'mx_is_valid' es true ✅. Si no, false ❌.
 
 Análisis del Registro BIMI:
+1.  **Identificación**: Busca en 'bimiRecords' un registro para el selector '${bimiSelector}._bimi'.
+2.  **Validación**: El registro debe contener 'v=BIMI1;'.
+3.  **Resultado**: Si el registro existe y contiene la cadena, 'bimi_is_valid' es true ✅. Si no, false ❌.
 
-1.  **Identificación**: Busca en 'bimiRecords' un registro para el selector '${bimiSelector}._bimi'. Solo puede existir uno con este selector.
-2.  **Validación de Contenido**: El registro encontrado debe contener las siguientes cadenas:
-    *   \`v=BIMI1;\`
-    *   \`l=https:\` (para el enlace del logotipo). No valides el dominio de la URL del logo, solo la presencia de la etiqueta.
-3.  **Resultado**: 
-    *   Si el registro existe y contiene ambas cadenas, marca 'bimiStatus' como 'verified' ✅.
-    *   Si existe pero falta alguna de las cadenas, 'unverified' ❌.
-    *   Si no se encuentra, 'not-found' 🧐.
+Análisis del Certificado VMC:
+1.  **Identificación**: Dentro del registro BIMI, busca la etiqueta 'a='.
+2.  **Validación**: La presencia de la etiqueta 'a=' indica un VMC.
+3.  **Resultado**: Si 'a=' existe, 'vmc_is_authentic' es true ✅. Si no, false ❌.
 
-Análisis del Registro VMC:
+**Veredicto General y Puntuación:**
+- **verdict**: Un resumen de una línea sobre el estado general.
+- **validation_score**: Un puntaje de 0 a 100. 100 si todo es perfecto. 70 si BIMI es válido pero VMC no. 40 si MX es válido pero BIMI/VMC no. 0-20 si nada es válido.
 
-1.  **Identificación**: El VMC es parte del registro BIMI. Busca dentro de 'bimiRecords' para el selector '${bimiSelector}._bimi'.
-2.  **Validación**: Para que un VMC se considere válido, el registro BIMI debe contener AMBAS cadenas:
-    *   \`v=BIMI1;\`
-    *   \`a=https:\` (esta es la parte del certificado VMC).
-3.  **Contexto**: Explica que el VMC es un certificado digital que verifica la autenticidad de la marca y su logotipo. Es un complemento de seguridad para BIMI que aumenta la confianza y la probabilidad de que el logo se muestre en proveedores como Gmail.
-4.  **Resultado**: 
-    *   Si el registro existe y contiene ambas cadenas ('v=BIMI1;' y 'a=https:'), marca 'vmcStatus' como 'verified' ✅.
-    *   Si el registro existe pero no contiene la cadena 'a=https:', marca 'vmcStatus' como 'unverified' ❌.
-    *   Si no se encuentra ningún registro para '${bimiSelector}._bimi', marca 'vmcStatus' como 'not-found' 🧐.
+**Análisis Detallado:**
+- **detailed_analysis**: Explica en texto plano el estado de MX, BIMI y VMC, su propósito y cómo solucionar cualquier problema.
 
 Registros a analizar:
 - Dominio: ${domain}
@@ -134,7 +107,12 @@ Registros a analizar:
 
     const jsonMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/);
     if (!jsonMatch || !jsonMatch[1]) {
-      throw new Error("La IA no devolvió un JSON válido.");
+      const fallbackJsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+      if(!fallbackJsonMatch || !fallbackJsonMatch[0]) {
+         throw new Error("La IA no devolvió un JSON válido.");
+      }
+      const parsedJson = JSON.parse(fallbackJsonMatch[0]);
+      return OptionalDnsHealthOutputSchema.parse(parsedJson);
     }
     
     const parsedJson = JSON.parse(jsonMatch[1]);

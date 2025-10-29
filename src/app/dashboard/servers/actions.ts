@@ -6,9 +6,9 @@ import {
   type DnsHealthInput,
 } from '@/ai/flows/dns-verification-flow';
 import { 
-  validateAndAnalyzeDomain, 
-  type VmcAnalysisInput
-} from '@/ai/flows/vmc-deepseek-analysis-flow';
+  verifyOptionalDnsHealth,
+  type OptionalDnsHealthInput
+} from '@/ai/flows/optional-dns-verification-flow';
 
 import { z } from 'zod';
 import dns from 'node:dns/promises';
@@ -37,10 +37,10 @@ const optionalDnsActionSchema = z.object({
   domain: z.string().describe('El nombre de dominio a verificar.'),
 });
 
-export async function verifyOptionalDnsAction(input: VmcAnalysisInput) {
+export async function verifyOptionalDnsAction(input: OptionalDnsHealthInput) {
   try {
     const validatedInput = optionalDnsActionSchema.parse(input);
-    const result = await validateAndAnalyzeDomain(validatedInput);
+    const result = await verifyOptionalDnsHealth(validatedInput);
     
     if (result === null) {
       return { success: false, error: "El análisis de VMC no devolvió resultados." };
@@ -120,3 +120,4 @@ export async function verifyDomainOwnershipAction(
     };
   }
 }
+

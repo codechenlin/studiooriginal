@@ -642,7 +642,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
-    
+    const allOptionalRecordsVerified = dnsAnalysis && 'mx_is_valid' in dnsAnalysis && dnsAnalysis.mx_is_valid && dnsAnalysis.bimi_is_valid && dnsAnalysis.vmc_is_authentic;
     const mxRecordStatus = optionalRecordStatus.mx;
 
     const propagationWarning = (
@@ -655,6 +655,20 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             <Eye className="size-10 text-amber-400 shrink-0 mt-1" />
             <p>
                 La propagación de los registros DNS puede tardar desde unos minutos hasta 48 horas en algunas ocasiones, también puede causar falsos duplicados recomendamos esperar después de realizar una configuración en sus registros DNS.
+            </p>
+        </motion.div>
+    );
+    
+     const propagationSuccessWarning = (
+        <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-4 p-3 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-cyan-200/90 rounded-lg border border-cyan-400/20 text-xs flex items-start gap-3"
+        >
+            <Globe className="size-6 text-cyan-400 shrink-0 mt-1" />
+            <p>
+                La propagación se ha completado correctamente.
             </p>
         </motion.div>
     );
@@ -747,7 +761,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           <motion.div
                               initial={{ opacity: 0, scale: 0.8 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                              className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden space-y-3"
                           >
                               <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
                               <div className="relative z-10 flex flex-col items-center text-center gap-2">
@@ -757,7 +771,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                   <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
                                   <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
                               </div>
-                               {propagationWarning}
+                               {propagationSuccessWarning}
                           </motion.div>
                       )}
                   </div>
@@ -767,8 +781,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     {healthCheckStatus === 'verifying' ? (
                        <div className="text-center flex flex-col items-center gap-4">
                            <div className="relative w-24 h-24">
-                              <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin" style={{ animationDuration: '2s' }} />
-                              <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }} />
+                              <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-[hud-spin_2s_linear_infinite]" />
+                              <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-[hud-spin_1.5s_linear_infinite]" style={{animationDirection: 'reverse'}}/>
                               <div className="absolute inset-0 flex items-center justify-center"><BrainCircuit className="text-primary size-10" /></div>
                           </div>
                           <p className="font-semibold text-lg text-primary">Análisis Neuronal en Progreso...</p>
@@ -777,7 +791,22 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     ) : dnsAnalysis && 'verdict' in dnsAnalysis ? (
                        <div className="w-full space-y-4">
                          <ScoreDisplay score={(dnsAnalysis as VmcAnalysisOutput).validation_score || 0} />
-                          {mxRecordStatus !== 'idle' && (
+                          {allOptionalRecordsVerified ? (
+                            <motion.div
+                                initial={{opacity: 0, y: 10}}
+                                animate={{opacity: 1, y: 0}}
+                                className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                            >
+                                <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                                <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                                    <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                                        <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                    </motion.div>
+                                    <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                                    <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
+                                </div>
+                            </motion.div>
+                          ) : mxRecordStatus !== 'idle' && (
                             <motion.div
                                 initial={{opacity: 0, y: 10}}
                                 animate={{opacity: 1, y: 0}}
@@ -797,7 +826,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     </h5>
                                     <p className={mxRecordStatus === 'verified' ? 'text-green-200/80' : 'text-amber-200/80'}>
                                         {mxRecordStatus === 'verified'
-                                            ? '¡Excelente! Tu dominio está configurado correctamente para recibir correos en tu buzón de Mailflow.'
+                                            ? '¡Excelente! Tu dominio está configurado correctamente para recibir correos en tu buzón de Daybuu.'
                                             : 'No se detectó un registro MX apuntando a daybuu.com. No podrás recibir correos en tu bandeja de entrada hasta que se configure correctamente.'
                                         }
                                     </p>
@@ -1090,6 +1119,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   );
 }
 
+// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
+// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -1243,25 +1274,25 @@ function DnsInfoModal({
             )}
             </AnimatePresence>
         </div>
-         <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <Button 
-                    onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
-                >
-                    Sí, generar nueva
-                </Button>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+        <Dialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+            <DialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                    Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <Button 
+                        onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
+                        className="bg-gradient-to-r from-[#AD00EC] to-[#00ADEC] text-white hover:bg-[#00CB07] hover:text-white"
+                    >
+                        Sí, generar nueva
+                    </Button>
+                </AlertDialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
     );
     
