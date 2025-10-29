@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, animate } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { verifyDnsAction, verifyDomainOwnershipAction, verifyOptionalDnsAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
@@ -1043,8 +1043,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     </>
   );
 }
-// Note: The rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) are assumed to be in the same file or imported correctly.
-// The code for them is lengthy and has been omitted here for brevity as no changes were requested for them.
+
 function DnsInfoModal({
   recordType,
   domain,
@@ -1198,22 +1197,20 @@ function DnsInfoModal({
             )}
             </AnimatePresence>
         </div>
-         <AlertDialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}>
-                    Sí, generar nueva
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+        <Dialog open={confirmRegenerate} onOpenChange={setConfirmRegenerate}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>¿Generar Nueva Clave DKIM?</DialogTitle>
+              <DialogDescription>
+                Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmRegenerate(false)}>Cancelar</Button>
+              <Button onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}>Sí, generar nueva</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
     );
     
@@ -1549,11 +1546,11 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
     );
 }
 
-const ScoreDisplay = ({ score }: { score: number }) => {
+function ScoreDisplay({ score }: { score: number }) {
     const [displayScore, setDisplayScore] = React.useState(0);
     
     useEffect(() => {
-      const controls = motion.animate(0, score, {
+      const controls = animate(0, score, {
         duration: 1.5,
         ease: "circOut",
         onUpdate: value => setDisplayScore(Math.round(value)),
