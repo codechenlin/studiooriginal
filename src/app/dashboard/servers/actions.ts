@@ -7,8 +7,9 @@ import {
 } from '@/ai/flows/dns-verification-flow';
 import { 
   verifyOptionalDnsHealth,
-  type OptionalDnsHealthInput
 } from '@/ai/flows/optional-dns-verification-flow';
+import { type OptionalDnsHealthInput, OptionalDnsHealthInputSchema } from '@/app/dashboard/demo/types';
+
 
 import { z } from 'zod';
 import dns from 'node:dns/promises';
@@ -33,13 +34,9 @@ export async function verifyDnsAction(input: DnsHealthInput) {
   }
 }
 
-const optionalDnsActionSchema = z.object({
-  domain: z.string().describe('El nombre de dominio a verificar.'),
-});
-
 export async function verifyOptionalDnsAction(input: OptionalDnsHealthInput) {
   try {
-    const validatedInput = optionalDnsActionSchema.parse(input);
+    const validatedInput = OptionalDnsHealthInputSchema.parse(input);
     const result = await verifyOptionalDnsHealth(validatedInput);
     
     if (result === null) {
@@ -120,4 +117,3 @@ export async function verifyDomainOwnershipAction(
     };
   }
 }
-

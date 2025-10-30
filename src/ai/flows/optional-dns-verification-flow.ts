@@ -4,49 +4,16 @@
  * @fileOverview An AI agent to verify and diagnose the health of a domain's OPTIONAL DNS records.
  *
  * - verifyOptionalDnsHealth - A function that uses AI to analyze optional DNS records.
- * - OptionalDnsHealthInput - The input type for the verifyOptionalDnsHealth function.
- * - OptionalDnsHealthOutput - The return type for the verifyOptionalDnsHealth function.
  */
 
 import { getAiConfigForFlows, getDnsConfigForFlows } from '@/ai/genkit';
-import { z } from 'zod';
 import dns from 'node:dns/promises';
 import { deepseekChat } from '@/ai/deepseek';
-import { VmcAnalysisInputSchema, VmcAnalysisOutputSchema, type VmcAnalysisInput, type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
-
-export type OptionalDnsHealthInput = VmcAnalysisInput;
-export const OptionalDnsHealthInputSchema = VmcAnalysisInputSchema;
-
-export type OptionalDnsHealthOutput = VmcAnalysisOutput;
-export const OptionalDnsHealthOutputSchema = VmcAnalysisOutputSchema;
-
-
-const getTxtRecords = async (name: string): Promise<string[]> => {
-  try {
-    const records = await dns.resolveTxt(name);
-    return records.map(rec => rec.join(''));
-  } catch (error: any) {
-    if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
-      return [];
-    }
-    throw error;
-  }
-};
-
-const getMxRecords = async (domain: string): Promise<dns.MxRecord[]> => {
-    try {
-        return await dns.resolveMx(domain);
-    } catch (error: any) {
-        if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
-            return [];
-        }
-        throw error;
-    }
-}
+import { VmcAnalysisOutputSchema, type VmcAnalysisInput, type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
 
 export async function verifyOptionalDnsHealth(
-  input: OptionalDnsHealthInput
-): Promise<OptionalDnsHealthOutput | null> {
+  input: VmcAnalysisInput
+): Promise<VmcAnalysisOutput | null> {
   const aiConfig = getAiConfigForFlows();
   const dnsConfig = getDnsConfigForFlows();
   
@@ -61,6 +28,29 @@ export async function verifyOptionalDnsHealth(
   const { domain } = input;
   const bimiSelector = dnsConfig.bimiSelector;
   
+  const getTxtRecords = async (name: string): Promise<string[]> => {
+    try {
+      const records = await dns.resolveTxt(name);
+      return records.map(rec => rec.join(''));
+    } catch (error: any) {
+      if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
+        return [];
+      }
+      throw error;
+    }
+  };
+
+  const getMxRecords = async (domain: string): Promise<dns.MxRecord[]> => {
+      try {
+          return await dns.resolveMx(domain);
+      } catch (error: any) {
+          if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
+              return [];
+          }
+          throw error;
+      }
+  }
+
   const [mxRecords, bimiRecords] = await Promise.all([
     getMxRecords(domain),
     getTxtRecords(`${bimiSelector}._bimi.${domain}`),
@@ -68,7 +58,7 @@ export async function verifyOptionalDnsHealth(
 
   const prompt = `Analiza los registros DNS opcionales de un dominio y responde en español usando emojis. No incluyas enlaces a documentación externa. Tu respuesta DEBE ser un objeto JSON válido que cumpla con este esquema Zod:
 \`\`\`json
-${JSON.stringify(OptionalDnsHealthOutputSchema.shape, null, 2)}
+${JSON.stringify(VmcAnalysisOutputSchema.shape, null, 2)}
 \`\`\`
 
 Análisis del Registro MX:
@@ -112,11 +102,11 @@ Registros a analizar:
          throw new Error("La IA no devolvió un JSON válido.");
       }
       const parsedJson = JSON.parse(fallbackJsonMatch[0]);
-      return OptionalDnsHealthOutputSchema.parse(parsedJson);
+      return VmcAnalysisOutputSchema.parse(parsedJson);
     }
     
     const parsedJson = JSON.parse(jsonMatch[1]);
-    const validatedOutput = OptionalDnsHealthOutputSchema.parse(parsedJson);
+    const validatedOutput = VmcAnalysisOutputSchema.parse(parsedJson);
 
     return validatedOutput;
   } catch (error: any) {
