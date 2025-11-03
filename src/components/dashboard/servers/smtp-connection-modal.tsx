@@ -210,10 +210,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
     if (runAiAnalysis) {
       const result = await verifyOptionalDnsAction({ domain });
-      setHealthCheckStatus('verified'); // Mark as done even if AI fails
-       if (result.success && result.data) {
-        setDnsAnalysis(result.data);
-        const typedData = result.data as VmcAnalysisOutput; // Cast for type safety
+      setHealthCheckStatus('verified');
+      if (result.success && result.data) {
+        const typedData = result.data as VmcAnalysisOutput;
+        setDnsAnalysis(typedData);
         setOptionalRecordStatus({
             mx: typedData.mx_is_valid ? 'verified' : 'failed',
             bimi: typedData.bimi_is_valid ? 'verified' : 'failed',
@@ -223,10 +223,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
             setShowNotification(true);
         }
       } else {
-          // This block now handles the case where the API call itself fails,
-          // or returns a `success: false` payload.
-          // We set a minimal dnsAnalysis object to ensure the UI renders the score and MX status.
-          setDnsAnalysis({ validation_score: 0 } as VmcAnalysisOutput);
+          setDnsAnalysis({ validation_score: 0, mx_is_valid: false } as Partial<VmcAnalysisOutput> as VmcAnalysisOutput);
           setOptionalRecordStatus({ mx: 'failed', bimi: 'failed', vmc: 'failed' });
           console.error("Optional DNS Analysis Error:", result.error);
       }
@@ -643,8 +640,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
     const allOptionalRecordsVerified = dnsAnalysis && 'mx_is_valid' in dnsAnalysis && dnsAnalysis.mx_is_valid && dnsAnalysis.bimi_is_valid && dnsAnalysis.vmc_is_authentic;
-    const mxRecordStatus = optionalRecordStatus.mx;
-
+    const mxRecordStatus = (dnsAnalysis as VmcAnalysisOutput)?.mx_is_valid;
+    
     const propagationWarning = (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -778,7 +775,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   <div className="w-full flex-grow flex flex-col justify-center items-center">
                     {healthCheckStatus === 'verifying' ? (
                        <div className="text-center flex flex-col items-center gap-4">
-                           <div className="relative w-24 h-24">
+                          <div className="relative w-24 h-24">
                               <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-[hud-spin_2s_linear_infinite]" />
                               <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-[hud-spin_1.5s_linear_infinite]" style={{animationDirection: 'reverse'}}/>
                               <div className="absolute inset-0 flex items-center justify-center"><BrainCircuit className="text-primary size-10" /></div>
@@ -788,33 +785,52 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       </div>
                     ) : (
                        <div className="w-full space-y-4">
-                        {(dnsAnalysis || healthCheckStatus === 'failed') && 'validation_score' in (dnsAnalysis || {}) && <ScoreDisplay score={dnsAnalysis.validation_score || 0} />}
-                        {(dnsAnalysis || healthCheckStatus === 'failed') && (
-                            <motion.div
-                                initial={{opacity: 0, y: 10}}
-                                animate={{opacity: 1, y: 0}}
-                                className={cn(
-                                    "p-3 rounded-lg border flex items-start gap-3",
-                                    optionalRecordStatus.mx === 'verified' ? 'bg-green-900/40 border-green-500/50' : 'bg-amber-900/40 border-amber-400/50'
-                                )}
-                            >
-                                {optionalRecordStatus.mx === 'verified' ? (
-                                    <CheckCircle className="size-6 shrink-0 text-green-400 mt-0.5" />
-                                ) : (
-                                    <AlertTriangle className="size-6 shrink-0 text-amber-400 mt-0.5" />
-                                )}
-                                <div className="text-left text-xs">
-                                    <h5 className={cn("font-bold", optionalRecordStatus.mx === 'verified' ? 'text-green-300' : 'text-amber-300')}>
-                                        {optionalRecordStatus.mx === 'verified' ? 'Registro MX Verificado' : 'Registro MX no Encontrado'}
-                                    </h5>
-                                    <p className={optionalRecordStatus.mx === 'verified' ? 'text-green-200/80' : 'text-amber-200/80'}>
-                                        {optionalRecordStatus.mx === 'verified'
-                                            ? '¡Excelente! Tu dominio está configurado correctamente para recibir correos en tu buzón de Daybuu.'
-                                            : 'No se detectó un registro MX apuntando a daybuu.com. No podrás recibir correos en tu bandeja de entrada hasta que se configure correctamente.'
-                                        }
-                                    </p>
-                                </div>
-                            </motion.div>
+                        {allOptionalRecordsVerified ? (
+                          <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="relative p-4 mb-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                          >
+                              <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                              <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                                  <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                                      <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                  </motion.div>
+                                  <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                                  <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
+                              </div>
+                          </motion.div>
+                        ) : (
+                          <>
+                            {dnsAnalysis && 'validation_score' in dnsAnalysis && <ScoreDisplay score={dnsAnalysis.validation_score || 0} />}
+                            {dnsAnalysis && mxRecordStatus !== undefined && (
+                                <motion.div
+                                    initial={{opacity: 0, y: 10}}
+                                    animate={{opacity: 1, y: 0}}
+                                    className={cn(
+                                        "p-3 rounded-lg border flex items-start gap-3",
+                                        mxRecordStatus ? 'bg-green-900/40 border-green-500/50' : 'bg-amber-900/40 border-amber-400/50'
+                                    )}
+                                >
+                                    {mxRecordStatus ? (
+                                        <CheckCircle className="size-6 shrink-0 text-green-400 mt-0.5" />
+                                    ) : (
+                                        <AlertTriangle className="size-6 shrink-0 text-amber-400 mt-0.5" />
+                                    )}
+                                    <div className="text-left text-xs">
+                                        <h5 className={cn("font-bold", mxRecordStatus ? 'text-green-300' : 'text-amber-300')}>
+                                            {mxRecordStatus ? 'Registro MX Verificado' : 'Registro MX no Encontrado'}
+                                        </h5>
+                                        <p className={mxRecordStatus ? 'text-green-200/80' : 'text-amber-200/80'}>
+                                            {mxRecordStatus
+                                                ? '¡Excelente! Tu dominio está configurado correctamente para recibir correos en tu buzón de Daybuu.'
+                                                : 'No se detectó un registro MX apuntando a daybuu.com. No podrás recibir correos en tu bandeja de entrada hasta que se configure correctamente.'
+                                            }
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            )}
+                          </>
                         )}
                         {!dnsAnalysis && healthCheckStatus !== 'verifying' && (
                             <div className="text-center">
@@ -1691,7 +1707,4 @@ function ScoreDisplay({ score }: { score: number }) {
         </div>
     )
 }
-    
-
-
     

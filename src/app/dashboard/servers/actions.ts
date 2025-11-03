@@ -6,9 +6,9 @@ import {
   type DnsHealthInput,
 } from '@/ai/flows/dns-verification-flow';
 import { 
-  verifyOptionalDnsHealth,
-} from '@/ai/flows/optional-dns-verification-flow';
-import { type OptionalDnsHealthInput, OptionalDnsHealthInputSchema } from '@/app/dashboard/demo/types';
+  validateAndAnalyzeDomain,
+} from '@/ai/flows/vmc-deepseek-analysis-flow';
+import { type VmcAnalysisInput, VmcAnalysisInputSchema } from '@/app/dashboard/demo/types';
 
 
 import { z } from 'zod';
@@ -34,10 +34,11 @@ export async function verifyDnsAction(input: DnsHealthInput) {
   }
 }
 
-export async function verifyOptionalDnsAction(input: OptionalDnsHealthInput) {
+export async function verifyOptionalDnsAction(input: VmcAnalysisInput) {
   try {
-    const validatedInput = OptionalDnsHealthInputSchema.parse(input);
-    const result = await verifyOptionalDnsHealth(validatedInput);
+    const validatedInput = VmcAnalysisInputSchema.parse(input);
+    // Call the correct flow that uses the external API
+    const result = await validateAndAnalyzeDomain(validatedInput);
     
     if (result === null) {
       return { success: false, error: "El análisis de VMC no devolvió resultados." };
