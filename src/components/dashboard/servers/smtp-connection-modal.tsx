@@ -14,21 +14,21 @@ import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, 
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion, animate } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { verifyDnsAction, verifyDomainOwnershipAction } from '@/app/dashboard/servers/actions';
+import { verifyDnsAction, verifyDomainOwnershipAction, verifyOptionalDnsAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
-import { type VmcAnalysisOutput, validateDomainWithAI } from '@/app/dashboard/demo/actions';
+import { type OptionalDnsHealthOutput } from '@/ai/flows/optional-dns-verification-flow';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
 import { PauseVerificationModal } from './pause-verification-modal';
 import { AddEmailModal } from './add-email-modal';
 import { SubdomainModal } from './subdomain-modal';
-import { ScoreDisplay } from '@/app/dashboard/demo/page';
+import { ScoreDisplay } from '@/components/dashboard/score-display';
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -51,7 +51,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('idle');
   
   const [healthCheckStatus, setHealthCheckStatus] = useState<HealthCheckStatus>('idle');
-  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | VmcAnalysisOutput | null>(null);
+  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | OptionalDnsHealthOutput | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
@@ -79,8 +79,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
-  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false);
-  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
+  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); // New state for subdomain feature
+  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
 
 
@@ -783,7 +783,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       )}
                   </div>
                 )}
-                {currentStep === 3 && healthCheckStep === 'optional' && (
+                 {currentStep === 3 && healthCheckStep === 'optional' && (
                   <div className="w-full flex-grow flex flex-col justify-center items-center">
                     {healthCheckStatus === 'verifying' ? (
                        <div className="text-center flex flex-col items-center gap-4">
@@ -1171,7 +1171,7 @@ function DnsInfoModal({
         title: "Certificado VMC",
         description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
       },
-    };
+    }
 
     const renderSpfContent = () => {
         const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
@@ -1283,7 +1283,7 @@ function DnsInfoModal({
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white"
+                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white hover:opacity-90"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1595,5 +1595,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     );
 }
-
-    
