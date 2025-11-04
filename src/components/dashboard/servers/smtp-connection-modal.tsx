@@ -14,20 +14,21 @@ import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, 
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion, animate } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { verifyDnsAction, verifyDomainOwnershipAction, verifyOptionalDnsAction } from '@/app/dashboard/servers/actions';
+import { verifyDnsAction, verifyDomainOwnershipAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
-import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
+import { type VmcAnalysisOutput, validateDomainWithAI } from '@/app/dashboard/demo/actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
 import { PauseVerificationModal } from './pause-verification-modal';
 import { AddEmailModal } from './add-email-modal';
 import { SubdomainModal } from './subdomain-modal';
+import { ScoreDisplay } from '@/app/dashboard/demo/page';
 
 interface SmtpConnectionModalProps {
   isOpen: boolean;
@@ -208,8 +209,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setShowNotification(false);
     setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
 
-    const result = await verifyOptionalDnsAction({ domain });
-
+    const result = await validateDomainWithAI({ domain });
+    
+    setHealthCheckStatus('verified');
     if (result.success && result.data) {
       const typedData = result.data as VmcAnalysisOutput;
       setDnsAnalysis(typedData);
@@ -224,10 +226,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     } else {
       setDnsAnalysis(null);
       setOptionalRecordStatus({ mx: 'failed', bimi: 'failed', vmc: 'failed' });
-      // No mostrar toast de error aquí, la UI lo manejará mostrando el estado fallido.
       console.error("Optional DNS Analysis Error:", result.error);
     }
-    setHealthCheckStatus('verified');
   };
 
   const handleGenerateDkim = async () => {
@@ -515,7 +515,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderContent = () => {
     return (
       <Form {...form}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[700px]" showCloseButton={false}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[90vh] max-h-[700px]" showCloseButton={false}>
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
@@ -579,11 +579,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
                             {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
                             {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
-                             <div className="pt-2 text-xs text-muted-foreground">
+                            <div className="pt-2 text-xs text-muted-foreground">
                                 <p><strong>Como trabajan juntos:</strong></p>
-                                <p><strong>SPF 📤:</strong> ¿Quién puede enviar?</p>
-                                <p><strong>DKIM ✍️:</strong> ¿El correo fue alterado?</p>
-                                <p><strong>DMARC 🛡️:</strong> ¿Qué hacer si falla SPF/DKIM?</p>
+                                <p><strong>SPF 📤:</strong> Quién puede enviar?</p>
+                                <p><strong>DKIM ✍️:</strong> El correo fue alterado?</p>
+                                <p><strong>DMARC 🛡️:</strong> Qué hacer si falla SPF/DKIM?</p>
                             </div>
                           </>
                           ) : (
@@ -594,9 +594,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
                              <div className="pt-2 text-xs text-muted-foreground">
                                 <p><strong>Como trabajan juntos:</strong></p>
-                                <p><strong>MX 📬:</strong> ¿Dónde se entregan mis correos?</p>
-                                <p><strong>BIMI 🎨:</strong> ¿Que logo representa mi marca?</p>
-                                <p><strong>VMC ✅:</strong> ¿Qué certifica que el logo registrado me pertenece?</p>
+                                <p><strong>MX 📬:</strong> Dónde se entregan mis correos?</p>
+                                <p><strong>BIMI 🎨:</strong> Que logo representa mi marca?</p>
+                                <p><strong>VMC ✅:</strong> Qué certifica que el logo registrado me pertenece?</p>
                             </div>
                           </>
                           )}
@@ -652,8 +652,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderRightPanelContent = () => {
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
     const allOptionalRecordsVerified = optionalRecordStatus.mx === 'verified' && optionalRecordStatus.bimi === 'verified' && optionalRecordStatus.vmc === 'verified';
-    const mxRecordStatus = (dnsAnalysis as VmcAnalysisOutput)?.mx_is_valid;
-    
+    const mxRecordStatus = dnsAnalysis && 'mx_is_valid' in dnsAnalysis ? (dnsAnalysis as VmcAnalysisOutput).mx_is_valid : undefined;
+
     const propagationWarning = (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -799,15 +799,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                        <div className="w-full space-y-4">
                         {(healthCheckStatus === 'verified' && dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined) ? (
                             <ScoreDisplay score={dnsAnalysis.validation_score} />
-                        ) : (healthCheckStatus === 'verified' && !dnsAnalysis) ? (
-                            <ScoreDisplay score={0} />
                         ) : null }
 
                         {allOptionalRecordsVerified && healthCheckStatus === 'verified' ? (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden space-y-3"
+                                className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
                             >
                                 <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
                                 <div className="relative z-10 flex flex-col items-center text-center gap-2">
@@ -818,7 +816,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
                                 </div>
                             </motion.div>
-                        ) : healthCheckStatus === 'verified' && 'mx_is_valid' in (dnsAnalysis || {}) && (dnsAnalysis as VmcAnalysisOutput).mx_is_valid === false ? (
+                        ) : healthCheckStatus === 'verified' && mxRecordStatus === false ? (
                            <motion.div
                                 initial={{opacity: 0, y: 10}}
                                 animate={{opacity: 1, y: 0}}
@@ -830,14 +828,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     <p className="text-amber-200/80">No se detectó un registro MX apuntando a daybuu.com. No podrás recibir correos en tu bandeja de entrada hasta que se configure correctamente.</p>
                                 </div>
                             </motion.div>
-                        ) : null}
-
-                        {!dnsAnalysis && healthCheckStatus !== 'verifying' && (
-                            <div className="text-center">
-                                <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
-                                <h4 className="font-bold">Registros Opcionales</h4>
-                                <p className="text-sm text-muted-foreground">Analiza tus registros MX, BIMI y VMC para mejorar la reputación y visibilidad de tu marca.</p>
-                            </div>
+                        ) : healthCheckStatus !== 'verifying' && (
+                          <div className="text-center">
+                              <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
+                              <h4 className="font-bold">Registros Opcionales</h4>
+                              <p className="text-sm text-muted-foreground">Estos registros mejoran la reputación y visibilidad de tu marca.</p>
+                              {propagationWarning}
+                          </div>
                         )}
                        </div>
                     )}
@@ -1119,6 +1116,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   );
 }
 
+// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
+// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -1172,7 +1171,7 @@ function DnsInfoModal({
         title: "Certificado VMC",
         description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
       },
-    }
+    };
 
     const renderSpfContent = () => {
         const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
@@ -1234,7 +1233,7 @@ function DnsInfoModal({
                   {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
                   Generar Nueva
                 </Button>
-                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:from-[#00CE07] hover:to-[#A6EE00] text-white">
+                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white">
                   <CheckCheck className="mr-2"/>
                   {dkimData?.publicKeyRecord === acceptedKey ? 'Clave Aceptada' : 'Aceptar y Usar esta Clave'}
                 </Button>
@@ -1284,7 +1283,7 @@ function DnsInfoModal({
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white"
+                    className="bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1545,6 +1544,55 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+    );
+}
+
+function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
+    const steps = [
+        { name: "Enviado", status: deliveryStatus !== 'idle' },
+        { name: "Procesado por Servidor", status: deliveryStatus === 'delivered' || (deliveryStatus === 'bounced' && testError !== '') },
+        { name: "Entregado / Rebotado", status: deliveryStatus === 'delivered' || deliveryStatus === 'bounced' }
+    ];
+
+    const getStepStatus = (index: number) => {
+        if (steps[index].status) {
+            if (index === 2 && deliveryStatus === 'bounced') return 'error';
+            return 'success';
+        }
+        return 'pending';
+    };
+
+    return (
+        <div className="mt-4 p-3 rounded-lg bg-black/20 border border-white/10">
+            <div className="relative flex justify-between items-center">
+                {steps.map((step, index) => {
+                    const status = getStepStatus(index);
+                    return (
+                        <div key={index} className="relative z-10 flex flex-col items-center">
+                            <div className={cn("size-6 rounded-full flex items-center justify-center border-2", {
+                                'bg-green-500 border-green-300': status === 'success',
+                                'bg-red-500 border-red-300': status === 'error',
+                                'bg-gray-500 border-gray-400': status === 'pending',
+                            })}>
+                                {status === 'success' ? <Check className="size-4 text-white" /> : 
+                                 status === 'error' ? <X className="size-4 text-white" /> :
+                                 <Loader2 className="size-4 text-white animate-spin"/>}
+                            </div>
+                            <p className="text-xs mt-1 text-center">{step.name}</p>
+                        </div>
+                    );
+                })}
+                 <div className="absolute top-[11px] left-0 w-full h-0.5 bg-gray-500">
+                    <div
+                        className={cn("h-full bg-gradient-to-r", {
+                            'from-green-500 to-green-500': deliveryStatus === 'delivered',
+                            'from-green-500 to-red-500': deliveryStatus === 'bounced',
+                        })}
+                        style={{ width: deliveryStatus === 'delivered' || deliveryStatus === 'bounced' ? '100%' : (deliveryStatus === 'sent' ? '50%' : '0%'), transition: 'width 2s ease' }}
+                    />
+                </div>
+            </div>
+        </div>
     );
 }
 
