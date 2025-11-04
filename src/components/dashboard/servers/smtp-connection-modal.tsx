@@ -14,7 +14,7 @@ import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, 
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { verifyDnsAction, verifyDomainOwnershipAction } from '@/app/dashboard/servers/actions';
+import { verifyDnsAction, verifyDomainOwnershipAction,  } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -22,7 +22,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
 import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
-import { validateDomainWithAI } from '@/app/dashboard/demo/actions';
+import { validateDomainWithAI } from './actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
@@ -582,11 +582,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
                             {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
                             {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
-                            <div className="pt-2 text-xs text-muted-foreground">
-                                <b>Como trabajan juntos:</b><br/>
-                                <b>SPF 📤:</b> Quién puede enviar?<br/>
-                                <b>DKIM ✍️:</b> El correo fue alterado?<br/>
-                                <b>DMARC 🛡️:</b> Qué hacer si falla SPF/DKIM?
+                             <div className="pt-2 text-xs text-muted-foreground">
+                                <p><b>Como trabajan juntos:</b></p>
+                                <p><b>SPF 📤:</b> Quién puede enviar?</p>
+                                <p><b>DKIM ✍️:</b> El correo fue alterado?</p>
+                                <p><b>DMARC 🛡️:</b> Qué hacer si falla SPF/DKIM?</p>
                             </div>
                           </>
                           ) : (
@@ -596,10 +596,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
                              <div className="pt-2 text-xs text-muted-foreground">
-                                <b>Como trabajan juntos:</b><br/>
-                                <b>MX 📬:</b> Dónde se entregan mis correos?<br/>
-                                <b>BIMI 🎨:</b> Que logo representa mi marca?<br/>
-                                <b>VMC ✅:</b> Qué certifica que el logo registrado me pertenece?
+                                <p><b>Como trabajan juntos:</b></p>
+                                <p><b>MX 📬:</b> Dónde se entregan mis correos?</p>
+                                <p><b>BIMI 🎨:</b> Que logo representa mi marca?</p>
+                                <p><b>VMC ✅:</b> Qué certifica que el logo registrado me pertenece?</p>
                             </div>
                           </>
                           )}
@@ -768,7 +768,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                   <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
                                   <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
                               </div>
-                               {propagationSuccessMessage}
+                              
                           </motion.div>
                       )}
                   </div>
@@ -1553,61 +1553,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
-
-function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
-    const steps = [
-        { name: "Enviado", status: deliveryStatus !== 'idle' },
-        { name: "Procesado por Servidor", status: deliveryStatus === 'delivered' || (deliveryStatus === 'bounced' && testError !== '') },
-        { name: "Entregado / Rebotado", status: deliveryStatus === 'delivered' || deliveryStatus === 'bounced' }
-    ];
-
-    const getStepStatus = (index: number) => {
-        if (steps[index].status) {
-            if (index === 2 && deliveryStatus === 'bounced') return 'error';
-            return 'success';
-        }
-        return 'pending';
-    };
-
-    return (
-        <div className="mt-4 p-3 rounded-lg bg-black/20 border border-white/10">
-            <div className="relative flex justify-between items-center">
-                {steps.map((step, index) => {
-                    const status = getStepStatus(index);
-                    return (
-                        <div key={index} className="relative z-10 flex flex-col items-center">
-                            <div className={cn("size-6 rounded-full flex items-center justify-center border-2", {
-                                'bg-green-500 border-green-300': status === 'success',
-                                'bg-red-500 border-red-300': status === 'error',
-                                'bg-gray-500 border-gray-400': status === 'pending',
-                            })}>
-                                {status === 'success' ? <Check className="size-4 text-white" /> : 
-                                 status === 'error' ? <X className="size-4 text-white" /> :
-                                 <Loader2 className="size-4 text-white animate-spin"/>}
-                            </div>
-                            <p className="text-xs mt-1 text-center">{step.name}</p>
-                        </div>
-                    );
-                })}
-                 <div className="absolute top-[11px] left-0 w-full h-0.5 bg-gray-500">
-                    <div
-                        className={cn("h-full bg-gradient-to-r", {
-                            'from-green-500 to-green-500': deliveryStatus === 'delivered',
-                            'from-green-500 to-red-500': deliveryStatus === 'bounced',
-                        })}
-                        style={{ width: deliveryStatus === 'delivered' || deliveryStatus === 'bounced' ? '100%' : (deliveryStatus === 'sent' ? '50%' : '0%'), transition: 'width 2s ease' }}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-
-
-    
-
-    
-
-    
-
