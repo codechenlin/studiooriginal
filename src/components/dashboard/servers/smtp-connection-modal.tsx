@@ -21,7 +21,8 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
-import { type OptionalDnsHealthOutput } from '@/ai/flows/optional-dns-verification-flow';
+import { type VmcAnalysisOutput, type VmcAnalysisInput } from '@/app/dashboard/demo/types';
+import { validateDomainWithAI } from '@/app/dashboard/demo/actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
@@ -51,7 +52,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('idle');
   
   const [healthCheckStatus, setHealthCheckStatus] = useState<HealthCheckStatus>('idle');
-  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | OptionalDnsHealthOutput | null>(null);
+  const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | VmcAnalysisOutput | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
@@ -797,9 +798,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                       </div>
                     ) : (
                        <div className="w-full space-y-4">
-                        {(healthCheckStatus === 'verified' && dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined) ? (
+                        {(healthCheckStatus === 'verified' && dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined) && (
                             <ScoreDisplay score={dnsAnalysis.validation_score} />
-                        ) : null }
+                        )}
 
                         {allOptionalRecordsVerified && healthCheckStatus === 'verified' ? (
                             <motion.div
@@ -1283,7 +1284,7 @@ function DnsInfoModal({
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white hover:opacity-90"
+                    className="bg-gradient-to-r from-green-500 to-green-600 text-white hover:opacity-90"
                 >
                     Sí, generar nueva
                 </Button>
@@ -1595,3 +1596,4 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     );
 }
+
