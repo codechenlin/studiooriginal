@@ -10,9 +10,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause, Eye } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause, Eye, Layers2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AnimatePresence, motion, animate } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { verifyDnsAction, verifyDomainOwnershipAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
@@ -21,7 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
-import { type VmcAnalysisOutput, type VmcAnalysisInput } from '@/app/dashboard/demo/types';
+import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
 import { validateDomainWithAI } from '@/app/dashboard/demo/actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -450,6 +450,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
       )
   }
 
+  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
+
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
         <span className='font-semibold'>{name}</span>
@@ -784,51 +786,59 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   </div>
                 )}
                  {currentStep === 3 && healthCheckStep === 'optional' && (
-                  <div className="w-full flex-grow flex flex-col justify-center items-center">
-                    {healthCheckStatus === 'verifying' ? (
-                       <div className="text-center flex flex-col items-center gap-4">
-                          <div className="relative w-24 h-24">
-                              <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-[hud-spin_2s_linear_infinite]" />
-                              <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-[hud-spin_1.5s_linear_infinite]" style={{animationDirection: 'reverse'}}/>
-                              <div className="absolute inset-0 flex items-center justify-center"><BrainCircuit className="text-primary size-10" /></div>
-                          </div>
-                          <p className="font-semibold text-lg text-primary">Análisis Neuronal en Progreso...</p>
-                          <p className="text-sm text-muted-foreground">La IA está evaluando los registros DNS opcionales de tu dominio.</p>
-                      </div>
-                    ) : (
-                       <div className="w-full space-y-4">
-                        {(healthCheckStatus === 'verified' && dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined) && (
-                            <ScoreDisplay score={dnsAnalysis.validation_score} />
-                        )}
-                        
-                        {allOptionalRecordsVerified && healthCheckStatus === 'verified' && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
-                            >
-                                <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
-                                <div className="relative z-10 flex flex-col items-center text-center gap-2">
-                                    <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
-                                        <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
-                                    </motion.div>
-                                    <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
-                                    <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {!allOptionalRecordsVerified && healthCheckStatus === 'verified' && (
+                    <div className="w-full flex-grow flex flex-col justify-center items-center">
+                        {healthCheckStatus === 'idle' && (
                             <div className="text-center">
-                              <div className="flex justify-center mb-4"><Layers className="size-16 text-primary/30" /></div>
-                              <h4 className="font-bold">Registros Opcionales</h4>
-                              <p className="text-sm text-muted-foreground">Estos registros mejoran la reputación y visibilidad de tu marca.</p>
-                               {propagationWarning}
+                                <div className="flex justify-center mb-4 relative">
+                                    <div className="absolute inset-0 -m-4 bg-gradient-to-tr from-primary/10 via-accent/10 to-primary/10 rounded-full blur-xl" />
+                                    <Layers2 className="size-20 text-primary/80 relative" />
+                                </div>
+                                <h4 className="font-bold text-xl">Registros Opcionales</h4>
+                                <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">Verifica tus registros MX, BIMI y VMC para mejorar la reputación, entregabilidad y visibilidad de tu marca en los buzones de entrada.</p>
                             </div>
                         )}
-                       </div>
-                    )}
-                  </div>
+                        {healthCheckStatus === 'verifying' && (
+                            <div className="text-center flex flex-col items-center gap-4">
+                                <div className="relative w-24 h-24">
+                                    <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-[hud-spin_2s_linear_infinite]" />
+                                    <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-[hud-spin_1.5s_linear_infinite]" style={{animationDirection: 'reverse'}}/>
+                                    <div className="absolute inset-0 flex items-center justify-center"><BrainCircuit className="text-primary size-10" /></div>
+                                </div>
+                                <p className="font-semibold text-lg text-primary">Análisis Neuronal en Progreso...</p>
+                                <p className="text-sm text-muted-foreground">La IA está evaluando los registros DNS opcionales de tu dominio.</p>
+                            </div>
+                        )}
+                        {healthCheckStatus === 'verified' && (
+                           <div className="w-full space-y-4">
+                            {(dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined) && (
+                                <ScoreDisplay score={dnsAnalysis.validation_score} />
+                            )}
+                            
+                            {allOptionalRecordsVerified && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="relative p-4 rounded-lg bg-black/30 border border-green-500/30 overflow-hidden"
+                                >
+                                    <div className="absolute -inset-px rounded-lg" style={{ background: 'radial-gradient(400px circle at center, rgba(0, 203, 7, 0.3), transparent 80%)' }} />
+                                    <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                                        <motion.div animate={{ rotate: [0, 10, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, ease: "easeInOut" }}>
+                                            <CheckCheck className="size-8 text-green-400" style={{ filter: 'drop-shadow(0 0 8px #00CB07)'}}/>
+                                        </motion.div>
+                                        <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
+                                        <p className="text-xs text-green-200/80">Todos los registros opcionales son correctos.</p>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {!allOptionalRecordsVerified && (
+                                <div className="text-center">
+                                    {propagationWarning}
+                                </div>
+                            )}
+                           </div>
+                        )}
+                    </div>
                 )}
                 {currentStep === 4 && (
                     <div className="relative z-10 w-full h-full flex flex-col">
@@ -1223,7 +1233,7 @@ function DnsInfoModal({
                   {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
                   Generar Nueva
                 </Button>
-                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white">
+                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white hover:opacity-90">
                   <CheckCheck className="mr-2"/>
                   {dkimData?.publicKeyRecord === acceptedKey ? 'Clave Aceptada' : 'Aceptar y Usar esta Clave'}
                 </Button>
@@ -1273,7 +1283,7 @@ function DnsInfoModal({
                 <AlertDialogCancel className="hover:bg-[#F00000] hover:text-white">Cancelar</AlertDialogCancel>
                 <Button 
                     onClick={() => { onRegenerateDkim(); setConfirmRegenerate(false); }}
-                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white"
+                    className="bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white hover:opacity-90"
                 >
                     Sí, generar nueva
                 </Button>
