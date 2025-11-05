@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause, Eye, Layers2 } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause, Eye, Layers2, GitBranch } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -668,7 +668,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         </p>
       </motion.div>
     );
-    
+
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
         <StatusIndicator />
@@ -767,7 +767,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                   <h4 className="font-bold text-white">¡Éxito! Registros Verificados</h4>
                                   <p className="text-xs text-green-200/80">Todos los registros obligatorios son correctos.</p>
                               </div>
-                              {propagationWarning}
+                               <motion.div
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.5 }}
+                                  className="mt-4 p-3 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 text-blue-200/90 rounded-lg border border-blue-400/20 text-xs flex items-start gap-3"
+                                >
+                                  <Globe className="size-10 shrink-0 text-blue-400 mt-1" />
+                                  <p>
+                                      ¡Excelente! La propagación de tus registros DNS obligatorios se ha completado correctamente en toda la red.
+                                  </p>
+                                </motion.div>
                           </motion.div>
                       )}
                   </div>
@@ -1227,7 +1237,14 @@ function DnsInfoModal({
                   {isGeneratingDkim ? <Loader2 className="mr-2 animate-spin"/> : <RefreshCw className="mr-2" />}
                   Generar Nueva
                 </Button>
-                <Button onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} className="w-full bg-gradient-to-r from-[#00CE07] to-[#A6EE00] text-white hover:opacity-90">
+                <Button 
+                  onClick={() => dkimData && onAcceptKey(dkimData.publicKeyRecord)} 
+                  disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} 
+                  className="w-full text-white hover:opacity-90"
+                  style={{
+                    background: 'linear-gradient(to right, #00CE07, #A6EE00)',
+                  }}
+                >
                   <CheckCheck className="mr-2"/>
                   {dkimData?.publicKeyRecord === acceptedKey ? 'Clave Aceptada' : 'Aceptar y Usar esta Clave'}
                 </Button>
@@ -1342,6 +1359,13 @@ function DnsInfoModal({
 
     const renderMxContent = () => (
       <div className="space-y-4 text-sm">
+        <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
+            <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+            <div>
+              <p className="font-bold mb-1 text-amber-300">¡Prioridad Máxima!</p>
+              <p>Establecer la prioridad en 0 asegura que <strong className="text-white">daybuu.com</strong> sea el servidor principal para recibir todos tus correos. Una prioridad más alta (1, 2, 3...) lo designa como respaldo, activándose solo si el servidor principal falla.</p>
+            </div>
+        </div>
         <p>Añade este registro MX para usar nuestro servicio de correo entrante.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
@@ -1540,5 +1564,71 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
+    const steps = [
+        { id: 'sent', title: 'Correo Enviado', icon: Send },
+        { id: 'delivered', title: 'Entregado al Buzón', icon: MailCheck },
+        { id: 'bounced', title: 'Rebotado', icon: AlertCircle },
+    ];
+    
+    const currentStepIndex = steps.findIndex(step => step.id === deliveryStatus);
+
+    return (
+        <div className="mt-4 p-4 border rounded-lg bg-black/30">
+            <h4 className="text-sm font-semibold mb-3">Línea de Tiempo de Entrega</h4>
+            <div className="flex items-center">
+                {steps.map((step, index) => {
+                    const isCompleted = index < currentStepIndex;
+                    const isActive = index === currentStepIndex;
+                    const isBounced = step.id === 'bounced' && isActive;
+                    
+                    if (step.id === 'bounced' && deliveryStatus !== 'bounced') return null;
+                    if (step.id !== 'bounced' && deliveryStatus === 'bounced') {
+                         // Don't show "delivered" if bounced
+                        if (step.id === 'delivered') return null;
+                    }
+
+                    return(
+                        <React.Fragment key={step.id}>
+                            <motion.div
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ delay: index * 0.2 }}
+                              className="flex flex-col items-center"
+                            >
+                                <div className={cn(
+                                    "relative size-8 rounded-full flex items-center justify-center border-2",
+                                    isCompleted ? "bg-green-500/20 border-green-500" : "bg-muted/20 border-border",
+                                    isActive && !isBounced && "bg-primary/20 border-primary animate-pulse",
+                                    isBounced && "bg-red-500/20 border-red-500"
+                                )}>
+                                    <step.icon className={cn(
+                                        "size-4",
+                                        isCompleted ? "text-green-400" : "text-muted-foreground",
+                                        isActive && !isBounced && "text-primary",
+                                        isBounced && "text-red-400"
+                                    )} />
+                                </div>
+                                <p className="text-[10px] mt-1.5 text-center">{step.title}</p>
+                            </motion.div>
+
+                            {(index < steps.length - 1 && !(step.id === 'sent' && deliveryStatus === 'bounced')) && (
+                                <motion.div 
+                                  initial={{ scaleX: 0 }}
+                                  animate={{ scaleX: 1 }}
+                                  transition={{ delay: index * 0.2 + 0.1, duration: 0.2 }}
+                                  className={cn("flex-1 h-0.5", isCompleted ? "bg-green-500" : "bg-border")} 
+                                />
+                            )}
+                        </React.Fragment>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+    
 
     
