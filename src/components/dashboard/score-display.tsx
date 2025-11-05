@@ -73,27 +73,27 @@ export const ScoreDisplay = ({ score }: { score: number }) => {
               <linearGradient id="gradient-orange" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#fb923c"/><stop offset="100%" stopColor="#f97316"/></linearGradient>
               <linearGradient id="gradient-red" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#f87171"/><stop offset="100%" stopColor="#ef4444"/></linearGradient>
             </defs>
-            <circle cx="40" cy="40" r="37" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="transparent" />
+            <circle cx="40" cy="40" r="35" stroke="rgba(255,255,255,0.1)" strokeWidth="4" fill="transparent" />
             <motion.circle
                 cx="40"
                 cy="40"
-                r="37"
+                r="35"
                 stroke={getScoreBg()}
-                strokeWidth="2"
+                strokeWidth="4"
                 fill="transparent"
                 strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 37}
-                initial={{ strokeDashoffset: 2 * Math.PI * 37 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 37 - (score / 100) * (2 * Math.PI * 37) }}
+                strokeDasharray={2 * Math.PI * 35}
+                initial={{ strokeDashoffset: 2 * Math.PI * 35 }}
+                animate={{ strokeDashoffset: 2 * Math.PI * 35 - (score / 100) * (2 * Math.PI * 35) }}
                 transition={{ duration: 1.5, ease: "circOut" }}
                 transform="rotate(-90 40 40)"
             />
            </svg>
            <div className="absolute inset-0 flex flex-col items-center justify-center">
-             <motion.p className={cn("text-2xl font-bold", getScoreColor())} style={{ filter: getScoreShadow() }}>
+             <motion.p className={cn("text-xl font-bold", getScoreColor())} style={{ filter: getScoreShadow() }}>
                 {rounded}
             </motion.p>
-            <p className={cn("text-[9px] font-semibold tracking-wider uppercase", confidence.color)}>{confidence.text}</p>
+            <p className={cn("text-[8px] font-semibold tracking-wider uppercase", confidence.color)}>{confidence.text}</p>
            </div>
        </div>
     </div>

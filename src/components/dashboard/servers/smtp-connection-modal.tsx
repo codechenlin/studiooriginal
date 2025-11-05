@@ -338,7 +338,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const handlePauseProcess = () => {
     toast({
         title: "Proceso Pausado",
-        description: "Tu progreso ha sido guardado. Tienes 24 horas para continuar.",
+        description: "Tu progreso ha sido guardado. Tienes 48 horas para continuar.",
         className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white'
     });
     setIsPauseModalOpen(false);
@@ -1242,7 +1242,7 @@ function DnsInfoModal({
                   disabled={!dkimData || dkimData.publicKeyRecord === acceptedKey} 
                   className="w-full text-white hover:opacity-90"
                   style={{
-                    background: 'linear-gradient(to right, #00CE07, #A6EE00)',
+                    background: dkimData?.publicKeyRecord === acceptedKey ? 'grey' : 'linear-gradient(to right, #00CE07, #A6EE00)',
                   }}
                 >
                   <CheckCheck className="mr-2"/>
@@ -1359,11 +1359,11 @@ function DnsInfoModal({
 
     const renderMxContent = () => (
       <div className="space-y-4 text-sm">
-        <div className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
+        <div className="text-xs text-amber-300/80 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
             <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
             <div>
               <p className="font-bold mb-1 text-amber-300">¡Prioridad Máxima!</p>
-              <p>Establecer la prioridad en 0 asegura que <strong className="text-white">daybuu.com</strong> sea el servidor principal para recibir todos tus correos. Una prioridad más alta (1, 2, 3...) lo designa como respaldo, activándose solo si el servidor principal falla.</p>
+              <p>Establecer la prioridad en <strong className="text-white">0</strong> asegura que <strong className="text-white">daybuu.com</strong> sea el servidor principal para recibir todos tus correos. Una prioridad más alta (ej: 10, 20) lo designa como respaldo, que solo se activará si el servidor principal falla.</p>
             </div>
         </div>
         <p>Añade este registro MX para usar nuestro servicio de correo entrante.</p>
@@ -1564,71 +1564,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
-
-function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
-    const steps = [
-        { id: 'sent', title: 'Correo Enviado', icon: Send },
-        { id: 'delivered', title: 'Entregado al Buzón', icon: MailCheck },
-        { id: 'bounced', title: 'Rebotado', icon: AlertCircle },
-    ];
-    
-    const currentStepIndex = steps.findIndex(step => step.id === deliveryStatus);
-
-    return (
-        <div className="mt-4 p-4 border rounded-lg bg-black/30">
-            <h4 className="text-sm font-semibold mb-3">Línea de Tiempo de Entrega</h4>
-            <div className="flex items-center">
-                {steps.map((step, index) => {
-                    const isCompleted = index < currentStepIndex;
-                    const isActive = index === currentStepIndex;
-                    const isBounced = step.id === 'bounced' && isActive;
-                    
-                    if (step.id === 'bounced' && deliveryStatus !== 'bounced') return null;
-                    if (step.id !== 'bounced' && deliveryStatus === 'bounced') {
-                         // Don't show "delivered" if bounced
-                        if (step.id === 'delivered') return null;
-                    }
-
-                    return(
-                        <React.Fragment key={step.id}>
-                            <motion.div
-                              initial={{ scale: 0.8, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              transition={{ delay: index * 0.2 }}
-                              className="flex flex-col items-center"
-                            >
-                                <div className={cn(
-                                    "relative size-8 rounded-full flex items-center justify-center border-2",
-                                    isCompleted ? "bg-green-500/20 border-green-500" : "bg-muted/20 border-border",
-                                    isActive && !isBounced && "bg-primary/20 border-primary animate-pulse",
-                                    isBounced && "bg-red-500/20 border-red-500"
-                                )}>
-                                    <step.icon className={cn(
-                                        "size-4",
-                                        isCompleted ? "text-green-400" : "text-muted-foreground",
-                                        isActive && !isBounced && "text-primary",
-                                        isBounced && "text-red-400"
-                                    )} />
-                                </div>
-                                <p className="text-[10px] mt-1.5 text-center">{step.title}</p>
-                            </motion.div>
-
-                            {(index < steps.length - 1 && !(step.id === 'sent' && deliveryStatus === 'bounced')) && (
-                                <motion.div 
-                                  initial={{ scaleX: 0 }}
-                                  animate={{ scaleX: 1 }}
-                                  transition={{ delay: index * 0.2 + 0.1, duration: 0.2 }}
-                                  className={cn("flex-1 h-0.5", isCompleted ? "bg-green-500" : "bg-border")} 
-                                />
-                            )}
-                        </React.Fragment>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
-    
-
-    

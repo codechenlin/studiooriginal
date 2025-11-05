@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Eye, ShieldAlert, DollarSign, Mail, ShoppingCart } from 'lucide-react';
+import { Database, Search, Tag, Square, RefreshCw, ChevronLeft, ChevronRight, Star, Eye, ShieldAlert, DollarSign, Mail, ShoppingCart, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,11 +12,12 @@ import { SecuritySettingsModal } from '@/components/dashboard/inbox/security-set
 import { SpamFilterSettingsModal } from '@/components/dashboard/inbox/spam-filter-settings-modal';
 import { EmailListItem, type Email } from '@/components/dashboard/inbox/email-list-item';
 import { EmailView } from '@/components/dashboard/inbox/email-view';
-import { AntivirusStatusModal } from '@/components/dashboard/inbox/antivirus-status-modal';
+import { AntivirusConfigModal } from '@/components/dashboard/inbox/antivirus-config-modal';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StorageIndicator } from '@/components/dashboard/inbox/storage-indicator';
 import { StorageDetailsModal } from '@/components/dashboard/inbox/storage-details-modal';
+import { TagFilterModal, type TaggableTag } from '@/components/dashboard/inbox/tag-filter-modal';
 
 const initialShoppingEmails: Email[] = [
     {
@@ -46,10 +47,12 @@ export default function ShoppingPage() {
   const [emails, setEmails] = useState(initialShoppingEmails);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isSpamFilterModalOpen, setIsSpamFilterModalOpen] = useState(false);
-  const [isAntivirusModalOpen, setIsAntivirusModalOpen] = useState(false);
+  const [isAntivirusConfigModalOpen, setIsAntivirusConfigModalOpen] = useState(false);
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [showStarred, setShowStarred] = useState(false);
+  const [isTagFilterModalOpen, setIsTagFilterModalOpen] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<TaggableTag[]>([]);
 
   const handleSelectEmail = (email: Email) => {
     setSelectedEmail(email);
@@ -66,8 +69,15 @@ export default function ShoppingPage() {
         )
     );
   };
+  
+  const handleFilterByTags = (tags: TaggableTag[]) => {
+    setSelectedTags(tags);
+  }
 
-  const displayedEmails = showStarred ? emails.filter(email => email.starred) : emails;
+  const displayedEmails = emails
+    .filter(email => !showStarred || email.starred)
+    .filter(email => selectedTags.length === 0 || (email.tag && selectedTags.some(t => t.name === email.tag?.name)));
+
 
   if (selectedEmail) {
       return <EmailView email={selectedEmail} onBack={handleBackToList} onToggleStar={handleToggleStar} />
@@ -107,9 +117,9 @@ export default function ShoppingPage() {
                 used={10.2} 
                 total={15} 
                 gradientColors={['#00EF10', '#A6EE00']} 
-                hoverBorderColor='#00CB07'
+                borderColor="hsla(120, 100%, 47%, 0.3)"
+                hoverBorderColor="hsla(120, 100%, 47%, 0.45)"
                 onClick={() => setIsStorageModalOpen(true)}
-                style={{'--hover-border-color': '#00CB07'} as React.CSSProperties}
             />
         </header>
 
@@ -144,10 +154,32 @@ export default function ShoppingPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input placeholder="Buscar en compras..." className="pl-10 bg-background/70 border-[#00CB07]/30" />
             </div>
-             <Button variant="outline" className="w-full md:w-auto bg-background/70 border-[#00CB07]/30 hover:bg-cyan-500 hover:text-white">
-                <Tag className="mr-2 size-4" />
-                Etiquetas
-            </Button>
+             <div className="flex items-center gap-2">
+                <Button variant="outline" className="w-full md:w-auto bg-background/70 border-[#00CB07]/30 hover:bg-cyan-500 hover:text-white" onClick={() => setIsTagFilterModalOpen(true)}>
+                    <Tag className="mr-2 size-4" />
+                    Etiquetas
+                </Button>
+                <AnimatePresence>
+                  {selectedTags.length > 0 && (
+                      <motion.div
+                          initial={{ opacity: 0, scale: 0.8, width: 0 }}
+                          animate={{ opacity: 1, scale: 1, width: 'auto' }}
+                          exit={{ opacity: 0, scale: 0.8, width: 0 }}
+                          className="relative"
+                      >
+                          <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setSelectedTags([])}
+                              className="relative group/reset-btn rounded-full size-10 border-2 border-red-500/50 text-red-400 bg-red-900/20 hover:bg-red-900/40 hover:text-red-300 hover:border-red-500"
+                          >
+                              <div className="absolute inset-0 rounded-full border-2 border-dashed border-red-500 animate-spin-slow group-hover/reset-btn:animate-[spin-slow_2s_linear_infinite]" />
+                              <XCircle className="size-5 transition-transform group-hover/reset-btn:scale-110" style={{ filter: 'drop-shadow(0 0 5px #F00000)'}}/>
+                          </Button>
+                      </motion.div>
+                  )}
+              </AnimatePresence>
+            </div>
           </CardContent>
         </Card>
         
@@ -187,14 +219,14 @@ export default function ShoppingPage() {
                         <Button variant="ghost" size="icon" className="hover:bg-green-500/20"><ChevronRight/></Button>
                     </div>
                     <Separator orientation="vertical" className="h-6 bg-green-500/30" />
-                     <Button variant="ghost" size="icon" className="hover:bg-green-500/20 border-2 border-transparent hover:border-green-500/50 text-green-500" onClick={() => setIsSecurityModalOpen(true)}>
+                     <Button variant="ghost" size="icon" className="hover:bg-green-500/20 text-green-500 hover:text-green-500" onClick={() => setIsSecurityModalOpen(true)}>
                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M9.06 10.13a3.5 3.5 0 0 1 5.88 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="12" r="1" stroke="currentColor" strokeWidth="2"/>
                          </svg>
                     </Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 border-2 border-transparent hover:border-amber-500/50 text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 border-2 border-transparent hover:border-blue-500/50 text-blue-500" onClick={() => setIsAntivirusModalOpen(true)}>
+                    <Button variant="ghost" size="icon" className="hover:bg-amber-500/20 text-amber-500 hover:text-amber-500" onClick={() => setIsSpamFilterModalOpen(true)}><ShieldAlert /></Button>
+                    <Button variant="ghost" size="icon" className="hover:bg-blue-500/20 text-blue-500 hover:text-blue-500" onClick={() => setIsAntivirusConfigModalOpen(true)}>
                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-5">
                           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -235,8 +267,9 @@ export default function ShoppingPage() {
     </main>
     <SecuritySettingsModal isOpen={isSecurityModalOpen} onOpenChange={setIsSecurityModalOpen} />
     <SpamFilterSettingsModal isOpen={isSpamFilterModalOpen} onOpenChange={setIsSpamFilterModalOpen} />
-    <AntivirusStatusModal isOpen={isAntivirusModalOpen} onOpenChange={setIsAntivirusModalOpen} />
+    <AntivirusConfigModal isOpen={isAntivirusConfigModalOpen} onOpenChange={setIsAntivirusConfigModalOpen} />
     <StorageDetailsModal isOpen={isStorageModalOpen} onOpenChange={setIsStorageModalOpen} themeColors={['#00EF10', '#A6EE00']} />
+    <TagFilterModal isOpen={isTagFilterModalOpen} onOpenChange={setIsTagFilterModalOpen} onFilter={handleFilterByTags} initialSelectedTags={selectedTags} />
     </>
   );
 }
