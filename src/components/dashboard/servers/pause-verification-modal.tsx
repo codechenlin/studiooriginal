@@ -15,7 +15,7 @@ interface PauseVerificationModalProps {
 }
 
 export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancelProcess }: PauseVerificationModalProps) {
-  const [timeLeft, setTimeLeft] = useState(24 * 60 * 60);
+  const [timeLeft, setTimeLeft] = useState(48 * 60 * 60);
 
   useEffect(() => {
     if (isOpen) {
@@ -49,7 +49,7 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancel
             </div>
             <DialogTitle className="text-2xl font-bold">Pausar Proceso de Verificación</DialogTitle>
             <DialogDescription className="text-purple-200/70 pt-2">
-                Puedes pausar y continuar más tarde. Tu progreso (códigos y claves) se guardará por 24 horas.
+                Puedes pausar y continuar más tarde. Tu progreso (códigos y claves) se guardará por 48 horas.
             </DialogDescription>
         </DialogHeader>
 
@@ -61,7 +61,7 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancel
              <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                 <AlertTriangle className="size-8 text-amber-400 shrink-0 mt-1" />
                 <p>
-                    Si no retomas el proceso en las próximas 24 horas, tu progreso se perderá y deberás iniciar una nueva verificación con nuevos códigos y claves.
+                    Si no retomas el proceso en las próximas 48 horas, tu progreso se perderá y deberás iniciar una nueva verificación con nuevos códigos y claves.
                 </p>
             </div>
         </div>
