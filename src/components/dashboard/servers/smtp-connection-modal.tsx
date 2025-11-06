@@ -584,9 +584,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
                             <div className="pt-2 text-xs text-muted-foreground">
                                 <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                <p><strong className="font-semibold">✉️ SPF:</strong> ¿Quién puede enviar?</p>
-                                <p><strong className="font-semibold">✍️ DKIM:</strong> ¿Está firmado y sin cambios?</p>
-                                <p><strong className="font-semibold">🛡️ DMARC:</strong> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
+                                <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
+                                <p><span className="font-semibold">✍️ DKIM:</span> ¿Está firmado y sin cambios?</p>
+                                <p><span className="font-semibold">🛡️ DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
                              </div>
                           </>
                           ) : (
@@ -597,9 +597,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
                              <div className="pt-2 text-xs text-muted-foreground">
                                 <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                <p><strong className="font-semibold">📥 MX:</strong> ¿Dónde entregar los correos?</p>
-                                <p><strong className="font-semibold">🎨 BIMI:</strong> ¿Cuál es mi logo oficial?</p>
-                                <p><strong className="font-semibold">🔐 VMC:</strong> ¿Es mi logo una marca registrada?</p>
+                                <p><span className="font-semibold">📥 MX:</span> ¿Dónde entregar los correos?</p>
+                                <p><span className="font-semibold">🎨 BIMI:</span> ¿Cuál es mi logo oficial?</p>
+                                <p><span className="font-semibold">🔐 VMC:</span> ¿Es mi logo una marca registrada?</p>
                             </div>
                           </>
                           )}
@@ -831,7 +831,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                             : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
                                         )}
                                     >
-                                        {dnsAnalysis.mx_is_valid ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertCircle className="size-8 shrink-0 text-red-400 mt-1" />}
+                                        {dnsAnalysis.mx_is_valid ? <CheckCheck className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertCircle className="size-8 shrink-0 text-red-400 mt-1" />}
                                         <p>
                                           {dnsAnalysis.mx_is_valid
                                             ? "Tu registro MX está correctamente configurado para recibir correos en tu buzón."
@@ -851,7 +851,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     )}
                                   >
                                     {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
-                                      ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" />
+                                      ? <CheckCheck className="size-8 shrink-0 text-green-400 mt-1" />
                                       : <AlertTriangle className="size-8 shrink-0 text-red-400 mt-1" />}
                                     <p>
                                       {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
@@ -1307,7 +1307,7 @@ function DnsInfoModal({
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+                  Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
