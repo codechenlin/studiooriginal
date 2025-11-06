@@ -38,7 +38,7 @@ export async function verifyDnsAction(input: DnsHealthInput) {
 export async function validateDomainWithAIAction(input: VmcAnalysisInput): Promise<{ success: boolean; data?: VmcAnalysisOutput; error?: string }> {
   try {
     const validatedInput = VmcAnalysisInputSchema.parse(input);
-    const result = await validateDomainWithAI(validatedInput);
+    const result = await validateAndAnalyzeDomain(validatedInput);
     return { success: true, data: result };
   } catch (error: any) {
     console.error('VMC validation with AI action error:', error);

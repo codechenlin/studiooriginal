@@ -14,7 +14,7 @@ import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, 
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { verifyDnsAction, verifyDomainOwnershipAction, validateDomainWithAI } from '@/app/dashboard/servers/actions';
+import { verifyDnsAction, verifyDomainOwnershipAction, validateDomainWithAIAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -210,7 +210,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setShowNotification(false);
     setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
 
-    const result = await validateDomainWithAI({ domain });
+    const result = await validateDomainWithAIAction({ domain });
     
     setHealthCheckStatus('verified');
     if (result.success && result.data) {
@@ -775,7 +775,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   </div>
                 )}
                  {currentStep === 3 && healthCheckStep === 'optional' && (
-                    <div className="w-full flex-grow flex flex-col justify-center items-center">
+                     <div className="w-full flex-grow flex flex-col justify-center items-center">
                         {healthCheckStatus === 'idle' && (
                            <motion.div
                                 initial={{ opacity: 0, scale: 0.8 }}
@@ -813,7 +813,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         className={cn(
-                                          "mt-4 p-3 rounded-lg border text-xs flex items-start gap-3",
+                                          "p-3 rounded-lg border text-xs flex items-start gap-3",
                                           dnsAnalysis.mx_is_valid
                                             ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-400/30 text-green-200/90"
                                             : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
@@ -832,7 +832,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                       initial={{ opacity: 0 }}
                                       animate={{ opacity: 1 }}
                                       className={cn(
-                                          "mt-2 p-3 rounded-lg border text-xs flex items-start gap-3",
+                                          "p-3 rounded-lg border text-xs flex items-start gap-3",
                                           (dnsAnalysis as any).mx_priority === 0
                                               ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-400/30 text-green-200/90"
                                               : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
@@ -846,8 +846,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                       </p>
                                   </motion.div>
                                 )}
-
-
                            </div>
                         )}
                     </div>
@@ -1374,7 +1372,7 @@ function DnsInfoModal({
                 <p>Establecer la prioridad en <strong className="text-white">0</strong> asegura que <strong className="text-white">daybuu.com</strong> sea el servidor principal para recibir todos tus correos. Una prioridad más alta (ej: 10, 20) lo designa como respaldo, que solo se activará si el servidor principal falla.</p>
             </div>
         </div>
-        <p>Añade este registro MX para usar nuestro servicio de correo entrante.</p>
+        <p className="pt-2">Añade este registro MX para usar nuestro servicio de correo entrante.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
           <span>@</span>
@@ -1580,4 +1578,3 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
     );
 }
 
-    
