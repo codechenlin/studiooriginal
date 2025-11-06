@@ -597,7 +597,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
                              <div className="pt-2 text-xs text-muted-foreground">
                                 <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                <p><span className="font-semibold">📥 MX:</span> ¿Dónde entregar los correos?</p>
+                                <p><span className="font-semibold">📥 MX:</span> ¿Dónde recibo mis correos entrantes?</p>
                                 <p><span className="font-semibold">🎨 BIMI:</span> ¿Cuál es mi logo oficial?</p>
                                 <p><span className="font-semibold">🔐 VMC:</span> ¿Es mi logo una marca registrada?</p>
                             </div>
@@ -867,6 +867,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                       {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
                                         ? "La prioridad 0 es correcta. Tu dominio utilizará daybuu.com como servidor principal para recibir todos los correos entrantes."
                                         : `Prioridad ${(dnsAnalysis as VmcAnalysisOutput).mx_priority} incorrecta. Tu dominio usará daybuu.com como servidor de respaldo`}
+                                    </p>
+                                  </motion.div>
+                                )}
+                                {dnsAnalysis && 'mx_points_to_daybuu' in dnsAnalysis && !(dnsAnalysis as VmcAnalysisOutput).mx_points_to_daybuu && (dnsAnalysis as VmcAnalysisOutput).mx_priority === 0 && (
+                                  <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="p-3 rounded-lg border text-xs flex items-start gap-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-400/30 text-amber-200/90"
+                                  >
+                                    <AlertCircle className="size-8 shrink-0 text-amber-400 mt-1" />
+                                    <p>
+                                      La prioridad 0 es correcta, pero el registro MX no apunta a nuestros servidores `daybuu.com`.
                                     </p>
                                   </motion.div>
                                 )}
@@ -1195,7 +1207,7 @@ function DnsInfoModal({
       },
        mx: {
         title: "Registro MX",
-        description: "MX es un registro que dice “Aquí es donde deben entregarse los correos que envían a mi dominio”. Indica el servidor de correo que recibe tus mensajes. Ejemplo real: Permite que Daybuu, Outlook o cualquier otro servicio sepa a qué servidor entregar tus correos electrónicos.",
+        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Mailflow AI, Google Workspace u Outlook sepan dónde recibir tus correos electrónicos.",
       },
       bimi: {
         title: "Registro BIMI",
@@ -1211,7 +1223,7 @@ function DnsInfoModal({
         const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
         return (
             <div className="space-y-4 text-sm">
-                <p>Añade el siguiente registro TXT a la configuración de tu dominio con tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
+                <p>Añade el siguiente registro TXT a la configuración DNS de tu dominio con tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
                     <span>@</span>
