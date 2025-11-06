@@ -805,16 +805,26 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                             </motion.div>
                         )}
                         {healthCheckStatus === 'verifying' && (
-                            <div className="text-center flex flex-col items-center gap-4">
-                                <div className="relative w-24 h-24">
-                                    <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-[hud-spin_2s_linear_infinite]" />
-                                    <div className="absolute inset-2 border-2 border-accent/20 rounded-full animate-[hud-spin_1.5s_linear_infinite]" style={{animationDirection: 'reverse'}}/>
-                                    <div className="absolute inset-0 flex items-center justify-center"><BrainCircuit className="text-primary size-10" /></div>
-                                </div>
-                                <p className="font-semibold text-lg text-primary">Análisis Neuronal en Progreso...</p>
-                                <p className="text-sm text-muted-foreground">La IA está evaluando los registros DNS opcionales de tu dominio.</p>
-                            </div>
-                        )}
+                           <div className="text-center flex flex-col items-center gap-4">
+                               <div className="relative w-24 h-24">
+                                   <motion.div
+                                       className="absolute inset-0 border-2 border-primary/20 rounded-full"
+                                       animate={{ rotate: 360 }}
+                                       transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                                   />
+                                   <motion.div
+                                       className="absolute inset-2 border-2 border-dashed border-accent/30 rounded-full"
+                                       animate={{ rotate: -360 }}
+                                       transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                                   />
+                                   <div className="absolute inset-0 flex items-center justify-center">
+                                       <BrainCircuit className="text-primary size-10" />
+                                   </div>
+                               </div>
+                               <p className="font-semibold text-lg text-primary">Análisis Neuronal en Progreso...</p>
+                               <p className="text-sm text-muted-foreground">La IA está evaluando los registros DNS opcionales de tu dominio.</p>
+                           </div>
+                       )}
                         {healthCheckStatus === 'verified' && (
                            <div className="w-full space-y-4">
                                 {dnsAnalysis && 'validation_score' in dnsAnalysis && dnsAnalysis.validation_score !== undefined ? (
@@ -970,7 +980,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
 
                          {healthCheckStep === 'optional' && (
-                             <Button className="w-full bg-[#2a004f] hover:bg-[#AD00EC] text-white h-12 text-base border-2 border-[#BC00FF] hover:border-[#BC00FF]" onClick={() => setCurrentStep(4)}>
+                             <Button className="w-full bg-primary hover:bg-primary/80 text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
                                 Siguiente <ArrowRight className="ml-2"/>
                             </Button>
                          )}
@@ -991,7 +1001,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           "w-full h-12 text-base bg-transparent transition-colors",
                            deliveryStatus === 'delivered'
                            ? "border-[#21F700] text-white hover:text-white hover:bg-[#00CB07]"
-                           : "border-[#F00000] text-white dark:text-foreground hover:bg-[#F00000] hover:text-white"
+                           : "border-[#F00000] text-white hover:text-white hover:bg-[#F00000]"
                         )}
                         onClick={deliveryStatus === 'delivered' ? handleClose : () => setIsCancelConfirmOpen(true)}
                      >
@@ -1638,6 +1648,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
 
     
