@@ -87,10 +87,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   useEffect(() => {
     if (domain && !dkimData) {
-      handleGenerateDkim();
+      // Do not auto-generate here. Let the user trigger it.
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domain]);
+  }, [domain, dkimData]);
 
 
   const smtpFormSchema = z.object({
@@ -131,6 +130,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setVerificationCode(generateVerificationCode());
     setVerificationStatus('pending');
     setCurrentStep(2);
+    handleGenerateDkim(); // Generate initial DKIM when moving to step 2
   };
   
   const handleCheckVerification = async () => {
@@ -238,11 +238,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     try {
       const result = await generateDkimKeys({ domain, selector: 'daybuu' });
       setDkimData(result);
-      toast({
-        title: "¡Nueva Clave Generada!",
-        description: "Se ha generado una nueva clave DKIM con éxito.",
-        className: "bg-[#00CB07] text-white border-none",
-      });
+      if (currentStep > 1) { // Only show toast if user explicitly requests a new key
+        toast({
+          title: "¡Nueva Clave Generada!",
+          description: "Se ha generado una nueva clave DKIM con éxito.",
+          className: "bg-[#00CB07] text-white border-none",
+        });
+      }
     } catch (error: any) {
       toast({
         title: 'Error al generar DKIM',
@@ -598,9 +600,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                           )}
                           <div className="pt-2 text-xs text-muted-foreground">
                             <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                            <p><strong className="font-semibold">SPF:</strong> ¿Quién puede enviar?</p>
-                            <p><strong className="font-semibold">DKIM:</strong> ¿Está firmado y sin cambios?</p>
-                            <p><strong className="font-semibold">DMARC:</strong> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
+                            <p><strong className="font-semibold">✉️ SPF:</strong> ¿Quién puede enviar?</p>
+                            <p><strong className="font-semibold">✍️ DKIM:</strong> ¿Está firmado y sin cambios?</p>
+                            <p><strong className="font-semibold">🛡️ DMARC:</strong> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
+                            {healthCheckStep === 'optional' && (
+                                <>
+                                    <p><strong className="font-semibold">📥 MX:</strong> ¿Dónde entregar los correos?</p>
+                                    <p><strong className="font-semibold">🎨 BIMI:</strong> ¿Cuál es mi logo oficial?</p>
+                                    <p><strong className="font-semibold">🔐 VMC:</strong> ¿Es mi logo una marca registrada?</p>
+                                </>
+                            )}
                           </div>
                            
                            {dnsAnalysis && (
@@ -837,25 +846,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                             : "Tu registro MX no está configurado correctamente. No podrás recibir correos en tu buzón hasta que se solucione."}
                                         </p>
                                     </motion.div>
-                                )}
-                                {dnsAnalysis && 'mx_points_to_daybuu' in dnsAnalysis && dnsAnalysis.mx_points_to_daybuu && (
-                                  <motion.div
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
-                                      className={cn(
-                                          "p-3 rounded-lg border text-xs flex items-start gap-3",
-                                          (dnsAnalysis as any).mx_priority === 0
-                                              ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-400/30 text-green-200/90"
-                                              : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
-                                      )}
-                                  >
-                                      {(dnsAnalysis as any).mx_priority === 0 ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertTriangle className="size-8 shrink-0 text-red-400 mt-1" />}
-                                      <p>
-                                          {(dnsAnalysis as any).mx_priority === 0
-                                              ? "La prioridad 0 en tu registro MX es correcta. Esto asegura que seamos tu servidor principal para la recepción de correos."
-                                              : `Tu registro MX tiene una prioridad de ${(dnsAnalysis as any).mx_priority}. Esto nos configura como servidor de respaldo. Para garantizar la entrega directa a tu buzón, ajusta la prioridad a 0.`}
-                                      </p>
-                                  </motion.div>
                                 )}
                            </div>
                         )}
@@ -1421,7 +1411,7 @@ function DnsInfoModal({
 
     const renderVmcContent = () => (
       <div className="space-y-4 text-sm">
-        <div className="text-xs text-amber-300/80 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
+         <div className="text-xs text-amber-300/80 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-400/20 flex items-start gap-3">
              <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
              <div>
                 <p className="font-bold mb-1 text-amber-300">¡Información Importante!</p>
@@ -1628,5 +1618,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
