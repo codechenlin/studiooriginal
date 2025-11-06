@@ -518,7 +518,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const renderContent = () => {
     return (
       <Form {...form}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[96vh]" showCloseButton={false}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]" showCloseButton={false}>
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
@@ -831,7 +831,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                             : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/30 text-red-200/90"
                                         )}
                                     >
-                                        {dnsAnalysis.mx_is_valid ? <CheckCheck className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertCircle className="size-8 shrink-0 text-red-400 mt-1" />}
+                                        {dnsAnalysis.mx_is_valid ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" /> : <AlertCircle className="size-8 shrink-0 text-red-400 mt-1" />}
                                         <p>
                                           {dnsAnalysis.mx_is_valid
                                             ? "Tu registro MX está correctamente configurado para recibir correos en tu buzón."
@@ -851,7 +851,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     )}
                                   >
                                     {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
-                                      ? <CheckCheck className="size-8 shrink-0 text-green-400 mt-1" />
+                                      ? <CheckCircle className="size-8 shrink-0 text-green-400 mt-1" />
                                       : <AlertTriangle className="size-8 shrink-0 text-red-400 mt-1" />}
                                     <p>
                                       {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
@@ -1201,7 +1201,7 @@ function DnsInfoModal({
         const recordValue = `v=spf1 include:_spf.daybuu.com -all`;
         return (
             <div className="space-y-4 text-sm">
-                <p>Añade el siguiente registro TXT a la configuración DNS de tu dominio con tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
+                <p>Añade el siguiente registro TXT a la configuración de tu dominio con tu proveedor (Foxmiu.com, Cloudflare.com, etc.).</p>
                 <div className={cn(baseClass, "flex-col items-start gap-1")}>
                     <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy('@')}><Copy className="size-4"/></Button></p>
                     <span>@</span>
@@ -1307,7 +1307,7 @@ function DnsInfoModal({
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Generar Nueva Clave DKIM?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Si generas una nueva clave, la anterior dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
+                  Si generas una nueva clave, la actual dejará de ser válida. Deberás actualizar tu registro DNS con la nueva clave y aceptarla aquí para que la verificación funcione.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -1638,9 +1638,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
-
-    
-
-    
