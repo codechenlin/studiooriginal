@@ -849,7 +849,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                         </p>
                                     </motion.div>
                                 )}
-                                {dnsAnalysis && 'mx_points_to_daybuu' in dnsAnalysis && dnsAnalysis.mx_points_to_daybuu && (
+                                {dnsAnalysis && 'mx_points_to_daybuu' in dnsAnalysis && (dnsAnalysis as VmcAnalysisOutput).mx_points_to_daybuu && (
                                   <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -866,7 +866,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                     <p>
                                       {(dnsAnalysis as VmcAnalysisOutput).mx_priority === 0
                                         ? "La prioridad 0 es correcta. Tu dominio utilizará daybuu.com como servidor principal."
-                                        : `Prioridad ${(dnsAnalysis as VmcAnalysisOutput).mx_priority} incorrecta. Tu dominio usará daybuu.com como servidor de respaldo`}
+                                        : `Prioridad ${(dnsAnalysis as VmcAnalysisOutput).mx_priority} incorrecta. Tu dominio usará daybuu.com como servidor de respaldo.`}
                                     </p>
                                   </motion.div>
                                 )}
@@ -878,7 +878,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                                   >
                                     <AlertCircle className="size-8 shrink-0 text-amber-400 mt-1" />
                                     <p>
-                                      La prioridad 0 es correcta, pero el registro MX no apunta a nuestros servidores `daybuu.com`.
+                                      La prioridad 0 es correcta, pero el registro MX no apunta a daybuu.com.
                                     </p>
                                   </motion.div>
                                 )}
@@ -1207,16 +1207,16 @@ function DnsInfoModal({
       },
        mx: {
         title: "Registro MX",
-        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Mailflow AI, Google Workspace u Outlook sepan dónde recibir tus correos electrónicos.",
+        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Gmail, Yandex, ProtonMail o QQ Mail sepan dónde recibes tus correos electrónicos."
       },
       bimi: {
         title: "Registro BIMI",
-        description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
+        description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles."
       },
       vmc: {
         title: "Certificado VMC",
         description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
-      }
+      },
     };
 
     const renderSpfContent = () => {
@@ -1664,4 +1664,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
     
 
     
-
