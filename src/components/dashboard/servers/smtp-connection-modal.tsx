@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause, Eye, Layers2, GitBranch } from 'lucide-react';
+import { Globe, ArrowRight, Copy, ShieldCheck, Search, AlertTriangle, KeyRound, Server as ServerIcon, AtSign, Mail, TestTube2, CheckCircle, Dna, DatabaseZap, Workflow, Lock, Loader2, Info, RefreshCw, Layers, Check, X, Link as LinkIcon, BrainCircuit, HelpCircle, AlertCircle, MailQuestion, CheckCheck, Send, MailCheck, Pause, Eye, Layers2, GitBranch, MailWarning } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -83,6 +83,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); // New state for subdomain feature
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
+  const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
 
 
   const smtpFormSchema = z.object({
@@ -110,6 +111,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   });
 
   const txtRecordValue = verificationCode;
+
+  const truncateDomain = (name: string, maxLength: number = 21): string => {
+    if (name.length <= maxLength) {
+        return name;
+    }
+    return `${name.substring(0, maxLength)}...`;
+  };
 
   const handleStartVerification = () => {
     if (!domain || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
@@ -371,7 +379,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   >
                     {isConfigFinished ? <CheckCircle className="size-5 text-[#00F508]"/> : <Workflow className="size-5 text-primary"/>}
                  </motion.div>
-                <span className="font-semibold text-base text-white/90">{domain}</span>
+                <span className="font-semibold text-base text-white/90">{truncateDomain(domain)}</span>
             </div>
         </div>
     )
@@ -548,7 +556,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   {currentStep === 2 && (
                   <>
                       <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
-                      <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{domain}</b>.</p>
+                      <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{truncateDomain(domain)}</b>.</p>
                       <div className="space-y-3 pt-4 flex-grow">
                           <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
                               <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
@@ -807,19 +815,19 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         {healthCheckStatus === 'verifying' && (
                            <div className="text-center flex flex-col items-center gap-4">
                                <div className="relative w-24 h-24">
-                                   <motion.div
-                                       className="absolute inset-0 border-2 border-primary/20 rounded-full"
-                                       animate={{ rotate: 360 }}
-                                       transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                                   />
-                                   <motion.div
-                                       className="absolute inset-2 border-2 border-dashed border-accent/30 rounded-full"
-                                       animate={{ rotate: -360 }}
-                                       transition={{ duration: 4.5, repeat: Infinity, ease: 'linear' }}
-                                   />
-                                   <div className="absolute inset-0 flex items-center justify-center">
-                                       <BrainCircuit className="text-primary size-10" />
-                                   </div>
+                                    <motion.div
+                                        className="absolute inset-0 border-2 border-primary/20 rounded-full"
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                                    />
+                                    <motion.div
+                                        className="absolute inset-2 border-2 border-dashed border-accent/30 rounded-full"
+                                        animate={{ rotate: -360 }}
+                                        transition={{ duration: 4.5, repeat: Infinity, ease: 'linear' }}
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <BrainCircuit className="text-primary size-10" />
+                                    </div>
                                </div>
                                <p className="font-semibold text-lg text-primary">Análisis Neuronal en Progreso...</p>
                                <p className="text-sm text-muted-foreground">La IA está evaluando los registros DNS opcionales de tu dominio.</p>
@@ -992,7 +1000,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                          )}
 
                          {healthCheckStep === 'optional' && (
-                             <Button className="w-full bg-primary hover:bg-primary/80 text-white h-12 text-base" onClick={() => setCurrentStep(4)}>
+                             <Button className="w-full bg-primary hover:bg-primary/80 text-white h-12 text-base" onClick={() => {
+                                if (optionalRecordStatus.mx !== 'verified') {
+                                    setIsMxWarningModalOpen(true);
+                                } else {
+                                    setCurrentStep(4);
+                                }
+                            }}>
                                 Siguiente <ArrowRight className="ml-2"/>
                             </Button>
                          )}
@@ -1107,6 +1121,34 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+        <AlertDialog open={isMxWarningModalOpen} onOpenChange={setIsMxWarningModalOpen}>
+            <AlertDialogContent className="bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white">
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-3">
+                        <div className="relative w-12 h-12 flex items-center justify-center">
+                            <motion.div className="absolute inset-0 border-2 border-dashed border-amber-400/50 rounded-full" animate={{rotate: 360}} transition={{duration: 10, repeat: Infinity, ease: "linear"}} />
+                            <motion.div className="absolute inset-2 border border-dashed border-amber-400/30 rounded-full" animate={{rotate: -360}} transition={{duration: 7, repeat: Infinity, ease: "linear"}} />
+                            <MailWarning className="text-amber-400 size-8"/>
+                        </div>
+                        Registro MX no Verificado
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-amber-100/70 pt-2">
+                        Has elegido continuar sin un registro MX verificado. Esto es crucial, ya que sin él, <strong className="text-white">no podrás recibir correos electrónicos</strong> en tu buzón para el dominio <strong className="font-mono text-white">{domain}</strong> a través de nuestra plataforma.
+                        <br/><br/>
+                        ¿Estás seguro de que deseas continuar?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Volver y Verificar</AlertDialogCancel>
+                    <AlertDialogAction 
+                        onClick={() => setCurrentStep(4)} 
+                        className="bg-amber-600 hover:bg-amber-500"
+                    >
+                        Continuar de todos modos
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
         <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
         <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
         <DnsInfoModal
@@ -1195,19 +1237,19 @@ function DnsInfoModal({
     const infoMap: Record<InfoViewRecord, { title: string, description: string }> = {
       spf: {
         title: "Registro SPF",
-        description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos.",
+        description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
       },
       dkim: {
         title: "Registro DKIM",
-        description: "DKIM es como una firmar digital para cada correo con un sello único que solo tú puedes poner, El receptor verifica esa firma con una clave pública que está en tu DNS. Si la firma coincide, sabe que el mensaje no fue alterado y que realmente salió de tu dominio. Ejemplo real: Garantiza que el contenido del correo no fue modificado en el camino.",
+        description: "DKIM es como una firmar digital para cada correo con un sello único que solo tú puedes poner, El receptor verifica esa firma con una clave pública que está en tu DNS. Si la firma coincide, sabe que el mensaje no fue alterado y que realmente salió de tu dominio. Ejemplo real: Garantiza que el contenido del correo no fue modificado en el camino."
       },
       dmarc: {
         title: "Registro DMARC",
-        description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude.",
+        description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude."
       },
        mx: {
         title: "Registro MX",
-        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Gmail, Yandex, ProtonMail o QQ Mail sepan dónde recibes tus correos electrónicos.",
+        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Gmail, Yandex, ProtonMail o QQ Mail sepan dónde recibes tus correos electrónicos."
       },
       bimi: {
         title: "Registro BIMI",
