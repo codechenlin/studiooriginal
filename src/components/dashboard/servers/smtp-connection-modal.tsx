@@ -597,7 +597,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                              {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
                              <div className="pt-2 text-xs text-muted-foreground">
                                 <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                <p><span className="font-semibold">📥 MX:</span> ¿Dónde recibo mis correos entrantes?</p>
+                                <p><span className="font-semibold">📥 MX:</span> ¿Dónde recibo mis correos?</p>
                                 <p><span className="font-semibold">🎨 BIMI:</span> ¿Cuál es mi logo oficial?</p>
                                 <p><span className="font-semibold">🔐 VMC:</span> ¿Es mi logo una marca registrada?</p>
                             </div>
@@ -1195,23 +1195,23 @@ function DnsInfoModal({
     const infoMap: Record<InfoViewRecord, { title: string, description: string }> = {
       spf: {
         title: "Registro SPF",
-        description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
+        description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos.",
       },
       dkim: {
         title: "Registro DKIM",
-        description: "DKIM es como una firmar digital para cada correo con un sello único que solo tú puedes poner, El receptor verifica esa firma con una clave pública que está en tu DNS. Si la firma coincide, sabe que el mensaje no fue alterado y que realmente salió de tu dominio. Ejemplo real: Garantiza que el contenido del correo no fue modificado en el camino."
+        description: "DKIM es como una firmar digital para cada correo con un sello único que solo tú puedes poner, El receptor verifica esa firma con una clave pública que está en tu DNS. Si la firma coincide, sabe que el mensaje no fue alterado y que realmente salió de tu dominio. Ejemplo real: Garantiza que el contenido del correo no fue modificado en el camino.",
       },
       dmarc: {
         title: "Registro DMARC",
-        description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude."
+        description: "DMARC es un registro que dice “Si el correo falla SPF o DKIM, haz esto: entrégalo igual, mándalo a spam o recházalo”. También puede enviarte reportes para que sepas si alguien intenta suplantar tu dominio. Ejemplo real: Te da control sobre qué pasa con los correos falsos y te avisa si hay intentos de fraude.",
       },
        mx: {
         title: "Registro MX",
-        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Gmail, Yandex, ProtonMail o QQ Mail sepan dónde recibes tus correos electrónicos."
+        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Gmail, Yandex, ProtonMail o QQ Mail sepan dónde recibes tus correos electrónicos.",
       },
       bimi: {
         title: "Registro BIMI",
-        description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles."
+        description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
       },
       vmc: {
         title: "Certificado VMC",
@@ -1462,8 +1462,8 @@ function DnsInfoModal({
         </div>
         <p className="pt-2">Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
-          <span>daybuu._bimi</span>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>default._bimi</span>
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
@@ -1660,6 +1660,8 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
 
     
 
