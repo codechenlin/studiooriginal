@@ -112,7 +112,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const txtRecordValue = verificationCode;
 
-  const truncateDomain = (name: string, maxLength: number = 21): string => {
+  const truncateDomain = (name: string, maxLength: number = 20): string => {
     if (name.length <= maxLength) {
         return name;
     }
@@ -1126,7 +1126,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
         <AlertDialog open={isMxWarningModalOpen} onOpenChange={setIsMxWarningModalOpen}>
             <AlertDialogContent className="bg-zinc-900/90 backdrop-blur-xl border border-amber-400/20 text-white">
                  <AlertDialogHeader>
-                    <div className="flex justify-center mb-4">
+                    <div className="flex justify-center pb-4">
                          <div className="relative w-20 h-20 flex items-center justify-center">
                             <motion.div className="absolute inset-0 border-2 border-dashed border-amber-400/50 rounded-full" animate={{rotate: 360}} transition={{duration: 10, repeat: Infinity, ease: "linear"}} />
                             <motion.div className="absolute inset-2 border-2 border-dashed border-amber-400/30 rounded-full" animate={{rotate: -360}} transition={{duration: 7, repeat: Infinity, ease: "linear"}} />
@@ -1134,16 +1134,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                         </div>
                     </div>
                      <AlertDialogTitle className="text-center text-xl">Registro MX no Verificado</AlertDialogTitle>
-                     <div className="relative py-4">
-                        <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
-                        <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-300 shadow-[0_0_8px_2px_theme(colors.amber.300)]" />
-                     </div>
+                    <div className="relative py-4">
+                      <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
+                      <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-300 shadow-[0_0_8px_2px_theme(colors.amber.300)]" />
+                   </div>
                     <AlertDialogDescription className="text-center text-amber-100/70 pt-2">
                         ¿Estás seguro de que deseas continuar?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                  <div className="p-4 my-2 rounded-lg bg-black/30 border border-amber-500/30 text-sm text-amber-200/90">
-                    Sin un registro MX verificado, <strong className="text-white">no podrás recibir correos</strong> en tu buzón para el dominio <strong className="font-mono text-white">{domain}</strong> a través de nuestra plataforma.
+                    Sin un registro MX verificado, <strong className="text-white">no podrás recibir correos</strong> en tu buzón para el dominio <strong className="font-mono text-white">{truncateDomain(domain, 20)}</strong> a través de nuestra plataforma.
                 </div>
                 <AlertDialogFooter>
                     <AlertDialogCancel className="bg-transparent hover:bg-[#00CB07] hover:border-[#00CB07] hover:text-white">Volver y Verificar</AlertDialogCancel>
@@ -1709,7 +1709,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
 
     
