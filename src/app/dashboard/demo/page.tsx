@@ -9,9 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Power, ShieldCheck, AlertTriangle, CheckCircle, Bot, Globe, Server, Dna, MailWarning } from 'lucide-react';
 import { checkApiHealthAction, validateDomainWithAI } from './actions';
 import { type ApiHealthOutput } from '@/ai/flows/api-health-check-flow';
-import { scanEmailForSpamAction } from './spam-actions';
-import { checkSpamAssassinHealthAction } from './spam-assassin-health-action';
-import { type SpamAssassinHealthOutput } from '@/ai/flows/spam-assassin-health-check-flow';
 import { type VmcAnalysisOutput } from './types';
 import { type SpamAssassinOutput } from '@/ai/flows/spam-assassin-types';
 import { cn } from '@/lib/utils';
@@ -56,7 +53,7 @@ export default function DemoPage() {
     const [sensitivity, setSensitivity] = useState(5.0);
 
     const [isCheckingSpamHealth, startSpamHealthCheck] = useTransition();
-    const [spamHealthResult, setSpamHealthResult] = useState<SpamAssassinHealthOutput | null>(null);
+    const [spamHealthResult, setSpamHealthResult] = useState<any | null>(null);
     const [spamHealthError, setSpamHealthError] = useState<string | null>(null);
 
 
@@ -77,11 +74,16 @@ export default function DemoPage() {
         setSpamHealthResult(null);
         setSpamHealthError(null);
         startSpamHealthCheck(async () => {
-            const result = await checkSpamAssassinHealthAction();
-            if (result.success) {
-                setSpamHealthResult(result.data || null);
-            } else {
-                setSpamHealthError(result.error || 'Ocurrió un error desconocido.');
+             try {
+                const response = await fetch('/api/spam-assassin/health');
+                const result = await response.json();
+                if (response.ok) {
+                    setSpamHealthResult(result);
+                } else {
+                    setSpamHealthError(result.error || 'Error desconocido');
+                }
+            } catch (error: any) {
+                setSpamHealthError(error.message || 'Fallo en la conexión');
             }
         });
     };
@@ -105,11 +107,20 @@ export default function DemoPage() {
         setSpamScanResult(null);
         setSpamScanError(null);
         startSpamScan(async () => {
-            const result = await scanEmailForSpamAction({ raw: rawEmail, sensitivity });
-            if (result.success && result.data) {
-                setSpamScanResult(result.data);
-            } else {
-                setSpamScanError(result.error || 'Ocurrió un error desconocido.');
+            try {
+                const response = await fetch('/api/spam-assassin/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ raw: rawEmail, sensitivity }),
+                });
+                const result = await response.json();
+                if(response.ok) {
+                    setSpamScanResult(result);
+                } else {
+                    setSpamScanError(result.error || 'Error desconocido');
+                }
+            } catch (error: any) {
+                setSpamScanError(error.message || 'Fallo en la conexión');
             }
         });
     };
