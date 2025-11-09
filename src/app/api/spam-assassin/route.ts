@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server';
+import https from 'https';
 
 const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud:8180";
 const API_KEY = "75bf75bnrfnuif0857nbf74fe521zdx";
+
+// Create an agent that ignores self-signed certificates.
+// This is for development purposes if the target server uses a self-signed cert.
+const agent = new https.Agent({
+  rejectUnauthorized: false,
+});
+
 
 export async function GET() {
   const url = `${API_BASE}/health`;
@@ -11,7 +19,9 @@ export async function GET() {
       method: 'GET',
       headers: {
         'X-Api-Key': API_KEY,
-      }
+      },
+      // @ts-ignore
+      agent,
     });
 
     if (!response.ok) {
@@ -34,13 +44,23 @@ export async function POST(request: Request) {
     const body = await request.json();
     const url = `${API_BASE}/classify/json`;
     
+    // Construct the payload for the external API
+    const apiPayload = {
+        raw_mime: `From: ${body.from}\nTo: ${body.to}\nSubject: ${body.subject}\n\n${body.body}`,
+        sensitivity: body.sensitivity,
+        return_details: true,
+        clamav_scan: body.clamav_scan || false
+    };
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Api-Key': API_KEY,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(apiPayload),
+      // @ts-ignore
+      agent,
     });
 
     if (!response.ok) {
@@ -54,9 +74,6 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('SpamAssassin Classify API call failed:', error);
-    if (error.name === 'ZodError') {
-        return NextResponse.json({ error: 'Datos de entrada inválidos.', details: error.errors }, { status: 400 });
-    }
     return NextResponse.json({ error: `No se pudo conectar con la API de SpamAssassin: ${error.message}` }, { status: 500 });
   }
 }

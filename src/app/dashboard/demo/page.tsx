@@ -15,10 +15,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import { classifyWithSpamAssassin, healthCheckSpamAssassin } from './spam-actions';
+import { SpamAssassinOutput } from '@/ai/flows/spam-assassin-types';
+
 
 const defaultSpamEmail = `From: test@example.com
-Subject: FREE MONEY
 To: user@yourdomain.com
+Subject: FREE MONEY
 
 Hello,
 
@@ -28,17 +31,6 @@ Special offer just for you. Act now!
 Best regards,
 Mr. Rich
 `;
-
-interface SpamAssassinResponse {
-  isSpam: boolean;
-  score: number;
-  sensitivity: number;
-  thresholdApplied: number;
-  details?: { rule: string; score: number }[];
-  virusDetected?: boolean | null;
-  headers?: Record<string, string>;
-  processingMs?: number;
-}
 
 
 export default function DemoPage() {
@@ -57,10 +49,16 @@ export default function DemoPage() {
     const [spamHealthError, setSpamHealthError] = useState<string | null>(null);
 
     const [isScanningSpam, startSpamScan] = useTransition();
-    const [spamScanResult, setSpamScanResult] = useState<SpamAssassinResponse | null>(null);
+    const [spamScanResult, setSpamScanResult] = useState<SpamAssassinOutput | null>(null);
     const [spamScanError, setSpamScanError] = useState<string | null>(null);
-    const [emailContent, setEmailContent] = useState(defaultSpamEmail);
-    const [sensitivity, setSensitivity] = useState(5.0);
+    
+    const [formValues, setFormValues] = useState({
+        from: 'ofertas@spamdomain.com',
+        to: 'usuario@tudominio.com',
+        subject: 'Gana dinero rápido',
+        body: 'Hola, haz clic aquí para ganar dinero rápido...',
+        sensitivity: 5.0,
+    });
     const [clamavScan, setClamavScan] = useState(false);
 
 
@@ -81,16 +79,11 @@ export default function DemoPage() {
         setSpamHealthResult(null);
         setSpamHealthError(null);
         startSpamHealthCheck(async () => {
-            try {
-                const response = await fetch('/api/spam-assassin', { method: 'GET' });
-                const result = await response.json();
-                if (response.ok) {
-                    setSpamHealthResult(result);
-                } else {
-                    setSpamHealthError(result.error || `Error del servidor: ${response.status}`);
-                }
-            } catch (error: any) {
-                setSpamHealthError(`Fallo en la conexión: ${error.message}`);
+            const result = await healthCheckSpamAssassin();
+            if (result.success) {
+                setSpamHealthResult(result.data);
+            } else {
+                setSpamHealthError(result.error);
             }
         });
     };
@@ -108,26 +101,29 @@ export default function DemoPage() {
             }
         });
     };
+    
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormValues(prev => ({ ...prev, [name]: value }));
+    };
 
-     const handleSpamScan = () => {
+    const handleSensitivityChange = (value: number[]) => {
+        setFormValues(prev => ({ ...prev, sensitivity: value[0] }));
+    }
+
+    const handleSpamScan = () => {
         setSpamScanResult(null);
         setSpamScanError(null);
         startSpamScan(async () => {
-            try {
-                 const response = await fetch('/api/spam-assassin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ raw_mime: emailContent, sensitivity, clamav_scan: clamavScan }),
-                });
+            const result = await classifyWithSpamAssassin({
+                ...formValues,
+                clamav_scan: clamavScan,
+            });
 
-                const result = await response.json();
-                if(response.ok) {
-                    setSpamScanResult(result);
-                } else {
-                    setSpamScanError(result.error || `Error del servidor: ${response.status}`);
-                }
-            } catch (error: any) {
-                setSpamScanError(`Fallo en la conexión: ${error.message}`);
+            if (result.success) {
+                setSpamScanResult(result.data);
+            } else {
+                setSpamScanError(result.error);
             }
         });
     };
@@ -304,12 +300,11 @@ export default function DemoPage() {
                 </Card>
             </div>
             
-            {/* New SpamAssassin Panel */}
              <Card className="bg-card/80 backdrop-blur-sm border-border/50 shadow-lg w-full max-w-6xl">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-xl">
                         <MailWarning className="text-amber-500"/>
-                        Mini Panel de Prueba 03: Clasificador de Spam
+                        Mini Panel de Prueba 03: Verificador de Spam
                     </CardTitle>
                     <CardDescription>
                        Prueba la API de SpamAssassin para evaluar el puntaje de spam de un correo electrónico.
@@ -331,11 +326,16 @@ export default function DemoPage() {
                         )}
                        </div>
 
-                        <div className="space-y-1"><Label htmlFor="email-content">Contenido del correo (MIME/RFC822)</Label><Textarea id="email-content" value={emailContent} onChange={e => setEmailContent(e.target.value)} className="h-40 font-mono text-xs" placeholder="From: ..."/></div>
+                        <div className="grid grid-cols-2 gap-2">
+                           <div className="space-y-1"><Label htmlFor="from">De:</Label><Input id="from" name="from" value={formValues.from} onChange={handleInputChange} /></div>
+                           <div className="space-y-1"><Label htmlFor="to">Para:</Label><Input id="to" name="to" value={formValues.to} onChange={handleInputChange} /></div>
+                        </div>
+                        <div className="space-y-1"><Label htmlFor="subject">Asunto:</Label><Input id="subject" name="subject" value={formValues.subject} onChange={handleInputChange} /></div>
+                        <div className="space-y-1"><Label htmlFor="body">Cuerpo:</Label><Textarea id="body" name="body" value={formValues.body} onChange={handleInputChange} className="h-28 font-mono text-xs"/></div>
                         
                         <div className="space-y-2">
-                            <Label>Sensibilidad del Filtro ({sensitivity.toFixed(1)})</Label>
-                            <Slider value={[sensitivity]} min={1.0} max={10.0} step={0.1} onValueChange={(value) => setSensitivity(value[0])}/>
+                            <Label>Sensibilidad del Filtro ({formValues.sensitivity.toFixed(1)})</Label>
+                            <Slider value={[formValues.sensitivity]} min={1.0} max={10.0} step={0.1} onValueChange={handleSensitivityChange}/>
                              <div className="flex justify-between text-xs text-muted-foreground"><span>Estricto</span><span>Relajado</span></div>
                         </div>
 
@@ -367,25 +367,25 @@ export default function DemoPage() {
                         )}
                         {spamScanResult && (
                              <div className="space-y-3 flex-grow flex flex-col">
-                                <div className={cn("p-4 rounded-lg text-center border-2", spamScanResult.isSpam ? "border-red-500 bg-red-500/10" : "border-green-500 bg-green-500/10")}>
-                                    <p className="text-sm font-semibold uppercase">{spamScanResult.isSpam ? "Correo Considerado Spam" : "Correo Legítimo"}</p>
-                                    <p className="text-3xl font-bold">{spamScanResult.score.toFixed(1)} / {spamScanResult.thresholdApplied.toFixed(1)}</p>
+                                <div className={cn("p-4 rounded-lg text-center border-2", spamScanResult.is_spam ? "border-red-500 bg-red-500/10" : "border-green-500 bg-green-500/10")}>
+                                    <p className="text-sm font-semibold uppercase">{spamScanResult.is_spam ? "Correo Considerado Spam" : "Correo Legítimo"}</p>
+                                    <p className="text-3xl font-bold">{spamScanResult.score.toFixed(1)} / {spamScanResult.threshold.toFixed(1)}</p>
                                     <div className="relative h-2 w-full bg-muted/50 rounded-full mt-2">
                                         <div 
-                                          className={cn("absolute h-full rounded-full", spamScanResult.isSpam ? "bg-red-500" : "bg-green-500")}
-                                          style={{width: `${(spamScanResult.score / spamScanResult.thresholdApplied) * 100}%`}}
+                                          className={cn("absolute h-full rounded-full", spamScanResult.is_spam ? "bg-red-500" : "bg-green-500")}
+                                          style={{width: `${(spamScanResult.score / spamScanResult.threshold) * 100}%`}}
                                         />
                                         <div 
                                             className="absolute top-0 h-full w-px bg-white/50"
-                                            style={{left: `${(spamScanResult.thresholdApplied / 10) * 100}%`}}
+                                            style={{left: `${(spamScanResult.threshold / 10) * 100}%`}}
                                         />
                                     </div>
                                 </div>
                                  <div className="flex-grow">
-                                     <Label>Detalles del Reporte de SpamAssassin</Label>
+                                     <Label>Reporte Completo</Label>
                                      <ScrollArea className="h-48 mt-1">
                                        <pre className="text-xs p-3 rounded-md bg-black/50 font-mono whitespace-pre-wrap">
-                                            {JSON.stringify(spamScanResult.details, null, 2)}
+                                            {spamScanResult.report}
                                         </pre>
                                      </ScrollArea>
                                  </div>

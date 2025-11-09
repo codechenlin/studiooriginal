@@ -12,4 +12,3 @@ import '@/ai/flows/virus-scan-flow.ts';
 import '@/ai/flows/test-chat-flow.ts';
 import '@/ai/flows/api-health-check-flow.ts';
 import '@/ai/flows/vmc-deepseek-analysis-flow.ts';
-import '@/ai/flows/spam-assassin-types.ts';
