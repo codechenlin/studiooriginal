@@ -1,11 +1,12 @@
+
 import { NextResponse } from 'next/server';
 import https from 'https';
 
 const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud:8180";
 const API_KEY = "75bf75bnrfnuif0857nbf74fe521zdx";
 
-// Create an agent that ignores self-signed certificates.
-// This is for development purposes if the target server uses a self-signed cert.
+// Create a single, reusable agent that ignores self-signed certificates.
+// This is the key to solving the "fetch failed" error in a server environment.
 const agent = new https.Agent({
   rejectUnauthorized: false,
 });
@@ -20,7 +21,7 @@ export async function GET() {
       headers: {
         'X-Api-Key': API_KEY,
       },
-      // @ts-ignore
+      // @ts-ignore - This is a valid option for node-fetch which is used by Next.js server-side
       agent,
     });
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const url = `${API_BASE}/classify/json`;
     
-    // Construct the payload for the external API
+    // The payload for the external API remains the same
     const apiPayload = {
         raw_mime: `From: ${body.from}\nTo: ${body.to}\nSubject: ${body.subject}\n\n${body.body}`,
         sensitivity: body.sensitivity,
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
         'X-Api-Key': API_KEY,
       },
       body: JSON.stringify(apiPayload),
-      // @ts-ignore
+      // @ts-ignore - Use the same agent for POST requests
       agent,
     });
 
@@ -70,10 +71,17 @@ export async function POST(request: Request) {
     }
 
     const result = await response.json();
-    return NextResponse.json(result);
+    // The external API seems to return isSpam, but the old code expected is_spam. Let's align.
+    // We will transform the response to match the schema expected by the frontend.
+    const transformedResult = {
+        is_spam: result.isSpam,
+        score: result.score,
+        threshold: result.thresholdApplied,
+        report: JSON.stringify(result.details, null, 2), // The report is an object, stringify for display
+    };
+
+    return NextResponse.json(transformedResult);
 
   } catch (error: any) {
     console.error('SpamAssassin Classify API call failed:', error);
-    return NextResponse.json({ error: `No se pudo conectar con la API de SpamAssassin: ${error.message}` }, { status: 500 });
-  }
-}
+    return NextResponse.json({ error: `No se pudo conectar con la API de SpamAssassin
