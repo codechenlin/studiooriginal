@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import https from 'https';
 
-const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud:8180";
+const API_BASE = "https://gdvsjd6vdkw749874bkd83.fanton.cloud:8081";
 const API_KEY = "75bf75bnrfnuif0857nbf74fe521zdx";
 
 const agent = new https.Agent({
@@ -42,9 +42,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const url = `${API_BASE}/classify/json`;
     
-    // El payload para la API externa ahora usa raw_mime
+    // Construct the raw_mime string from individual fields.
+    const raw_mime = `From: ${body.from}\nTo: ${body.to}\nSubject: ${body.subject}\n\n${body.body}`;
+    
     const apiPayload = {
-        raw_mime: `From: ${body.from}\nTo: ${body.to}\nSubject: ${body.subject}\n\n${body.body}`,
+        raw_mime: raw_mime,
         sensitivity: body.sensitivity,
         return_details: true,
         clamav_scan: body.clamav_scan || false
@@ -68,7 +70,7 @@ export async function POST(request: Request) {
     }
 
     const result = await response.json();
-    // Transforma la respuesta para que coincida con el schema esperado por el frontend.
+    // Transform the response to match the schema expected by the frontend.
     const transformedResult = {
         is_spam: result.isSpam,
         score: result.score,
@@ -83,3 +85,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `No se pudo conectar con la API de SpamAssassin: ${error.message}` }, { status: 500 });
   }
 }
+
