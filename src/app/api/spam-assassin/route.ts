@@ -84,4 +84,6 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('SpamAssassin Classify API call failed:', error);
-    return NextResponse.json({ error: `No se pudo conectar con la API de SpamAssassin
+    return NextResponse.json({ error: `No se pudo conectar con la API de SpamAssassin: ${error.message}` }, { status: 500 });
+  }
+}
