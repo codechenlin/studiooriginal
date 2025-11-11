@@ -1,14 +1,19 @@
+
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/actions'; // IMPORTANT: Use the actions client
 import { revalidatePath } from 'next/cache';
-import { DnsChecks, domainSchema, SmtpCredentials } from './types';
+import { DnsChecks, SmtpCredentials, type Domain } from './types';
+
 
 // --- DOMAIN ACTIONS ---
-export async function createOrGetDomain(domainName: string) {
+export async function createOrGetDomain(domainName: string): Promise<Domain | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not authenticated');
+  if (!user) {
+      console.error('User not authenticated in createOrGetDomain');
+      return null;
+  };
 
   // Check if domain already exists for this user
   let { data: existingDomain, error: fetchError } = await supabase
