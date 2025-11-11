@@ -18,6 +18,8 @@ export function createClient() {
         select: async () => ({ data: [], error: new Error(`Supabase not configured for table ${table}.`) }),
         insert: async () => ({ data: [], error: new Error(`Supabase not configured for table ${table}.`) }),
         update: async () => ({ data: [], error: new Error(`Supabase not configured for table ${table}.`) }),
+        delete: async () => ({ data: [], error: new Error(`Supabase not configured for table ${table}.`) }),
+        upsert: async () => ({ data: [], error: new Error(`Supabase not configured for table ${table}.`) }),
       }),
        storage: {
         from: (bucket: string) => ({
