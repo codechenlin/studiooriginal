@@ -5,13 +5,12 @@ import { createClient } from '@/lib/supabase/actions';
 import { revalidatePath } from 'next/cache';
 import { type Domain } from './types';
 
-// --- DOMAIN ACTIONS ---
-export async function createOrGetDomain(domainName: string): Promise<Domain | null> {
+export async function createOrGetDomain(domainName: string): Promise<{ success: boolean; data?: Domain; error?: string }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
       console.error('User not authenticated in createOrGetDomain');
-      return null;
+      return { success: false, error: 'Usuario no autenticado.' };
   };
 
   // Check if domain already exists for this user
@@ -24,11 +23,11 @@ export async function createOrGetDomain(domainName: string): Promise<Domain | nu
 
   if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows found
     console.error('Error fetching domain:', fetchError);
-    return null;
+    return { success: false, error: 'Error al buscar el dominio: ' + fetchError.message };
   }
   
   if (existingDomain) {
-    return existingDomain;
+    return { success: true, data: existingDomain };
   }
 
   // Create new domain if it doesn't exist
@@ -40,11 +39,11 @@ export async function createOrGetDomain(domainName: string): Promise<Domain | nu
 
   if (insertError) {
     console.error('Error creating domain:', insertError);
-    return null;
+    return { success: false, error: 'Error al crear el dominio: ' + insertError.message };
   }
   
   revalidatePath('/dashboard/servers');
-  return newDomain;
+  return { success: true, data: newDomain };
 }
 
 export async function updateDomainVerificationCode(domainId: string, verificationCode: string) {
@@ -108,3 +107,5 @@ export async function saveSmtpCredentials(domainId: string, credentials: any) { 
     
     if (error) console.error('Error saving SMTP credentials:', error);
 }
+
+    

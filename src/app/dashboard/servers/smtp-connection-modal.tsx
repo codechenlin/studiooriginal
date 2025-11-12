@@ -53,6 +53,11 @@ type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
 
 const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
 
+const domainFormSchema = z.object({
+  domain: z.string().regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Por favor, introduce un nombre de dominio válido."),
+});
+
+
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
   const { toast } = useToast();
   const [domain, setDomain] = useState('');
@@ -79,6 +84,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [testError, setTestError] = useState('');
   const [isConnectionSecure, setIsConnectionSecure] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
   const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
@@ -120,6 +126,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     },
   });
 
+  const domainForm = useForm<z.infer<typeof domainFormSchema>>({
+      resolver: zodResolver(domainFormSchema),
+      defaultValues: {
+          domain: "",
+      },
+  });
+
   const txtRecordValue = verificationCode;
 
   const truncateDomain = (name: string, maxLength: number = 20): string => {
@@ -129,28 +142,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     return `${name.substring(0, maxLength)}...`;
   };
 
-  const handleStartVerification = async () => {
-    if (!domain || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
-      toast({
-        title: "Dominio no válido",
-        description: "Por favor, introduce un nombre de dominio válido.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const dbDomain = await createOrGetDomain(domain);
-    if(dbDomain) {
-        setCurrentDomainId(dbDomain.id);
+  const handleStartVerification = async (values: z.infer<typeof domainFormSchema>) => {
+    startTransition(async () => {
+      const { domain: domainName } = values;
+      const result = await createOrGetDomain(domainName);
+      
+      if (result.success && result.data) {
+        setDomain(domainName);
+        setCurrentDomainId(result.data.id);
         const newCode = generateVerificationCode();
         setVerificationCode(newCode);
-        await updateDomainVerificationCode(dbDomain.id, newCode);
+        await updateDomainVerificationCode(result.data.id, newCode);
         setVerificationStatus('pending');
+        await handleGenerateDkim(true, result.data.id);
         setCurrentStep(2);
-        handleGenerateDkim(true, dbDomain.id);
-    } else {
-        toast({ title: 'Error', description: 'No se pudo crear o recuperar el dominio.', variant: 'destructive'})
-    }
+      } else {
+        toast({ title: 'Error de Servidor', description: result.error, variant: 'destructive'});
+      }
+    });
   };
   
   const handleCheckVerification = async () => {
@@ -270,11 +279,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
     const targetDomainId = domainId || currentDomainId;
-    if (!domain || !targetDomainId) return;
+    if (!domain && !targetDomainId) return;
+    const currentDomain = domain || domainForm.getValues('domain');
+    if(!currentDomain || !targetDomainId) return;
+    
     setIsGeneratingDkim(true);
     setAcceptedDkimKey(null); // Reset accepted key on new generation
     try {
-      const result = await generateDkimKeys({ domain, selector: 'daybuu' });
+      const result = await generateDkimKeys({ domain: currentDomain, selector: 'daybuu' });
       setDkimData(result);
       await updateDkimKey(targetDomainId, result.publicKeyRecord);
       if (!isInitial) {
@@ -307,6 +319,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const resetState = () => {
     setCurrentStep(1);
     setDomain('');
+    domainForm.reset();
     setCurrentDomainId(null);
     setVerificationCode('');
     setVerificationStatus('idle');
@@ -589,17 +602,35 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   className="flex flex-col h-full"
               >
                   {currentStep === 1 && (
-                  <>
+                  <form onSubmit={domainForm.handleSubmit(handleStartVerification)}>
                       <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
                       <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
                       <div className="space-y-2 pt-4 flex-grow">
                         <Label htmlFor="domain">Tu Dominio</Label>
-                        <div className="relative">
-                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                            <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
-                        </div>
+                        <FormField
+                           control={domainForm.control}
+                           name="domain"
+                           render={({ field }) => (
+                               <FormItem>
+                                   <FormControl>
+                                       <div className="relative">
+                                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                          <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" {...field} />
+                                       </div>
+                                   </FormControl>
+                                   <FormMessage />
+                               </FormItem>
+                           )}
+                       />
                       </div>
-                  </>
+                      <Button
+                        type="submit"
+                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white border-2 border-[#BC00FF] hover:border-[#BC00FF]"
+                        disabled={isPending}
+                      >
+                        {isPending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
+                      </Button>
+                  </form>
                   )}
                   {currentStep === 2 && (
                   <>
@@ -756,13 +787,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
                     <h4 className="font-bold">Empecemos</h4>
                     <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
-                     <Button
-                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white border-2 border-[#BC00FF] hover:border-[#BC00FF]"
-                        onClick={handleStartVerification}
-                        disabled={!domain}
-                      >
-                        Siguiente <ArrowRight className="ml-2"/>
-                      </Button>
                   </div>
                 )}
                 {currentStep === 2 && (
@@ -1757,3 +1781,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
