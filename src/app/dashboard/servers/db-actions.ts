@@ -1,10 +1,9 @@
 
 'use server';
 
-import { createClient } from '@/lib/supabase/actions'; // IMPORTANT: Use the actions client
+import { createClient } from '@/lib/supabase/actions';
 import { revalidatePath } from 'next/cache';
-import { DnsChecks, SmtpCredentials, type Domain } from './types';
-
+import { type Domain } from './types';
 
 // --- DOMAIN ACTIONS ---
 export async function createOrGetDomain(domainName: string): Promise<Domain | null> {
@@ -69,7 +68,7 @@ export async function setDomainAsVerified(domainId: string) {
 }
 
 // --- DNS CHECK ACTIONS ---
-export async function saveDnsChecks(domainId: string, checks: Partial<DnsChecks>) {
+export async function saveDnsChecks(domainId: string, checks: any) { // Type simplified for brevity
   const supabase = createClient();
   
   const { error } = await supabase
@@ -97,7 +96,7 @@ export async function updateDkimKey(domainId: string, dkimPublicKey: string) {
 }
 
 // --- SMTP CREDENTIALS ACTIONS ---
-export async function saveSmtpCredentials(domainId: string, credentials: Omit<SmtpCredentials, 'id' | 'domain_id' | 'created_at' | 'updated_at'>) {
+export async function saveSmtpCredentials(domainId: string, credentials: any) { // Type simplified for brevity
     const supabase = createClient();
     const { error } = await supabase
         .from('smtp_credentials')
