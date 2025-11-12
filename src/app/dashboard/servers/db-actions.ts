@@ -53,7 +53,11 @@ export async function updateDomainVerificationCode(domainId: string, verificatio
     .update({ verification_code: verificationCode, updated_at: new Date().toISOString() })
     .eq('id', domainId);
 
-  if (error) console.error('Error updating verification code:', error);
+  if (error) {
+    console.error('Error updating verification code:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
 }
 
 export async function setDomainAsVerified(domainId: string) {
@@ -63,7 +67,11 @@ export async function setDomainAsVerified(domainId: string) {
     .update({ is_verified: true, updated_at: new Date().toISOString() })
     .eq('id', domainId);
 
-  if (error) console.error('Error setting domain as verified:', error);
+  if (error) {
+    console.error('Error setting domain as verified:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
 }
 
 // --- DNS CHECK ACTIONS ---
@@ -78,7 +86,11 @@ export async function saveDnsChecks(domainId: string, checks: any) { // Type sim
       updated_at: new Date().toISOString()
     }, { onConflict: 'domain_id' });
     
-  if (error) console.error('Error saving DNS checks:', error);
+  if (error) {
+    console.error('Error saving DNS checks:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
 }
 
 export async function updateDkimKey(domainId: string, dkimPublicKey: string) {
@@ -91,7 +103,11 @@ export async function updateDkimKey(domainId: string, dkimPublicKey: string) {
       updated_at: new Date().toISOString()
     }, { onConflict: 'domain_id' });
 
-  if (error) console.error('Error updating DKIM key:', error);
+  if (error) {
+    console.error('Error updating DKIM key:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
 }
 
 // --- SMTP CREDENTIALS ACTIONS ---
@@ -105,7 +121,9 @@ export async function saveSmtpCredentials(domainId: string, credentials: any) { 
             updated_at: new Date().toISOString()
         }, { onConflict: 'domain_id' });
     
-    if (error) console.error('Error saving SMTP credentials:', error);
+    if (error) {
+        console.error('Error saving SMTP credentials:', error);
+        return { success: false, error: error.message };
+    }
+    return { success: true };
 }
-
-    

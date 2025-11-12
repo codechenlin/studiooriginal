@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const domainSchema = z.object({
@@ -33,7 +34,7 @@ export interface SmtpCredentials {
     port: number;
     encryption: string;
     username: string;
-    password: string;
+    password: string; // WARNING: Storing plain text passwords is not recommended. Use Supabase Vault.
     is_validated: boolean;
     created_at: string;
     updated_at: string;

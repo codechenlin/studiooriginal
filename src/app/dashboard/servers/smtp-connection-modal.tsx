@@ -53,7 +53,7 @@ type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
 
 const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
 
-const domainFormSchema = z.object({
+const domainSchema = z.object({
   domain: z.string().regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Por favor, introduce un nombre de dominio válido."),
 });
 
@@ -126,13 +126,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     },
   });
 
-  const domainForm = useForm<z.infer<typeof domainFormSchema>>({
-      resolver: zodResolver(domainFormSchema),
-      defaultValues: {
-          domain: "",
-      },
-  });
-
   const txtRecordValue = verificationCode;
 
   const truncateDomain = (name: string, maxLength: number = 20): string => {
@@ -142,13 +135,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     return `${name.substring(0, maxLength)}...`;
   };
 
-  const handleStartVerification = async (values: z.infer<typeof domainFormSchema>) => {
+  const handleStartVerification = async () => {
+    const validation = domainSchema.safeParse({ domain });
+    if (!validation.success) {
+      toast({
+        title: "Dominio no válido",
+        description: validation.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     startTransition(async () => {
-      const { domain: domainName } = values;
-      const result = await createOrGetDomain(domainName);
+      const result = await createOrGetDomain(domain);
       
       if (result.success && result.data) {
-        setDomain(domainName);
         setCurrentDomainId(result.data.id);
         const newCode = generateVerificationCode();
         setVerificationCode(newCode);
@@ -280,7 +281,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
     const targetDomainId = domainId || currentDomainId;
     if (!domain && !targetDomainId) return;
-    const currentDomain = domain || domainForm.getValues('domain');
+    const currentDomain = domain;
     if(!currentDomain || !targetDomainId) return;
     
     setIsGeneratingDkim(true);
@@ -319,7 +320,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const resetState = () => {
     setCurrentStep(1);
     setDomain('');
-    domainForm.reset();
     setCurrentDomainId(null);
     setVerificationCode('');
     setVerificationStatus('idle');
@@ -602,35 +602,24 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                   className="flex flex-col h-full"
               >
                   {currentStep === 1 && (
-                  <form onSubmit={domainForm.handleSubmit(handleStartVerification)}>
-                      <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
-                      <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
-                      <div className="space-y-2 pt-4 flex-grow">
-                        <Label htmlFor="domain">Tu Dominio</Label>
-                        <FormField
-                           control={domainForm.control}
-                           name="domain"
-                           render={({ field }) => (
-                               <FormItem>
-                                   <FormControl>
-                                       <div className="relative">
-                                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                          <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" {...field} />
-                                       </div>
-                                   </FormControl>
-                                   <FormMessage />
-                               </FormItem>
-                           )}
-                       />
-                      </div>
-                      <Button
-                        type="submit"
-                        className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white border-2 border-[#BC00FF] hover:border-[#BC00FF]"
-                        disabled={isPending}
-                      >
-                        {isPending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
-                      </Button>
-                  </form>
+                      <form onSubmit={(e) => { e.preventDefault(); handleStartVerification(); }}>
+                          <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
+                          <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
+                          <div className="space-y-2 pt-4 flex-grow">
+                            <Label htmlFor="domain">Tu Dominio</Label>
+                            <div className="relative">
+                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                <Input id="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
+                            </div>
+                          </div>
+                          <Button
+                            type="submit"
+                            className="w-full h-12 text-base mt-4 bg-[#2a004f] hover:bg-[#AD00EC] text-white border-2 border-[#BC00FF] hover:border-[#BC00FF]"
+                            disabled={isPending || !domain}
+                          >
+                            {isPending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
+                          </Button>
+                      </form>
                   )}
                   {currentStep === 2 && (
                   <>
@@ -1781,5 +1770,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
