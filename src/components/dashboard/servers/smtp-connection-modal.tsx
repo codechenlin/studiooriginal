@@ -57,17 +57,13 @@ const initialState = {
   domain: null as Domain | null,
 };
 
-function SubmitButton() {
+function SubmitButtonContent() {
   const { pending } = useFormStatus();
   return (
-      <Button
-          type="submit"
-          className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]"
-          disabled={pending}
-        >
-           {pending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
-        </Button>
-  )
+    <>
+      {pending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2"/></>}
+    </>
+  );
 }
 
 export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
@@ -112,7 +108,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
   const [currentDomainId, setCurrentDomainId] = useState<string | null>(null);
 
-  const [formState, formAction] = React.useActionState(createOrGetDomainAction, initialState);
+  const [formState, formAction] = useActionState(createOrGetDomainAction, initialState);
 
   useEffect(() => {
     if (formState.success && formState.domain) {
@@ -279,7 +275,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
     const targetDomainId = domainId || currentDomainId;
-    if (!domain && !targetDomainId) return;
     const currentDomain = domain || formState.domain?.domain_name;
     if(!currentDomain || !targetDomainId) return;
     
@@ -547,20 +542,20 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                     className="flex flex-col h-full"
                 >
                     {currentStep === 1 && (
-                      <form action={formAction} id="domain-form" className="h-full flex flex-col">
+                      <div className="h-full flex flex-col">
                         <div className="flex-grow">
                           <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
                           <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
-                          <div className="space-y-2 pt-4">
+                          <form action={formAction} id="domain-form" className="space-y-2 pt-4">
                             <Label htmlFor="domain">Tu Dominio</Label>
                             <div className="relative">
                                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" defaultValue={domain} onChange={e => setDomain(e.target.value)} />
                             </div>
                             {formState.message && !formState.success && <p className="text-sm text-destructive mt-2">{formState.message}</p>}
-                          </div>
+                          </form>
                         </div>
-                      </form>
+                      </div>
                     )}
                     {currentStep === 2 && (
                     <>
@@ -992,14 +987,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 )}
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                     {currentStep === 1 && (
-                      <>
-                        <Button type="submit" form="domain-form" className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]">
-                          <SubmitButtonContent />
-                        </Button>
-                        <Button type="button" variant="outline" className="w-full h-12 text-base text-white border-[#F00000] hover:text-white hover:bg-[#F00000]" onClick={() => setIsCancelConfirmOpen(true)}>
-                          Cancelar
-                        </Button>
-                      </>
+                      <Button type="submit" form="domain-form" className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]">
+                        <SubmitButtonContent/>
+                      </Button>
                     )}
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
                       <Button
@@ -1136,14 +1126,22 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     );
   };
   
-    const SubmitButtonContent = () => {
+    const SubmitButton = () => {
     const { pending } = useFormStatus();
     return (
-      <>
-        {pending ? <><Loader2 className="mr-2 animate-spin" /> Verificando...</> : <>Siguiente <ArrowRight className="ml-2" /></>}
-      </>
+        <Button
+            type="submit"
+            className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]"
+            disabled={pending || !domain}
+        >
+            {pending ? (
+                <><Loader2 className="mr-2 animate-spin" /> Verificando...</>
+            ) : (
+                <>Siguiente <ArrowRight className="ml-2" /></>
+            )}
+        </Button>
     );
-  };
+};
 
   return (
     <>
@@ -1763,5 +1761,7 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
 
     
