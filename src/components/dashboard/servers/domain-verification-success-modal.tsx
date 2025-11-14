@@ -70,8 +70,6 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
     return `${name.substring(0, maxLength)}...`;
   };
   
-  const allMandatoryVerified = dnsStatus.spf && dnsStatus.dkim && dnsStatus.dmarc;
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="max-w-7xl w-full bg-black/80 backdrop-blur-xl border-2 border-green-500/20 text-white overflow-hidden p-0">
@@ -80,32 +78,45 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
 
         <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-green-500/20">
             {/* Column 1: Success Message */}
-            <div className="p-8 flex flex-col items-center text-center z-10">
+            <div className="p-8 flex flex-col items-center text-center z-10 justify-between">
+                <div/>
                 <motion.div 
-                    initial={{ scale: 0, opacity: 0 }}
+                    initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 15 }}
-                    className="relative w-32 h-32 mb-6"
+                    transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 15 }}
+                    className="relative flex flex-col items-center"
                 >
-                    <svg className="absolute inset-0 w-full h-full animate-[hud-spin_25s_linear_infinite]" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="48" stroke="rgba(0,255,100,0.1)" strokeWidth="0.5" fill="none" />
-                        <path d="M 50,2 A 48,48 0 0,1 98,50" stroke="rgba(0,255,100,0.3)" strokeWidth="1" fill="none" strokeDasharray="3, 6" />
-                    </svg>
-                     <div className="absolute inset-0 flex items-center justify-center">
-                        <ShieldCheck className="size-24 text-green-400" style={{ filter: 'drop-shadow(0 0 15px #00ff6a)' }}/>
+                    <div className="relative w-32 h-32 mb-6">
+                        <svg className="absolute inset-0 w-full h-full animate-[hud-spin_25s_linear_infinite]" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="48" stroke="rgba(0,255,100,0.1)" strokeWidth="0.5" fill="none" />
+                            <path d="M 50,2 A 48,48 0 0,1 98,50" stroke="rgba(0,255,100,0.3)" strokeWidth="1" fill="none" strokeDasharray="3, 6" />
+                        </svg>
+                         <div className="absolute inset-0 flex items-center justify-center">
+                            <ShieldCheck className="size-24 text-green-400" style={{ filter: 'drop-shadow(0 0 15px #00ff6a)' }}/>
+                        </div>
                     </div>
+                    
+                    <DialogHeader>
+                        <DialogTitle className="text-3xl font-bold">¡Dominio Verificado!</DialogTitle>
+                        <DialogDescription className="text-lg text-green-200/80 mt-2">
+                            El dominio <span className="font-bold text-white">{truncateDomain(domain)}</span> está listo para despegar.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <p className="text-sm text-white/70 mt-4">
+                        Has completado la autenticación de tu dominio. Ahora puedes configurar direcciones de correo SMTP y comenzar a enviar campañas con la máxima confianza y entregabilidad.
+                    </p>
                 </motion.div>
                 
-                <DialogHeader>
-                    <DialogTitle className="text-3xl font-bold">¡Dominio Verificado!</DialogTitle>
-                    <DialogDescription className="text-lg text-green-200/80 mt-2">
-                        El dominio <span className="font-bold text-white">{truncateDomain(domain)}</span> está listo para despegar.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <p className="text-sm text-white/70 mt-4">
-                    Has completado la autenticación de tu dominio. Ahora puedes configurar direcciones de correo SMTP y comenzar a enviar campañas con la máxima confianza y entregabilidad.
-                </p>
+                 <div className="w-full mt-8">
+                     <Button
+                        onClick={() => onOpenChange(false)}
+                        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-lg h-12 hover:opacity-90"
+                      >
+                        <Check className="mr-2"/>
+                        Aceptar y Continuar
+                      </Button>
+                </div>
             </div>
 
             {/* Column 2: DNS Status */}
@@ -116,9 +127,9 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                         <h4 className="font-semibold text-white mb-2">Registros Obligatorios</h4>
                         <div className="space-y-3 p-3 bg-black/20 border border-cyan-400/10 rounded-lg">
                            <RecordStatus label="Registro TXT" icon={CheckCircle} verified={true} description="Verificación de propiedad del dominio."/>
-                           <RecordStatus label="Registro SPF" icon={CheckCircle} verified={!!dnsStatus.spf} description="Autorización de servidores de envío."/>
-                           <RecordStatus label="Registro DKIM" icon={CheckCircle} verified={!!dnsStatus.dkim} description="Firma digital para autenticidad."/>
-                           <RecordStatus label="Registro DMARC" icon={CheckCircle} verified={!!dnsStatus.dmarc} description="Política de protección y reporte."/>
+                           <RecordStatus label="Registro SPF" icon={CheckCircle} verified={true} description="Autorización de servidores de envío."/>
+                           <RecordStatus label="Registro DKIM" icon={CheckCircle} verified={true} description="Firma digital para autenticidad."/>
+                           <RecordStatus label="Registro DMARC" icon={CheckCircle} verified={true} description="Política de protección y reporte."/>
                         </div>
                     </div>
                     <div>
@@ -163,15 +174,6 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  </div>
             </div>
         </div>
-        <DialogFooter className="p-4 bg-black/50 border-t border-green-500/20 z-10">
-          <Button
-            onClick={() => onOpenChange(false)}
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold text-lg h-12 hover:opacity-90"
-          >
-            <Check className="mr-2"/>
-            Aceptar y Continuar
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
