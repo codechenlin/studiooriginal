@@ -12,6 +12,7 @@ import { DomainInfoModal } from '@/components/dashboard/servers/domain-info-moda
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
 import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
+import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/domain-verification-success-modal';
 
 
 type ProviderStatus = 'ok' | 'error';
@@ -117,6 +118,9 @@ export default function ServersPage() {
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   const [currentModalContext, setCurrentModalContext] = useState({ hasVerifiedDomains: false });
+  
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successModalData, setSuccessModalData] = useState<{domain: string, mxVerified: boolean} | null>(null);
 
   const handleSubdomainClick = (hasVerified: boolean) => {
     setCurrentModalContext({ hasVerifiedDomains: hasVerified });
@@ -154,10 +158,22 @@ export default function ServersPage() {
     setSelectedStatus(status);
     setIsDnsModalOpen(true);
   };
+  
+  const handleVerificationComplete = (domain: string, mxVerified: boolean) => {
+    setIsSmtpModalOpen(false);
+    setSuccessModalData({ domain, mxVerified });
+    setTimeout(() => {
+      setIsSuccessModalOpen(true);
+    }, 300); // Small delay for smoother transition
+  };
 
   return (
     <>
-    <SmtpConnectionModal isOpen={isSmtpModalOpen} onOpenChange={setIsSmtpModalOpen} />
+    <SmtpConnectionModal 
+      isOpen={isSmtpModalOpen} 
+      onOpenChange={setIsSmtpModalOpen} 
+      onVerificationComplete={handleVerificationComplete}
+    />
     <DnsStatusModal 
       isOpen={isDnsModalOpen} 
       onOpenChange={setIsDnsModalOpen}
@@ -166,6 +182,15 @@ export default function ServersPage() {
     <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} />
     <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
     <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
+    {successModalData && (
+        <DomainVerificationSuccessModal 
+            isOpen={isSuccessModalOpen}
+            onOpenChange={setIsSuccessModalOpen}
+            domain={successModalData.domain}
+            mxVerified={successModalData.mxVerified}
+        />
+    )}
+
 
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-background relative overflow-hidden">
        <style>{`
@@ -340,3 +365,5 @@ export default function ServersPage() {
     </>
   );
 }
+
+    

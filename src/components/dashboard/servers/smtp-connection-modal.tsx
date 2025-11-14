@@ -18,8 +18,6 @@ import { cn } from '@/lib/utils';
 import { verifyDnsAction, verifyDomainOwnershipAction, validateDomainWithAIAction } from '@/app/dashboard/servers/actions';
 import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
 import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
 import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
 import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
@@ -41,13 +39,12 @@ import { type Domain } from './types';
 interface SmtpConnectionModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  onVerificationComplete: (domain: string, mxVerified: boolean) => void;
 }
 
 type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'failed';
 type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
-type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
-type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
 
 const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
 
@@ -66,7 +63,7 @@ function SubmitButtonContent() {
   );
 }
 
-export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModalProps) {
+export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComplete }: SmtpConnectionModalProps) {
   const { toast } = useToast();
   const [domain, setDomain] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -95,9 +92,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
   
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
-  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); // New state for subdomain feature
-  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
-  const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
   const [currentDomainId, setCurrentDomainId] = useState<string | null>(null);
 
@@ -154,7 +148,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     if (result.success) {
       await setDomainAsVerified(currentDomainId);
       setVerificationStatus('verified');
-      setHasVerifiedDomains(true);
     } else {
       setVerificationStatus('failed');
       toast({
@@ -313,6 +306,22 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
     setIsPauseModalOpen(false);
     setIsCancelConfirmOpen(true);
   }
+  
+  const handleFinish = () => {
+    const mxVerified = optionalRecordStatus.mx === 'verified';
+    if (!mxVerified) {
+      setIsMxWarningModalOpen(true);
+    } else {
+      onVerificationComplete(domain, true);
+      handleClose();
+    }
+  };
+
+  const handleContinueAnyway = () => {
+    onVerificationComplete(domain, false);
+    setIsMxWarningModalOpen(false);
+    handleClose();
+  }
 
   const cardAnimation = {
       initial: { opacity: 0, y: 20 },
@@ -430,138 +439,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
   const renderContent = () => {
     return (
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[99vh]" showCloseButton={false}>
-            <div className="hidden md:block md:col-span-1 h-full">
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-2 gap-0 h-[99vh]" showCloseButton={false}>
+            <div className="hidden md:block h-full">
               {renderLeftPanel()}
             </div>
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 h-full">
-              <div className="h-full p-8 flex flex-col justify-start">
-                <AnimatePresence mode="wait">
-                <motion.div
-                    key={currentStep}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex flex-col h-full"
-                >
-                    {currentStep === 1 && (
-                      <form action={formAction} id="domain-form" className="h-full flex flex-col">
-                        <div className="flex-grow">
-                          <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
-                          <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
-                          <div className="space-y-2 pt-4">
-                            <Label htmlFor="domain">Tu Dominio</Label>
-                            <div className="relative">
-                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" defaultValue={domain} onChange={e => setDomain(e.target.value)} />
-                            </div>
-                            {formState.message && !formState.success && <p className="text-sm text-destructive mt-2">{formState.message}</p>}
-                          </div>
-                        </div>
-                      </form>
-                    )}
-                    {currentStep === 2 && (
-                    <>
-                        <h3 className="text-lg font-semibold mb-1">Añadir Registro DNS</h3>
-                        <p className="text-sm text-muted-foreground">Copia el siguiente registro TXT y añádelo a la configuración DNS de tu dominio <b>{truncateDomain(domain)}</b>.</p>
-                        <div className="space-y-3 pt-4 flex-grow">
-                            <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                                <Label className="text-xs font-sans text-muted-foreground">REGISTRO (HOST)</Label>
-                                <div className="flex justify-between items-center">
-                                    <span>@</span>
-                                    <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy('@')}>
-                                        <Copy className="size-4"/>
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="p-3 bg-muted/50 rounded-md text-sm font-mono border">
-                                <Label className="text-xs font-sans text-muted-foreground">VALOR</Label>
-                                <div className="flex justify-between items-center">
-                                    <p className="break-all pr-2">{txtRecordValue}</p>
-                                    <Button variant="ghost" size="icon" className="size-7 flex-shrink-0 text-foreground hover:bg-[#00ADEC] hover:text-white" onClick={() => handleCopy(txtRecordValue)}>
-                                        <Copy className="size-4"/>
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                    )}
-                    {currentStep === 3 && (
-                        <>
-                        <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
-                        <p className="text-sm text-muted-foreground">Nuestra IA analizará los registros DNS de tu dominio para asegurar una alta entregabilidad.</p>
-                        <div className="space-y-3 mt-4 flex-grow">
-                            {healthCheckStep === 'mandatory' ? (
-                            <>
-                              <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                              {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus || 'idle', 'spf')}
-                              {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus || 'idle', 'dkim')}
-                              {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus || 'idle', 'dmarc')}
-                              <div className="pt-2 text-xs text-muted-foreground">
-                                  <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                  <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
-                                  <p><span className="font-semibold">✍️ DKIM:</span> ¿Está firmado y sin cambios?</p>
-                                  <p><span className="font-semibold">🛡️ DMARC:</span> ¿Qué hacer si falla alguna de las dos comprobaciones SPF y DKIM?</p>
-                               </div>
-                            </>
-                            ) : (
-                            <>
-                               <h4 className='font-semibold text-sm'>Registros Opcionales</h4>
-                               {renderRecordStatus('MX', optionalRecordStatus.mx, 'mx')}
-                               {renderRecordStatus('BIMI', optionalRecordStatus.bimi, 'bimi')}
-                               {renderRecordStatus('VMC', optionalRecordStatus.vmc, 'vmc')}
-                               <div className="pt-2 text-xs text-muted-foreground">
-                                  <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
-                                  <p><span className="font-semibold">📥 MX:</span> ¿Dónde recibo mis correos?</p>
-                                  <p><span className="font-semibold">🎨 BIMI:</span> ¿Cuál es mi logo oficial?</p>
-                                  <p><span className="font-semibold">🔐 VMC:</span> ¿Es mi logo una marca registrada?</p>
-                              </div>
-                            </>
-                            )}
-                             
-                             {dnsAnalysis && (
-                                 <div className="pt-4 flex justify-center">
-                                  <div className="relative">
-                                      <button
-                                          className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
-                                          onClick={() => {
-                                              setIsAnalysisModalOpen(true);
-                                              setShowNotification(false);
-                                          }}
-                                      >
-                                          <div className="ai-core-border-animation group-hover:hidden"></div>
-                                          <div className="ai-core group-hover:scale-125"></div>
-                                          <div className="relative z-10 flex items-center justify-center gap-2 text-white">
-                                              <div className="flex gap-1 items-end h-4">
-                                                  <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
-                                                  <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
-                                                  <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
-                                              </div>
-                                              <span className="text-sm font-semibold">Análisis de la IA</span>
-                                          </div>
-                                      </button>
-                                       {showNotification && (
-                                          <div 
-                                              className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
-                                              style={{ backgroundColor: '#F00000' }}
-                                          >
-                                              !
-                                          </div>
-                                      )}
-                                  </div>
-                                 </div>
-                             )}
-
-                        </div>
-                        </>
-                    )}
-                </motion.div>
-                </AnimatePresence>
-              </div>
-              <div className="h-full">
-                {renderRightPanelContent()}
-              </div>
+            <div className="h-full">
+              {renderRightPanelContent()}
             </div>
         </DialogContent>
     );
@@ -845,14 +728,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
 
                          {healthCheckStep === 'optional' && (
                              <Button 
-                                className="w-full h-12 text-base text-white border-2 bg-[#2a004f] border-[#BC00FF] hover:bg-[#BC00FF] hover:border-[#BC00FF]"
-                                onClick={() => {
-                                if (optionalRecordStatus.mx !== 'verified') {
-                                    setIsMxWarningModalOpen(true);
-                                } else {
-                                    handleClose();
-                                }
-                            }}>
+                                className="w-full h-12 text-base text-white border-2 bg-green-800 border-green-500 hover:bg-green-700 hover:border-green-400"
+                                onClick={handleFinish}>
                                 Finalizar
                             </Button>
                          )}
@@ -992,7 +869,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 <AlertDialogFooter>
                     <AlertDialogCancel className="bg-transparent hover:bg-[#00CB07] hover:border-[#00CB07] hover:text-white">Volver y Verificar</AlertDialogCancel>
                     <AlertDialogAction 
-                        onClick={handleClose} 
+                        onClick={handleContinueAnyway} 
                         className="bg-amber-600 hover:bg-amber-500"
                     >
                         Continuar de todos modos
@@ -1000,8 +877,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange }: SmtpConnectionModa
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-        <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
-        <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
         <DnsInfoModal
             recordType={activeInfoModal}
             domain={domain}
@@ -1463,92 +1338,5 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
-
-function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, onOpenChange: (open: boolean) => void, analysis: string | null }) {
-    return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-zinc-900/80 border-cyan-400/20 backdrop-blur-xl text-white overflow-hidden">
-                <div className="absolute inset-0 z-0 opacity-10">
-                    <div className="absolute h-full w-full bg-[radial-gradient(#F00000_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
-                </div>
-                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/20 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
-
-                <DialogHeader className="z-10 flex flex-row justify-between items-center">
-                    <DialogTitle className="flex items-center gap-3 text-xl">
-                        <div className="p-2.5 bg-red-500/10 border-2 border-red-400/20 rounded-full icon-pulse-animation">
-                           <BrainCircuit className="text-red-400" />
-                        </div>
-                        Análisis de Error SMTP
-                        <div className="flex items-end gap-0.5 h-6">
-                            <span className="w-1 h-2/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0s`}}/>
-                            <span className="w-1 h-full bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.2s`}}/>
-                            <span className="w-1 h-3/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.4s`}}/>
-                            <span className="w-1 h-4/5 bg-white rounded-full" style={{animation: `sound-wave 1.2s infinite ease-in-out 0.6s`}}/>
-                        </div>
-                    </DialogTitle>
-                     <div className="flex items-center gap-2 text-sm text-green-300">
-                        EN LÍNEA
-                        <div className="size-3 rounded-full bg-[#39FF14] animate-pulse" style={{boxShadow: '0 0 8px #39FF14'}} />
-                    </div>
-                </DialogHeader>
-                 <ScrollArea className="max-h-[60vh] z-10 -mx-6 px-6">
-                     <div className="py-4 text-red-50 text-sm leading-relaxed whitespace-pre-line bg-black/30 p-4 rounded-lg border border-red-400/10 custom-scrollbar break-words">
-                        {analysis ? analysis : <div className="flex items-center gap-2"><Loader2 className="animate-spin"/> Generando análisis...</div>}
-                    </div>
-                </ScrollArea>
-                <DialogFooter className="z-10">
-                    <Button 
-                        onClick={() => onOpenChange(false)} 
-                        className="text-white bg-green-800 hover:bg-[#00CB07]"
-                    >
-                        Entendido
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: DeliveryStatus, testError: string }) {
-    const steps = [
-        { name: 'Despachado', status: deliveryStatus !== 'idle' },
-        { name: 'Entregado', status: deliveryStatus === 'delivered' },
-        { name: 'Rebotado', status: deliveryStatus === 'bounced' }
-    ];
-
-    return (
-        <div className="mt-4 w-full text-center">
-            <div className="flex justify-between items-center px-4">
-                {steps.map((step, index) => (
-                    <React.Fragment key={step.name}>
-                        <div className="flex flex-col items-center">
-                            <div className={cn(
-                                "size-6 rounded-full flex items-center justify-center border-2 transition-all",
-                                step.status && deliveryStatus !== 'bounced' && "bg-green-500 border-green-400",
-                                step.status && deliveryStatus === 'bounced' && index < 2 && "bg-green-500 border-green-400",
-                                deliveryStatus === 'bounced' && index === 2 && "bg-red-500 border-red-400 animate-pulse"
-                            )}>
-                                {step.status ? (
-                                    <Check className="size-4 text-white" />
-                                ) : (
-                                    <div className="size-2 rounded-full bg-muted-foreground/50" />
-                                )}
-                            </div>
-                            <p className="text-xs mt-1">{step.name}</p>
-                        </div>
-                        {index < steps.length - 1 && (
-                            <div className={cn(
-                                "flex-1 h-0.5 mx-2",
-                                step.status ? (deliveryStatus === 'bounced' ? 'bg-green-500' : 'bg-green-500') : 'bg-muted-foreground/30'
-                            )} />
-                        )}
-                    </React.Fragment>
-                ))}
-            </div>
-        </div>
-    )
-}
-
-    
 
     
