@@ -97,8 +97,8 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     </div>
                     
                     <DialogHeader>
-                        <DialogTitle className="text-3xl font-bold">¡Dominio Verificado!</DialogTitle>
-                        <DialogDescription className="text-lg text-green-200/80 mt-2">
+                        <DialogTitle className="text-3xl font-bold text-center">¡Dominio Verificado!</DialogTitle>
+                        <DialogDescription className="text-lg text-green-200/80 mt-2 text-center">
                             El dominio <span className="font-bold text-white">{truncateDomain(domain)}</span> está listo para despegar.
                         </DialogDescription>
                     </DialogHeader>
@@ -127,9 +127,9 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                         <h4 className="font-semibold text-white mb-2">Registros Obligatorios</h4>
                         <div className="space-y-3 p-3 bg-black/20 border border-cyan-400/10 rounded-lg">
                            <RecordStatus label="Registro TXT" icon={CheckCircle} verified={true} description="Verificación de propiedad del dominio."/>
-                           <RecordStatus label="Registro SPF" icon={CheckCircle} verified={true} description="Autorización de servidores de envío."/>
-                           <RecordStatus label="Registro DKIM" icon={CheckCircle} verified={true} description="Firma digital para autenticidad."/>
-                           <RecordStatus label="Registro DMARC" icon={CheckCircle} verified={true} description="Política de protección y reporte."/>
+                           <RecordStatus label="Registro SPF" icon={CheckCircle} verified={dnsStatus.spf ?? false} description="Autorización de servidores de envío."/>
+                           <RecordStatus label="Registro DKIM" icon={CheckCircle} verified={dnsStatus.dkim ?? false} description="Firma digital para autenticidad."/>
+                           <RecordStatus label="Registro DMARC" icon={CheckCircle} verified={dnsStatus.dmarc ?? false} description="Política de protección y reporte."/>
                         </div>
                     </div>
                     <div>
@@ -158,13 +158,13 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  ) : (
                     <div className="space-y-4">
                         <p className="text-sm text-amber-200/80">
-                            Has encendido los motores de propulsión y <strong className="text-white">ya puedes enviar correos</strong>. Sin embargo, tu escudo deflector (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
+                           Has encendido los motores de red y <strong className="text-white">ya puedes enviar correos</strong>. Sin embargo, tu escudo deflector (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
                         </p>
                          <FeatureCard icon={ShieldCheck} title="Antivirus y Anti-Phishing Cuántico" description="Recepción de correos desactivada." color="#F00000" delay={0.8} enabled={false} />
                          <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Recepción de correos desactivada." color="#F00000" delay={0.9} enabled={false} />
                          <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="Recepción de correos desactivada." color="#F00000" delay={1.0} enabled={false} />
                          <p className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
-                            <strong>Recomendación:</strong> Configura tu registro MX para desbloquear todo el potencial defensivo y de comunicación de Mailflow AI.
+                            <strong>Recomendación:</strong> Configura tu registro MX para desbloquear todo el potencial defensivo y de comunicación de daybuu.
                         </p>
                     </div>
                  )}

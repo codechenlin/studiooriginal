@@ -39,7 +39,7 @@ import { type Domain } from './types';
 interface SmtpConnectionModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onVerificationComplete: (domain: string, mxVerified: boolean) => void;
+  onVerificationComplete: (domain: string, dnsStatus: { spf?: boolean; dkim?: boolean; dmarc?: boolean; mx?: boolean; bimi?: boolean; vmc?: boolean; }) => void;
 }
 
 type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'failed';
@@ -311,17 +311,32 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   }
   
   const handleFinish = () => {
-    const mxVerified = optionalRecordStatus.mx === 'verified';
-    if (!mxVerified) {
+    const dnsStatus = {
+        spf: dnsAnalysis && 'spfStatus' in dnsAnalysis ? dnsAnalysis.spfStatus === 'verified' : false,
+        dkim: dnsAnalysis && 'dkimStatus' in dnsAnalysis ? dnsAnalysis.dkimStatus === 'verified' : false,
+        dmarc: dnsAnalysis && 'dmarcStatus' in dnsAnalysis ? dnsAnalysis.dmarcStatus === 'verified' : false,
+        mx: optionalRecordStatus.mx === 'verified',
+        bimi: optionalRecordStatus.bimi === 'verified',
+        vmc: optionalRecordStatus.vmc === 'verified',
+    };
+    if (!dnsStatus.mx) {
       setIsMxWarningModalOpen(true);
     } else {
-      onVerificationComplete(domain, true);
+      onVerificationComplete(domain, dnsStatus);
       handleClose();
     }
   };
 
   const handleContinueAnyway = () => {
-    onVerificationComplete(domain, false);
+     const dnsStatus = {
+        spf: dnsAnalysis && 'spfStatus' in dnsAnalysis ? dnsAnalysis.spfStatus === 'verified' : false,
+        dkim: dnsAnalysis && 'dkimStatus' in dnsAnalysis ? dnsAnalysis.dkimStatus === 'verified' : false,
+        dmarc: dnsAnalysis && 'dmarcStatus' in dnsAnalysis ? dnsAnalysis.dmarcStatus === 'verified' : false,
+        mx: false,
+        bimi: optionalRecordStatus.bimi === 'verified',
+        vmc: optionalRecordStatus.vmc === 'verified',
+    };
+    onVerificationComplete(domain, dnsStatus);
     setIsMxWarningModalOpen(false);
     handleClose();
   }
@@ -920,23 +935,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       </div>
     );
   };
-  
-    const SubmitButton = () => {
-    const { pending } = useFormStatus();
-    return (
-        <Button
-            type="submit"
-            className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]"
-            disabled={pending || !domain}
-        >
-            {pending ? (
-                <><Loader2 className="mr-2 animate-spin" /> Verificando...</>
-            ) : (
-                <>Siguiente <ArrowRight className="ml-2" /></>
-            )}
-        </Button>
-    );
-};
 
   return (
     <>
@@ -1055,6 +1053,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
 
 // ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
 // The copy of these modals is omitted for brevity but they are part of the file
+type InfoMapEntry = {
+    title: string;
+    description: string;
+};
+
 function DnsInfoModal({
   recordType,
   domain,
@@ -1083,7 +1086,7 @@ function DnsInfoModal({
 
     const baseClass = "p-2 bg-black/20 rounded-md font-mono text-xs text-white/80 flex justify-between items-center";
     
-    const infoMap: Record<InfoViewRecord, { title: string, description: string }> = {
+    const infoMap: Record<InfoViewRecord, InfoMapEntry> = {
       spf: {
         title: "Registro SPF",
         description: "SPF es un registro en tu DNS que dice “Estos son los servidores que tienen permiso para enviar correos en nombre de mi dominio”. Si un servidor que no está en la lista intenta enviar correos electrónicos usando tu dominio, el receptor lo marca como sospechoso o lo rechaza. Ejemplo real: Evita que un spammer envíe correos falsos como si fueran tuyos."
@@ -1466,7 +1469,3 @@ function AiAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: boolean, 
         </Dialog>
     );
 }
-
-    
-
-    
