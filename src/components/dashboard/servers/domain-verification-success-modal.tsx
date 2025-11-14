@@ -63,7 +63,7 @@ const RecordStatus = ({ label, icon: Icon, verified, description }: { label: str
 
 export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, dnsStatus }: DomainVerificationSuccessModalProps) {
 
-  const truncateDomain = (name: string, maxLength: number = 30): string => {
+  const truncateDomain = (name: string, maxLength: number = 20): string => {
     if (name.length <= maxLength) {
         return name;
     }
@@ -72,22 +72,22 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-7xl w-full h-[90vh] bg-black/80 backdrop-blur-xl border-2 border-green-500/20 text-white overflow-hidden p-0">
+      <DialogContent showCloseButton={false} className="max-w-7xl w-full h-[99vh] bg-black/80 backdrop-blur-xl border-2 border-green-500/20 text-white overflow-hidden p-0">
          <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
          <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] bg-green-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
         <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-green-500/20 h-full">
             {/* Column 1: DNS Status */}
             <div className="p-6 flex flex-col z-10">
-                <h3 className="text-lg font-bold text-cyan-300 mb-4 flex items-center gap-2"><Dna/>Resumen de Verificación DNS</h3>
+                <h3 className="text-base font-bold text-cyan-300 mb-4 flex items-center gap-2"><Dna/>Resumen de Verificación DNS</h3>
                 <div className="space-y-4">
                     <div>
                         <h4 className="font-semibold text-white mb-2 text-sm">Registros Obligatorios</h4>
                         <div className="space-y-2 p-3 bg-black/20 border border-cyan-400/10 rounded-lg">
                            <RecordStatus label="Registro TXT" icon={CheckCircle} verified={true} description="Verificación de propiedad del dominio."/>
-                           <RecordStatus label="Registro SPF" icon={CheckCircle} verified={true} description="Autorización de servidores de envío."/>
-                           <RecordStatus label="Registro DKIM" icon={CheckCircle} verified={true} description="Firma digital para autenticidad."/>
-                           <RecordStatus label="Registro DMARC" icon={CheckCircle} verified={true} description="Política de protección y reporte."/>
+                           <RecordStatus label="Registro SPF" icon={CheckCircle} verified={dnsStatus.spf ?? false} description="Autorización de servidores de envío."/>
+                           <RecordStatus label="Registro DKIM" icon={CheckCircle} verified={dnsStatus.dkim ?? false} description="Firma digital para autenticidad."/>
+                           <RecordStatus label="Registro DMARC" icon={CheckCircle} verified={dnsStatus.dmarc ?? false} description="Política de protección y reporte."/>
                         </div>
                     </div>
                     <div>
@@ -110,24 +110,24 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 15 }}
                     className="relative flex flex-col items-center"
                 >
-                    <div className="relative w-28 h-28 mb-4">
+                    <div className="relative w-24 h-24 mb-4">
                         <svg className="absolute inset-0 w-full h-full animate-[hud-spin_25s_linear_infinite]" viewBox="0 0 100 100">
                             <circle cx="50" cy="50" r="48" stroke="rgba(0,255,100,0.1)" strokeWidth="0.5" fill="none" />
                             <path d="M 50,2 A 48,48 0 0,1 98,50" stroke="rgba(0,255,100,0.3)" strokeWidth="1" fill="none" strokeDasharray="3, 6" />
                         </svg>
                          <div className="absolute inset-0 flex items-center justify-center">
-                            <ShieldCheck className="size-20 text-green-400" style={{ filter: 'drop-shadow(0 0 15px #00ff6a)' }}/>
+                            <ShieldCheck className="size-16 text-green-400" style={{ filter: 'drop-shadow(0 0 15px #00ff6a)' }}/>
                         </div>
                     </div>
                     
                     <DialogHeader className="text-center">
                         <DialogTitle className="text-2xl font-bold text-center">¡Dominio Verificado!</DialogTitle>
-                        <DialogDescription className="text-md text-green-200/80 mt-2 text-center">
+                        <DialogDescription className="text-sm text-green-200/80 mt-2 text-center">
                             El dominio <span className="font-bold text-white">{truncateDomain(domain)}</span> está listo para despegar.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <p className="text-xs text-white/70 mt-3">
+                    <p className="text-xs text-white/70 mt-2">
                         Ahora puedes configurar direcciones de correo SMTP y comenzar a enviar campañas con la máxima confianza y entregabilidad.
                     </p>
                 </motion.div>
@@ -145,10 +145,10 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
 
             {/* Column 3: Unlocked Features */}
             <div className="p-6 flex flex-col z-10 bg-black/20">
-                <h3 className="text-lg font-bold text-cyan-300 mb-4 flex items-center gap-2"><Bot />Capacidades Desbloqueadas</h3>
+                <h3 className="text-base font-bold text-cyan-300 mb-4 flex items-center gap-2"><Bot />Capacidades Desbloqueadas</h3>
                  {dnsStatus.mx ? (
                     <div className="space-y-3">
-                       <p className="text-sm text-green-200/80">
+                       <p className="text-xs text-green-200/80">
                          ¡Atención, piloto! Con tu registro MX apuntando a nuestra constelación de servidores, tu dominio no solo enviará correos a la velocidad de la luz, sino que también se ha convertido en una fortaleza digital. Tu buzón de entrada ahora está protegido por nuestro <strong className="text-white">Escudo Neuronal Activo</strong>.
                        </p>
                         <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Neutraliza amenazas antes de que lleguen a tu percepción." color="#00CB07" delay={0.8} enabled={true} />
@@ -157,7 +157,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     </div>
                  ) : (
                     <div className="space-y-3">
-                        <p className="text-sm text-amber-200/80">
+                        <p className="text-xs text-amber-200/80">
                            Has encendido los motores de red y <strong className="text-white">ya puedes enviar correos</strong>. Sin embargo, tu escudo deflector (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
                         </p>
                          <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Recepción de correos desactivada." color="#F00000" delay={0.8} enabled={false} />
