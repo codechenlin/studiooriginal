@@ -44,10 +44,10 @@ async function fetchBimiAndVmcValidation(domain: string): Promise<{ success: boo
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-API-KEY': EXTERNAL_API_KEY, // API Key sent as a header
       },
       body: JSON.stringify({
           domain: domain,
-          api_key: EXTERNAL_API_KEY
       })
     });
 
@@ -63,7 +63,6 @@ async function fetchBimiAndVmcValidation(domain: string): Promise<{ success: boo
     }
 
     const responseData = await response.json();
-    // The API returns the result nested inside a 'result' key. We extract that.
     return { success: true, data: responseData.result || responseData };
   } catch (error: any) {
     console.error('Fallo al conectar con la API externa:', error);
@@ -106,18 +105,20 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
   ]);
   
   // 2. Prepare the data to be sent to the AI
-  const dataToAnalyze = {
-      bimi_vmc_validation: bimiVmcResponse.data,
-      mx_records: mxRecords
+  const dataToAnalyze: any = {
+      bimi_vmc_validation: bimiVmcResponse.data
   };
-  
+
   // Augment MX data for the AI if records were found
   if (mxRecords && mxRecords.length > 0) {
       const daybuuMxRecord = mxRecords.find((record: any) => typeof record.exchange === 'string' && record.exchange.includes('daybuu.com'));
-      dataToAnalyze.mx_records.points_to_daybuu = !!daybuuMxRecord;
-      dataToAnalyze.mx_records.priority_is_zero = daybuuMxRecord ? daybuuMxRecord.priority === 0 : false;
+      dataToAnalyze.mx_records = {
+          records: mxRecords,
+          points_to_daybuu: !!daybuuMxRecord,
+          priority_is_zero: daybuuMxRecord ? daybuuMxRecord.priority === 0 : false,
+      };
   } else {
-       dataToAnalyze.mx_records = { points_to_daybuu: false, priority_is_zero: false, records: [] };
+       dataToAnalyze.mx_records = { records: [], points_to_daybuu: false, priority_is_zero: false };
   }
 
 
