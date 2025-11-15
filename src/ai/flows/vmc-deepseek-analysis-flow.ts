@@ -44,10 +44,10 @@ async function fetchBimiAndVmcValidation(domain: string): Promise<{ success: boo
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': EXTERNAL_API_KEY, // API Key sent as a header
       },
       body: JSON.stringify({
           domain: domain,
+          api_key: EXTERNAL_API_KEY,
       })
     });
 
