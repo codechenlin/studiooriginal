@@ -1,5 +1,5 @@
 
-'use server';
+"use server";
 
 import {
   verifyDnsHealth,
@@ -111,7 +111,3 @@ export async function verifyDomainOwnershipAction(
     };
   }
 }
-
-    
-
-    

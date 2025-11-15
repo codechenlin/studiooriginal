@@ -11,27 +11,44 @@ import { getAiConfigForFlows } from '@/ai/genkit';
 import { type VmcAnalysisInput, type VmcAnalysisOutput, VmcAnalysisOutputSchema } from '@/app/dashboard/demo/types';
 import fs from 'fs/promises';
 import path from 'path';
+import dns from 'node:dns/promises';
 
 const promptsPath = path.join(process.cwd(), 'src', 'app', 'lib', 'prompts.json');
 
-const EXTERNAL_API_BASE = "http://8b3i4m6i39303g2k432u.fanton.cloud:9090";
-const EXTERNAL_API_KEY = "6783434hfsnjd7942074nofsbs6472930nfns629df0983jvnmkd32";
+const EXTERNAL_API_BASE = "https://8b3i4m6i39303g2k432u.fanton.cloud";
+const EXTERNAL_API_KEY = "gd6408fgbn20lpicvm67d0mvfal0anvq83zmj89";
+
+async function getMxRecords(domain: string): Promise<dns.MxRecord[] | null> {
+    try {
+        return await dns.resolveMx(domain);
+    } catch (error: any) {
+        if (error.code === 'ENODATA' || error.code === 'ENOTFOUND') {
+            return null; // No records found is not an error for us.
+        }
+        console.error(`Error fetching MX records for ${domain}:`, error);
+        return null; // Treat other errors as "no records found" for simplicity.
+    }
+}
+
 
 /**
  * Fetches validation data from the external API.
  * @param domain The domain to validate.
  * @returns The full JSON response from the external API or an error object.
  */
-async function fetchDomainValidation(domain: string): Promise<{ success: boolean; data: any }> {
-  const url = `${EXTERNAL_API_BASE}/validate/full?domain=${encodeURIComponent(domain)}`;
+async function fetchBimiAndVmcValidation(domain: string): Promise<{ success: boolean; data: any }> {
+  const url = `${EXTERNAL_API_BASE}/validate`;
   
   try {
     const response = await fetch(url, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': EXTERNAL_API_KEY,
       },
+      body: JSON.stringify({
+          domain: domain,
+          api_key: EXTERNAL_API_KEY
+      })
     });
 
     if (!response.ok) {
@@ -45,7 +62,9 @@ async function fetchDomainValidation(domain: string): Promise<{ success: boolean
       return { success: false, data: { error: errorMessage, rawBody: errorBody } };
     }
 
-    return { success: true, data: await response.json() };
+    const responseData = await response.json();
+    // The API returns the result nested inside a 'result' key. We extract that.
+    return { success: true, data: responseData.result || responseData };
   } catch (error: any) {
     console.error('Fallo al conectar con la API externa:', error);
     const errorMessage = `No se pudo conectar con la API de validación: ${error.message}`;
@@ -80,19 +99,27 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
       throw new Error('La IA de Deepseek no está configurada o habilitada.');
   }
 
-  // 1. Fetch data from the external API
-  const validationResponse = await fetchDomainValidation(input.domain);
+  // 1. Fetch data from both sources concurrently
+  const [bimiVmcResponse, mxRecords] = await Promise.all([
+    fetchBimiAndVmcValidation(input.domain),
+    getMxRecords(input.domain),
+  ]);
   
-  // 2. Prepare the data to be sent to the AI (either success data or error data)
-  const dataToAnalyze = validationResponse.data;
+  // 2. Prepare the data to be sent to the AI
+  const dataToAnalyze = {
+      bimi_vmc_validation: bimiVmcResponse.data,
+      mx_records: mxRecords
+  };
   
-  // If the API call was successful, augment the data with our own MX check
-  if (validationResponse.success && dataToAnalyze.mx) {
-      const mxRecords = Array.isArray(dataToAnalyze.mx?.records) ? dataToAnalyze.mx.records : [];
+  // Augment MX data for the AI if records were found
+  if (mxRecords && mxRecords.length > 0) {
       const daybuuMxRecord = mxRecords.find((record: any) => typeof record.exchange === 'string' && record.exchange.includes('daybuu.com'));
-      dataToAnalyze.mx_points_to_daybuu = !!daybuuMxRecord;
-      dataToAnalyze.mx_priority = daybuuMxRecord ? daybuuMxRecord.priority : null;
+      dataToAnalyze.mx_records.points_to_daybuu = !!daybuuMxRecord;
+      dataToAnalyze.mx_records.priority_is_zero = daybuuMxRecord ? daybuuMxRecord.priority === 0 : false;
+  } else {
+       dataToAnalyze.mx_records = { points_to_daybuu: false, priority_is_zero: false, records: [] };
   }
+
 
   // 3. Get the main prompt and construct the final prompt for the AI
   const vmcPromptTemplate = await getVmcAnalysisPrompt();
@@ -147,4 +174,3 @@ export async function validateAndAnalyzeDomain(input: VmcAnalysisInput): Promise
     throw new Error(`Error al analizar los datos con la IA: ${error.message}`);
   }
 }
-
