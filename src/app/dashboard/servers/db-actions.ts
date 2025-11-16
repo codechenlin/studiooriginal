@@ -8,7 +8,7 @@ import { type Domain } from './types';
 interface FormState {
   success: boolean;
   message: string;
-  status: 'DOMAIN_CREATED' | 'DOMAIN_FOUND' | 'DOMAIN_TAKEN' | 'INVALID_INPUT' | 'ERROR';
+  status: 'idle' | 'DOMAIN_CREATED' | 'DOMAIN_FOUND' | 'DOMAIN_TAKEN' | 'INVALID_INPUT' | 'ERROR';
   domain?: Domain | null;
 }
 
@@ -24,7 +24,8 @@ export async function createOrGetDomainAction(
     return { 
       success: false, 
       message: 'Usuario no autenticado. Por favor, inicie sesión de nuevo.',
-      status: 'ERROR'
+      status: 'ERROR',
+      domain: null,
     };
   };
   
@@ -34,66 +35,77 @@ export async function createOrGetDomainAction(
       return { 
         success: false, 
         message: "Por favor, introduce un nombre de dominio válido.",
-        status: 'INVALID_INPUT'
+        status: 'INVALID_INPUT',
+        domain: null,
       };
   }
 
-  // Check if the domain exists at all.
-  let { data: existingDomain, error: fetchError } = await supabase
-    .from('domains')
-    .select('*')
-    .eq('domain_name', domainName)
-    .single();
+  try {
+    // Check if the domain exists at all.
+    const { data: existingDomain, error: fetchError } = await supabase
+      .from('domains')
+      .select('*')
+      .eq('domain_name', domainName)
+      .single();
 
-  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine.
-    console.error('Error fetching domain:', fetchError);
-    return { success: false, message: 'Error al buscar el dominio: ' + fetchError.message, status: 'ERROR' };
-  }
-  
-  // If the domain exists...
-  if (existingDomain) {
-    // And it belongs to the current user, return a "found" status.
-    if (existingDomain.user_id === user.id) {
-       revalidatePath('/dashboard/servers');
-       return { 
-         success: true, 
-         message: 'Este dominio ya está en tu cuenta. Puedes continuar con la configuración.', 
-         status: 'DOMAIN_FOUND',
-         domain: existingDomain 
-       };
-    } else {
-      // If it belongs to another user, return a "taken" status.
-      return { 
-        success: false, 
-        message: 'Este dominio ya está en uso y no puede ser añadido.',
-        status: 'DOMAIN_TAKEN'
-      };
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine.
+      throw fetchError;
     }
-  }
+    
+    // If the domain exists...
+    if (existingDomain) {
+      // And it belongs to the current user, return a "found" status.
+      if (existingDomain.user_id === user.id) {
+         revalidatePath('/dashboard/servers');
+         return { 
+           success: false, // Not success in terms of creation
+           message: 'Este dominio ya está en tu cuenta. Puedes continuar con la configuración.', 
+           status: 'DOMAIN_FOUND',
+           domain: existingDomain 
+         };
+      } else {
+        // If it belongs to another user, return a "taken" status.
+        return { 
+          success: false, 
+          message: 'Este dominio no está disponible porque ya se encuentra en uso.',
+          status: 'DOMAIN_TAKEN',
+          domain: null,
+        };
+      }
+    }
 
-  // If it doesn't exist, create it.
-  const { data: newDomain, error: insertError } = await supabase
-    .from('domains')
-    .insert({ domain_name: domainName, user_id: user.id })
-    .select()
-    .single();
+    // If it doesn't exist, create it.
+    const { data: newDomain, error: insertError } = await supabase
+      .from('domains')
+      .insert({ domain_name: domainName, user_id: user.id })
+      .select()
+      .single();
 
-  if (insertError) {
-    console.error('Error creating domain:', insertError);
+    if (insertError) {
+      throw insertError;
+    }
+    
+    revalidatePath('/dashboard/servers');
+    return { 
+      success: true, 
+      message: 'Dominio creado con éxito.',
+      status: 'DOMAIN_CREATED',
+      domain: newDomain 
+    };
+
+  } catch (error: any) {
+    console.error('Error in createOrGetDomainAction:', error);
     // This could happen if another user registers it in a race condition due to the UNIQUE constraint.
-    if (insertError.code === '23505') { // unique_violation
-        return { success: false, message: 'Este dominio ya está en uso y no puede ser añadido.', status: 'DOMAIN_TAKEN' };
+    if (error.code === '23505') { // unique_violation
+        return { 
+          success: false, 
+          message: 'Este dominio no está disponible porque ya se encuentra en uso.',
+          status: 'DOMAIN_TAKEN',
+          domain: null,
+        };
     }
-    return { success: false, message: 'Error al crear el dominio: ' + insertError.message, status: 'ERROR' };
+    return { success: false, message: 'Error de servidor: ' + error.message, status: 'ERROR', domain: null };
   }
-  
-  revalidatePath('/dashboard/servers');
-  return { 
-    success: true, 
-    message: 'Dominio creado con éxito.',
-    status: 'DOMAIN_CREATED',
-    domain: newDomain 
-  };
 }
 
 
@@ -125,18 +137,4 @@ export async function setDomainAsVerified(domainId: string) {
   return { success: true };
 }
 
-// --- DNS CHECK ACTIONS ---
-// These will be fleshed out in later steps.
-export async function saveDnsChecks(domainId: string, checks: any) { 
-  return { success: true };
-}
-
-export async function updateDkimKey(domainId: string, dkimPublicKey: string) {
-  return { success: true };
-}
-
-// --- SMTP CREDENTIALS ACTIONS ---
-// These will be fleshed out in later steps.
-export async function saveSmtpCredentials(domainId: string, credentials: any) {
-    return { success: true };
-}
+    

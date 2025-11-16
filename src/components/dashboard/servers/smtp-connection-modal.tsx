@@ -48,11 +48,16 @@ type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
 
 const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
 
-const initialState = {
+const initialState: {
+  success: boolean;
+  message: string;
+  status: 'idle' | 'DOMAIN_CREATED' | 'DOMAIN_FOUND' | 'DOMAIN_TAKEN' | 'INVALID_INPUT' | 'ERROR';
+  domain: Domain | null;
+} = {
   success: false,
   message: '',
-  status: 'idle' as 'idle' | 'DOMAIN_CREATED' | 'DOMAIN_FOUND' | 'DOMAIN_TAKEN' | 'INVALID_INPUT' | 'ERROR',
-  domain: null as Domain | null,
+  status: 'idle',
+  domain: null,
 };
 
 function SubmitButtonContent() {
@@ -104,13 +109,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const { pending } = useFormStatus();
 
   useEffect(() => {
-    if (formState.message && !formState.success && formState.status !== 'idle') {
+    if (formState.message && !formState.success && formState.status !== 'idle' && formState.status !== 'DOMAIN_FOUND' && formState.status !== 'DOMAIN_TAKEN') {
       if(formState.status === 'ERROR' || formState.status === 'INVALID_INPUT') {
           toast({ title: "Error", description: formState.message, variant: "destructive" });
       }
     }
 
-    if (formState.success && formState.domain) {
+    if (formState.status === 'DOMAIN_CREATED' && formState.success && formState.domain) {
       const newDomain = formState.domain.domain_name;
       setCurrentDomainId(formState.domain.id);
       setDomain(newDomain);
@@ -482,17 +487,21 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                     <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
                                 </div>
-                                {!formState.success && formState.message && (formState.status === 'DOMAIN_TAKEN' || formState.status === 'DOMAIN_FOUND') && (
+                                {!formState.success && (formState.status === 'DOMAIN_TAKEN' || formState.status === 'DOMAIN_FOUND') && (
                                   <motion.div
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className={cn(
-                                      "mt-2 p-3 rounded-lg border text-sm flex items-start gap-3",
+                                      "relative mt-2 p-3 rounded-lg border text-sm flex items-start gap-3 overflow-hidden",
                                       formState.status === 'DOMAIN_TAKEN' && "bg-red-900/40 border-red-500/50 text-red-300",
                                       formState.status === 'DOMAIN_FOUND' && "bg-amber-900/40 border-amber-500/50 text-amber-300",
                                     )}
                                   >
-                                    <AlertTriangle className="size-6 shrink-0 mt-0.5"/>
+                                    <div className="absolute top-0 left-0 w-1.5 h-full" style={{background: `linear-gradient(to bottom, ${formState.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}, ${formState.status === 'DOMAIN_TAKEN' ? '#F07000' : '#FFAB00'})`}}/>
+                                    <div className="absolute -top-1 -right-1 w-20 h-20 opacity-10">
+                                      <div className="absolute inset-0 border-2 border-dashed rounded-full animate-spin-slow" style={{borderColor: formState.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}} />
+                                    </div>
+                                    <AlertTriangle className="size-6 shrink-0 mt-0.5" style={{color: formState.status === 'DOMAIN_TAKEN' ? '#F00000' : '#E18700'}}/>
                                     <span>{formState.message}</span>
                                   </motion.div>
                                 )}
@@ -847,7 +856,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                     {currentStep === 1 && (
                       <Button type="submit" form="domain-form" className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]" disabled={!domain || pending}>
-                        <SubmitButtonContent/>
+                        <SubmitButtonContent />
                       </Button>
                     )}
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
@@ -924,8 +933,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     let text = 'ESTADO DEL SISTEMA';
     
     if (pending) {
-      status = 'processing';
-      text = 'VERIFICANDO DOMINIO';
+        status = 'processing';
+        text = 'VERIFICANDO DOMINIO';
     } else if (currentStep === 2) {
       if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICANDO DNS';
       } else if (verificationStatus === 'verified') { status = 'success'; text = 'DOMINIO VERIFICADO';
@@ -957,14 +966,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     return (
       <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
         <div className="relative flex items-center justify-center w-4 h-4">
-          <div className={cn('absolute w-full h-full rounded-full', ledColor, status !== 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
+          <div className={cn('absolute w-full h-full rounded-full', ledColor, status === 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
           {status === 'processing' ? <Loader2 className='w-4 h-4 text-amber-300 animate-spin'/> : <div className={cn('w-2 h-2 rounded-full', ledColor)} /> }
         </div>
         <p className="text-xs font-semibold tracking-wider text-white/80">{text}</p>
       </div>
     );
   };
-
+  
   return (
     <>
       <ToastProvider>
@@ -1543,3 +1552,6 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+
+    
