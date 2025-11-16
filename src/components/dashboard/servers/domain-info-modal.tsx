@@ -42,7 +42,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
+            <DialogContent className="max-w-4xl w-full h-[99vh] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
                  <style>{`
                     .info-grid {
                         background-image:
@@ -90,7 +90,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                             </div>
                             <h2 className="text-2xl font-bold mt-4 font-mono">{truncateDomain(domain.domain_name)}</h2>
                             <p className="text-sm text-cyan-200/80">Verificado el: {format(new Date(domain.updated_at), "d 'de' MMMM, yyyy", { locale: es })}</p>
-                             <Button variant="outline" className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white mt-6" onClick={() => onOpenChange(false)}>
+                            <Button variant="outline" className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white mt-6" onClick={() => onOpenChange(false)}>
                                 <X className="mr-2"/> Cerrar
                             </Button>
                         </motion.div>
