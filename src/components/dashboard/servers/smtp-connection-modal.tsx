@@ -130,10 +130,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         if (formState.status !== 'DOMAIN_TAKEN' && formState.status !== 'DOMAIN_FOUND') {
           toast({ title: "Error", description: formState.message, variant: "destructive" });
         }
-        if (formState.status === 'DOMAIN_FOUND') {
-            setInfoModalDomain(formState.domain);
-            setIsDomainInfoModalOpen(true);
-        }
       }
     }
   }, [formState]);
@@ -500,7 +496,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                     <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
                                 </div>
-                                {!formState.success && (formState.status === 'DOMAIN_TAKEN' || formState.status === 'DOMAIN_FOUND') && (
+                                {!formState.success && (formState.status === 'DOMAIN_TAKEN' || formState.status === 'DOMAIN_FOUND') && !isPending && (
                                   <motion.div
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
