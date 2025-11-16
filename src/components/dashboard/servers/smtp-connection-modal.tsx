@@ -32,7 +32,7 @@ import {
   createOrGetDomainAction,
   updateDomainVerificationCode,
   setDomainAsVerified,
-} from '@/app/dashboard/servers/db-actions';
+} from './db-actions';
 import { type Domain } from './types';
 
 
@@ -51,6 +51,7 @@ const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toSt
 const initialState = {
   success: false,
   message: '',
+  status: 'idle' as 'idle' | 'DOMAIN_CREATED' | 'DOMAIN_FOUND' | 'DOMAIN_TAKEN' | 'INVALID_INPUT' | 'ERROR',
   domain: null as Domain | null,
 };
 
@@ -101,6 +102,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [formState, formAction] = useActionState(createOrGetDomainAction, initialState);
 
   useEffect(() => {
+    if (formState.message && !formState.success) {
+      // Errors or warnings are handled by the UI based on status, but we can toast generic errors.
+      if(formState.status === 'ERROR' || formState.status === 'INVALID_INPUT') {
+          toast({ title: "Error", description: formState.message, variant: "destructive" });
+      }
+    }
+
     if (formState.success && formState.domain) {
       const newDomain = formState.domain.domain_name;
       setCurrentDomainId(formState.domain.id);
@@ -109,21 +117,12 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       const newCode = generateVerificationCode();
       setVerificationCode(newCode);
       
-      // We do this async, no need to wait for it to move to next step
       updateDomainVerificationCode(formState.domain.id, newCode);
       handleGenerateDkim(true, formState.domain.id);
       
       setVerificationStatus('pending');
       setCurrentStep(2);
-      
-    } else if (formState.message && !formState.success) {
-      toast({
-        title: "Error al verificar dominio",
-        description: formState.message,
-        variant: "destructive",
-      });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formState]);
 
   const txtRecordValue = verificationCode;
@@ -482,6 +481,20 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                     <Input id="domain" name="domain" placeholder="ejemplo.com" className="pl-10 h-12 text-base" value={domain} onChange={(e) => setDomain(e.target.value)} />
                                 </div>
+                                {!formState.success && formState.message && (formState.status === 'DOMAIN_TAKEN' || formState.status === 'DOMAIN_FOUND') && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className={cn(
+                                      "mt-2 p-3 rounded-lg border text-sm flex items-start gap-3",
+                                      formState.status === 'DOMAIN_TAKEN' && "bg-red-900/40 border-red-500/50 text-red-300",
+                                      formState.status === 'DOMAIN_FOUND' && "bg-amber-900/40 border-amber-500/50 text-amber-300",
+                                    )}
+                                  >
+                                    <AlertTriangle className="size-6 shrink-0 mt-0.5"/>
+                                    <span>{formState.message}</span>
+                                  </motion.div>
+                                )}
                             </div>
                           </div>
                       </form>
@@ -592,6 +605,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
   
   const renderRightPanelContent = () => {
+    const { pending } = useFormStatus();
     const allMandatoryRecordsVerified = dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' && dnsAnalysis.dkimStatus === 'verified' && dnsAnalysis.dmarcStatus === 'verified';
     
     const propagationSuccessMessage = (
@@ -624,7 +638,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     
     return (
       <div className="relative p-6 border-l h-full flex flex-col items-center text-center bg-muted/20">
-        <StatusIndicator />
+        <StatusIndicator pending={pending}/>
         <div className="w-full flex-grow flex flex-col justify-center">
             <AnimatePresence mode="wait">
               <motion.div
@@ -820,8 +834,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 )}
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                     {currentStep === 1 && (
-                      <Button type="submit" form="domain-form" className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]">
-                        <SubmitButtonContent/>
+                      <Button type="submit" form="domain-form" className="w-full h-12 text-base bg-[#2a004f] text-white hover:bg-[#AD00EC] border-2 border-[#BC00FF] hover:border-[#BC00FF]" disabled={!domain || pending}>
+                        <SubmitButtonContent />
                       </Button>
                     )}
                     {currentStep === 2 && (verificationStatus === 'pending' || verificationStatus === 'failed') &&
@@ -893,11 +907,14 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     );
   };
   
-  const StatusIndicator = () => {
+  const StatusIndicator = ({pending}: {pending: boolean}) => {
     let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
     let text = 'ESTADO DEL SISTEMA';
     
-    if (currentStep === 2) {
+    if (pending) {
+      status = 'processing';
+      text = 'VERIFICANDO DOMINIO';
+    } else if (currentStep === 2) {
       if (verificationStatus === 'verifying') { status = 'processing'; text = 'VERIFICANDO DNS';
       } else if (verificationStatus === 'verified') { status = 'success'; text = 'DOMINIO VERIFICADO';
       } else if (verificationStatus === 'failed') { status = 'error'; text = 'FALLO DE VERIFICACIÓN';
@@ -1012,7 +1029,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             dkimData={dkimData}
             isGeneratingDkim={isGeneratingDkim}
             onRegenerateDkim={handleGenerateDkim}
-            acceptedKey={acceptedDkimKey}
+            acceptedKey={acceptedKey}
             onAcceptKey={(key) => {
               setAcceptedDkimKey(key);
               setShowDkimAcceptWarning(false);
