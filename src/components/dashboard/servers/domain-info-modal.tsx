@@ -4,12 +4,13 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, Mail, ChevronRight, X, CheckCircle, GitBranch, Dna } from 'lucide-react';
+import { Globe, Mail, ChevronRight, X, CheckCircle, GitBranch, Dna, Copy } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { type Domain } from './types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 interface DomainInfoModalProps {
   isOpen: boolean;
@@ -31,6 +32,8 @@ const RecordRow = ({ label, icon: Icon }: { label: string, icon: React.ElementTy
 );
 
 export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModalProps) {
+    const { toast } = useToast();
+
     if (!domain) return null;
 
     const truncateDomain = (name: string, maxLength: number = 21): string => {
@@ -39,6 +42,16 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
         }
         return `${name.substring(0, maxLength)}...`;
     };
+    
+    const handleCopy = (textToCopy: string) => {
+        navigator.clipboard.writeText(textToCopy);
+        toast({
+            title: "¡Copiado!",
+            description: "El registro de verificación ha sido copiado al portapapeles.",
+            className: 'bg-success-login border-none text-white'
+        });
+    }
+
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -90,7 +103,27 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                             </div>
                             <h2 className="text-2xl font-bold mt-4 font-mono">{truncateDomain(domain.domain_name)}</h2>
                             <p className="text-sm text-cyan-200/80">Verificado el: {format(new Date(domain.updated_at), "d 'de' MMMM, yyyy", { locale: es })}</p>
-                            <Button variant="outline" className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white mt-6" onClick={() => onOpenChange(false)}>
+                            
+                            {domain.verification_code && (
+                               <div className="w-full text-left mt-6">
+                                    <h4 className="text-sm font-bold text-cyan-300/80 mb-2">Registro de Verificación</h4>
+                                    <div className="p-3 bg-black/30 rounded-lg border border-cyan-400/20 font-mono text-xs text-white/80">
+                                        <div className="flex justify-between items-center">
+                                            <span className="break-all pr-2">{domain.verification_code}</span>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="size-7 shrink-0 text-cyan-300 hover:bg-cyan-500/20"
+                                                onClick={() => handleCopy(domain.verification_code || '')}
+                                            >
+                                                <Copy className="size-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                             <Button variant="outline" className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white mt-8" onClick={() => onOpenChange(false)}>
                                 <X className="mr-2"/> Cerrar
                             </Button>
                         </motion.div>
