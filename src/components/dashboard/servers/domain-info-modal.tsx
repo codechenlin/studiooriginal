@@ -33,6 +33,13 @@ const RecordRow = ({ label, icon: Icon }: { label: string, icon: React.ElementTy
 export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModalProps) {
     if (!domain) return null;
 
+    const truncateDomain = (name: string, maxLength: number = 21): string => {
+        if (name.length <= maxLength) {
+            return name;
+        }
+        return `${name.substring(0, maxLength)}...`;
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl w-full flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
@@ -70,23 +77,26 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
 
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2">
                     {/* Left Column */}
-                    <div className="p-6 flex flex-col items-center justify-center text-center border-r border-cyan-400/20 relative overflow-hidden info-grid">
+                    <div className="p-8 flex flex-col items-center justify-center text-center border-r border-cyan-400/20 relative overflow-hidden info-grid">
                         <div className="scan-line-info" />
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
-                            className="z-10"
+                            className="z-10 flex flex-col items-center"
                         >
                             <div className="p-4 bg-cyan-500/10 rounded-full border-2 border-cyan-400/30 inline-block">
                                 <CheckCircle className="size-16 text-cyan-300" style={{ filter: 'drop-shadow(0 0 10px #00ADEC)' }} />
                             </div>
-                            <h2 className="text-2xl font-bold mt-4 font-mono">{domain.domain_name}</h2>
+                            <h2 className="text-2xl font-bold mt-4 font-mono">{truncateDomain(domain.domain_name)}</h2>
                             <p className="text-sm text-cyan-200/80">Verificado el: {format(new Date(domain.updated_at), "d 'de' MMMM, yyyy", { locale: es })}</p>
+                             <Button variant="outline" className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white mt-6" onClick={() => onOpenChange(false)}>
+                                <X className="mr-2"/> Cerrar
+                            </Button>
                         </motion.div>
                     </div>
                     {/* Right Column */}
-                    <div className="p-6 flex flex-col z-10">
+                    <div className="p-8 flex flex-col z-10">
                         <h3 className="font-semibold mb-4">Registros DNS Configurados</h3>
                         <div className="space-y-3">
                             <h4 className="text-sm font-bold text-cyan-300/80">Obligatorios</h4>
@@ -102,12 +112,6 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                         </div>
                     </div>
                 </div>
-
-                <DialogFooter className="p-4 border-t border-cyan-400/20 z-10">
-                    <Button variant="outline" className="text-white border-cyan-400/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white" onClick={() => onOpenChange(false)}>
-                        <X className="mr-2"/> Cerrar
-                    </Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
