@@ -29,8 +29,8 @@ import { AddEmailModal } from './add-email-modal';
 import { SubdomainModal } from './subdomain-modal';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { DomainInfoModal } from './domain-info-modal';
+import { createOrGetDomainAction } from '@/app/dashboard/servers/db-actions';
 import {
-  createOrGetDomainAction,
   updateDomainVerificationCode,
   setDomainAsVerified,
 } from '@/app/dashboard/servers/db-actions';
@@ -112,8 +112,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const { pending } = useFormStatus();
 
   useEffect(() => {
-    if (formState.message && !formState.success && formState.status !== 'idle' && formState.status !== 'DOMAIN_FOUND' && formState.status !== 'DOMAIN_TAKEN') {
-      if(formState.status === 'ERROR' || formState.status === 'INVALID_INPUT') {
+    if (formState.message && !formState.success && formState.status !== 'idle') {
+      if (formState.status === 'ERROR' || formState.status === 'INVALID_INPUT') {
           toast({ title: "Error", description: formState.message, variant: "destructive" });
       }
     }
@@ -506,7 +506,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                       <p>{formState.message}</p>
                                       {formState.status === 'DOMAIN_FOUND' && formState.domain && (
                                         <Button 
-                                          className="mt-3 h-8 text-xs bg-gradient-to-r from-[#AD00EC] to-[#1700E6] text-white hover:opacity-90"
+                                          className="mt-3 h-8 text-xs text-white hover:opacity-90"
+                                           style={{background: 'linear-gradient(to right, #AD00EC, #1700E6)'}}
                                           onClick={() => {
                                             setInfoModalDomain(formState.domain);
                                             setIsDomainInfoModalOpen(true);
@@ -1566,3 +1567,5 @@ function SmtpErrorAnalysisModal({ isOpen, onOpenChange, analysis }: { isOpen: bo
         </Dialog>
     );
 }
+
+    
