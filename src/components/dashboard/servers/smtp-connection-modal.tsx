@@ -118,6 +118,35 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [state, formAction] = useActionState(createOrGetDomainAction, initialState);
   const [isPending, startTransition] = useTransition();
 
+  const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
+    const targetDomainId = domainId || state.domain?.id;
+    const currentDomain = domain || state.domain?.domain_name;
+    if(!currentDomain || !targetDomainId) return;
+    
+    setIsGeneratingDkim(true);
+    setAcceptedKey(null); // Reset accepted key on new generation
+    try {
+      const result = await generateDkimKeys({ domain: currentDomain, selector: 'daybuu' });
+      setDkimData(result);
+      await updateDkimKey(targetDomainId, result.publicKeyRecord);
+      if (!isInitial) {
+        toast({
+          title: "¡Nueva Clave Generada!",
+          description: "Se ha generado una nueva clave DKIM con éxito.",
+          className: "bg-[#00CB07] text-white border-none",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error al generar DKIM',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingDkim(false);
+    }
+  };
+
   useEffect(() => {
     if (state.status !== 'idle' && !isPending) {
         if(state.status === 'DOMAIN_FOUND' && state.domain) {
@@ -126,14 +155,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         } else if (state.success && state.domain) {
             setDomain(state.domain.domain_name);
             setVerificationCode(state.domain.verification_code || '');
-            handleGenerateDkim(true, state.domain.id);
             setVerificationStatus('pending');
             setCurrentStep(2);
         } else if (!state.success && state.status !== 'DOMAIN_TAKEN') {
             toast({ title: "Error", description: state.message, variant: "destructive" });
         }
     }
-  }, [state, isPending]);
+  }, [state, isPending, toast]);
 
   const handleSubmitForm = (formData: FormData) => {
     startTransition(() => {
@@ -165,6 +193,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
 
     if (result.success) {
       await setDomainAsVerified(state.domain.id);
+      await handleGenerateDkim(true, state.domain.id); // Generate DKIM key right after verification
       setVerificationStatus('verified');
       setHasVerifiedDomains(true); 
       form.setValue('username', `ejemplo@${state.domain.domain_name}`);
@@ -262,35 +291,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       setDnsAnalysis(null);
       setOptionalRecordStatus({ mx: 'failed', bimi: 'failed', vmc: 'failed' });
       console.error("Optional DNS Analysis Error:", result.error);
-    }
-  };
-
-  const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
-    const targetDomainId = domainId || state.domain?.id;
-    const currentDomain = domain || state.domain?.domain_name;
-    if(!currentDomain || !targetDomainId) return;
-    
-    setIsGeneratingDkim(true);
-    setAcceptedKey(null); // Reset accepted key on new generation
-    try {
-      const result = await generateDkimKeys({ domain: currentDomain, selector: 'daybuu' });
-      setDkimData(result);
-      await updateDkimKey(targetDomainId, result.publicKeyRecord);
-      if (!isInitial) {
-        toast({
-          title: "¡Nueva Clave Generada!",
-          description: "Se ha generado una nueva clave DKIM con éxito.",
-          className: "bg-[#00CB07] text-white border-none",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Error al generar DKIM',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsGeneratingDkim(false);
     }
   };
 
@@ -466,8 +466,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           </div>
       )
   }
-
-  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
 
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
