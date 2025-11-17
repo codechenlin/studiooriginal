@@ -111,15 +111,47 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     className="relative flex flex-col items-center"
                 >
                     <div className="relative w-48 h-48 mb-4">
-                        <svg className="absolute inset-0 w-full h-full animate-[hud-spin_25s_linear_infinite]" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="48" stroke="rgba(0,255,100,0.1)" strokeWidth="0.5" fill="none" />
-                            <path d="M 50,2 A 48,48 0 0,1 98,50" stroke="rgba(0,255,100,0.3)" strokeWidth="1" fill="none" strokeDasharray="3, 6" />
+                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                           <defs>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                           </defs>
+                            {/* Orbiting rings */}
+                            <motion.path
+                                d="M 30,15 A 35,35 0 1,1 70,85"
+                                fill="none"
+                                stroke="rgba(0, 203, 7, 0.4)"
+                                strokeWidth="2"
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                            />
+                             <motion.path
+                                d="M 15,70 A 35,35 0 1,1 85,30"
+                                fill="none"
+                                stroke="rgba(0, 203, 7, 0.4)"
+                                strokeWidth="2"
+                                initial={{ rotate: 0 }}
+                                animate={{ rotate: -360 }}
+                                transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+                            />
+                            {/* Pulsating particles */}
+                             <motion.circle cx="30" cy="15" r="2" fill="#00CB07" initial={{scale:0, opacity:0}} animate={{scale:[0,1,0], opacity:[0,1,0]}} transition={{duration: 4, repeat: Infinity, delay: 1}}/>
+                             <motion.circle cx="85" cy="30" r="2" fill="#00CB07" initial={{scale:0, opacity:0}} animate={{scale:[0,1,0], opacity:[0,1,0]}} transition={{duration: 4, repeat: Infinity, delay: 3}}/>
                         </svg>
-                         <div className="absolute inset-0 rounded-full border-2 border-dashed border-green-400/50 animate-spin-slow" />
-                         <div className="absolute inset-2 rounded-full border-2 border-dashed border-green-400/30 animate-pulse" style={{ animationDirection: 'reverse' }} />
-                         <div className="absolute inset-0 flex items-center justify-center">
-                            <ShieldCheck className="size-32 text-green-400" style={{ filter: 'drop-shadow(0 0 25px #00ff6a)' }}/>
-                        </div>
+
+                         <motion.div 
+                            className="absolute inset-0 flex items-center justify-center"
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                         >
+                            <ShieldCheck className="text-green-400" style={{ fontSize: '128px', filter: 'drop-shadow(0 0 25px #00ff6a)' }}/>
+                         </motion.div>
                     </div>
                     
                     <DialogHeader className="text-center">
@@ -160,7 +192,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  ) : (
                     <div className="space-y-3">
                         <p className="text-xs text-amber-200/80">
-                           Has encendido los motores de red y <strong className="text-white">ya puedes enviar correos</strong>. Sin embargo, tu escudo deflector (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
+                           Has encendido los motores de red, ya puedes enviar correos. Sin embargo, tu (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
                         </p>
                          <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Recepción de correos desactivada." color="#F00000" delay={0.8} enabled={false} />
                          <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Recepción de correos desactivada." color="#F00000" delay={0.9} enabled={false} />
