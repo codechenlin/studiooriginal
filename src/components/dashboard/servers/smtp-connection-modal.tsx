@@ -118,6 +118,30 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [state, formAction] = useActionState(createOrGetDomainAction, initialState);
   const [isPending, startTransition] = useTransition();
 
+  const smtpFormSchema = z.object({
+    host: z.string().min(1, "El host es requerido."),
+    port: z.coerce.number().min(1, "El puerto es requerido."),
+    encryption: z.enum(['tls', 'ssl', 'none']),
+    username: z.string().email("Debe ser un correo válido."),
+    password: z.string().min(1, "La contraseña es requerida."),
+    testEmail: z.string().email("El correo de prueba debe ser válido.")
+  }).refine(data => !domain || data.username.endsWith(`@${domain}`), {
+    message: `El correo debe pertenecer al dominio verificado (${domain})`,
+    path: ["username"],
+  });
+
+  const form = useForm<z.infer<typeof smtpFormSchema>>({
+    resolver: zodResolver(smtpFormSchema),
+    defaultValues: {
+      host: '',
+      port: 587,
+      encryption: 'tls',
+      username: '',
+      password: '',
+      testEmail: '',
+    },
+  });
+
   const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
     const targetDomainId = domainId || state.domain?.id;
     const currentDomain = domain || state.domain?.domain_name;
@@ -193,7 +217,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
 
     if (result.success) {
       await setDomainAsVerified(state.domain.id);
-      await handleGenerateDkim(true, state.domain.id); // Generate DKIM key right after verification
+      await handleGenerateDkim(true, state.domain.id);
       setVerificationStatus('verified');
       setHasVerifiedDomains(true); 
       form.setValue('username', `ejemplo@${state.domain.domain_name}`);
@@ -466,6 +490,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           </div>
       )
   }
+
+  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
 
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
