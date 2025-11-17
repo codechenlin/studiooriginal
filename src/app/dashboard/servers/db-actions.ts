@@ -9,7 +9,7 @@ interface FormState {
   success: boolean;
   message: string;
   status: 'idle' | 'DOMAIN_CREATED' | 'DOMAIN_FOUND' | 'DOMAIN_TAKEN' | 'INVALID_INPUT' | 'ERROR';
-  domain?: Domain | null;
+  domain: Domain | null;
 }
 
 const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
@@ -90,6 +90,17 @@ export async function createOrGetDomainAction(
     if (insertError) {
       throw insertError;
     }
+
+    // Create an associated entry in dns_checks
+    const { error: dnsCheckError } = await supabase
+        .from('dns_checks')
+        .insert({ domain_id: newDomain.id });
+
+    if (dnsCheckError) {
+        // Optional: you might want to roll back the domain creation if this fails
+        console.error("Failed to create initial dns_check entry:", dnsCheckError);
+        // For simplicity, we'll just log the error here.
+    }
     
     revalidatePath('/dashboard/servers');
     return { 
@@ -114,7 +125,6 @@ export async function createOrGetDomainAction(
   }
 }
 
-
 export async function setDomainAsVerified(domainId: string) {
   const supabase = createClient();
   const { error } = await supabase
@@ -130,7 +140,6 @@ export async function setDomainAsVerified(domainId: string) {
   return { success: true };
 }
 
-
 export async function updateDkimKey(domainId: string, publicKey: string) {
     const supabase = createClient();
     const { data, error } = await supabase
@@ -139,22 +148,9 @@ export async function updateDkimKey(domainId: string, publicKey: string) {
         .eq('domain_id', domainId)
         .select();
 
-    if (error && error.code === 'PGRST116') { // No rows found, so insert
-        const { data: insertData, error: insertError } = await supabase
-            .from('dns_checks')
-            .insert({ domain_id: domainId, dkim_public_key: publicKey });
-        if(insertError) throw insertError;
-        return { success: true, data: insertData };
-    }
-    
-    if (error) throw error;
-    
-    if (!data || data.length === 0) {
-       const { data: insertData, error: insertError } = await supabase
-            .from('dns_checks')
-            .insert({ domain_id: domainId, dkim_public_key: publicKey });
-       if(insertError) throw insertError;
-       return { success: true, data: insertData };
+    if (error) {
+        console.error('Error updating DKIM key:', error);
+        throw error;
     }
     
     return { success: true, data };
@@ -167,23 +163,10 @@ export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_veri
         .update({ ...checks, updated_at: new Date().toISOString() })
         .eq('domain_id', domainId)
         .select();
-
-    if (error && error.code === 'PGRST116') { // No rows found, so insert
-        const { data: insertData, error: insertError } = await supabase
-            .from('dns_checks')
-            .insert({ domain_id: domainId, ...checks });
-        if(insertError) throw insertError;
-        return { success: true, data: insertData };
-    }
-        
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-       const { data: insertData, error: insertError } = await supabase
-            .from('dns_checks')
-            .insert({ domain_id: domainId, ...checks });
-       if(insertError) throw insertError;
-       return { success: true, data: insertData };
+    
+    if (error) {
+        console.error('Error saving DNS checks:', error);
+        throw error;
     }
 
     return { success: true, data };

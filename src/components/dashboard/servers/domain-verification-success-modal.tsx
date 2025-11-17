@@ -110,13 +110,15 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     transition={{ delay: 0.2, type: "spring", stiffness: 100, damping: 15 }}
                     className="relative flex flex-col items-center"
                 >
-                    <div className="relative w-24 h-24 mb-4">
+                    <div className="relative w-48 h-48 mb-4">
                         <svg className="absolute inset-0 w-full h-full animate-[hud-spin_25s_linear_infinite]" viewBox="0 0 100 100">
                             <circle cx="50" cy="50" r="48" stroke="rgba(0,255,100,0.1)" strokeWidth="0.5" fill="none" />
                             <path d="M 50,2 A 48,48 0 0,1 98,50" stroke="rgba(0,255,100,0.3)" strokeWidth="1" fill="none" strokeDasharray="3, 6" />
                         </svg>
+                         <div className="absolute inset-0 rounded-full border-2 border-dashed border-green-400/50 animate-spin-slow" />
+                         <div className="absolute inset-2 rounded-full border-2 border-dashed border-green-400/30 animate-pulse" style={{ animationDirection: 'reverse' }} />
                          <div className="absolute inset-0 flex items-center justify-center">
-                            <ShieldCheck className="size-16 text-green-400" style={{ filter: 'drop-shadow(0 0 15px #00ff6a)' }}/>
+                            <ShieldCheck className="size-32 text-green-400" style={{ filter: 'drop-shadow(0 0 25px #00ff6a)' }}/>
                         </div>
                     </div>
                     
