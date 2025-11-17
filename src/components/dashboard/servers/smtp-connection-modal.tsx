@@ -35,6 +35,7 @@ import {
   setDomainAsVerified,
   updateDkimKey,
   saveDnsChecks,
+  saveSmtpCredentials,
 } from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
 
@@ -47,7 +48,9 @@ interface SmtpConnectionModalProps {
 
 type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'failed';
 type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
+type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
+type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
 
 const initialState: {
   success: boolean;
@@ -81,9 +84,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
-  const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
-  const [infoModalDomain, setInfoModalDomain] = useState<Domain | null>(null);
   const [finalDnsStatus, setFinalDnsStatus] = useState<any>({});
+
 
   const [optionalRecordStatus, setOptionalRecordStatus] = useState({
       mx: 'idle' as HealthCheckStatus,
@@ -91,38 +93,34 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       vmc: 'idle' as HealthCheckStatus
   });
 
+  const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
   const [dkimData, setDkimData] = useState<DkimGenerationOutput | null>(null);
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [testError, setTestError] = useState('');
+  const [isConnectionSecure, setIsConnectionSecure] = useState(false);
   
   const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
   const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
   
-  const [acceptedKey, setAcceptedKey] = useState<string | null>(null);
+  const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
   
+  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
-  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); 
-  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); 
+  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); // New state for subdomain feature
+  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
   
   const [state, formAction] = useActionState(createOrGetDomainAction, initialState);
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<z.infer<typeof smtpFormSchema>>({
-    resolver: zodResolver(smtpFormSchema),
-    defaultValues: {
-      host: '',
-      port: 587,
-      encryption: 'tls',
-      username: '',
-      password: '',
-      testEmail: '',
-    },
-  });
+  const [infoModalDomain, setInfoModalDomain] = useState<Domain | null>(null);
+  const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
+
   const smtpFormSchema = z.object({
     host: z.string().min(1, "El host es requerido."),
     port: z.coerce.number().min(1, "El puerto es requerido."),
@@ -135,13 +133,56 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     path: ["username"],
   });
 
+  const form = useForm<z.infer<typeof smtpFormSchema>>({
+    resolver: zodResolver(smtpFormSchema),
+    defaultValues: {
+      host: '',
+      port: 587,
+      encryption: 'tls',
+      username: '',
+      password: '',
+      testEmail: '',
+    },
+  });
+
+  const handleSubmitForm = (formData: FormData) => {
+    startTransition(() => {
+      formAction(formData);
+    });
+  };
+
+  useEffect(() => {
+    if (state.status !== 'idle' && !isPending) {
+        if(state.status === 'DOMAIN_FOUND' && state.domain) {
+            setInfoModalDomain(state.domain);
+            setIsDomainInfoModalOpen(true);
+        } else if (state.success && state.domain) {
+            setDomain(state.domain.domain_name);
+            setVerificationCode(state.domain.verification_code || '');
+            setVerificationStatus('pending');
+            setCurrentStep(2);
+        } else if (!state.success && state.status !== 'DOMAIN_TAKEN') {
+            toast({ title: "Error", description: state.message, variant: "destructive" });
+        }
+    }
+  }, [state, isPending, toast]);
+
+  const txtRecordValue = verificationCode;
+
+  const truncateDomain = (name: string, maxLength: number = 20): string => {
+    if (name.length <= maxLength) {
+        return name;
+    }
+    return `${name.substring(0, maxLength)}...`;
+  };
+
   const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
     const targetDomainId = domainId || state.domain?.id;
     const currentDomain = domain || state.domain?.domain_name;
     if(!currentDomain || !targetDomainId) return;
     
     setIsGeneratingDkim(true);
-    setAcceptedKey(null); // Reset accepted key on new generation
+    setAcceptedDkimKey(null); // Reset accepted key on new generation
     try {
       const result = await generateDkimKeys({ domain: currentDomain, selector: 'daybuu' });
       setDkimData(result);
@@ -162,37 +203,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     } finally {
       setIsGeneratingDkim(false);
     }
-  };
-
-  useEffect(() => {
-    if (state.status !== 'idle' && !isPending) {
-        if(state.status === 'DOMAIN_FOUND' && state.domain) {
-            setInfoModalDomain(state.domain);
-            setIsDomainInfoModalOpen(true);
-        } else if (state.success && state.domain) {
-            setDomain(state.domain.domain_name);
-            setVerificationCode(state.domain.verification_code || '');
-            setVerificationStatus('pending');
-            setCurrentStep(2);
-        } else if (!state.success && state.status !== 'DOMAIN_TAKEN') {
-            toast({ title: "Error", description: state.message, variant: "destructive" });
-        }
-    }
-  }, [state, isPending, toast]);
-
-  const handleSubmitForm = (formData: FormData) => {
-    startTransition(() => {
-      formAction(formData);
-    });
-  };
-
-  const txtRecordValue = verificationCode;
-
-  const truncateDomain = (name: string, maxLength: number = 20): string => {
-    if (name.length <= maxLength) {
-        return name;
-    }
-    return `${name.substring(0, maxLength)}...`;
   };
   
   const handleCheckVerification = async () => {
@@ -225,7 +235,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
   
   const handleCheckHealth = async () => {
-    if (!state.domain || !acceptedKey) {
+    if (!state.domain || !acceptedDkimKey) {
       toast({
         title: "Acción Requerida",
         description: "Debes 'Aceptar y Usar' una clave DKIM antes de verificar la salud del dominio.",
@@ -242,7 +252,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     try {
       const result = await verifyDnsAction({
         domain: state.domain.domain_name,
-        dkimPublicKey: acceptedKey,
+        dkimPublicKey: acceptedDkimKey,
       });
       
       setHealthCheckStatus(result.success ? 'verified' : 'failed');
@@ -339,13 +349,15 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     setVerificationStatus('idle');
     setHealthCheckStatus('idle');
     setDnsAnalysis(null);
+    form.reset();
     setActiveInfoModal(null);
     setIsCancelConfirmOpen(false);
     setDkimData(null);
     setShowNotification(false);
     setHealthCheckStep('mandatory');
     setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
-    setAcceptedKey(null);
+    setSmtpErrorAnalysis(null);
+    setAcceptedDkimKey(null);
     setFinalDnsStatus({});
   }
 
@@ -368,7 +380,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     setIsPauseModalOpen(false);
     setIsCancelConfirmOpen(true);
   }
-
+  
   const handleFinish = () => {
     if (!state.domain) return;
     
@@ -387,6 +399,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     handleClose();
   }
 
+
   const cardAnimation = {
       initial: { opacity: 0, y: 20 },
       animate: { opacity: 1, y: 0 },
@@ -396,15 +409,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const DomainStatusIndicator = () => {
     if (currentStep < 2 || !state.domain) return null;
     
+    const isConfigFinished = currentStep === 4;
+
     return (
         <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
             <p className="text-xs text-muted-foreground">Dominio en configuración</p>
             <div className="flex items-center justify-center gap-2 mt-1">
                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                    animate={{ rotate: isConfigFinished ? 0 : 360 }}
+                    transition={{ duration: 4, repeat: isConfigFinished ? 0 : Infinity, ease: 'linear' }}
                   >
-                    <Workflow className="size-5 text-primary"/>
+                    {isConfigFinished ? <CheckCircle className="size-5 text-[#00F508]"/> : <Workflow className="size-5 text-primary"/>}
                  </motion.div>
                 <span className="font-semibold text-base text-white/90">{truncateDomain(state.domain.domain_name)}</span>
             </div>
@@ -595,9 +610,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                           {healthCheckStep === 'mandatory' ? (
                           <>
                             <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                            {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus ? 'verified' : 'idle', 'spf')}
-                            {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus ? 'verified' : 'idle', 'dkim')}
-                            {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus ? 'verified' : 'idle', 'dmarc')}
+                            {renderRecordStatus('SPF', dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' ? 'verified' : 'idle', 'spf')}
+                            {renderRecordStatus('DKIM', dnsAnalysis && 'dkimStatus' in dnsAnalysis && dnsAnalysis.dkimStatus === 'verified' ? 'verified' : 'idle', 'dkim')}
+                            {renderRecordStatus('DMARC', dnsAnalysis && 'dmarcStatus' in dnsAnalysis && dnsAnalysis.dmarcStatus === 'verified' ? 'verified' : 'idle', 'dmarc')}
                             <div className="pt-2 text-xs text-muted-foreground">
                                 <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
                                 <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
@@ -1125,7 +1140,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             dkimData={dkimData}
             isGeneratingDkim={isGeneratingDkim}
             onRegenerateDkim={handleGenerateDkim}
-            acceptedKey={acceptedKey}
+            acceptedKey={acceptedDkimKey}
             onAcceptKey={(key) => {
               setAcceptedKey(key);
               setShowDkimAcceptWarning(false);
@@ -1667,5 +1682,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: any, 
         </div>
     )
 }
-
-    
