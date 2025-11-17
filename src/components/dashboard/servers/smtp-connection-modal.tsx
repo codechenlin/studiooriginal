@@ -35,7 +35,6 @@ import {
   setDomainAsVerified,
   updateDkimKey,
   saveDnsChecks,
-  saveSmtpCredentials,
 } from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
 
@@ -496,6 +495,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           </div>
       )
   }
+
+  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
 
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
@@ -1142,7 +1143,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             onRegenerateDkim={handleGenerateDkim}
             acceptedKey={acceptedDkimKey}
             onAcceptKey={(key) => {
-              setAcceptedKey(key);
+              setAcceptedDkimKey(key);
               setShowDkimAcceptWarning(false);
               setShowKeyAcceptedToast(true);
               setTimeout(() => setShowKeyAcceptedToast(false), 3000);
@@ -1152,6 +1153,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             isOpen={isAnalysisModalOpen}
             onOpenChange={setIsAnalysisModalOpen}
             analysis={(dnsAnalysis as any)?.detailed_analysis || (dnsAnalysis as any)?.analysis || null}
+        />
+        <SmtpErrorAnalysisModal
+            isOpen={isSmtpErrorAnalysisModalOpen}
+            onOpenChange={setIsSmtpErrorAnalysisModalOpen}
+            analysis={smtpErrorAnalysis}
         />
         {showKeyAcceptedToast && (
             <div className="fixed top-4 right-4 z-[101] w-80">
