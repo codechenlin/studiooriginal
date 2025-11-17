@@ -523,7 +523,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             <div className="hidden md:block md:col-span-1 h-full">
               {renderLeftPanel()}
             </div>
-            <div className="md:col-span-1 h-full p-8 flex flex-col justify-center">
+            <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
               <AnimatePresence mode="wait">
               <motion.div
                   key={currentStep}
@@ -535,7 +535,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
               >
                   {currentStep === 1 && (
                       <form action={handleSubmitForm} id="domain-form" className="flex flex-col h-full">
-                          <div className="flex-grow flex flex-col justify-center">
+                          <div className="flex flex-col justify-start">
                             <h3 className="text-lg font-semibold mb-1">Introduce tu Dominio</h3>
                             <p className="text-sm text-muted-foreground">Para asegurar la entregabilidad y autenticidad de tus correos, primero debemos verificar que eres el propietario del dominio.</p>
                             <div className="space-y-2 pt-4">
