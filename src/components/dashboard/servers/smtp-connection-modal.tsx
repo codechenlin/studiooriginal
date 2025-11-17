@@ -32,6 +32,10 @@ import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { DomainInfoModal } from './domain-info-modal';
 import { 
   createOrGetDomainAction,
+  setDomainAsVerified,
+  updateDkimKey,
+  saveDnsChecks,
+  saveSmtpCredentials,
 } from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
 
@@ -44,9 +48,9 @@ interface SmtpConnectionModalProps {
 
 type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'failed';
 type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
+type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
-
-const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
+type DeliveryStatus = 'idle' | 'sent' | 'delivered' | 'bounced';
 
 const initialState: {
   success: boolean;
@@ -89,21 +93,28 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       vmc: 'idle' as HealthCheckStatus
   });
 
+  const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
   const [dkimData, setDkimData] = useState<DkimGenerationOutput | null>(null);
   const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [testError, setTestError] = useState('');
+  const [isConnectionSecure, setIsConnectionSecure] = useState(false);
+  
+  const [isSmtpErrorAnalysisModalOpen, setIsSmtpErrorAnalysisModalOpen] = useState(false);
+  const [smtpErrorAnalysis, setSmtpErrorAnalysis] = useState<string | null>(null);
   
   const [acceptedKey, setAcceptedKey] = useState<string | null>(null);
   const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
   const [showKeyAcceptedToast, setShowKeyAcceptedToast] = useState(false);
   
+  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('idle');
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [hasVerifiedDomains, setHasVerifiedDomains] = useState(false); // New state for subdomain feature
+  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false); // New state for subdomain modal
+  const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   const [isMxWarningModalOpen, setIsMxWarningModalOpen] = useState(false);
   
-  const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
-  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
-
   const [state, formAction] = useActionState(createOrGetDomainAction, initialState);
   const [isPending, startTransition] = useTransition();
 
@@ -111,20 +122,19 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     if (state.status !== 'idle' && !isPending) {
         if(state.status === 'DOMAIN_FOUND' && state.domain) {
             setInfoModalDomain(state.domain);
+            setIsDomainInfoModalOpen(true);
         } else if (state.success && state.domain) {
-            const newDomain = state.domain.domain_name;
-            setDomain(newDomain);
-            const newCode = generateVerificationCode();
-            setVerificationCode(newCode);
+            setDomain(state.domain.domain_name);
+            setVerificationCode(state.domain.verification_code || '');
             handleGenerateDkim(true, state.domain.id);
             setVerificationStatus('pending');
             setCurrentStep(2);
-        } else if (!state.success && state.status !== 'DOMAIN_TAKEN' && state.status !== 'DOMAIN_FOUND') {
+        } else if (!state.success && state.status !== 'DOMAIN_TAKEN') {
             toast({ title: "Error", description: state.message, variant: "destructive" });
         }
     }
   }, [state, isPending]);
-  
+
   const handleSubmitForm = (formData: FormData) => {
     startTransition(() => {
       formAction(formData);
@@ -141,10 +151,11 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
   
   const handleCheckVerification = async () => {
+    if (!state.domain) return;
     setVerificationStatus('verifying');
     
     const result = await verifyDomainOwnershipAction({
-        domain,
+        domain: state.domain.domain_name,
         expectedValue: txtRecordValue,
         recordType: 'TXT',
         name: '@'
@@ -153,7 +164,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     if (result.success) {
+      await setDomainAsVerified(state.domain.id);
       setVerificationStatus('verified');
+      setHasVerifiedDomains(true); 
+      form.setValue('username', `ejemplo@${state.domain.domain_name}`);
     } else {
       setVerificationStatus('failed');
       toast({
@@ -165,7 +179,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
   
   const handleCheckHealth = async () => {
-    if (!acceptedKey) {
+    if (!state.domain || !acceptedKey) {
       toast({
         title: "Acción Requerida",
         description: "Debes 'Aceptar y Usar' una clave DKIM antes de verificar la salud del dominio.",
@@ -181,13 +195,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
 
     try {
       const result = await verifyDnsAction({
-        domain,
+        domain: state.domain.domain_name,
         dkimPublicKey: acceptedKey,
       });
       
       setHealthCheckStatus(result.success ? 'verified' : 'failed');
       if (result.success && result.data) {
         setDnsAnalysis(result.data);
+        await saveDnsChecks(state.domain.id, {
+            spf_verified: result.data.spfStatus === 'verified',
+            dkim_verified: result.data.dkimStatus === 'verified',
+            dmarc_verified: result.data.dmarcStatus === 'verified',
+        });
         const allVerified = result.data.spfStatus === 'verified' && result.data.dkimStatus === 'verified' && result.data.dmarcStatus === 'verified';
         if (!allVerified) {
           setShowNotification(true);
@@ -210,17 +229,26 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   }
 
   const handleCheckOptionalHealth = async () => {
+    if(!state.domain) return;
+
     setHealthCheckStatus('verifying');
     setDnsAnalysis(null);
     setShowNotification(false);
     setOptionalRecordStatus({ mx: 'idle', bimi: 'idle', vmc: 'idle' });
 
-    const result = await validateDomainWithAIAction({ domain });
+    const result = await validateDomainWithAIAction({ domain: state.domain.domain_name });
     
     setHealthCheckStatus('verified');
     if (result.success && result.data) {
       const typedData = result.data as VmcAnalysisOutput;
       setDnsAnalysis(typedData);
+      
+      const checksToSave = {
+          mx_verified: typedData.mx_is_valid,
+          bimi_verified: typedData.bimi_is_valid,
+          vmc_verified: typedData.vmc_is_authentic,
+      };
+      await saveDnsChecks(state.domain.id, checksToSave);
       
       setOptionalRecordStatus({
         mx: typedData.mx_is_valid ? 'verified' : 'failed',
@@ -238,14 +266,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
 
   const handleGenerateDkim = async (isInitial = false, domainId?: string) => {
+    const targetDomainId = domainId || state.domain?.id;
     const currentDomain = domain || state.domain?.domain_name;
-    if(!currentDomain) return;
+    if(!currentDomain || !targetDomainId) return;
     
     setIsGeneratingDkim(true);
     setAcceptedKey(null); // Reset accepted key on new generation
     try {
       const result = await generateDkimKeys({ domain: currentDomain, selector: 'daybuu' });
       setDkimData(result);
+      await updateDkimKey(targetDomainId, result.publicKeyRecord);
       if (!isInitial) {
         toast({
           title: "¡Nueva Clave Generada!",
@@ -310,6 +340,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   }
   
   const handleFinish = () => {
+    if (!state.domain) return;
     const dnsStatus = {
         spf: dnsAnalysis && 'spfStatus' in dnsAnalysis ? dnsAnalysis.spfStatus === 'verified' : false,
         dkim: dnsAnalysis && 'dkimStatus' in dnsAnalysis ? dnsAnalysis.dkimStatus === 'verified' : false,
@@ -321,12 +352,13 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     if (!dnsStatus.mx) {
       setIsMxWarningModalOpen(true);
     } else {
-      onVerificationComplete(domain, dnsStatus);
+      onVerificationComplete(state.domain.domain_name, dnsStatus);
       handleClose();
     }
   };
 
   const handleContinueAnyway = () => {
+     if (!state.domain) return;
      const dnsStatus = {
         spf: dnsAnalysis && 'spfStatus' in dnsAnalysis ? dnsAnalysis.spfStatus === 'verified' : false,
         dkim: dnsAnalysis && 'dkimStatus' in dnsAnalysis ? dnsAnalysis.dkimStatus === 'verified' : false,
@@ -335,7 +367,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         bimi: optionalRecordStatus.bimi === 'verified',
         vmc: optionalRecordStatus.vmc === 'verified',
     };
-    onVerificationComplete(domain, dnsStatus);
+    onVerificationComplete(state.domain.domain_name, dnsStatus);
     setIsMxWarningModalOpen(false);
     handleClose();
   }
@@ -347,7 +379,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
 
   const DomainStatusIndicator = () => {
-    if (currentStep < 2) return null;
+    if (currentStep < 2 || !state.domain) return null;
     
     return (
         <div className="p-3 mb-6 rounded-lg border border-white/10 bg-black/20 text-center">
@@ -359,7 +391,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   >
                     <Workflow className="size-5 text-primary"/>
                  </motion.div>
-                <span className="font-semibold text-base text-white/90">{truncateDomain(domain)}</span>
+                <span className="font-semibold text-base text-white/90">{truncateDomain(state.domain.domain_name)}</span>
             </div>
         </div>
     )
@@ -434,6 +466,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           </div>
       )
   }
+
+  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
 
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
@@ -583,7 +617,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                             setShowNotification(false);
                                         }}
                                     >
-                                        <div className="ai-core-border-animation group-hover:hidden"></div>
+                                        <div className="ai-core-border-animation group-hover/hidden"></div>
                                         <div className="ai-core group-hover:scale-125"></div>
                                         <div className="relative z-10 flex items-center justify-center gap-2 text-white">
                                             <div className="flex gap-1 items-end h-4">
@@ -662,22 +696,25 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   exit={{ opacity: 0, y: -10 }}
                   className="w-full flex flex-col justify-between flex-grow"
                 >
-                {currentStep === 1 && !isPending && (
+                {currentStep === 1 && (
                   <div className="text-center flex-grow flex flex-col justify-center">
-                    <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
-                    <h4 className="font-bold">Empecemos</h4>
-                    <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
-                  </div>
-                )}
-                 {currentStep === 1 && isPending && (
-                  <div className="text-center flex-grow flex flex-col justify-center">
-                      <div className="relative w-24 h-24 mx-auto mb-4">
-                          <div className="absolute inset-0 border-2 border-dashed border-amber-400/50 rounded-full animate-spin-slow" />
-                          <div className="absolute inset-2 border-2 border-dashed border-amber-400/30 animate-pulse" style={{ animationDirection: 'reverse' }} />
-                          <Search className="size-16 text-amber-400 animate-pulse absolute inset-0 m-auto" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)/0.7))' }}/>
-                      </div>
-                      <h4 className="font-bold text-lg">Buscando dominio en la red...</h4>
-                      <p className="text-sm text-muted-foreground">Validando y configurando tu espacio de trabajo.</p>
+                     {isPending ? (
+                      <>
+                        <div className="relative w-24 h-24 mx-auto mb-4">
+                            <div className="absolute inset-0 border-2 border-dashed border-amber-400/50 rounded-full animate-spin-slow" />
+                            <div className="absolute inset-2 border-2 border-dashed border-amber-400/30 animate-pulse" style={{ animationDirection: 'reverse' }} />
+                            <Search className="size-16 text-amber-400 animate-pulse absolute inset-0 m-auto" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)/0.7))' }}/>
+                        </div>
+                        <h4 className="font-bold text-lg">Buscando dominio en la red...</h4>
+                        <p className="text-sm text-muted-foreground">Validando y configurando tu espacio de trabajo.</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-center mb-4"><Globe className="size-16 text-primary/30" /></div>
+                        <h4 className="font-bold">Empecemos</h4>
+                        <p className="text-sm text-muted-foreground">Introduce tu dominio para comenzar la verificación.</p>
+                      </>
+                    )}
                   </div>
                 )}
                 {currentStep === 2 && (

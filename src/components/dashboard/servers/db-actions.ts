@@ -12,10 +12,9 @@ interface FormState {
   domain?: Domain | null;
 }
 
-export async function createOrGetDomainAction(
-  prevState: FormState,
-  formData: FormData
-): Promise<FormState> {
+const generateVerificationCode = () => `daybuu-verificacion=${Math.random().toString(36).substring(2, 12)}`;
+
+export async function createOrGetDomain(domainName: string): Promise<FormState> {
   const supabase = createClient();
   
   const { data: { user } } = await supabase.auth.getUser();
@@ -29,7 +28,6 @@ export async function createOrGetDomainAction(
     };
   };
   
-  const domainName = formData.get('domain') as string;
 
   if (!domainName || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domainName)) {
       return { 
@@ -73,10 +71,15 @@ export async function createOrGetDomainAction(
       }
     }
 
-    // If it doesn't exist, create it.
+    // If it doesn't exist, create it with a verification code.
+    const verificationCode = generateVerificationCode();
     const { data: newDomain, error: insertError } = await supabase
       .from('domains')
-      .insert({ domain_name: domainName, user_id: user.id })
+      .insert({ 
+          domain_name: domainName, 
+          user_id: user.id,
+          verification_code: verificationCode
+      })
       .select()
       .single();
 
@@ -107,21 +110,6 @@ export async function createOrGetDomainAction(
   }
 }
 
-
-export async function updateDomainVerificationCode(domainId: string, verificationCode: string) {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from('domains')
-    .update({ verification_code: verificationCode, updated_at: new Date().toISOString() })
-    .eq('id', domainId);
-
-  if (error) {
-    console.error('Error updating verification code:', error);
-    return { success: false, error: error.message };
-  }
-  return { success: true };
-}
-
 export async function setDomainAsVerified(domainId: string) {
   const supabase = createClient();
   const { error } = await supabase
@@ -133,5 +121,81 @@ export async function setDomainAsVerified(domainId: string) {
     console.error('Error setting domain as verified:', error);
     return { success: false, error: error.message };
   }
+  revalidatePath('/dashboard/servers');
   return { success: true };
+}
+
+export async function updateDkimKey(domainId: string, publicKey: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from('dns_checks')
+        .update({ dkim_public_key: publicKey, updated_at: new Date().toISOString() })
+        .eq('domain_id', domainId)
+        .select();
+
+    if (error && error.code === 'PGRST116') { // No rows found, so insert
+        const { data: insertData, error: insertError } = await supabase
+            .from('dns_checks')
+            .insert({ domain_id: domainId, dkim_public_key: publicKey });
+        if(insertError) throw insertError;
+        return { success: true, data: insertData };
+    }
+    
+    if (error) throw error;
+    
+    if (!data || data.length === 0) {
+       const { data: insertData, error: insertError } = await supabase
+            .from('dns_checks')
+            .insert({ domain_id: domainId, dkim_public_key: publicKey });
+       if(insertError) throw insertError;
+       return { success: true, data: insertData };
+    }
+    
+    return { success: true, data };
+}
+
+export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_verified: boolean; dkim_verified: boolean; dmarc_verified: boolean; mx_verified: boolean; bimi_verified: boolean; vmc_verified: boolean }>) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from('dns_checks')
+        .update({ ...checks, updated_at: new Date().toISOString() })
+        .eq('domain_id', domainId)
+        .select();
+
+    if (error && error.code === 'PGRST116') { // No rows found, so insert
+        const { data: insertData, error: insertError } = await supabase
+            .from('dns_checks')
+            .insert({ domain_id: domainId, ...checks });
+        if(insertError) throw insertError;
+        return { success: true, data: insertData };
+    }
+        
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+       const { data: insertData, error: insertError } = await supabase
+            .from('dns_checks')
+            .insert({ domain_id: domainId, ...checks });
+       if(insertError) throw insertError;
+       return { success: true, data: insertData };
+    }
+
+    return { success: true, data };
+}
+
+export async function saveSmtpCredentials(domainId: string, credentials: { host: string, port: number, encryption: string, username: string, password?: string, is_validated: boolean }) {
+    const supabase = createClient();
+    // In a real app, password should be encrypted or stored in a secure vault.
+    // For this example, we'll store it directly, but this is NOT recommended for production.
+    const { data, error } = await supabase
+        .from('smtp_credentials')
+        .upsert({ domain_id: domainId, ...credentials }, { onConflict: 'domain_id' })
+        .select();
+    
+    if (error) {
+        console.error('Error saving SMTP credentials:', error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
 }
