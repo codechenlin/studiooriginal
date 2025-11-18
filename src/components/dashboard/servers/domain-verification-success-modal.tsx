@@ -79,7 +79,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
         <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-green-500/20 h-full">
             {/* Column 1: DNS Status */}
             <div className="p-6 flex flex-col z-10">
-                <h3 className="text-base font-bold mb-4 flex items-center gap-2" style={{color: '#1700E6'}}><Dna style={{color: '#1700E6'}}/>Resumen de Verificación DNS</h3>
+                <h3 className="text-base font-bold mb-4 flex items-center gap-2" style={{color: '#009AFF'}}><Dna style={{color: '#009AFF'}}/>Resumen de Verificación DNS</h3>
                 <div className="space-y-4">
                     <div>
                         <h4 className="font-semibold text-white mb-2 text-sm">Registros Obligatorios</h4>
@@ -111,29 +111,24 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     className="relative flex flex-col items-center"
                 >
                     <div className="relative w-64 h-64 mb-4 group">
-                        {/* Rotating Dashed Circles */}
                         <motion.svg 
                             className="absolute inset-0 w-full h-full" 
                             viewBox="0 0 100 100"
                             initial={{ rotate: 0 }}
                             animate={{ rotate: 360 }}
-                            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+                            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
                         >
-                            <circle cx="50" cy="50" r="48" stroke="#1700E6" strokeWidth="0.75" fill="none" strokeDasharray="4 8"/>
+                            <circle cx="50" cy="50" r="48" stroke="#1700E6" strokeWidth="0.5" fill="none" strokeDasharray="2 8"/>
                         </motion.svg>
                         <motion.svg 
                             className="absolute inset-0 w-full h-full"
                             viewBox="0 0 100 100"
                             initial={{ rotate: 360 }}
                             animate={{ rotate: 0 }}
-                            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+                            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
                         >
-                            <circle cx="50" cy="50" r="40" stroke="#009AFF" strokeWidth="0.75" fill="none" strokeDasharray="3 6"/>
+                            <circle cx="50" cy="50" r="40" stroke="#009AFF" strokeWidth="0.5" fill="none" strokeDasharray="6 3"/>
                         </motion.svg>
-                        
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-48 h-48 rounded-full bg-amber-500/10 blur-3xl group-hover:blur-2xl transition-all duration-500"/>
-                        </div>
                         
                          <motion.div
                              className="absolute inset-0 z-0"
@@ -169,11 +164,12 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                         onClick={() => onOpenChange(false)}
                         className="w-full h-11 font-bold text-base transition-all duration-300"
                         style={{
-                           backgroundColor: '#00CB07',
+                           backgroundColor: '#B96F00',
                            color: 'white',
+                           border: '2px solid #E18700'
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = 'black'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#00CB07'; e.currentTarget.style.color = 'white';}}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#B96F00'; e.currentTarget.style.color = 'white';}}
                       >
                         <Check className="mr-2"/>
                         Aceptar y Continuar
@@ -183,7 +179,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
 
             {/* Column 3: Unlocked Features */}
             <div className="p-6 flex flex-col z-10 bg-black/20">
-                <h3 className="text-base font-bold mb-4 flex items-center gap-2" style={{color: '#1700E6'}}><Bot style={{color: '#1700E6'}}/>Capacidades Desbloqueadas</h3>
+                <h3 className="text-base font-bold mb-4 flex items-center gap-2" style={{color: '#009AFF'}}><Bot style={{color: '#009AFF'}}/>Capacidades Desbloqueadas</h3>
                  {dnsStatus.mx ? (
                     <div className="space-y-3">
                        <p className="text-xs text-green-200/80">
