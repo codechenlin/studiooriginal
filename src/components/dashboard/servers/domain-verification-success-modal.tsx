@@ -4,7 +4,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Check, MailPlus, CheckCircle, XCircle, Bot, ShieldCheck, Globe, Dna, GitBranch, MailWarning, Languages, Shield } from 'lucide-react';
+import { Check, MailPlus, CheckCircle, XCircle, Bot, ShieldCheck, Globe, Dna, GitBranch, MailWarning, Languages, Shield, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -135,7 +135,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     className="relative flex flex-col items-center"
                 >
                     <div className="relative w-64 h-64 mb-4 group">
-                        <motion.div
+                         <motion.div
                           className="absolute inset-0 rounded-full border-2 border-dashed"
                           style={{ borderColor: '#1700E6' }}
                           animate={{ rotate: 360 }}
@@ -160,8 +160,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                             }}
                             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                         />
-
-                         <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center">
                             <ShieldCheck className="size-32 text-green-400" style={{ filter: 'drop-shadow(0 0 25px #00ff6a)' }}/>
                         </div>
                     </div>
@@ -201,13 +200,13 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  {dnsStatus.mx ? (
                     <div className="space-y-3">
                        <p className="text-xs text-green-200/80">
-                         ¡Correcto! Con tu registro MX apuntando a nuestro servidores, tu dominio no solo enviará correos, sino que también tu buzón de entrada ahora está protegido por nuestro Escudo <strong className="text-white">Neuronal Predictivo</strong>.
+                         ¡Correcto! Con tu registro MX apuntando a nuestro servidores, tu dominio no solo enviará correos, sino que también tu buzón de entrada ahora está protegido por nuestro Escudo <strong className="text-white font-bold">Neuronal Defensiva</strong>.
                        </p>
                         <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Neutraliza amenazas antes de que lleguen a tu percepción." enabled={true} />
                         <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Nuestro sistema aprende y se anticipa, manteniendo tu enfoque despejado." enabled={true} />
                         <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="La IA escanea cada byte en busca de anomalías, asegurando una comunicación pura." enabled={true} />
-                        <FeatureCard icon={Languages} title="Traductor de Correos Electrónicos" description="Traduce correos entrantes al instante con el poder de la IA." enabled={true} />
-                        <FeatureCard icon={Shield} title="Escudo de Privacidad Analítica" description="Bloquea rastreadores y protege tus datos de la analítica de terceros." enabled={true} />
+                        <FeatureCard icon={Languages} title="Traductor de Correos Electrónicos" description="Traduce tus correos electrónicos entrantes a tu idioma" enabled={true} />
+                        <FeatureCard icon={Eye} title="Escudo de Privacidad Analítica" description="Bloquea rastreadores ocultos y protégete de la analíticas de terceros." enabled={true} />
                     </div>
                  ) : (
                     <div className="space-y-3">
@@ -218,7 +217,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                          <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Recepción de correos desactivada." enabled={false} />
                          <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="Recepción de correos desactivada." enabled={false} />
                          <FeatureCard icon={Languages} title="Traductor de Correos Electrónicos" description="Recepción de correos desactivada." enabled={false} />
-                        <FeatureCard icon={Shield} title="Escudo de Privacidad Analítica" description="Recepción de correos desactivada." enabled={false} />
+                        <FeatureCard icon={Eye} title="Escudo de Privacidad Analítica" description="Recepción de correos desactivada." enabled={false} />
                          <p className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                             <strong>Recomendación:</strong> Configura tu registro MX para desbloquear todo el potencial defensivo y de comunicación de daybuu.
                         </p>
@@ -226,7 +225,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  )}
                  <div className="mt-auto pt-4">
                     <Separator className="bg-green-500/20 mb-3"/>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground font-bold text-white">
                         Recuerda mantener el registro TXT de verificación en tu DNS para que tu dominio permanezca activo.
                     </p>
                  </div>
