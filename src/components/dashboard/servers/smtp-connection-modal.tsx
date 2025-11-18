@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useTransition, useActionState } from 'react';
@@ -157,7 +158,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
             toast({ title: "Error", description: state.message, variant: "destructive" });
         }
     }
-  }, [state, isPending, toast]);
+  }, [state, isPending]);
 
   const txtRecordValue = verificationCode;
 
@@ -742,8 +743,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 {currentStep === 2 && (
                   <div className="text-center flex-grow flex flex-col">
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
-                          {verificationStatus === 'verifying' && (
-                             <div className="absolute w-40 h-40 flex items-center justify-center">
+                          {verificationStatus === 'verifying' ? (
+                             <div className="relative w-32 h-32 flex items-center justify-center">
                                 <motion.div
                                     className="absolute inset-0 border-2 border-dashed rounded-full"
                                     style={{ borderColor: '#00CE07' }}
@@ -756,9 +757,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                     animate={{ rotate: -360 }}
                                     transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
                                 />
-                                <Search className="size-16 text-cyan-300"/>
+                                <Dna className="size-16 text-[#00ADEC]"/>
                              </div>
-                          )}
+                          ) : null}
                           <div className="z-10 flex flex-col items-center gap-3">
                               {verificationStatus === 'pending' && (
                                   <>
@@ -769,8 +770,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                               )}
                               {verificationStatus === 'verifying' && (
                                   <>
-                                      <h4 className="font-bold text-lg">Verificando...</h4>
-                                      <p className="text-sm text-muted-foreground">Buscando el registro DNS.</p>
+                                      <h4 className="font-bold text-lg mt-4">Analizando Estructura DNS...</h4>
+                                      <p className="text-sm text-muted-foreground">El núcleo de IA está procesando los datos de tu dominio.</p>
                                   </>
                               )}
                               {verificationStatus === 'verified' && (
