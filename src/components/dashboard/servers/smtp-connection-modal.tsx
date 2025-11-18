@@ -149,7 +149,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     if (state.status !== 'idle' && !isPending) {
         if(state.status === 'DOMAIN_FOUND' && state.domain) {
             setInfoModalDomain(state.domain);
-            setIsDomainInfoModalOpen(true);
         } else if (state.success && state.domain) {
             setDomain(state.domain.domain_name);
             setVerificationCode(state.domain.verification_code || '');
@@ -740,7 +739,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   <div className="text-center flex-grow flex flex-col">
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
                           {verificationStatus === 'verifying' && (
-                            <div className="relative w-32 h-32 flex items-center justify-center">
+                             <div className="relative w-32 h-32 flex items-center justify-center">
                                 <motion.div className="absolute inset-0 border-2 border-dashed rounded-full" style={{ borderColor: '#AD00EC' }} animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }} />
                                 <motion.div className="absolute inset-2 border-2 border-dashed rounded-full" style={{ borderColor: '#1700E6' }} animate={{ rotate: -360 }} transition={{ duration: 6, repeat: Infinity, ease: 'linear' }} />
                                 <Dna className="size-16 text-[#00ADEC]" />

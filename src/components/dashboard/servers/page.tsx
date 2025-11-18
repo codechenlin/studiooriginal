@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { Button } from "@/components/ui/button";
 import { Server, Zap, ChevronRight, Mail, Code, Bot, Globe, Send, Clock, CheckCircle, AlertTriangle, Info, Plus, MailPlus, GitBranch } from "lucide-react";
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
 import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
 import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/domain-verification-success-modal';
+import { type Domain } from './types';
 
 
 type ProviderStatus = 'ok' | 'error';
@@ -130,6 +131,7 @@ export default function ServersPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalData, setSuccessModalData] = useState<{domain: string, dnsStatus: DnsStatus} | null>(null);
 
+
   const handleSubdomainClick = (hasVerified: boolean) => {
     setCurrentModalContext({ hasVerifiedDomains: hasVerified });
     if (!hasVerified) {
@@ -187,13 +189,18 @@ export default function ServersPage() {
       onOpenChange={setIsDnsModalOpen}
       status={selectedStatus}
     />
-    <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} />
+    <DomainInfoModal isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} domain={null} />
     <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
     <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
     {successModalData && (
         <DomainVerificationSuccessModal 
             isOpen={isSuccessModalOpen}
-            onOpenChange={setIsSuccessModalOpen}
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                setSuccessModalData(null);
+              }
+              setIsSuccessModalOpen(isOpen);
+            }}
             domain={successModalData.domain}
             dnsStatus={successModalData.dnsStatus}
         />
@@ -266,7 +273,11 @@ export default function ServersPage() {
                               size="sm" 
                               variant="outline" 
                               className="text-xs h-7 px-3 border-cyan-400/50 text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 hover:text-cyan-200"
-                              onClick={() => setIsDomainInfoModalOpen(true)}
+                              onClick={() => {
+                                // This is a placeholder. You'd fetch and pass the specific domain info here.
+                                // setInfoModalDomain(SOME_DOMAIN_DATA_FROM_PROVIDER);
+                                setIsDomainInfoModalOpen(true);
+                              }}
                            >
                               Información
                             </Button>

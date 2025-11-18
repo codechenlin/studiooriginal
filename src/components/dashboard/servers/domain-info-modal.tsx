@@ -21,10 +21,15 @@ interface DomainInfoModalProps {
 const StatusHeader = ({ title, lastUpdated }: { title: string, lastUpdated?: string | null }) => (
     <div className="flex items-center justify-between mb-3">
         <h4 className="text-sm font-bold text-cyan-300/80">{title}</h4>
-        {lastUpdated && (
+        {lastUpdated ? (
              <div className="flex items-center gap-1.5 text-xs text-white/50">
                 <Clock className="size-3"/>
                 <span>Últ. comprobación: {formatDistanceToNow(new Date(lastUpdated), { addSuffix: true, locale: es })}</span>
+             </div>
+        ) : (
+             <div className="flex items-center gap-1.5 text-xs text-amber-400/70">
+                <Clock className="size-3"/>
+                <span>Aún no verificado</span>
              </div>
         )}
     </div>
