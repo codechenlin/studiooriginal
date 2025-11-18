@@ -4,7 +4,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, Mail, ChevronRight, X, CheckCircle, GitBranch, Dna, Copy, Clock } from 'lucide-react';
+import { Globe, Mail, ChevronRight, X, CheckCircle, GitBranch, Dna, Copy, Clock, XCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { type Domain } from './types';
@@ -36,10 +36,14 @@ const StatusHeader = ({ title, lastUpdated }: { title: string, lastUpdated?: str
 );
 
 
-const RecordRow = ({ label, icon: Icon }: { label: string, icon: React.ElementType }) => (
+const RecordRow = ({ label, icon: Icon, verified }: { label: string, icon: React.ElementType, verified: boolean }) => (
     <div className="flex items-center justify-between p-3 rounded-lg bg-black/30 border border-cyan-400/20">
         <div className="flex items-center gap-3">
-            <CheckCircle className="size-5 text-green-400" />
+            {verified ? (
+                <CheckCircle className="size-5 text-green-400" />
+            ) : (
+                <XCircle className="size-5 text-red-400" />
+            )}
             <span className="font-semibold">{label}</span>
         </div>
         <Button size="sm" variant="outline" className="text-xs h-7 border-cyan-400/50 text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 hover:text-cyan-200">
@@ -71,6 +75,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
     }
 
     const lastCheckDate = domain.dns_checks?.updated_at;
+    const dnsChecks = domain.dns_checks || {};
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -153,15 +158,15 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                     <div className="p-8 flex flex-col z-10">
                         <div className="space-y-3">
                            <StatusHeader title="Obligatorios" lastUpdated={lastCheckDate} />
-                            <RecordRow label="SPF" icon={Dna} />
-                            <RecordRow label="DKIM" icon={Dna} />
-                            <RecordRow label="DMARC" icon={Dna} />
+                            <RecordRow label="SPF" icon={Dna} verified={dnsChecks.spf_verified ?? false}/>
+                            <RecordRow label="DKIM" icon={Dna} verified={dnsChecks.dkim_verified ?? false}/>
+                            <RecordRow label="DMARC" icon={Dna} verified={dnsChecks.dmarc_verified ?? false}/>
                         </div>
                         <div className="space-y-3 mt-6">
                            <StatusHeader title="Opcionales" lastUpdated={lastCheckDate} />
-                            <RecordRow label="MX" icon={Mail} />
-                            <RecordRow label="BIMI" icon={GitBranch} />
-                            <RecordRow label="VMC" icon={GitBranch} />
+                            <RecordRow label="MX" icon={Mail} verified={dnsChecks.mx_verified ?? false}/>
+                            <RecordRow label="BIMI" icon={GitBranch} verified={dnsChecks.bimi_verified ?? false}/>
+                            <RecordRow label="VMC" icon={GitBranch} verified={dnsChecks.vmc_verified ?? false}/>
                         </div>
                     </div>
                 </div>
