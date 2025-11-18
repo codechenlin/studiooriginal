@@ -126,8 +126,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
             </div>
 
             {/* Column 2: Success Message */}
-             <div className="p-6 flex flex-col items-center text-center z-10 justify-between">
-                <div/>
+             <div className="p-6 flex flex-col items-center text-center z-10 justify-center gap-6">
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -177,10 +176,22 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     </p>
                 </motion.div>
                 
-                 <div className="w-full mt-6">
+                 <div className="w-full">
                     <Button
                         onClick={() => onOpenChange(false)}
-                        className="w-full h-11 font-bold text-base transition-all duration-300 bg-[#B96F00] border-2 border-[#E18700] text-white hover:bg-white hover:text-black hover:border-white"
+                        className="w-full h-11 font-bold text-base transition-all duration-300 border-2 text-black hover:text-black hover:border-white"
+                        style={{
+                            borderColor: '#E18700',
+                            backgroundColor: '#B96F00'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#FFFFFF';
+                            e.currentTarget.style.borderColor = '#E5E5E5';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = '#B96F00';
+                            e.currentTarget.style.borderColor = '#E18700';
+                        }}
                       >
                         <Check className="mr-2"/>
                         Aceptar y Continuar
@@ -199,7 +210,7 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                         <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Neutraliza amenazas antes de que lleguen a tu percepción." enabled={true} />
                         <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Nuestro sistema aprende y se anticipa, manteniendo tu enfoque despejado." enabled={true} />
                         <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="La IA escanea cada byte en busca de anomalías, asegurando una comunicación pura." enabled={true} />
-                        <FeatureCard icon={Languages} title="Traductor de Correos Electrónicos" description="Traduce tus correos electrónicos entrantes a tu idioma" enabled={true} />
+                        <FeatureCard icon={Languages} title="Traductor de Correos Electrónicos" description="Traduce tus correos electrónicos entrantes en diferentes idiomas." enabled={true} />
                         <FeatureCard icon={Eye} title="Escudo de Privacidad Analítica" description="Bloquea rastreadores ocultos y protégete de la analíticas de terceros." enabled={true} />
                     </div>
                  ) : (
