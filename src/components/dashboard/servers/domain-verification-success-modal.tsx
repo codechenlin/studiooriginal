@@ -4,7 +4,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Check, MailPlus, CheckCircle, XCircle, Bot, ShieldCheck, Globe, Dna, GitBranch, MailWarning } from 'lucide-react';
+import { Check, MailPlus, CheckCircle, XCircle, Bot, ShieldCheck, Globe, Dna, GitBranch, MailWarning, Languages, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -23,19 +23,24 @@ interface DomainVerificationSuccessModalProps {
   }
 }
 
-const FeatureCard = ({ icon: Icon, title, description, color, delay, enabled }: { icon: React.ElementType, title: string, description: string, color: string, delay: number, enabled: boolean }) => (
+const FeatureCard = ({ icon: Icon, title, description, enabled }: { icon: React.ElementType, title: string, description: string, enabled: boolean }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: delay, duration: 0.5 }}
+        transition={{ duration: 0.5 }}
         className={cn(
-            "p-3 rounded-lg bg-black/20 border transition-all",
+            "relative p-3 rounded-lg bg-black/20 border transition-all overflow-hidden",
             enabled ? "border-green-500/30" : "border-red-500/30"
         )}
     >
         <div className="flex items-center gap-3">
-            <div className={cn("p-2 rounded-md", enabled ? "bg-green-900/40" : "bg-red-900/40")}>
-                <Icon className={cn("size-5", enabled ? "text-green-300" : "text-red-300")}/>
+             <div className={cn(
+                "relative p-2 rounded-md shrink-0",
+                enabled ? "bg-green-900/40" : "bg-red-900/40"
+             )}>
+                <div className="absolute inset-0 rounded-md feature-icon-glow" style={{'--glow-color': enabled ? '#00CB07' : '#F00000'} as React.CSSProperties}/>
+                <div className="absolute inset-0 rounded-md feature-icon-pulse" style={{'--glow-color': enabled ? '#00CB07' : '#F00000'} as React.CSSProperties}/>
+                <Icon className={cn("relative z-10 size-5", enabled ? "text-green-300" : "text-red-300")}/>
             </div>
             <div>
                 <h4 className={cn("font-semibold text-sm", enabled ? "text-white" : "text-white/70 line-through")}>{title}</h4>
@@ -73,6 +78,25 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="max-w-7xl w-full h-[99vh] bg-black/80 backdrop-blur-xl border-2 border-green-500/20 text-white overflow-hidden p-0">
+          <style>{`
+             @keyframes feature-glow {
+                0%, 100% { box-shadow: 0 0 5px -1px var(--glow-color); }
+                50% { box-shadow: 0 0 12px 2px var(--glow-color); }
+            }
+            .feature-icon-glow { animation: feature-glow 3s infinite ease-in-out; }
+            @keyframes feature-pulse {
+                0% { transform: scale(0.8); opacity: 0; }
+                50% { opacity: 0.7; }
+                100% { transform: scale(1.5); opacity: 0; }
+            }
+            .feature-icon-pulse {
+                position: absolute;
+                inset: 0;
+                border-radius: inherit;
+                border: 1px solid var(--glow-color);
+                animation: feature-pulse 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+            }
+        `}</style>
          <div className="absolute inset-0 z-0 opacity-10 bg-grid-green-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
          <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] bg-green-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
 
@@ -111,40 +135,35 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                     className="relative flex flex-col items-center"
                 >
                     <div className="relative w-64 h-64 mb-4 group">
-                        <motion.svg 
-                            className="absolute inset-0 w-full h-full" 
-                            viewBox="0 0 100 100"
-                            initial={{ rotate: 0 }}
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                        >
-                            <circle cx="50" cy="50" r="48" stroke="#1700E6" strokeWidth="0.5" fill="none" strokeDasharray="2 8"/>
-                        </motion.svg>
-                        <motion.svg 
-                            className="absolute inset-0 w-full h-full"
-                            viewBox="0 0 100 100"
-                            initial={{ rotate: 360 }}
-                            animate={{ rotate: 0 }}
-                            transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-                        >
-                            <circle cx="50" cy="50" r="40" stroke="#009AFF" strokeWidth="0.5" fill="none" strokeDasharray="6 3"/>
-                        </motion.svg>
-                        
+                        <motion.div
+                          className="absolute inset-0 rounded-full border-2 border-dashed"
+                          style={{ borderColor: '#1700E6' }}
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
+                        />
                          <motion.div
-                             className="absolute inset-0 z-0"
+                          className="absolute inset-4 rounded-full border-2 border-dashed"
+                          style={{ borderColor: '#009AFF' }}
+                          animate={{ rotate: -360 }}
+                          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <motion.div
+                             className="absolute inset-0 z-0 rounded-full"
                             style={{
-                                backgroundImage: `radial-gradient(circle, transparent 60%, #E1870066)`,
+                                boxShadow: `0 0 0px #E18700`,
+                                filter: `blur(15px)`,
+                                background: `#E18700`
                             }}
                             animate={{
-                                transform: ['scale(0.8)', 'scale(1.2)', 'scale(0.8)'],
-                                opacity: [0.5, 0.8, 0.5]
+                                transform: ['scale(0.3)', 'scale(0.5)', 'scale(0.3)'],
+                                opacity: [0, 0.4, 0]
                             }}
-                            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                         />
 
                          <div className="absolute inset-0 flex items-center justify-center">
                             <ShieldCheck className="size-32 text-green-400" style={{ filter: 'drop-shadow(0 0 25px #00ff6a)' }}/>
-                         </div>
+                        </div>
                     </div>
                     
                     <DialogHeader className="text-center">
@@ -162,14 +181,13 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  <div className="w-full mt-6">
                     <Button
                         onClick={() => onOpenChange(false)}
-                        className="w-full h-11 font-bold text-base transition-all duration-300"
+                        className="w-full h-11 font-bold text-base text-white transition-all duration-300"
                         style={{
                            backgroundColor: '#B96F00',
-                           color: 'white',
                            border: '2px solid #E18700'
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = 'black'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#B96F00'; e.currentTarget.style.color = 'white';}}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = 'black'; e.currentTarget.style.borderColor = '#E5E5E5'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#B96F00'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = '#E18700'; }}
                       >
                         <Check className="mr-2"/>
                         Aceptar y Continuar
@@ -183,20 +201,24 @@ export function DomainVerificationSuccessModal({ isOpen, onOpenChange, domain, d
                  {dnsStatus.mx ? (
                     <div className="space-y-3">
                        <p className="text-xs text-green-200/80">
-                         ¡Correcto! Con tu registro MX apuntando a nuestro servidores, tu dominio no solo enviará correos, sino que también tu buzón de entrada ahora está protegido por nuestro Escudo Neuronal Predictivo.
+                         ¡Correcto! Con tu registro MX apuntando a nuestro servidores, tu dominio no solo enviará correos, sino que también tu buzón de entrada ahora está protegido por nuestro Escudo <strong className="text-white">Neuronal Predictivo</strong>.
                        </p>
-                        <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Neutraliza amenazas antes de que lleguen a tu percepción." color="#00CB07" delay={0.8} enabled={true} />
-                        <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Nuestro sistema aprende y se anticipa, manteniendo tu enfoque despejado." color="#00CB07" delay={0.9} enabled={true} />
-                        <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="La IA escanea cada byte en busca de anomalías, asegurando una comunicación pura." color="#00CB07" delay={1.0} enabled={true} />
+                        <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Neutraliza amenazas antes de que lleguen a tu percepción." enabled={true} />
+                        <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Nuestro sistema aprende y se anticipa, manteniendo tu enfoque despejado." enabled={true} />
+                        <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="La IA escanea cada byte en busca de anomalías, asegurando una comunicación pura." enabled={true} />
+                        <FeatureCard icon={Languages} title="Traductor de Correos Electrónicos" description="Traduce correos entrantes al instante con el poder de la IA." enabled={true} />
+                        <FeatureCard icon={Shield} title="Escudo de Privacidad Analítica" description="Bloquea rastreadores y protege tus datos de la analítica de terceros." enabled={true} />
                     </div>
                  ) : (
                     <div className="space-y-3">
                         <p className="text-xs text-amber-200/80">
                            Has encendido los motores de red, ya puedes enviar correos. Sin embargo, tu (Registro MX) no está orientado hacia nuestra base. Esto significa que solo podrás transmitir, pero no recibir comunicaciones entrantes a través de nuestra plataforma.
                         </p>
-                         <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Recepción de correos desactivada." color="#F00000" delay={0.8} enabled={false} />
-                         <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Recepción de correos desactivada." color="#F00000" delay={0.9} enabled={false} />
-                         <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="Recepción de correos desactivada." color="#F00000" delay={1.0} enabled={false} />
+                         <FeatureCard icon={ShieldCheck} title="Antivirus con blindaje cognitivo" description="Recepción de correos desactivada." enabled={false} />
+                         <FeatureCard icon={Bot} title="Filtro de Spam con IA Predictiva" description="Recepción de correos desactivada." enabled={false} />
+                         <FeatureCard icon={Dna} title="Análisis Neuronal de Contenido" description="Recepción de correos desactivada." enabled={false} />
+                         <FeatureCard icon={Languages} title="Traductor de Correos Electrónicos" description="Recepción de correos desactivada." enabled={false} />
+                        <FeatureCard icon={Shield} title="Escudo de Privacidad Analítica" description="Recepción de correos desactivada." enabled={false} />
                          <p className="text-xs text-amber-300/80 p-3 bg-amber-500/10 rounded-lg border border-amber-400/20">
                             <strong>Recomendación:</strong> Configura tu registro MX para desbloquear todo el potencial defensivo y de comunicación de daybuu.
                         </p>
