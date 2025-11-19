@@ -155,19 +155,8 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                         </motion.div>
                     </div>
                     {/* Right Column */}
-                    <div className="p-8 flex flex-col z-10">
-                        <div className="space-y-3">
-                           <StatusHeader title="Obligatorios" lastUpdated={lastCheckDate} />
-                            <RecordRow label="SPF" icon={Dna} verified={dnsChecks.spf_verified ?? false}/>
-                            <RecordRow label="DKIM" icon={Dna} verified={dnsChecks.dkim_verified ?? false}/>
-                            <RecordRow label="DMARC" icon={Dna} verified={dnsChecks.dmarc_verified ?? false}/>
-                        </div>
-                        <div className="space-y-3 mt-6">
-                           <StatusHeader title="Opcionales" lastUpdated={lastCheckDate} />
-                            <RecordRow label="MX" icon={Mail} verified={dnsChecks.mx_verified ?? false}/>
-                            <RecordRow label="BIMI" icon={GitBranch} verified={dnsChecks.bimi_verified ?? false}/>
-                            <RecordRow label="VMC" icon={GitBranch} verified={dnsChecks.vmc_verified ?? false}/>
-                        </div>
+                    <div className="p-8 flex flex-col z-10 items-center justify-center">
+                        <span className="text-4xl font-bold text-muted-foreground">VACIÓ</span>
                     </div>
                 </div>
             </DialogContent>
