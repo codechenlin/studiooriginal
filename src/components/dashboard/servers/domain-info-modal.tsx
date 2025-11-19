@@ -4,18 +4,35 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, CheckCircle, Copy, X } from 'lucide-react';
+import { Globe, CheckCircle, Copy, X, Shield, AlertTriangle, GitBranch, MailWarning, Dna } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type Domain } from './types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface DomainInfoModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   domain: Domain | null;
 }
+
+const RecordStatus = ({ label, icon: Icon, verified }: { label: string, icon: React.ElementType, verified: boolean }) => (
+    <div className="relative p-2 pl-3 border-l-2" style={{ borderColor: verified ? '#00CB07' : '#F00000' }}>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Icon className={cn("size-4", verified ? "text-green-400" : "text-red-400")} />
+                <span className="font-semibold text-sm">{label}</span>
+            </div>
+            {verified ? 
+                <CheckCircle className="size-5 text-green-400" style={{ filter: 'drop-shadow(0 0 4px #00CB07)'}}/> : 
+                <AlertTriangle className="size-5 text-red-400" style={{ filter: 'drop-shadow(0 0 4px #F00000)'}}/>
+            }
+        </div>
+    </div>
+);
+
 
 export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModalProps) {
     const { toast } = useToast();
@@ -37,6 +54,9 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
             className: 'bg-success-login border-none text-white'
         });
     }
+    
+    const dnsChecks = Array.isArray(domain.dns_checks) ? domain.dns_checks[0] : domain.dns_checks;
+
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -70,9 +90,6 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                         </div>
                         Información del Dominio
                     </DialogTitle>
-                    <DialogDescription className="text-cyan-200/70">
-                        Detalles y estado de verificación del dominio {domain.domain_name}.
-                    </DialogDescription>
                 </DialogHeader>
                 
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2">
@@ -124,7 +141,24 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                     </div>
                     {/* Right Column */}
                     <div className="p-8 flex flex-col z-10 items-center justify-center bg-black/20">
-                        <span className="text-4xl font-bold text-muted-foreground">VACIÓ</span>
+                       <div className="w-full space-y-4">
+                           <div>
+                                <h4 className="font-semibold text-white mb-2 text-sm flex items-center gap-2"><Dna/>Registros Obligatorios</h4>
+                                <div className="space-y-2 p-3 bg-black/30 border border-cyan-400/10 rounded-lg">
+                                   <RecordStatus label="Registro SPF" icon={Shield} verified={dnsChecks?.spf_verified ?? false} />
+                                   <RecordStatus label="Registro DKIM" icon={Shield} verified={dnsChecks?.dkim_verified ?? false} />
+                                   <RecordStatus label="Registro DMARC" icon={Shield} verified={dnsChecks?.dmarc_verified ?? false} />
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-white mb-2 text-sm flex items-center gap-2"><Dna/>Registros Opcionales</h4>
+                                 <div className="space-y-2 p-3 bg-black/30 border border-cyan-400/10 rounded-lg">
+                                   <RecordStatus label="Registro MX" icon={MailWarning} verified={dnsChecks?.mx_verified ?? false}/>
+                                   <RecordStatus label="Registro BIMI" icon={GitBranch} verified={dnsChecks?.bimi_verified ?? false}/>
+                                   <RecordStatus label="Certificado VMC" icon={GitBranch} verified={dnsChecks?.vmc_verified ?? false}/>
+                                </div>
+                            </div>
+                       </div>
                     </div>
                 </div>
             </DialogContent>
