@@ -62,11 +62,9 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                         100% { transform: translateY(100vh); }
                     }
                 `}</style>
-
-                <DialogHeader>
-                    {/* El título se oculta para no interferir con el diseño, pero es necesario para la accesibilidad */}
-                    <DialogTitle className="sr-only">Información del Dominio</DialogTitle>
-                    <DialogDescription className="sr-only">Detalles y estado de verificación del dominio {domain.domain_name}.</DialogDescription>
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Información del Dominio</DialogTitle>
+                    <DialogDescription>Detalles y estado de verificación del dominio {domain.domain_name}.</DialogDescription>
                 </DialogHeader>
 
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2">
