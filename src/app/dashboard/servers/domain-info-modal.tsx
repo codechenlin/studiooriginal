@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Globe, CheckCircle, Copy, X, Shield, AlertTriangle, GitBranch, MailWarning, Dna } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type Domain } from './types';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -56,6 +56,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
     }
     
     const dnsChecks = Array.isArray(domain.dns_checks) ? domain.dns_checks[0] : domain.dns_checks;
+    const lastCheckedDate = dnsChecks?.updated_at ? formatDistanceToNow(new Date(dnsChecks.updated_at), { addSuffix: true, locale: es }) : 'Nunca';
 
 
     return (
@@ -143,7 +144,10 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                     <div className="p-8 flex flex-col z-10 items-center justify-center bg-black/20">
                        <div className="w-full space-y-4">
                            <div>
-                                <h4 className="font-semibold text-white mb-2 text-sm flex items-center gap-2"><Dna/>Registros Obligatorios</h4>
+                                <div className="flex justify-between items-baseline mb-2">
+                                  <h4 className="font-semibold text-white text-sm flex items-center gap-2"><Dna style={{color: '#00ADEC'}}/>Registros Obligatorios</h4>
+                                  <p className="text-xs text-muted-foreground">Revisado: {lastCheckedDate}</p>
+                                </div>
                                 <div className="space-y-2 p-3 bg-black/30 border border-cyan-400/10 rounded-lg">
                                    <RecordStatus label="Registro SPF" icon={Shield} verified={dnsChecks?.spf_verified ?? false} />
                                    <RecordStatus label="Registro DKIM" icon={Shield} verified={dnsChecks?.dkim_verified ?? false} />
@@ -151,7 +155,10 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                                 </div>
                             </div>
                             <div>
-                                <h4 className="font-semibold text-white mb-2 text-sm flex items-center gap-2"><Dna/>Registros Opcionales</h4>
+                               <div className="flex justify-between items-baseline mb-2">
+                                  <h4 className="font-semibold text-white text-sm flex items-center gap-2"><Dna style={{color: '#00ADEC'}}/>Registros Opcionales</h4>
+                                  <p className="text-xs text-muted-foreground">Revisado: {lastCheckedDate}</p>
+                                </div>
                                  <div className="space-y-2 p-3 bg-black/30 border border-cyan-400/10 rounded-lg">
                                    <RecordStatus label="Registro MX" icon={MailWarning} verified={dnsChecks?.mx_verified ?? false}/>
                                    <RecordStatus label="Registro BIMI" icon={GitBranch} verified={dnsChecks?.bimi_verified ?? false}/>
@@ -165,5 +172,3 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
         </Dialog>
     );
 }
-
-    
