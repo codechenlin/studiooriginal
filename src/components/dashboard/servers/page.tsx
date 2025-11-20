@@ -204,10 +204,32 @@ export default function ServersPage() {
   };
   
   const handleInfoClick = (providerId: string) => {
-    // This is where we'd fetch the specific domains for the provider.
-    // For now, we'll just open the modal. A more complete implementation
-    // would fetch data and pass it to the DomainInfoModal.
     if (providerId === 'smtp') {
+        // This is a placeholder. In a real app, you'd fetch the relevant domain data.
+        // For now, let's create a mock domain object to pass to the modal.
+        const mockDomain: Domain = {
+            id: 'd081190c-3363-4217-832d-3d4c6c965f49',
+            user_id: '885c0c81-e275-49cc-934f-fbb5c1086011',
+            domain_name: 'ejemplo.com',
+            verification_code: 'daybuu-verificacion=abcdef123',
+            is_verified: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            dns_checks: {
+                id: 'c8646b9a-455-4d26-b83c-cb8e3e4a2d1',
+                domain_id: 'd081190c-3363-4217-832d-3d4c6c965f49',
+                spf_verified: true,
+                dkim_verified: false,
+                dmarc_verified: true,
+                mx_verified: false,
+                bimi_verified: true,
+                vmc_verified: false,
+                dkim_public_key: 'v=DKIM1; k=rsa; p=...',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            }
+        };
+        setInfoModalDomain(mockDomain);
         setIsDomainInfoModalOpen(true);
     }
   }
@@ -416,5 +438,3 @@ export default function ServersPage() {
     </>
   );
 }
-
-    
