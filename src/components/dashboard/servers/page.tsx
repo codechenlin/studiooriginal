@@ -202,12 +202,6 @@ export default function ServersPage() {
     }, 300);
   };
 
-  const handleInfoClick = (providerId: string) => {
-    if (providerId === 'smtp') {
-        setIsDomainManagerModalOpen(true);
-    }
-  };
-
   return (
     <>
     <SmtpConnectionModal 
@@ -304,7 +298,7 @@ export default function ServersPage() {
                               size="sm" 
                               variant="outline" 
                               className="text-xs h-7 px-3 border-cyan-400/50 text-cyan-300 bg-cyan-900/20 hover:bg-cyan-900/40 hover:text-cyan-200"
-                              onClick={() => handleInfoClick(provider.id)}
+                              onClick={() => setIsDomainManagerModalOpen(true)}
                               disabled={!provider.hasVerifiedDomains}
                            >
                               Información
@@ -412,6 +406,3 @@ export default function ServersPage() {
     </>
   );
 }
-
-
-    
