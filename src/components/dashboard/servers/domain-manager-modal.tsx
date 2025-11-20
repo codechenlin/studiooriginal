@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal, CheckCircle, XCircle } from 'lucide-react';
+import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal, CheckCircle, XCircle, MoreHorizontal, Layers } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -71,7 +71,16 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     const [activeTab, setActiveTab] = useState<'domains' | 'subdomains'>('domains');
     const [emailFilter, setEmailFilter] = useState<'all' | 'connected' | 'disconnected'>('all');
     
-    const truncateName = (name: string, maxLength: number): string => {
+    const truncateName = (name: string): string => {
+        const maxLength = activeTab === 'domains' ? 21 : 21;
+        if (name.length <= maxLength) {
+            return name;
+        }
+        return `${name.substring(0, maxLength)}...`;
+    };
+    
+     const truncateEmail = (name: string): string => {
+        const maxLength = 19;
         if (name.length <= maxLength) {
             return name;
         }
@@ -125,8 +134,8 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                       position: absolute;
                       inset: 0;
                       border-radius: 50%;
-                      border: 2px solid var(--wave-color);
-                      animation: pulse-wave 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+                      border: 1px solid var(--wave-color);
+                      animation: pulse-wave 1s infinite cubic-bezier(0.4, 0, 0.2, 1);
                     }
                     @keyframes illumination-pulse {
                         0%, 100% {
@@ -174,12 +183,12 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                     className="space-y-2"
                                 >
                                     {currentList.length > 0 ? currentList.map(d => (
-                                        <div key={d.name} onClick={() => setSelectedDomain(d.name)} className={cn("w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2 cursor-pointer", selectedDomain === d.name ? "bg-cyan-500/20 border-cyan-400" : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50")}>
+                                        <div key={d.name} onClick={() => setSelectedDomain(d.name)} className={cn("w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2", selectedDomain === d.name ? "bg-cyan-500/20 border-cyan-400" : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50")}>
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <LedIndicator verified={d.verified}/>
-                                                <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name, 21)}</span>
+                                                <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name)}</span>
                                             </div>
-                                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
+                                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => {e.stopPropagation(); /* Future action */}}>
                                                 <Code className="mr-2 size-3"/>
                                                 Detalles
                                             </Button>
@@ -194,12 +203,12 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                     {/* Right Column: Email List */}
                     <div className="flex flex-col p-6 bg-black/10 info-grid relative">
                          <div className="z-10 flex flex-col h-full">
-                           <div className="flex justify-between items-center shrink-0">
-                               <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
+                           <div className="flex justify-between items-center shrink-0 mb-4">
+                               <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2 min-w-0">
                                  <Mail className="size-4"/>
-                                 Correos para: <span className="font-mono text-white truncate">{selectedDomain ? truncateName(selectedDomain, 19) : '...'}</span>
+                                 <span className="truncate">Correos para: <span className="font-mono text-white" title={selectedDomain || ''}>{selectedDomain ? truncateEmail(selectedDomain) : '...'}</span></span>
                                </h3>
-                               <div className="flex items-center gap-1">
+                               <div className="flex items-center gap-1 p-1 rounded-md bg-black/30 border border-cyan-400/20">
                                     <Button variant={emailFilter === 'connected' ? 'secondary' : 'ghost'} size="icon" className="size-7" onClick={() => setEmailFilter('connected')}>
                                         <CheckCircle className="text-green-400"/>
                                     </Button>
@@ -207,18 +216,18 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                         <XCircle className="text-red-500"/>
                                     </Button>
                                      <Button variant={emailFilter === 'all' ? 'secondary' : 'ghost'} size="icon" className="size-7" onClick={() => setEmailFilter('all')}>
-                                        <Layers/>
-                                    </Button>
-                               </div>
+                                         <Layers/>
+                                     </Button>
+                                </div>
                            </div>
-                           <ScrollArea className="flex-1 -m-6 p-6 mt-4 custom-scrollbar">
+                           <ScrollArea className="flex-1 -m-6 p-6 mt-0 custom-scrollbar">
                                 <div className="space-y-2">
                                     {selectedDomain ? (
                                         emails.length > 0 ? emails.map(email => (
                                             <div key={email.address} className="p-3 bg-black/40 border border-cyan-400/10 rounded-lg flex items-center justify-between">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                    <LedIndicator verified={email.connected}/>
-                                                   <span className="font-mono text-sm text-white/80 truncate" title={email.address}>{truncateName(email.address, 19)}</span>
+                                                   <span className="font-mono text-sm text-white/80 truncate" title={email.address}>{truncateEmail(email.address)}</span>
                                                 </div>
                                                 <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
                                                   <Signal className="mr-2 size-3"/>
