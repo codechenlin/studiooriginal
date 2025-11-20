@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, CheckCircle, Copy, X, Shield, AlertTriangle, GitBranch, MailWarning, Dna, Bot } from 'lucide-react';
+import { Globe, CheckCircle, Copy, X, Shield, AlertTriangle, GitBranch, MailWarning, Dna, Bot, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type Domain } from './types';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -198,7 +198,9 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                            <div>
                                 <div className="flex justify-between items-baseline mb-2">
                                   <h4 className="font-semibold text-white text-sm flex items-center gap-2"><Dna style={{color: '#00ADEC'}}/>Registros Obligatorios</h4>
-                                  <p className="text-xs text-muted-foreground">Revisado: {lastCheckedDate}</p>
+                                   <p className="text-xs text-muted-foreground">
+                                        <span className="font-bold" style={{color: '#E18700'}}>Revisado:</span> {lastCheckedDate}
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
                                    <RecordStatus label="Registro SPF" icon={Shield} verified={dnsChecks?.spf_verified ?? false} />
@@ -209,7 +211,9 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                             <div>
                                <div className="flex justify-between items-baseline mb-2">
                                   <h4 className="font-semibold text-white text-sm flex items-center gap-2"><Dna style={{color: '#00ADEC'}}/>Registros Opcionales</h4>
-                                  <p className="text-xs text-muted-foreground">Revisado: {lastCheckedDate}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        <span className="font-bold" style={{color: '#E18700'}}>Revisado:</span> {lastCheckedDate}
+                                    </p>
                                 </div>
                                  <div className="space-y-2">
                                    <RecordStatus label="Registro MX" icon={MailWarning} verified={dnsChecks?.mx_verified ?? false}/>
