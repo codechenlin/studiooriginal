@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, CheckCircle, Copy, X, Shield, AlertTriangle, GitBranch, MailWarning, Dna } from 'lucide-react';
+import { Globe, CheckCircle, Copy, X, Shield, AlertTriangle, GitBranch, MailWarning, Dna, Bot } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type Domain } from './types';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -31,6 +31,14 @@ const RecordStatus = ({ label, icon: Icon, verified }: { label: string, icon: Re
             <div className="flex items-center gap-3">
                 <Icon className={cn("size-5", verified ? "text-green-400" : "text-red-400")} />
                 <span className="font-semibold text-sm text-white/90">{label}</span>
+                 <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-xs bg-black/20 border-cyan-400/30 text-cyan-300 hover:bg-cyan-900/40 hover:text-cyan-200"
+                >
+                    <Bot className="size-3 mr-1" />
+                    Detalles
+                </Button>
             </div>
             <div className="relative flex items-center justify-center size-6">
                 <div 
@@ -47,7 +55,7 @@ const RecordStatus = ({ label, icon: Icon, verified }: { label: string, icon: Re
                     )} 
                     style={{ animation: `icon-pulse-wave 2s infinite ease-out` }}
                 />
-                <Icon className={cn("relative size-6", verified ? "text-green-300" : "text-red-300")} />
+                {verified ? <CheckCircle className={cn("relative size-6", "text-green-300")} /> : <AlertTriangle className={cn("relative size-6", "text-red-300")} />}
             </div>
         </div>
     </motion.div>
@@ -61,12 +69,12 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
     const dnsChecks = Array.isArray(domain?.dns_checks) ? domain?.dns_checks[0] : domain?.dns_checks;
 
     useEffect(() => {
-        if (dnsChecks?.updated_at) {
+        if (isOpen && dnsChecks?.updated_at) {
           setLastCheckedDate(formatDistanceToNow(new Date(dnsChecks.updated_at), { addSuffix: true, locale: es }));
-        } else {
+        } else if(isOpen) {
           setLastCheckedDate('Nunca');
         }
-    }, [dnsChecks?.updated_at]);
+    }, [isOpen, dnsChecks?.updated_at]);
 
 
     if (!domain) return null;
@@ -170,7 +178,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                          <Button
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                            className="w-full mt-8 bg-white text-[#00ADEC] hover:text-white z-10 border-2 border-[#00ADEC] hover:bg-[#00ADEC]"
+                            className="w-full mt-8 bg-[#00ADEC] text-white hover:text-black z-10 border-2 border-white hover:bg-white"
                         >
                             <X className="mr-2"/>
                             Cerrar
