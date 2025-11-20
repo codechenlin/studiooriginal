@@ -36,7 +36,6 @@ import {
   updateDkimKey,
   saveDnsChecks,
   updateDomainVerificationCode,
-  getVerifiedDomainsCount,
 } from '@/app/dashboard/servers/db-actions';
 import { type Domain } from './types';
 
@@ -381,11 +380,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   const handleFinish = async () => {
     if (!state.domain) return;
     
-    await saveDnsChecks(state.domain.id, { is_fully_verified: true });
-
     if (!finalDnsStatus.mx) {
       setIsMxWarningModalOpen(true);
     } else {
+      await saveDnsChecks(state.domain.id, { is_fully_verified: true });
       onVerificationComplete(state.domain.domain_name, finalDnsStatus);
       handleClose();
     }
@@ -495,6 +493,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           </div>
       )
   }
+
+  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
 
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
@@ -1447,8 +1447,8 @@ function DnsInfoModal({
         </div>
         <p className="pt-2">Añade este registro TXT para que los proveedores de correo muestren tu logo.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
-          <span>default._bimi</span>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
@@ -1471,8 +1471,8 @@ function DnsInfoModal({
         </div>
         <p className="pt-2">Añade el certificado VMC a tu registro BIMI para validación de marca.</p>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
-          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`default._bimi`)}><Copy className="size-4"/></Button></p>
-          <span>default._bimi</span>
+          <p className="font-bold text-white/90 flex justify-between w-full"><span>Host/Nombre:</span><Button size="icon" variant="ghost" className="size-6 -mr-2" onClick={() => onCopy(`daybuu._bimi`)}><Copy className="size-4"/></Button></p>
+          <span>daybuu._bimi</span>
         </div>
         <div className={cn(baseClass, "flex-col items-start gap-1")}>
           <p className="font-bold text-white/90">Tipo de Registro:</p><span>TXT</span>
@@ -1669,5 +1669,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
