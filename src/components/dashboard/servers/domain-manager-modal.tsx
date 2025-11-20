@@ -52,13 +52,13 @@ const RightPanelPlaceholder = () => (
             />
             <div className="absolute left-0 top-1/2 -translate-y-1/2 group">
                 <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20">
-                     <div className="absolute inset-0 rounded-full bg-cyan-500/10 animate-pulse group-hover:scale-110 transition-transform" style={{animationDuration: '3s'}}/>
+                    <motion.div className="absolute inset-0 rounded-full bg-cyan-500/10" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}/>
                     <Globe className="relative size-8 text-cyan-300"/>
                 </div>
             </div>
              <div className="absolute right-0 top-1/2 -translate-y-1/2 group">
                 <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20">
-                    <div className="absolute inset-0 rounded-full bg-cyan-500/10 animate-pulse group-hover:scale-110 transition-transform" style={{animationDuration: '3s', animationDelay: '0.5s'}}/>
+                    <motion.div className="absolute inset-0 rounded-full bg-cyan-500/10" animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}/>
                     <MailOpen className="relative size-8 text-cyan-300"/>
                 </div>
             </div>
@@ -149,16 +149,16 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                     className="space-y-2"
                                 >
                                     {currentList.length > 0 ? currentList.map(d => (
-                                        <button key={d.name} onClick={() => setSelectedDomain(d.name)} className={cn("w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2", selectedDomain === d.name ? "bg-cyan-500/20 border-cyan-400" : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50")}>
+                                        <div key={d.name} onClick={() => setSelectedDomain(d.name)} className={cn("w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2 cursor-pointer", selectedDomain === d.name ? "bg-cyan-500/20 border-cyan-400" : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50")}>
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <LedIndicator verified={d.verified}/>
                                                 <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name)}</span>
                                             </div>
-                                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white">
+                                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
                                                 <Code className="mr-2 size-3"/>
                                                 Detalles
                                             </Button>
-                                        </button>
+                                        </div>
                                     )) : (
                                         <EmptyState type={activeTab === 'domains' ? 'Dominios' : 'Subdominios'} />
                                     )}
@@ -182,7 +182,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                                    <LedIndicator verified={true}/>
                                                    <span className="font-mono text-sm text-white/80 truncate">{email}</span>
                                                 </div>
-                                                <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white">
+                                                <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
                                                   <GitBranch className="mr-2 size-3"/>
                                                   Informe
                                                 </Button>
