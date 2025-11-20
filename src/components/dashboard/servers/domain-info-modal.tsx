@@ -72,10 +72,15 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
     const dnsChecks = Array.isArray(domain?.dns_checks) ? domain?.dns_checks[0] : domain?.dns_checks;
 
     useEffect(() => {
-        if (isOpen && dnsChecks?.updated_at) {
-          setLastCheckedDate(formatDistanceToNow(new Date(dnsChecks.updated_at), { addSuffix: true, locale: es }));
-        } else if(isOpen) {
-          setLastCheckedDate('Nunca');
+        if (isOpen) {
+            const calculateDate = () => {
+                if (dnsChecks?.updated_at) {
+                    setLastCheckedDate(formatDistanceToNow(new Date(dnsChecks.updated_at), { addSuffix: true, locale: es }));
+                } else {
+                    setLastCheckedDate('Nunca');
+                }
+            };
+            calculateDate();
         }
     }, [isOpen, dnsChecks?.updated_at]);
 
@@ -126,7 +131,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                         50% { filter: blur(8px); opacity: 1; }
                     }
                     @keyframes icon-pulse-wave {
-                        0% { transform: scale(0.5); opacity: 1; }
+                        0% { transform: scale(0.8); opacity: 1; }
                         100% { transform: scale(2.5); opacity: 0; }
                     }
                 `}</style>
@@ -181,7 +186,7 @@ export function DomainInfoModal({ isOpen, onOpenChange, domain }: DomainInfoModa
                          <Button
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                            className="w-full mt-8 bg-background/80 text-foreground hover:text-black z-10 border-2 border-white hover:bg-white"
+                            className="w-full mt-8 bg-[#00ADEC] text-white z-10 border-white hover:bg-white hover:text-black"
                         >
                             <X className="mr-2"/>
                             Cerrar
