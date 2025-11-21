@@ -43,7 +43,6 @@ export async function createOrGetDomainAction(
   }
 
   try {
-    // Check if the domain exists at all, and join dns_checks
     const { data: existingDomain, error: fetchError } = await supabase
       .from('domains')
       .select(`
@@ -53,22 +52,19 @@ export async function createOrGetDomainAction(
       .eq('domain_name', domainName)
       .maybeSingle();
 
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine.
+    if (fetchError && fetchError.code !== 'PGRST116') {
       throw fetchError;
     }
     
-    // If the domain exists...
     if (existingDomain) {
-      // And it belongs to the current user, return a "found" status.
       if (existingDomain.user_id === user.id) {
          return { 
-           success: false, // Not success in terms of creation
+           success: false, 
            message: 'Este nombre de dominio ya se encuentra verificado en tu cuenta.', 
            status: 'DOMAIN_FOUND',
            domain: existingDomain 
          };
       } else {
-        // If it belongs to another user, return a "taken" status.
         return { 
           success: false, 
           message: 'Este dominio no es posible añadirlo por que ya esta ocupado y en uso.',
@@ -78,7 +74,6 @@ export async function createOrGetDomainAction(
       }
     }
 
-    // If it doesn't exist, create it with a verification code.
     const verificationCode = generateVerificationCode();
     const { data: newDomain, error: insertError } = await supabase
       .from('domains')
@@ -90,19 +85,14 @@ export async function createOrGetDomainAction(
       .select()
       .single();
 
-    if (insertError) {
-      throw insertError;
-    }
-
-    // Create an associated entry in dns_checks
+    if (insertError) throw insertError;
+    
     const { error: dnsCheckError } = await supabase
         .from('dns_checks')
         .insert({ domain_id: newDomain.id });
 
     if (dnsCheckError) {
-        // Optional: you might want to roll back the domain creation if this fails
         console.error("Failed to create initial dns_check entry:", dnsCheckError);
-        // For simplicity, we'll just log the error here.
     }
     
     revalidatePath('/dashboard/servers');
@@ -115,8 +105,7 @@ export async function createOrGetDomainAction(
 
   } catch (error: any) {
     console.error('Error in createOrGetDomainAction:', error);
-    // This could happen if another user registers it in a race condition due to the UNIQUE constraint.
-    if (error.code === '23505') { // unique_violation
+    if (error.code === '23505') {
         return { 
           success: false, 
           message: 'Este dominio no es posible añadirlo por que ya esta ocupado y en uso.',
@@ -128,27 +117,27 @@ export async function createOrGetDomainAction(
   }
 }
 
-export async function getVerifiedDomainsCount(): Promise<{ success: boolean; count?: number; error?: string; }> {
+export async function getVerifiedDomainsCount(): Promise<{ success: boolean; count: number; error?: string; }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return { success: false, error: 'Usuario no autenticado.' };
+    return { success: false, error: 'Usuario no autenticado.', count: 0 };
   }
   
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('verified_domains_count')
-      .eq('id', user.id)
-      .single();
+    const { count, error } = await supabase
+      .from('domains')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_verified', true);
       
     if (error) throw error;
     
-    return { success: true, count: data.verified_domains_count || 0 };
+    return { success: true, count: count || 0 };
   } catch (error: any) {
     console.error('Error fetching verified domains count:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message, count: 0 };
   }
 }
 
@@ -203,23 +192,21 @@ export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_veri
         .from('dns_checks')
         .update({ ...checks, updated_at: new Date().toISOString() })
         .eq('domain_id', domainId)
-        .select();
+        .select()
+        .single();
     
     if (error) {
         console.error('Error saving DNS checks:', error);
         throw error;
     }
-
-    // Trigger a re-calculation on the profiles table
-    // We can do this by "updating" the related domain, which fires our trigger
-    const { data: domainData } = await supabase.from('domains').select('user_id').eq('id', domainId).single();
-    if (domainData) {
-        await supabase.rpc('update_user_verified_domains_count_manual', { user_id_param: domainData.user_id });
-    }
+    
+    // The trigger will now handle updating the count automatically
+    // when 'is_fully_verified' changes.
 
     revalidatePath('/dashboard/servers');
     return { success: true, data };
 }
+
 
 export async function saveSmtpCredentials(domainId: string, credentials: { host: string, port: number, encryption: string, username: string, password?: string, is_validated: boolean }) {
     const supabase = createClient();

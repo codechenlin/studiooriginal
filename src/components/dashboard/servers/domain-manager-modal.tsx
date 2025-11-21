@@ -67,6 +67,7 @@ import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '../admin/media-preview';
 import { Separator } from '../ui/separator';
+import { createOrGetDomainAction } from './db-actions';
 
 // Mock Data
 const domains: Domain[] = [
@@ -183,15 +184,13 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
         const errorCount = currentDomainData?.emails.filter(e => !e.connected).length ?? 0;
     
         return (
-             <div className="relative flex-1 p-2 rounded-lg bg-transparent min-w-[360px]">
+             <div className="relative flex-1 p-2 rounded-lg bg-transparent min-w-0">
                 <div className="flex items-center justify-center gap-4">
                     <div className="flex items-center gap-2 text-xs">
                         <CheckCircle className="size-4 text-green-400" />
                         <span className="font-semibold text-white">Conexión Estable: <span className="font-mono text-lg">{connectedCount}</span></span>
                     </div>
-                    <div className="w-px h-8 bg-gradient-to-b from-transparent via-cyan-400/50 to-transparent relative">
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-cyan-300 rounded-full shadow-[0_0_4px_#00ADEC] tech-scanner"/>
-                    </div>
+                    <Separator orientation="vertical" className="h-8 bg-cyan-400/20" />
                     <div className="flex items-center gap-2 text-xs">
                         <XCircle className="size-4 text-red-500" />
                         <span className="font-semibold text-white">Error de Conexión: <span className="font-mono text-lg">{errorCount}</span></span>
@@ -315,7 +314,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                         </div>
                         Gestor de Dominios y Correos
                     </DialogTitle>
-                    <div className="flex items-center gap-2 text-sm font-semibold text-green-300">
+                     <div className="flex items-center gap-2 text-sm font-semibold text-green-300">
                          <div className="relative flex items-center justify-center w-4 h-4">
                             <div className="absolute w-full h-full rounded-full border-2 border-cyan-400/80 animate-[led-glow-ring_4s_infinite_ease-in-out]" />
                             <div className="w-2 h-2 rounded-full bg-cyan-300 shadow-[0_0_8px_#00ADEC]"/>
@@ -347,9 +346,9 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                                 <LedIndicator verified={d.is_verified}/>
                                                 <p className="font-mono text-sm text-white/90 truncate" title={d.name}>{truncateName(d.name, 25)}</p>
                                             </div>
-                                             {activeTab === 'domains' && (
-                                                <Button variant="ghost" size="icon" className={cn("h-8 w-8 bg-white/5 hover:bg-white/10 opacity-0 transition-opacity", selectedDomain === d.name && "opacity-100")} onClick={(e) => handleDeleteClick(e, d.name)} >
-                                                    <Trash2 className="size-4 text-[#f03e3e] hover:text-[#ff6b6b]" />
+                                            {activeTab === 'domains' && selectedDomain === d.name && (
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/5 hover:bg-white/10 opacity-100 transition-opacity" onClick={(e) => handleDeleteClick(e, d.name)} >
+                                                     <Trash2 className="size-4 text-[#ffffff] hover:text-[#ff6b6b]" style={{backgroundColor: 'hsla(0, 0%, 100%, 0.3)', borderRadius: '50%', padding: '2px'}}/>
                                                 </Button>
                                             )}
                                         </div>
