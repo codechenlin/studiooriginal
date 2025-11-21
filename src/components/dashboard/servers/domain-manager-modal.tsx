@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
+import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -68,7 +68,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '../ui/skeleton';
 import { MediaPreview } from '../admin/media-preview';
@@ -145,7 +145,8 @@ const LedIndicator = ({ verified }: { verified: boolean }) => (
     </div>
   );
   
-const ConnectionSignal = () => (
+const ConnectionSignal = () => {
+    return (
       <div className="relative flex items-center justify-center w-8 h-8">
           <div className="absolute w-full h-full border-2 border-dashed border-[#E18700]/30 rounded-full animate-spin-slow" />
           <div className="flex items-end gap-0.5 h-3/5">
@@ -166,12 +167,14 @@ const ConnectionSignal = () => (
               />
           </div>
       </div>
-  );
+    );
+};
 
 export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalProps) {
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'domains' | 'subdomains'>('domains');
     const [emailFilter, setEmailFilter] = useState<'all' | 'connected' | 'disconnected'>('all');
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     
     const truncateName = (name: string, maxLength: number): string => {
         if (name.length <= maxLength) {
@@ -197,6 +200,46 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     const currentList = activeTab === 'domains' ? domains : subdomains;
     const currentDomainData = [...domains, ...subdomains].find(d => d.name === selectedDomain);
     
+    const DeleteConfirmationModal = () => (
+         <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+            <DialogContent showCloseButton={false} className="sm:max-w-md bg-zinc-900/90 backdrop-blur-xl border border-red-500/20 text-white overflow-hidden p-0">
+                <div className="absolute inset-0 z-0 opacity-10 bg-grid-red-500/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
+                <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-red-500/10 rounded-full animate-pulse-slow filter blur-3xl -translate-x-1/2 -translate-y-1/2"/>
+
+                <div className="p-8 text-center flex flex-col items-center z-10">
+                     <div className="flex justify-center mb-4">
+                        <div className="relative w-24 h-24 flex items-center justify-center">
+                            <motion.div className="absolute inset-0 border-2 border-dashed border-red-400/50 rounded-full" animate={{rotate: 360}} transition={{duration: 10, repeat: Infinity, ease: "linear"}} />
+                            <motion.div className="absolute inset-2 border-2 border-dashed border-red-400/30 rounded-full" animate={{rotate: -360}} transition={{duration: 7, repeat: Infinity, ease: "linear"}} />
+                            <AlertTriangle className="text-red-400 size-16 animate-pulse" style={{ filter: 'drop-shadow(0 0 10px #F00000)' }}/>
+                        </div>
+                    </div>
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-bold">Confirmar Eliminación</DialogTitle>
+                        <DialogDescription className="text-red-200/80">
+                           ¿Estás seguro de que deseas eliminar el dominio verificado <strong>{selectedDomain}</strong>? Esta acción es irreversible. Podrás volver a verificar el dominio más adelante si lo deseas.
+                        </DialogDescription>
+                    </DialogHeader>
+                     <div className="w-full mt-6 text-left">
+                        <Label htmlFor="password-confirm" className="text-red-200/90">Para confirmar, escribe tu contraseña:</Label>
+                        <div className="relative mt-2">
+                             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                             <Input id="password-confirm" type="password" className="pl-10 bg-black/40 border-red-500/30 focus:border-red-400" placeholder="••••••••"/>
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter className="p-4 bg-black/20 border-t border-red-500/20 z-10 flex justify-between">
+                    <Button variant="outline" className="text-white hover:bg-white hover:text-black" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</Button>
+                    <Button variant="destructive" className="bg-[#F00000] hover:bg-red-700">
+                        <Trash2 className="mr-2"/>
+                        Eliminar Permanentemente
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-5xl w-full h-[650px] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
@@ -254,8 +297,8 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                             <button onClick={() => setActiveTab('domains')} className={cn("flex-1 py-2 px-4 text-sm font-semibold rounded-md transition-colors", activeTab === 'domains' && 'bg-cyan-500/20 text-cyan-200')}>Dominios</button>
                             <button onClick={() => setActiveTab('subdomains')} className={cn("flex-1 py-2 px-4 text-sm font-semibold rounded-md transition-colors", activeTab === 'subdomains' && 'bg-cyan-500/20 text-cyan-200')}>Subdominios</button>
                         </div>
-                        <ScrollArea className="flex-1 -m-6 p-6 custom-scrollbar">
-                            <AnimatePresence mode="wait">
+                        <ScrollArea className="flex-1 -m-6 p-6 mt-0 custom-scrollbar">
+                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={activeTab}
                                     initial={{ opacity: 0 }}
@@ -275,10 +318,12 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                                 <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name, 21)}</span>
                                             </div>
                                              {activeTab === 'domains' ? (
-                                                 <MoreHorizontal className="text-[#F00000]" />
-                                             ) : (
+                                                <Button variant="ghost" size="icon" className="group" onClick={(e) => { e.stopPropagation(); setIsDeleteModalOpen(true); }} >
+                                                    <Trash2 className="size-4 text-[#F00000] transition-colors group-hover:text-white" />
+                                                </Button>
+                                            ) : (
                                                 <MoreHorizontal className="text-cyan-300/50" />
-                                             )}
+                                            )}
                                         </div>
                                     )) : (
                                         <EmptyState type={activeTab === 'domains' ? 'Dominios' : 'Subdominios'} />
@@ -341,7 +386,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                        Cerrar
                      </Button>
                     <div className="flex items-center gap-4">
-                        <div className="flex-1 p-2 rounded-lg border-2 bg-transparent min-w-[360px]" style={{ borderColor: '#E18700' }}> 
+                         <div className="flex-1 p-2 rounded-lg border-2 bg-transparent min-w-[360px]" style={{ borderColor: '#E18700' }}> 
                             {selectedDomain && currentDomainData ? (
                                 <div className="flex items-center justify-around gap-4">
                                     {/* Connected */}
@@ -370,6 +415,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                      </div>
                 </DialogFooter>
             </DialogContent>
+            <DeleteConfirmationModal />
         </Dialog>
     );
 }
