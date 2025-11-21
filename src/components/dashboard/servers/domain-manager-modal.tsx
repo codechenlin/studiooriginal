@@ -171,6 +171,7 @@ const ConnectionSignal = () => {
 };
 
 export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalProps) {
+    const { toast } = useToast();
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'domains' | 'subdomains'>('domains');
     const [emailFilter, setEmailFilter] = useState<'all' | 'connected' | 'disconnected'>('all');
@@ -318,8 +319,8 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                                 <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name, 21)}</span>
                                             </div>
                                              {activeTab === 'domains' ? (
-                                                <Button variant="ghost" size="icon" className="group" onClick={(e) => { e.stopPropagation(); setIsDeleteModalOpen(true); }} >
-                                                    <Trash2 className="size-4 text-[#F00000] transition-colors group-hover:text-white" />
+                                                <Button variant="ghost" size="icon" className="group bg-white/80 hover:bg-white" onClick={(e) => { e.stopPropagation(); setIsDeleteModalOpen(true); }} >
+                                                    <Trash2 className="size-4 text-[#F00000] transition-colors" />
                                                 </Button>
                                             ) : (
                                                 <MoreHorizontal className="text-cyan-300/50" />
@@ -412,6 +413,13 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                 </div>
                              )}
                          </div>
+                         <Button
+                            variant="outline"
+                            className="h-11 px-4 text-white border-white/30 bg-transparent hover:bg-white hover:text-black"
+                         >
+                            <Plug className="mr-2"/>
+                            Comprobación
+                         </Button>
                      </div>
                 </DialogFooter>
             </DialogContent>
@@ -419,3 +427,5 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
         </Dialog>
     );
 }
+
+    
