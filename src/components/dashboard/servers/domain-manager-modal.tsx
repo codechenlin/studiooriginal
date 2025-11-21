@@ -151,13 +151,17 @@ const SystemStatusIndicator = () => {
     return (
         <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center gap-3">
             <div className="relative flex items-center justify-center w-6 h-6">
-                <div 
-                    className="absolute w-full h-full rounded-full border-2 animate-[hud-spin_4s_linear_infinite]"
-                    style={{ borderColor: '#009AFF' }}
+                 <motion.div
+                    className="absolute inset-0 border-2 border-dashed rounded-full"
+                    style={{ borderColor: '#1700E6' }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
                 />
-                <div 
-                    className="absolute w-2/3 h-2/3 rounded-full border-2 border-dashed"
-                    style={{ borderColor: '#1700E6', animation: `hud-spin 3s linear infinite reverse` }}
+                 <motion.div
+                    className="absolute inset-2 border-2 border-dashed rounded-full"
+                    style={{ borderColor: '#009AFF' }}
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
                 />
                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6', boxShadow: '0 0 6px #1700E6'}}/>
             </div>
@@ -207,9 +211,8 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                 <div className="flex items-center gap-2">
                     <CheckCircle className="size-5 text-green-400" />
                     <span className="font-semibold text-white">Conexión Estable: <span className="font-mono text-lg">{connectedCount}</span></span>
-                     <span className="text-xs font-semibold text-white px-2 py-1 rounded-md" style={{backgroundColor: 'rgba(0, 203, 7, 0.3)'}}>Correos</span>
+                    <span className="text-xs font-semibold text-white px-2 py-1 rounded-md" style={{backgroundColor: 'rgba(0, 203, 7, 0.3)'}}>Correos</span>
                 </div>
-                <Separator orientation="vertical" className="h-8 bg-cyan-400/20" />
                 <div className="flex items-center gap-2">
                     <XCircle className="size-5 text-red-500" />
                     <span className="font-semibold text-white">Error de Conexión: <span className="font-mono text-lg">{errorCount}</span></span>
@@ -290,13 +293,6 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                       50% { opacity: 0.7; }
                       100% { transform: scale(2.5); opacity: 0; }
                     }
-                    .animate-pulse-wave {
-                      position: absolute;
-                      inset: 0;
-                      border-radius: inherit;
-                      border: 1px solid var(--wave-color);
-                      animation: pulse-wave 1s infinite cubic-bezier(0.4, 0, 0.2, 1);
-                    }
                     @keyframes illumination-pulse {
                         0%, 100% {
                             transform: scale(0.5);
@@ -351,7 +347,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                                 <p className="font-mono text-sm text-white/90 truncate" title={d.name}>{truncateName(d.name, 25)}</p>
                                             </div>
                                             {activeTab === 'domains' && selectedDomain === d.name && (
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/5 hover:bg-white text-red-500 hover:text-red-500" onClick={(e) => handleDeleteClick(e, d.name)} >
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/5 hover:bg-white text-red-500 hover:text-white" onClick={(e) => handleDeleteClick(e, d.name)} >
                                                      <Trash2 className="size-4"/>
                                                 </Button>
                                             )}
@@ -407,12 +403,11 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                         </div>
                     </div>
                 </div>
-                 <DialogFooter className="p-3 border-t border-cyan-400/20 bg-black/30 z-10 flex justify-between items-center">
+                 <DialogFooter className="p-3 border-t border-cyan-400/20 bg-black/30 z-10 flex justify-between items-center gap-4">
                      <ConnectionSignal />
                      <div className="flex items-center gap-2">
                         <Button
-                            variant="outline"
-                            className="h-11 px-4 text-white border-white/30 bg-transparent hover:bg-white hover:text-black"
+                            className="h-11 px-4 text-white bg-gradient-to-r from-[#1700E6] to-[#009AFF] hover:from-[#00CE07] hover:to-[#A6EE00] hover:text-white"
                          >
                             <Plug className="mr-2"/>
                             Comprobación
