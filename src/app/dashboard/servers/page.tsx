@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useTransition, useCallback } from 'react';
@@ -11,7 +12,7 @@ import { DomainManagerModal } from '@/components/dashboard/servers/domain-manage
 import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
 import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
 import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/domain-verification-success-modal';
-import { type Domain } from './types';
+import { CreateSubdomainModal } from '@/components/dashboard/servers/create-subdomain-modal';
 import { getVerifiedDomainsCount } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -124,7 +125,8 @@ export default function ServersPage() {
   const [isDomainManagerModalOpen, setIsDomainManagerModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
   
-  const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
+  const [isSubdomainWarningModalOpen, setIsSubdomainWarningModalOpen] = useState(false);
+  const [isCreateSubdomainModalOpen, setIsCreateSubdomainModalOpen] = useState(false);
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -136,22 +138,18 @@ export default function ServersPage() {
   
   const handleSubdomainClick = (hasVerified: boolean) => {
     if (hasVerified) {
-      // Logic to open functional subdomain modal
-      // For now, we can reuse the same modal or create a new one.
-      // Let's assume we want to open a *different* modal for creation.
-      // We will reuse the same one for now for simplicity, but the logic is here.
-      setIsSubdomainModalOpen(true);
+      setIsCreateSubdomainModalOpen(true);
     } else {
-      setIsSubdomainModalOpen(true); // This opens the warning modal
+      setIsSubdomainWarningModalOpen(true);
     }
   };
   
   const handleAddEmailClick = (hasVerified: boolean) => {
     if (hasVerified) {
-      // Open functional "add email" modal
-      setIsAddEmailModalOpen(true);
+       // Future: Open functional "add email" modal
+       setIsAddEmailModalOpen(true); 
     } else {
-      setIsAddEmailModalOpen(true); // This opens the warning modal
+       setIsAddEmailModalOpen(true);
     }
   };
   
@@ -180,7 +178,6 @@ export default function ServersPage() {
       ...p,
       domainsCount: domainsCount,
       hasVerifiedDomains: domainsCount > 0,
-      // Placeholder for other counts, as we are only fetching the main domain count now
       subdomainsCount: 0, 
       emailsCount: 0,
       formattedEmailsCount: (0).toLocaleString()
@@ -220,7 +217,8 @@ export default function ServersPage() {
       status={selectedStatus}
     />
     <DomainManagerModal isOpen={isDomainManagerModalOpen} onOpenChange={setIsDomainManagerModalOpen} />
-    <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
+    <SubdomainModal isOpen={isSubdomainWarningModalOpen} onOpenChange={setIsSubdomainWarningModalOpen} />
+    <CreateSubdomainModal isOpen={isCreateSubdomainModalOpen} onOpenChange={setIsCreateSubdomainModalOpen} />
     <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
     {successModalData && (
         <DomainVerificationSuccessModal 
