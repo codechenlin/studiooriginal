@@ -1,26 +1,90 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal, CheckCircle, XCircle, MoreHorizontal, Layers, Plug, Hourglass, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  MoreHorizontal,
+  FileIcon,
+  Image as ImageIcon,
+  Film,
+  FileText,
+  Music,
+  Archive,
+  Edit,
+  Trash2,
+  Download,
+  Eye,
+  UploadCloud,
+  Loader2,
+  Search,
+  XCircle,
+  AlertTriangle,
+  FolderOpen,
+  Check,
+  Globe,
+  GitBranch,
+  Mail,
+  X,
+  MailOpen,
+  Code,
+  Signal,
+  CheckCircle,
+  Layers,
+  Plug,
+  Hourglass,
+  KeyRound,
+  Shield,
+} from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Separator } from '@/components/ui/separator';
+import { motion } from 'framer-motion';
+import { type Domain } from './types';
+import { Skeleton } from '../ui/skeleton';
+import { MediaPreview } from '../admin/media-preview';
+import { Separator } from '../ui/separator';
 
 // Mock Data
-const domains = [
-    { name: 'mailflow.ai', verified: true, emails: [{address: 'ventas@mailflow.ai', connected: true}, {address: 'soporte@mailflow.ai', connected: true}, {address: 'info@mailflow.ai', connected: false}] },
-    { name: 'daybuu.com', verified: true, emails: [{address: 'contacto@daybuu.com', connected: true}] },
-    { name: 'my-super-long-domain-name-that-needs-truncation.com', verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}] },
-    { name: 'another-domain.dev', verified: false, emails: [] },
+const domains: Domain[] = [
+    { id: '1', name: 'mailflow.ai', is_verified: true, emails: [{address: 'ventas@mailflow.ai', connected: true}, {address: 'soporte@mailflow.ai', connected: true}, {address: 'info@mailflow.ai', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    { id: '2', name: 'daybuu.com', is_verified: true, emails: [{address: 'contacto@daybuu.com', connected: true}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    { id: '3', name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    { id: '4', name: 'another-domain.dev', is_verified: false, emails: [], user_id: '', verification_code: '', created_at: '', updated_at: '' },
 ];
 const subdomains = [
-    { name: 'marketing.mailflow.ai', verified: true, emails: [{address: 'newsletter@marketing.mailflow.ai', connected: true}] },
-    { name: 'app.daybuu.com', verified: false, emails: [] },
-    { name: 'another-very-long-subdomain-name-to-check-truncation.mailflow.ai', verified: true, emails: [{address: 'info@another-very-long-subdomain-name-to-check-truncation.mailflow.ai', connected: true}] },
+    { id: 'sub1', name: 'marketing.mailflow.ai', verified: true, emails: [{address: 'newsletter@marketing.mailflow.ai', connected: true}] },
+    { id: 'sub2', name: 'app.daybuu.com', verified: false, emails: [] },
+    { id: 'sub3', name: 'another-very-long-subdomain-name-to-check-truncation.mailflow.ai', verified: true, emails: [{address: 'info@another-very-long-subdomain-name-to-check-truncation.mailflow.ai', connected: true}] },
 ];
 
 interface DomainManagerModalProps {
@@ -69,6 +133,41 @@ const RightPanelPlaceholder = () => (
     </div>
 );
 
+const LedIndicator = ({ verified }: { verified: boolean }) => (
+    <div 
+      className="relative size-3 rounded-sm shrink-0" 
+      style={{
+        backgroundColor: verified ? '#00CB07' : '#F00000',
+        boxShadow: `0 0 6px ${verified ? '#00CB07' : '#F00000'}`,
+      }}
+    >
+      <div className="absolute inset-0 rounded-sm animate-pulse-wave" style={{'--wave-color': verified ? '#00CB07' : '#F00000', animationDuration: '1s'} as React.CSSProperties} />
+    </div>
+  );
+  
+const ConnectionSignal = () => (
+      <div className="relative flex items-center justify-center w-8 h-8">
+          <div className="absolute w-full h-full border-2 border-dashed border-[#E18700]/30 rounded-full animate-spin-slow" />
+          <div className="flex items-end gap-0.5 h-3/5">
+              <motion.div
+                  className="w-1 bg-[#E18700] rounded-full"
+                  animate={{ height: ['20%', '80%', '20%'] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+               <motion.div
+                  className="w-1 bg-[#E18700] rounded-full"
+                  animate={{ height: ['60%', '30%', '60%'] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+              />
+               <motion.div
+                  className="w-1 bg-[#E18700] rounded-full"
+                  animate={{ height: ['40%', '100%', '40%'] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+              />
+          </div>
+      </div>
+  );
+
 export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalProps) {
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'domains' | 'subdomains'>('domains');
@@ -98,41 +197,6 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     const currentList = activeTab === 'domains' ? domains : subdomains;
     const currentDomainData = [...domains, ...subdomains].find(d => d.name === selectedDomain);
     
-    const LedIndicator = ({ verified }: { verified: boolean }) => (
-      <div 
-        className="relative size-3 rounded-sm shrink-0" 
-        style={{
-          backgroundColor: verified ? '#00CB07' : '#F00000',
-          boxShadow: `0 0 6px ${verified ? '#00CB07' : '#F00000'}`,
-        }}
-      >
-        <div className="absolute inset-0 rounded-sm animate-pulse-wave" style={{'--wave-color': verified ? '#00CB07' : '#F00000', animationDuration: '1s'} as React.CSSProperties} />
-      </div>
-    );
-    
-    const ConnectionSignal = () => (
-        <div className="relative flex items-center justify-center w-8 h-8">
-            <div className="absolute w-full h-full border-2 border-dashed border-cyan-400/30 rounded-full animate-spin-slow" />
-            <div className="flex items-end gap-0.5 h-3/5">
-                <motion.div
-                    className="w-1 bg-cyan-300 rounded-full"
-                    animate={{ height: ['20%', '80%', '20%'] }}
-                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                 <motion.div
-                    className="w-1 bg-cyan-300 rounded-full"
-                    animate={{ height: ['60%', '30%', '60%'] }}
-                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-                />
-                 <motion.div
-                    className="w-1 bg-cyan-300 rounded-full"
-                    animate={{ height: ['40%', '100%', '40%'] }}
-                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-                />
-            </div>
-        </div>
-    );
-
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-5xl w-full h-[650px] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
@@ -203,14 +267,18 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                     {currentList.length > 0 ? currentList.map(d => (
                                         <div key={d.name} onClick={() => setSelectedDomain(d.name)} className={cn("w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2 cursor-pointer", selectedDomain === d.name ? "bg-cyan-500/20 border-cyan-400" : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50")}>
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <LedIndicator verified={d.verified}/>
+                                                <LedIndicator verified={d.is_verified}/>
                                                 <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-white hover:text-black" onClick={(e) => e.stopPropagation()}>
                                                   <Code className="mr-2 size-3"/>
                                                   Detalles
                                                 </Button>
                                                 <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name, 21)}</span>
                                             </div>
-                                            <MoreHorizontal className="text-cyan-300/50"/>
+                                             {activeTab === 'domains' ? (
+                                                 <MoreHorizontal className="text-[#F00000]" />
+                                             ) : (
+                                                <MoreHorizontal className="text-cyan-300/50" />
+                                             )}
                                         </div>
                                     )) : (
                                         <EmptyState type={activeTab === 'domains' ? 'Dominios' : 'Subdominios'} />
@@ -273,30 +341,20 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                        Cerrar
                      </Button>
                     <div className="flex items-center gap-4">
-                        <Button
-                            className="text-white font-bold transition-opacity hover:opacity-95"
-                             style={{ background: 'linear-gradient(to right, #1700E6, #009AFF)' }}
-                             onMouseOver={(e) => e.currentTarget.style.background = 'linear-gradient(to right, #00CE07, #A6EE00)'}
-                             onMouseOut={(e) => e.currentTarget.style.background = 'linear-gradient(to right, #1700E6, #009AFF)'}
-                        >
-                           <Plug className="mr-2"/>
-                           Comprobar Conexión
-                        </Button>
-                        <Separator orientation="vertical" className="h-10 bg-cyan-400/20 rounded-full"/>
-                         <div className="flex-1 p-2 rounded-lg border-2 border-white min-w-[360px]">
+                        <div className="flex-1 p-2 rounded-lg border-2 bg-transparent min-w-[360px]" style={{ borderColor: '#E18700' }}> 
                             {selectedDomain && currentDomainData ? (
                                 <div className="flex items-center justify-around gap-4">
                                     {/* Connected */}
                                     <div className="flex items-center gap-2 text-xs">
                                         <div className="size-3 rounded-sm bg-[#00CB07]"/>
-                                        <span className="font-semibold text-green-300">Conexión Establecida</span>
+                                        <span className="font-semibold text-white">Conexión Estable</span>
                                         <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => e.connected).length}</span>
                                         <div className="px-1.5 py-0.5 bg-green-500/20 text-green-300 rounded-md text-xs font-semibold border border-green-500/30">Correos</div>
                                     </div>
                                     {/* Disconnected */}
                                     <div className="flex items-center gap-2 text-xs">
                                         <div className="size-3 rounded-sm bg-[#F00000]"/>
-                                        <span className="font-semibold text-red-400">Error de Conexión</span>
+                                        <span className="font-semibold text-white">Error de Conexión</span>
                                         <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
                                         <div className="px-1.5 py-0.5 bg-red-500/20 text-red-300 rounded-md text-xs font-semibold border border-red-500/30">Correos</div>
                                     </div>
