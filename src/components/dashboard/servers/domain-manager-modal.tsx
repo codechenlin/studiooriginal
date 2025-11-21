@@ -66,7 +66,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '../admin/media-preview';
-import { Separator } from '../ui/separator';
+import { Separator } from '@/components/ui/separator';
 import { createOrGetDomainAction } from './db-actions';
 
 // Mock Data
@@ -184,17 +184,15 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
         const errorCount = currentDomainData?.emails.filter(e => !e.connected).length ?? 0;
     
         return (
-             <div className="relative flex-1 p-2 rounded-lg bg-transparent min-w-0">
-                <div className="flex items-center justify-center gap-4">
-                    <div className="flex items-center gap-2 text-xs">
-                        <CheckCircle className="size-4 text-green-400" />
-                        <span className="font-semibold text-white">Conexión Estable: <span className="font-mono text-lg">{connectedCount}</span></span>
-                    </div>
-                    <Separator orientation="vertical" className="h-8 bg-cyan-400/20" />
-                    <div className="flex items-center gap-2 text-xs">
-                        <XCircle className="size-4 text-red-500" />
-                        <span className="font-semibold text-white">Error de Conexión: <span className="font-mono text-lg">{errorCount}</span></span>
-                    </div>
+            <div className="flex items-center justify-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                    <CheckCircle className="size-5 text-green-400" />
+                    <span className="font-semibold text-white">Conexión Estable: <span className="font-mono text-lg">{connectedCount}</span></span>
+                </div>
+                <Separator orientation="vertical" className="h-8 bg-cyan-400/20" />
+                <div className="flex items-center gap-2">
+                    <XCircle className="size-5 text-red-500" />
+                    <span className="font-semibold text-white">Error de Conexión: <span className="font-mono text-lg">{errorCount}</span></span>
                 </div>
             </div>
         );
@@ -207,12 +205,14 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     };
     
     const handleDelete = () => {
+        // Here you would call your server action to delete the domain
         toast({
             title: "Dominio eliminado (simulado)",
             description: `El dominio "${domainToDelete}" ha sido eliminado.`,
         });
         setIsDeleteModalOpen(false);
         setDomainToDelete(null);
+        // Here you would re-fetch your domains
     };
 
     const DeleteConfirmationModal = () => (
@@ -348,7 +348,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                             </div>
                                             {activeTab === 'domains' && selectedDomain === d.name && (
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/5 hover:bg-white/10 opacity-100 transition-opacity" onClick={(e) => handleDeleteClick(e, d.name)} >
-                                                     <Trash2 className="size-4 text-[#ffffff] hover:text-[#ff6b6b]" style={{backgroundColor: 'hsla(0, 0%, 100%, 0.3)', borderRadius: '50%', padding: '2px'}}/>
+                                                     <Trash2 className="size-4 text-[#F00000] hover:text-[#ff6b6b]" style={{backgroundColor: 'hsla(0, 0%, 100%, 0.1)', borderRadius: '50%', padding: '2px'}}/>
                                                 </Button>
                                             )}
                                         </div>
@@ -425,3 +425,5 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
         </>
     );
 }
+
+    
