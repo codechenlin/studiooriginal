@@ -65,7 +65,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MediaPreview } from '../admin/media-preview';
+import { MediaPreview } from '@/components/admin/media-preview';
 import { Separator } from '@/components/ui/separator';
 import { createOrGetDomainAction } from './db-actions';
 
@@ -82,11 +82,11 @@ const domains: Domain[] = [
 ];
 const subdomains = [
     // @ts-ignore
-    { id: 'sub1', name: 'marketing.mailflow.ai', verified: true, emails: [{address: 'newsletter@marketing.mailflow.ai', connected: true}] },
+    { id: 'sub1', name: 'marketing.mailflow.ai', is_verified: true, emails: [{address: 'newsletter@marketing.mailflow.ai', connected: true}] },
     // @ts-ignore
-    { id: 'sub2', name: 'app.daybuu.com', verified: false, emails: [] },
+    { id: 'sub2', name: 'app.daybuu.com', is_verified: false, emails: [] },
     // @ts-ignore
-    { id: 'sub3', name: 'another-very-long-subdomain-name-to-check-truncation.mailflow.ai', verified: true, emails: [{address: 'info@another-very-long-subdomain-name-to-check-truncation.mailflow.ai', connected: true}] },
+    { id: 'sub3', name: 'another-very-long-subdomain-name-to-check-truncation.mailflow.ai', is_verified: true, emails: [{address: 'info@another-very-long-subdomain-name-to-check-truncation.mailflow.ai', connected: true}] },
 ];
 
 interface DomainManagerModalProps {
@@ -146,6 +146,25 @@ const LedIndicator = ({ verified }: { verified: boolean }) => (
       <div className="absolute inset-0 rounded-sm animate-pulse-wave" style={{'--wave-color': verified ? '#00CB07' : '#F00000', animationDuration: '1s'} as React.CSSProperties} />
     </div>
   );
+  
+const SystemStatusIndicator = () => {
+    return (
+        <div className="p-2 rounded-lg bg-black/30 border border-cyan-400/20 flex items-center gap-3">
+            <div className="relative flex items-center justify-center w-6 h-6">
+                <div 
+                    className="absolute w-full h-full rounded-full border-2 animate-[hud-spin_4s_linear_infinite]"
+                    style={{ borderColor: '#009AFF' }}
+                />
+                <div 
+                    className="absolute w-2/3 h-2/3 rounded-full border-2 border-dashed"
+                    style={{ borderColor: '#1700E6', animation: `hud-spin 3s linear infinite reverse` }}
+                />
+                 <div className="w-2 h-2 rounded-full" style={{backgroundColor: '#1700E6', boxShadow: '0 0 6px #1700E6'}}/>
+            </div>
+            <p className="text-xs font-bold tracking-wider text-white">ESTADO DEL SISTEMA</p>
+        </div>
+    );
+};
 
 export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalProps) {
     const { toast } = useToast();
@@ -156,8 +175,8 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     const [domainToDelete, setDomainToDelete] = useState<string | null>(null);
 
     const truncateName = (name: string, maxLength: number): string => {
-        if (name.length <= maxLength) {
-            return name;
+        if (!name || name.length <= maxLength) {
+            return name || '';
         }
         return `${name.substring(0, maxLength)}...`;
     };
@@ -188,11 +207,13 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                 <div className="flex items-center gap-2">
                     <CheckCircle className="size-5 text-green-400" />
                     <span className="font-semibold text-white">Conexión Estable: <span className="font-mono text-lg">{connectedCount}</span></span>
+                     <span className="text-xs font-semibold text-white px-2 py-1 rounded-md" style={{backgroundColor: 'rgba(0, 203, 7, 0.3)'}}>Correos</span>
                 </div>
                 <Separator orientation="vertical" className="h-8 bg-cyan-400/20" />
                 <div className="flex items-center gap-2">
                     <XCircle className="size-5 text-red-500" />
                     <span className="font-semibold text-white">Error de Conexión: <span className="font-mono text-lg">{errorCount}</span></span>
+                    <span className="text-xs font-semibold text-white px-2 py-1 rounded-md" style={{backgroundColor: 'rgba(240, 0, 0, 0.3)'}}>Correos</span>
                 </div>
             </div>
         );
@@ -205,14 +226,12 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     };
     
     const handleDelete = () => {
-        // Here you would call your server action to delete the domain
         toast({
             title: "Dominio eliminado (simulado)",
             description: `El dominio "${domainToDelete}" ha sido eliminado.`,
         });
         setIsDeleteModalOpen(false);
         setDomainToDelete(null);
-        // Here you would re-fetch your domains
     };
 
     const DeleteConfirmationModal = () => (
@@ -295,16 +314,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                         background: radial-gradient(circle, var(--glow-color) 0%, transparent 70%);
                         animation: illumination-pulse 3s infinite ease-out;
                     }
-                    @keyframes led-glow-ring {
-                      0%, 100% {
-                        transform: rotate(0deg) scale(1);
-                        box-shadow: 0 0 3px 1px #00ADEC, inset 0 0 3px 1px #00ADEC;
-                      }
-                      50% {
-                        transform: rotate(180deg) scale(1.1);
-                        box-shadow: 0 0 8px 2px #00ADEC, inset 0 0 6px 2px #00ADEC;
-                      }
-                    }
+                    @keyframes hud-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 `}</style>
 
                  <DialogHeader className="p-4 border-b border-cyan-400/20 bg-black/30 text-left z-10 flex flex-row justify-between items-center">
@@ -314,13 +324,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                         </div>
                         Gestor de Dominios y Correos
                     </DialogTitle>
-                     <div className="flex items-center gap-2 text-sm font-semibold text-green-300">
-                         <div className="relative flex items-center justify-center w-4 h-4">
-                            <div className="absolute w-full h-full rounded-full border-2 border-cyan-400/80 animate-[led-glow-ring_4s_infinite_ease-in-out]" />
-                            <div className="w-2 h-2 rounded-full bg-cyan-300 shadow-[0_0_8px_#00ADEC]"/>
-                        </div>
-                        ESTADO DEL SISTEMA
-                    </div>
+                    <SystemStatusIndicator/>
                 </DialogHeader>
                 
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 min-h-0">
@@ -347,8 +351,8 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                                 <p className="font-mono text-sm text-white/90 truncate" title={d.name}>{truncateName(d.name, 25)}</p>
                                             </div>
                                             {activeTab === 'domains' && selectedDomain === d.name && (
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/5 hover:bg-white/10 opacity-100 transition-opacity" onClick={(e) => handleDeleteClick(e, d.name)} >
-                                                     <Trash2 className="size-4 text-[#F00000] hover:text-[#ff6b6b]" style={{backgroundColor: 'hsla(0, 0%, 100%, 0.1)', borderRadius: '50%', padding: '2px'}}/>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-white/5 hover:bg-white text-red-500 hover:text-red-500" onClick={(e) => handleDeleteClick(e, d.name)} >
+                                                     <Trash2 className="size-4"/>
                                                 </Button>
                                             )}
                                         </div>
@@ -425,5 +429,3 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
         </>
     );
 }
-
-    
