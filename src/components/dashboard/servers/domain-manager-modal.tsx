@@ -53,13 +53,13 @@ const RightPanelPlaceholder = () => (
                 }}
             />
             <div className="absolute left-0 top-1/2 -translate-y-1/2 group">
-                <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20 icon-illuminated">
+                 <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20 icon-illuminated">
                     <div className="illumination-pulse" style={{'--glow-color': '#00ADEC'} as React.CSSProperties}/>
                     <Globe className="relative size-8 text-cyan-300"/>
                 </div>
             </div>
              <div className="absolute right-0 top-1/2 -translate-y-1/2 group">
-                <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20 icon-illuminated">
+                 <div className="relative p-4 rounded-full bg-black/30 border border-cyan-400/20 icon-illuminated">
                     <div className="illumination-pulse" style={{'--glow-color': '#00ADEC'} as React.CSSProperties}/>
                     <MailOpen className="relative size-8 text-cyan-300"/>
                 </div>
@@ -100,13 +100,13 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     
     const LedIndicator = ({ verified }: { verified: boolean }) => (
       <div 
-        className="relative size-3 rounded-full shrink-0" 
+        className="relative size-3 rounded-sm shrink-0" 
         style={{
           backgroundColor: verified ? '#00CB07' : '#F00000',
           boxShadow: `0 0 6px ${verified ? '#00CB07' : '#F00000'}`,
         }}
       >
-        <div className="absolute inset-0 rounded-full animate-pulse-wave" style={{'--wave-color': verified ? '#00CB07' : '#F00000', animationDuration: '1s'} as React.CSSProperties} />
+        <div className="absolute inset-0 rounded-sm animate-pulse-wave" style={{'--wave-color': verified ? '#00CB07' : '#F00000', animationDuration: '1s'} as React.CSSProperties} />
       </div>
     );
     
@@ -151,7 +151,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                     .animate-pulse-wave {
                       position: absolute;
                       inset: 0;
-                      border-radius: 50%;
+                      border-radius: inherit;
                       border: 1px solid var(--wave-color);
                       animation: pulse-wave 1s infinite cubic-bezier(0.4, 0, 0.2, 1);
                     }
@@ -225,7 +225,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                            <div className="flex justify-between items-center shrink-0 mb-4">
                                <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2 min-w-0">
                                  <Mail className="size-4"/>
-                                 <span className="truncate">Correos para: <span className="font-mono text-white" title={selectedDomain || ''}>{selectedDomain ? truncateName(selectedDomain, 19) : '...'}</span></span>
+                                 <span className="truncate">Correos para: <span className="font-mono text-white" title={selectedDomain || ''}>{selectedDomain ? truncateName(selectedDomain, 15) : '...'}</span></span>
                                </h3>
                                <div className="flex items-center gap-1 p-1 rounded-md bg-black/30 border border-cyan-400/20">
                                     <Button variant={emailFilter === 'connected' ? 'secondary' : 'ghost'} size="icon" className="size-7 hover:bg-white/20" onClick={() => setEmailFilter('connected')}>
@@ -272,7 +272,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                        <X className="mr-2"/>
                        Cerrar
                      </Button>
-                    <div className="flex-grow flex items-center justify-center gap-4">
+                    <div className="flex items-center gap-4">
                         <Button
                             className="text-white font-bold transition-opacity hover:opacity-95"
                              style={{ background: 'linear-gradient(to right, #1700E6, #009AFF)' }}
@@ -283,7 +283,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                            Comprobar Conexión
                         </Button>
                         <Separator orientation="vertical" className="h-10 bg-cyan-400/20 rounded-full"/>
-                         <div className="flex-1 p-2 rounded-lg bg-amber-500/20 border border-white/20 min-w-[360px]">
+                         <div className="flex-1 p-2 rounded-lg border-2 border-white min-w-[360px]">
                             {selectedDomain && currentDomainData ? (
                                 <div className="flex items-center justify-around gap-4">
                                     {/* Connected */}
@@ -315,5 +315,3 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
         </Dialog>
     );
 }
-
-    
