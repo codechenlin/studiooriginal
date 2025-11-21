@@ -76,14 +76,21 @@ import { Separator } from '../ui/separator';
 
 // Mock Data
 const domains: Domain[] = [
+    // @ts-ignore
     { id: '1', name: 'mailflow.ai', is_verified: true, emails: [{address: 'ventas@mailflow.ai', connected: true}, {address: 'soporte@mailflow.ai', connected: true}, {address: 'info@mailflow.ai', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    // @ts-ignore
     { id: '2', name: 'daybuu.com', is_verified: true, emails: [{address: 'contacto@daybuu.com', connected: true}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    // @ts-ignore
     { id: '3', name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    // @ts-ignore
     { id: '4', name: 'another-domain.dev', is_verified: false, emails: [], user_id: '', verification_code: '', created_at: '', updated_at: '' },
 ];
 const subdomains = [
+    // @ts-ignore
     { id: 'sub1', name: 'marketing.mailflow.ai', verified: true, emails: [{address: 'newsletter@marketing.mailflow.ai', connected: true}] },
+    // @ts-ignore
     { id: 'sub2', name: 'app.daybuu.com', verified: false, emails: [] },
+    // @ts-ignore
     { id: 'sub3', name: 'another-very-long-subdomain-name-to-check-truncation.mailflow.ai', verified: true, emails: [{address: 'info@another-very-long-subdomain-name-to-check-truncation.mailflow.ai', connected: true}] },
 ];
 
@@ -145,31 +152,6 @@ const LedIndicator = ({ verified }: { verified: boolean }) => (
     </div>
   );
   
-const ConnectionSignal = () => {
-    return (
-      <div className="relative flex items-center justify-center w-8 h-8">
-          <div className="absolute w-full h-full border-2 border-dashed border-[#E18700]/30 rounded-full animate-spin-slow" />
-          <div className="flex items-end gap-0.5 h-3/5">
-              <motion.div
-                  className="w-1 bg-[#E18700] rounded-full"
-                  animate={{ height: ['20%', '80%', '20%'] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-              />
-               <motion.div
-                  className="w-1 bg-[#E18700] rounded-full"
-                  animate={{ height: ['60%', '30%', '60%'] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
-              />
-               <motion.div
-                  className="w-1 bg-[#E18700] rounded-full"
-                  animate={{ height: ['40%', '100%', '40%'] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
-              />
-          </div>
-      </div>
-    );
-};
-
 export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalProps) {
     const { toast } = useToast();
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
@@ -177,6 +159,31 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     const [emailFilter, setEmailFilter] = useState<'all' | 'connected' | 'disconnected'>('all');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     
+    const ConnectionSignal = () => {
+      return (
+        <div className="relative flex items-center justify-center w-8 h-8">
+            <div className="absolute w-full h-full border-2 border-dashed border-[#E18700]/30 rounded-full animate-spin-slow" />
+            <div className="flex items-end gap-0.5 h-3/5">
+                <motion.div
+                    className="w-1 bg-[#E18700] rounded-full"
+                    animate={{ height: ['20%', '80%', '20%'] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                 <motion.div
+                    className="w-1 bg-[#E18700] rounded-full"
+                    animate={{ height: ['60%', '30%', '60%'] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+                />
+                 <motion.div
+                    className="w-1 bg-[#E18700] rounded-full"
+                    animate={{ height: ['40%', '100%', '40%'] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+                />
+            </div>
+        </div>
+      );
+    };
+
     const truncateName = (name: string, maxLength: number): string => {
         if (name.length <= maxLength) {
             return name;
@@ -312,18 +319,14 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                         <div key={d.name} onClick={() => setSelectedDomain(d.name)} className={cn("w-full text-left p-3 rounded-lg flex items-center justify-between transition-all duration-200 border-2 cursor-pointer", selectedDomain === d.name ? "bg-cyan-500/20 border-cyan-400" : "bg-black/20 border-transparent hover:bg-cyan-500/10 hover:border-cyan-400/50")}>
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <LedIndicator verified={d.is_verified}/>
-                                                <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-white hover:text-black" onClick={(e) => e.stopPropagation()}>
-                                                  <Code className="mr-2 size-3"/>
-                                                  Detalles
-                                                </Button>
-                                                <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name, 21)}</span>
+                                                <p className="font-mono text-sm text-white/90 truncate" title={d.name}>{truncateName(d.name, 25)}</p>
                                             </div>
                                              {activeTab === 'domains' ? (
-                                                <Button variant="ghost" size="icon" className="group bg-white/80 hover:bg-white" onClick={(e) => { e.stopPropagation(); setIsDeleteModalOpen(true); }} >
-                                                    <Trash2 className="size-4 text-[#F00000] transition-colors" />
+                                                <Button variant="ghost" size="icon" className="group h-8 w-8 bg-white/10 hover:bg-white" onClick={(e) => { e.stopPropagation(); setIsDeleteModalOpen(true); }} >
+                                                    <Trash2 className="size-4 text-[#F00000] transition-colors group-hover:text-[#F00000]" />
                                                 </Button>
                                             ) : (
-                                                <MoreHorizontal className="text-cyan-300/50" />
+                                                <MoreHorizontal className="text-[#F00000]" />
                                             )}
                                         </div>
                                     )) : (
@@ -360,11 +363,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                             <div key={email.address} className="p-3 bg-black/40 border border-cyan-400/10 rounded-lg flex items-center justify-between">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                    <LedIndicator verified={email.connected}/>
-                                                   <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-white hover:text-black" onClick={(e) => e.stopPropagation()}>
-                                                      <Signal className="mr-2 size-3"/>
-                                                      Informe
-                                                    </Button>
-                                                   <span className="font-mono text-sm text-white/80 truncate" title={email.address}>{truncateName(email.address, 19)}</span>
+                                                   <span className="font-mono text-sm text-white/80 truncate" title={email.address}>{truncateName(email.address, 25)}</span>
                                                 </div>
                                                 <MoreHorizontal className="text-cyan-300/50" />
                                             </div>
@@ -382,43 +381,41 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                     </div>
                 </div>
                  <DialogFooter className="p-3 border-t border-cyan-400/20 bg-black/30 z-10 flex justify-between items-center">
-                    <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
-                       <X className="mr-2"/>
-                       Cerrar
-                     </Button>
-                    <div className="flex items-center gap-4">
-                         <div className="flex-1 p-2 rounded-lg border-2 bg-transparent min-w-[360px]" style={{ borderColor: '#E18700' }}> 
-                            {selectedDomain && currentDomainData ? (
-                                <div className="flex items-center justify-around gap-4">
-                                    {/* Connected */}
-                                    <div className="flex items-center gap-2 text-xs">
-                                        <div className="size-3 rounded-sm bg-[#00CB07]"/>
-                                        <span className="font-semibold text-white">Conexión Estable</span>
-                                        <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => e.connected).length}</span>
-                                        <div className="px-1.5 py-0.5 bg-green-500/20 text-green-300 rounded-md text-xs font-semibold border border-green-500/30">Correos</div>
-                                    </div>
-                                    {/* Disconnected */}
-                                    <div className="flex items-center gap-2 text-xs">
-                                        <div className="size-3 rounded-sm bg-[#F00000]"/>
-                                        <span className="font-semibold text-white">Error de Conexión</span>
-                                        <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
-                                        <div className="px-1.5 py-0.5 bg-red-500/20 text-red-300 rounded-md text-xs font-semibold border border-red-500/30">Correos</div>
-                                    </div>
-                                    <ConnectionSignal />
+                     <div className="flex-1 p-2 rounded-lg border-2 bg-transparent min-w-[360px]" style={{ borderColor: '#E18700' }}> 
+                        {selectedDomain && currentDomainData ? (
+                            <div className="flex items-center justify-around gap-4">
+                                <div className="flex items-center gap-2 text-xs">
+                                    <div className="size-3 rounded-sm bg-[#00CB07]"/>
+                                    <span className="font-semibold text-white">Conexión Estable</span>
+                                    <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => e.connected).length}</span>
+                                    <div className="px-1.5 py-0.5 bg-green-500/20 text-green-300 rounded-md text-xs font-semibold border border-green-500/30">Correos</div>
                                 </div>
-                             ) : (
-                                <div className="flex items-center justify-center gap-3 text-sm text-white">
-                                    <Hourglass className="size-5 animate-spin-slow" />
-                                    <span>Selecciona un dominio para ver el estado de conexión.</span>
+                                <div className="flex items-center gap-2 text-xs">
+                                    <div className="size-3 rounded-sm bg-[#F00000]"/>
+                                    <span className="font-semibold text-white">Error de Conexión</span>
+                                    <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
+                                    <div className="px-1.5 py-0.5 bg-red-500/20 text-red-300 rounded-md text-xs font-semibold border border-red-500/30">Correos</div>
                                 </div>
-                             )}
-                         </div>
-                         <Button
+                                <ConnectionSignal />
+                            </div>
+                         ) : (
+                            <div className="flex items-center justify-center gap-3 text-sm text-white">
+                                <Hourglass className="size-5 animate-spin-slow" />
+                                <span>Selecciona un dominio para ver el estado de conexión.</span>
+                            </div>
+                         )}
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <Button
                             variant="outline"
                             className="h-11 px-4 text-white border-white/30 bg-transparent hover:bg-white hover:text-black"
                          >
                             <Plug className="mr-2"/>
                             Comprobación
+                         </Button>
+                         <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black h-11" onClick={() => onOpenChange(false)}>
+                           <X className="mr-2"/>
+                           Cerrar
                          </Button>
                      </div>
                 </DialogFooter>
@@ -427,5 +424,3 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
         </Dialog>
     );
 }
-
-    
