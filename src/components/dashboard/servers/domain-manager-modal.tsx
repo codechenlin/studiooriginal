@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Globe, GitBranch, Mail, X, MailOpen, FolderOpen, Code, Signal, CheckCircle, XCircle, MoreHorizontal, Layers, Plug, Hourglass, Check } from 'lucide-react';
@@ -228,10 +228,10 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                  <span className="truncate">Correos para: <span className="font-mono text-white" title={selectedDomain || ''}>{selectedDomain ? truncateName(selectedDomain, 15) : '...'}</span></span>
                                </h3>
                                <div className="flex items-center gap-1 p-1 rounded-md bg-black/30 border border-cyan-400/20">
-                                    <Button variant={emailFilter === 'connected' ? 'secondary' : 'ghost'} size="icon" className="size-7 hover:bg-white" onClick={() => setEmailFilter('connected')}>
+                                    <Button variant={emailFilter === 'connected' ? 'secondary' : 'ghost'} size="icon" className="size-7 hover:bg-white/20" onClick={() => setEmailFilter('connected')}>
                                         <CheckCircle className="text-green-400"/>
                                     </Button>
-                                    <Button variant={emailFilter === 'disconnected' ? 'secondary' : 'ghost'} size="icon" className="size-7 hover:bg-white" onClick={() => setEmailFilter('disconnected')}>
+                                    <Button variant={emailFilter === 'disconnected' ? 'secondary' : 'ghost'} size="icon" className="size-7 hover:bg-white/20" onClick={() => setEmailFilter('disconnected')}>
                                         <XCircle className="text-red-500"/>
                                     </Button>
                                      <Button variant={emailFilter === 'all' ? 'secondary' : 'ghost'} size="icon" className="size-7" onClick={() => setEmailFilter('all')}>
@@ -268,7 +268,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                     </div>
                 </div>
                  <DialogFooter className="p-3 border-t border-cyan-400/20 bg-black/30 z-10 flex justify-between items-center">
-                     <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
+                    <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
                        <X className="mr-2"/>
                        Cerrar
                      </Button>
@@ -285,30 +285,33 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                         <Separator orientation="vertical" className="h-8 bg-cyan-400/20 rounded-full"/>
                      </div>
 
-                     {selectedDomain && currentDomainData ? (
-                        <div className="flex items-center gap-3 text-xs">
-                           <div className="flex items-center gap-2">
-                               <div className="size-2.5 rounded-sm" style={{backgroundColor: '#00CB07'}}/>
-                               <p className="font-semibold text-green-300">Conexión Establecida</p>
-                               <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => e.connected).length}</span>
-                               <div className="px-2 py-1 bg-green-500/20 text-green-300 rounded-md text-xs font-semibold border border-green-500/30">Correos</div>
-                           </div>
-                           <div className="flex items-center gap-2">
-                               <div className="size-2.5 rounded-sm" style={{backgroundColor: '#F00000'}}/>
-                               <p className="font-semibold text-red-400">Error de Conexión</p>
-                               <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
-                               <div className="px-2 py-1 bg-red-500/20 text-red-300 rounded-md text-xs font-semibold border border-red-500/30">Correos</div>
-                           </div>
-                           <ConnectionSignal />
-                        </div>
-                     ) : (
-                        <div className="flex items-center gap-3 text-sm text-cyan-200/60">
-                            <Hourglass className="size-5 animate-spin-slow" />
-                            <span>Selecciona un dominio para ver el estado de conexión.</span>
-                        </div>
-                     )}
+                     <div className="relative p-2 rounded-lg bg-amber-500/10">
+                        {selectedDomain && currentDomainData ? (
+                            <div className="flex items-center gap-3 text-xs">
+                               <div className="flex items-center gap-2">
+                                   <div className="size-2.5 rounded-sm bg-green-500"/>
+                                   <p className="font-semibold text-green-300">Conexión Establecida</p>
+                                   <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => e.connected).length}</span>
+                                   <div className="px-1.5 py-0.5 bg-green-500/20 text-green-300 rounded-md text-xs font-semibold border border-green-500/30">Correos</div>
+                               </div>
+                               <div className="flex items-center gap-2">
+                                   <div className="size-2.5 rounded-sm bg-red-500"/>
+                                   <p className="font-semibold text-red-400">Error de Conexión</p>
+                                   <span className="font-mono text-lg text-white">{currentDomainData.emails.filter(e => !e.connected).length}</span>
+                                   <div className="px-1.5 py-0.5 bg-red-500/20 text-red-300 rounded-md text-xs font-semibold border border-red-500/30">Correos</div>
+                               </div>
+                               <ConnectionSignal />
+                            </div>
+                         ) : (
+                            <div className="flex items-center gap-3 text-sm text-cyan-200/60">
+                                <Hourglass className="size-5 animate-spin-slow" />
+                                <span>Selecciona un dominio para ver el estado de conexión.</span>
+                            </div>
+                         )}
+                     </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     );
 }
+
