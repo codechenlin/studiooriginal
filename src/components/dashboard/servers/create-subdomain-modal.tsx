@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Globe, ArrowRight, Dna, DatabaseZap, Check, X, GitBranch, Loader2, AlertTriangle, CheckCircle, Info, ArrowLeft } from 'lucide-react';
@@ -17,6 +17,53 @@ interface CreateSubdomainModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
+
+const LoadingPlaceholder = () => (
+    <div className="flex flex-col items-center justify-center text-center text-cyan-200/50 h-full p-4">
+        <div className="relative w-28 h-28 mb-4 flex items-center justify-center">
+            <motion.div
+                className="absolute inset-2 border-2 border-dashed rounded-full"
+                style={{ borderColor: '#1700E6' }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+            />
+            <motion.div
+                className="absolute inset-5 border-2 border-dashed rounded-full"
+                style={{ borderColor: '#009AFF' }}
+                animate={{ rotate: -360 }}
+                transition={{ duration: 7, repeat: Infinity, ease: 'linear' }}
+            />
+             <motion.div
+                className="absolute inset-0 z-0 rounded-full"
+                style={{
+                    boxShadow: `0 0 0px #1700E6`,
+                    filter: `blur(15px)`,
+                    background: `#1700E6`
+                }}
+                animate={{
+                    transform: ['scale(0.3)', 'scale(0.4)', 'scale(0.3)'],
+                    opacity: [0, 0.3, 0]
+                }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <Globe className="relative z-10 size-12 text-cyan-200" />
+        </div>
+        <h4 className="font-semibold text-white/80">Buscando Dominios Verificados...</h4>
+        <p className="text-xs">Sincronizando con la red de dominios para continuar.</p>
+    </div>
+);
+
+const StatusIndicator = () => {
+    return (
+      <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5 w-full">
+        <div className="relative flex items-center justify-center w-4 h-4">
+          <div className="absolute w-full h-full rounded-full bg-blue-500 animate-pulse" style={{filter: `blur(4px)`}}/>
+          <div className="w-2 h-2 rounded-full bg-blue-500" />
+        </div>
+        <p className="text-xs font-semibold tracking-wider text-white/80">ESTADO DEL SISTEMA</p>
+      </div>
+    );
+};
 
 export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainModalProps) {
   const { toast } = useToast();
@@ -58,7 +105,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <DomainList onSelect={handleDomainSelect} />;
+        return <DomainList onSelect={handleDomainSelect} renderLoading={() => <LoadingPlaceholder />} />;
       case 2:
         return (
           <div className="text-center p-8 flex flex-col items-center justify-center h-full">
@@ -107,7 +154,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     <>
       <DnsStatusModal isOpen={isDnsModalOpen} onOpenChange={setIsDnsModalOpen} status="ok" />
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]">
+        <DialogContent showCloseButton={false} className="max-w-5xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[600px]">
            <DialogHeader className="sr-only">
             <DialogTitle>Crear Subdominio</DialogTitle>
             <DialogDescription>
@@ -142,6 +189,16 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
           
           {/* Right Panel: Content */}
           <div className="md:col-span-2 flex flex-col">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold text-center">Seleccionar Dominio</h3>
+              <p className="text-sm text-center text-muted-foreground">Elige un dominio verificado para asociar tu nuevo subdominio.</p>
+               <div className="mt-4">
+                 <StatusIndicator />
+              </div>
+              <div className="relative w-full h-px my-4 bg-gradient-to-r from-transparent via-primary/30 to-transparent">
+                <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]"/>
+              </div>
+            </div>
             <div className="flex-1 overflow-y-auto">
               <AnimatePresence mode="wait">
                 {renderStepContent()}
