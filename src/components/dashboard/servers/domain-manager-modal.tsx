@@ -74,15 +74,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
     const [activeTab, setActiveTab] = useState<'domains' | 'subdomains'>('domains');
     const [emailFilter, setEmailFilter] = useState<'all' | 'connected' | 'disconnected'>('all');
     
-    const truncateName = (name: string, maxLength: number = 21): string => {
-        if (name.length <= maxLength) {
-            return name;
-        }
-        return `${name.substring(0, maxLength)}...`;
-    };
-    
-    const truncateEmail = (name: string): string => {
-        const maxLength = 19;
+    const truncateName = (name: string, maxLength: number): string => {
         if (name.length <= maxLength) {
             return name;
         }
@@ -143,7 +135,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-4xl w-full h-[650px] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
+            <DialogContent showCloseButton={false} className="max-w-5xl w-full h-[650px] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border border-cyan-400/20 text-white overflow-hidden">
                 <style>{`
                     .info-grid {
                         background-image:
@@ -216,7 +208,7 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                                   <Code className="mr-2 size-3"/>
                                                   Detalles
                                                 </Button>
-                                                <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name)}</span>
+                                                <span className="font-mono text-sm truncate" title={d.name}>{truncateName(d.name, 21)}</span>
                                             </div>
                                             <MoreHorizontal className="text-cyan-300/50"/>
                                         </div>
@@ -254,11 +246,11 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                                             <div key={email.address} className="p-3 bg-black/40 border border-cyan-400/10 rounded-lg flex items-center justify-between">
                                                 <div className="flex items-center gap-3 min-w-0">
                                                    <LedIndicator verified={email.connected}/>
-                                                    <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-cyan-800/60 hover:text-white" onClick={(e) => e.stopPropagation()}>
+                                                    <Button variant="outline" size="sm" className="h-7 px-3 text-xs bg-cyan-900/50 border-cyan-400/30 text-cyan-300 hover:bg-white hover:text-black" onClick={(e) => e.stopPropagation()}>
                                                       <Signal className="mr-2 size-3"/>
                                                       Informe
                                                     </Button>
-                                                   <span className="font-mono text-sm text-white/80 truncate" title={email.address}>{truncateEmail(email.address)}</span>
+                                                   <span className="font-mono text-sm text-white/80 truncate" title={email.address}>{truncateName(email.address, 19)}</span>
                                                 </div>
                                                 <MoreHorizontal className="text-cyan-300/50" />
                                             </div>
@@ -280,12 +272,11 @@ export function DomainManagerModal({ isOpen, onOpenChange }: DomainManagerModalP
                        <X className="mr-2"/>
                        Cerrar
                      </Button>
-
                      <Button
+                        style={{backgroundColor: '#E18700'}}
+                        className="text-white font-bold transition-colors duration-300"
                         onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#00CB07'; }}
                         onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#E18700'; }}
-                        style={{backgroundColor: '#E18700'}}
-                        className="text-white font-bold"
                      >
                        <Plug className="mr-2"/>
                        Comprobar Conexión
