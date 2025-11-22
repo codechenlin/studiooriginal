@@ -1,19 +1,20 @@
 
 "use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, GitBranch, Dna, ArrowRight, X, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Globe, GitBranch, Dna, ArrowRight, X, CheckCircle, AlertTriangle, Loader2, RefreshCw, Eye, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { type Domain } from './types';
 import { getVerifiedDomains } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 interface CreateSubdomainModalProps {
   isOpen: boolean;
@@ -53,39 +54,56 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
         return `${name.substring(0, maxLength)}...`;
     };
     
-    const filteredDomains = domains.filter(domain => domain.domain_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredDomains = domains.filter(domain => domain.domain_name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
     if (isLoading) {
         return <>{renderLoading()}</>;
     }
 
     return (
-        <ScrollArea className="flex-1 -mx-4">
-            <div className="space-y-2 px-4">
-                {filteredDomains.map((domain) => (
-                    <motion.div
-                        key={domain.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="group relative p-3 rounded-lg border-2 border-transparent bg-background/50 transition-all duration-300 hover:bg-primary/10 hover:border-primary cursor-pointer"
-                        onClick={() => onSelect(domain)}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <CheckCircle className="size-6 text-green-400 flex-shrink-0" />
-                                <div className="min-w-0">
-                                  <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name, 25)}</p>
-                                  <p className="text-xs text-muted-foreground">Verificado</p>
-                                </div>
-                            </div>
-                            <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                Seleccionar
-                            </Button>
-                        </div>
-                    </motion.div>
-                ))}
+        <div className="flex flex-col h-full">
+            <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                    placeholder="Buscar dominio..."
+                    className="pl-10 bg-background/50"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
             </div>
-        </ScrollArea>
+            <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3 mb-4">
+              <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
+              <p>
+                  <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
+              </p>
+            </div>
+            <ScrollArea className="flex-1">
+                <div className="space-y-2 pr-4">
+                    {filteredDomains.map((domain) => (
+                        <motion.div
+                            key={domain.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="group relative p-3 rounded-lg border-2 border-transparent bg-background/50 transition-all duration-300 hover:bg-primary/10 hover:border-primary cursor-pointer"
+                            onClick={() => onSelect(domain)}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <CheckCircle className="size-6 text-green-400 flex-shrink-0" />
+                                    <div className="min-w-0">
+                                      <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name, 25)}</p>
+                                      <p className="text-xs text-muted-foreground">Verificado</p>
+                                    </div>
+                                </div>
+                                <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Seleccionar
+                                </Button>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </ScrollArea>
+        </div>
     );
 }
 
@@ -172,23 +190,23 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     };
 
     const StatusIndicator = () => {
-        const statusConfig = {
-            idle: { text: 'EN ESPERA', color: 'bg-blue-500' },
-            processing: { text: 'PROCESANDO', color: 'bg-amber-500' },
-            success: { text: 'COMPLETADO', color: 'bg-green-500' },
-            error: { text: 'ERROR', color: 'bg-red-500' }
-        };
-        const currentConfig = statusConfig[processStatus];
-        return (
-          <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
-            <div className="relative flex items-center justify-center w-4 h-4">
-              <div className={cn('absolute w-full h-full rounded-full', currentConfig.color, processStatus !== 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
-              {processStatus === 'processing' ? <Loader2 className='w-4 h-4 text-amber-300 animate-spin'/> : <div className={cn('w-2 h-2 rounded-full', currentConfig.color)} /> }
-            </div>
-            <p className="text-xs font-semibold tracking-wider text-white/80">{currentConfig.text}</p>
-          </div>
-        );
+      const statusConfig = {
+          idle: { text: 'EN ESPERA', color: 'bg-blue-500' },
+          processing: { text: 'PROCESANDO', color: 'bg-amber-500' },
+          success: { text: 'COMPLETADO', color: 'bg-green-500' },
+          error: { text: 'ERROR', color: 'bg-red-500' }
       };
+      const currentConfig = statusConfig[processStatus];
+      return (
+        <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
+          <div className="relative flex items-center justify-center w-4 h-4">
+            <div className={cn('absolute w-full h-full rounded-full', currentConfig.color, processStatus !== 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
+            {processStatus === 'processing' ? <Loader2 className='w-4 h-4 text-amber-300 animate-spin'/> : <div className={cn('w-2 h-2 rounded-full', currentConfig.color)} /> }
+          </div>
+          <p className="text-xs font-semibold tracking-wider text-white/80">{currentConfig.text}</p>
+        </div>
+      );
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -221,6 +239,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                             </li>
                         ))}
                     </ul>
+                    <Separator className="my-6" />
                 </div>
 
                 {/* Center Panel */}
@@ -242,7 +261,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                          <Button
                             onClick={handleNextStep}
                             disabled={isPending}
-                            className="w-full h-12 text-base text-white hover:opacity-90"
+                            className="text-white hover:opacity-90"
                              style={{
                               background: 'linear-gradient(to right, #1700E6, #009AFF)'
                             }}
@@ -252,7 +271,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                            <RefreshCw className="mr-2"/>
                            Actualizar
                           </Button>
-                        <Button variant="outline" className="w-full h-12 text-base" onClick={handleClose}>
+                        <Button variant="outline" className="w-full h-12 text-base text-white border-white hover:bg-white hover:text-black" onClick={handleClose}>
                             <X className="mr-2"/>Cancelar
                         </Button>
                     </div>
@@ -261,4 +280,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </Dialog>
     );
 }
-
