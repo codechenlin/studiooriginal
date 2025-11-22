@@ -2,14 +2,32 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Globe, GitBranch, Dna, ArrowRight, X, CheckCircle, AlertTriangle, Loader2, RefreshCw, Eye, Search } from 'lucide-react';
+import {
+  Globe,
+  GitBranch,
+  Dna,
+  ArrowRight,
+  X,
+  CheckCircle,
+  AlertTriangle,
+  Loader2,
+  RefreshCw,
+  Search,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { type Domain } from './types';
 import { getVerifiedDomains } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
@@ -25,7 +43,7 @@ const renderLoading = () => (
     <div className="space-y-2">
         {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-black/20">
-                <Skeleton className="size-6 rounded-full" />
+                <Skeleton className="h-6 w-6 rounded-full" />
                 <Skeleton className="h-4 w-3/4" />
             </div>
         ))}
@@ -54,7 +72,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
         return `${name.substring(0, maxLength)}...`;
     };
     
-    const filteredDomains = domains.filter(domain => domain.domain_name?.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredDomains = domains.filter(domain => domain.domain_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     if (isLoading) {
         return <>{renderLoading()}</>;
@@ -62,7 +80,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
 
     return (
         <div className="flex flex-col h-full">
-            <div className="relative mb-4">
+             <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                     placeholder="Buscar dominio..."
@@ -71,14 +89,8 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3 mb-4">
-              <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
-              <p>
-                  <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
-              </p>
-            </div>
-            <ScrollArea className="flex-1">
-                <div className="space-y-2 pr-4">
+            <ScrollArea className="flex-1 -mx-4">
+                <div className="space-y-2 pr-4 pl-4">
                     {filteredDomains.map((domain) => (
                         <motion.div
                             key={domain.id}
@@ -149,12 +161,57 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         transition: { duration: 0.3 }
     };
     
+    const renderLeftPanel = () => {
+        const stepInfo = [
+            { title: "Seleccionar Dominio", icon: Globe },
+            { title: "Crear Subdominio", icon: GitBranch },
+            { title: "Análisis DNS", icon: Dna },
+        ];
+        
+        return (
+            <div className="bg-muted/30 p-8 flex flex-col justify-between h-full">
+                <div>
+                   <DialogTitle className="text-xl font-bold flex items-center gap-2">Crear Subdominio</DialogTitle>
+                   <DialogDescription className="text-muted-foreground mt-1">Sigue los pasos para configurar tu nuevo subdominio.</DialogDescription>
+                    
+                    <ul className="space-y-4 mt-8">
+                      {stepInfo.map((step, index) => (
+                          <li key={index} className="flex items-center gap-4">
+                             <div className={cn(
+                                  "size-10 rounded-full flex items-center justify-center border-2 transition-all",
+                                  currentStep === index + 1 && "bg-primary/10 border-primary text-primary animate-pulse",
+                                  currentStep > index + 1 && "bg-green-500/20 border-green-500 text-green-400",
+                                  currentStep < index + 1 && "bg-muted/50 border-border"
+                             )}>
+                                 <step.icon className="size-5" />
+                             </div>
+                             <span className={cn(
+                                 "font-semibold transition-colors",
+                                 currentStep === index + 1 && "text-primary",
+                                 currentStep > index + 1 && "text-green-400",
+                                 currentStep < index + 1 && "text-muted-foreground"
+                             )}>{step.title}</span>
+                          </li>
+                      ))}
+                    </ul>
+                    <Separator className="my-6" />
+                     <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                        <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
+                        <p>
+                            <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     const renderStepContent = () => {
         switch (currentStep) {
             case 1:
                 return (
                     <div className="flex flex-col h-full">
-                        <h3 className="text-lg font-semibold mb-1 flex items-center gap-2"><Eye className="size-5" />Seleccionar Dominio Principal</h3>
+                        <h3 className="text-lg font-semibold mb-1 flex items-center gap-2">Seleccionar Dominio Principal</h3>
                         <p className="text-sm text-muted-foreground mb-4">Elige el dominio verificado al que se asociará tu nuevo subdominio.</p>
                         <DomainList onSelect={handleSelectDomain} renderLoading={renderLoading} />
                     </div>
@@ -212,34 +269,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]" showCloseButton={false}>
                 {/* Left Panel */}
-                <div className="hidden md:block md:col-span-1 h-full bg-muted/30 p-8">
-                     <DialogTitle className="text-xl font-bold flex items-center gap-2">Crear Subdominio</DialogTitle>
-                     <DialogDescription className="text-muted-foreground mt-1">Sigue los pasos para configurar tu nuevo subdominio.</DialogDescription>
-                    <ul className="space-y-4 mt-8">
-                        {[
-                            { title: "Seleccionar Dominio", icon: Globe },
-                            { title: "Crear Subdominio", icon: GitBranch },
-                            { title: "Análisis DNS", icon: Dna },
-                        ].map((step, index) => (
-                            <li key={index} className="flex items-center gap-4">
-                               <div className={cn(
-                                    "size-10 rounded-full flex items-center justify-center border-2 transition-all",
-                                    currentStep === index + 1 && "bg-primary/10 border-primary text-primary animate-pulse",
-                                    currentStep > index + 1 && "bg-green-500/20 border-green-500 text-green-400",
-                                    currentStep < index + 1 && "bg-muted/50 border-border"
-                               )}>
-                                   <step.icon className="size-5" />
-                               </div>
-                               <span className={cn(
-                                   "font-semibold transition-colors",
-                                   currentStep === index + 1 && "text-primary",
-                                   currentStep > index + 1 && "text-green-400",
-                                   currentStep < index + 1 && "text-muted-foreground"
-                               )}>{step.title}</span>
-                            </li>
-                        ))}
-                    </ul>
-                    <Separator className="my-6" />
+                <div className="hidden md:block md:col-span-1 h-full">
+                  {renderLeftPanel()}
                 </div>
 
                 {/* Center Panel */}
@@ -261,7 +292,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                          <Button
                             onClick={handleNextStep}
                             disabled={isPending}
-                            className="text-white hover:opacity-90"
+                            className="w-full h-12 text-base text-white hover:opacity-90"
                              style={{
                               background: 'linear-gradient(to right, #1700E6, #009AFF)'
                             }}
@@ -280,3 +311,4 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </Dialog>
     );
 }
+
