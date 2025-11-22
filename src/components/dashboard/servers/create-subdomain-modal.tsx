@@ -24,7 +24,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   MoreHorizontal,
   FileIcon,
@@ -60,7 +59,8 @@ import {
   ArrowRight,
   ArrowLeft,
   Dna,
-  RefreshCw
+  RefreshCw,
+  BrainCircuit
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -88,11 +88,6 @@ const mockDomains: Domain[] = [
 interface CreateSubdomainModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-}
-
-interface DomainListProps {
-    onSelect: (domain: Domain) => void;
-    renderLoading: () => React.ReactNode;
 }
 
 const LoadingPlaceholder = () => (
@@ -130,13 +125,12 @@ const LoadingPlaceholder = () => (
     </div>
 );
 
-function DomainList({ onSelect, renderLoading }: DomainListProps) {
+function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) => void; renderLoading: () => React.ReactNode; }) {
     const [domains, setDomains] = useState<Domain[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         setIsLoading(true);
-        // Simulate fetching data
         setTimeout(() => {
             setDomains(mockDomains);
             setIsLoading(false);
@@ -155,8 +149,8 @@ function DomainList({ onSelect, renderLoading }: DomainListProps) {
     }
 
     return (
-        <ScrollArea className="flex-1 pr-2">
-            <div className="space-y-2">
+        <ScrollArea className="flex-1 -mx-4">
+            <div className="space-y-2 px-4">
                 {domains.map((domain) => (
                     <motion.div
                         key={domain.id}
@@ -292,7 +286,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
               Un asistente para guiarte en la creación y configuración de un nuevo subdominio.
             </DialogDescription>
           </DialogHeader>
-          {/* Left Panel: Steps */}
           <div className="hidden md:block col-span-1 bg-muted/30 p-8">
             <h2 className="text-lg font-bold flex items-center gap-2"><GitBranch /> Crear Subdominio</h2>
             <p className="text-sm text-muted-foreground mt-1">Sigue los pasos para configurar tu nuevo subdominio.</p>
@@ -326,14 +319,19 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             </div>
              <div className="mt-8 space-y-3">
                 <Label>Búsqueda Rápida de Dominio</Label>
-                <div className="flex gap-2">
-                    <Input placeholder="Buscar por nombre..." />
-                    <Button variant="outline">Buscar</Button>
+                <div className="relative">
+                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input placeholder="Buscar por nombre..." className="pl-10"/>
+                </div>
+                 <div className="mt-4 p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                    <AlertTriangle className="size-8 text-amber-400 shrink-0 mt-1" />
+                    <p>
+                        <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
+                    </p>
                 </div>
             </div>
           </div>
           
-          {/* Right Panel: Content */}
           <div className="md:col-span-2 flex flex-col">
               <div className="p-4 border-b flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -350,9 +348,9 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
               </AnimatePresence>
             </div>
             <DialogFooter className="p-4 border-t bg-muted/20">
-                <Button
+                 <Button
                     variant="outline"
-                    className="border-[#F00000] text-[#F00000] hover:text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000]"
+                    className="border-[#F00000] text-white hover:text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000]"
                     onClick={handleClose}
                 >
                   <X className="mr-2" />
@@ -363,9 +361,10 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 {currentStep < 3 && 
                     <Button 
                         onClick={handleNextStep}
-                        className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:from-[#00CE07] hover:to-[#A6EE00]"
+                        className="bg-gradient-to-r from-[#1700E6] to-[#009AFF] text-white hover:bg-gradient-to-r hover:from-[#00CE07] hover:to-[#A6EE00]"
                     >
-                        <RefreshCw className="mr-2" /> Actualizar
+                        <RefreshCw className="mr-2" />
+                        Actualizar
                     </Button>
                 }
                 {currentStep === 3 && <Button onClick={handleClose}><Check className="mr-2" />Finalizar</Button>}
@@ -374,6 +373,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
           </div>
         </DialogContent>
       </Dialog>
-    </>
+      </>
   );
 }
+
+    
