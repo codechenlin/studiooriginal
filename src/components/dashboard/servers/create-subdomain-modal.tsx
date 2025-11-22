@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
@@ -69,7 +68,7 @@ import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { Separator } from '@/components/ui/separator';
-import { getVerifiedDomains } from './db-actions';
+import { getVerifiedDomains, createOrGetDomainAction } from './db-actions';
 
 
 interface CreateSubdomainModalProps {
@@ -103,26 +102,25 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                 toast({ title: "Modo de Demostración", description: "Cargando dominios de ejemplo." });
                 const mockDomains: Domain[] = [
                     // @ts-ignore
-                    { id: '1', domain_name: 'mailflow.ai', is_verified: true },
+                    { id: '1', domain_name: 'mailflow.ai', is_verified: true, updated_at: new Date().toISOString() },
                     // @ts-ignore
-                    { id: '2', domain_name: 'daybuu.com', is_verified: true },
+                    { id: '2', domain_name: 'daybuu.com', is_verified: true, updated_at: new Date().toISOString() },
                     // @ts-ignore
-                    { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true },
+                    { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, updated_at: new Date().toISOString() },
                     // @ts-ignore
-                    { id: '4', domain_name: 'another-domain.dev', is_verified: false },
+                    { id: '4', domain_name: 'another-domain.dev', is_verified: false, updated_at: new Date().toISOString() },
                 ];
                 setDomains(mockDomains);
             }
         });
     }, [toast]);
     
-    const truncateName = (name: string, maxLength: number = 19): string => {
+    const truncateName = (name: string, maxLength: number = 23): string => {
         if (!name || name.length <= maxLength) return name || '';
         return `${name.substring(0, maxLength)}...`;
     };
     
     const filteredDomains = domains.filter(domain => domain.domain_name && domain.domain_name.toLowerCase().includes(searchTerm.toLowerCase()));
-
 
     if (isLoading) {
         return <>{renderLoading()}</>;
@@ -139,7 +137,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <ScrollArea className="flex-1 pr-1">
+            <ScrollArea className="flex-1 -mr-4 pr-4">
                 <div className="space-y-2">
                     {filteredDomains.map((domain) => (
                         <motion.div
@@ -147,21 +145,29 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={cn(
-                                "group relative p-3 rounded-lg border-2 transition-all duration-300 flex items-center justify-between",
-                                domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-muted text-muted-foreground"
+                                "group relative p-3 rounded-lg border-2 transition-all duration-300 flex flex-col items-start",
+                                domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-red-500/30 text-muted-foreground"
                             )}
                             onClick={() => domain.is_verified && onSelect(domain)}
                         >
                             <div className="absolute inset-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(120,119,198,0.15)_0%,rgba(255,255,255,0)_100%)] opacity-0 group-hover:opacity-100 transition-opacity"/>
-                            <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-3 min-w-0 w-full">
                                 {domain.is_verified ? 
                                     <CheckCircle className="size-6 text-green-400 flex-shrink-0" /> : 
                                     <AlertTriangle className="size-6 text-red-400 flex-shrink-0" />
                                 }
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                   <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name)}</p>
                                 </div>
                             </div>
+                            {!domain.is_verified && (
+                                <div className="pl-9 pt-2 w-full flex justify-between items-center">
+                                    <p className="text-xs text-muted-foreground">
+                                        Última act: {format(new Date(domain.updated_at), "dd/MM/yy", { locale: es })}
+                                    </p>
+                                    <Button variant="outline" size="sm" className="h-7 text-xs border-amber-500/50 text-amber-300 hover:bg-amber-500/20">Análisis</Button>
+                                </div>
+                            )}
                         </motion.div>
                     ))}
                 </div>
@@ -185,11 +191,13 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     
     const handleNextStep = () => {
         if (currentStep === 2 && subdomainName) {
-            setProcessStatus('processing');
-            setTimeout(() => {
-                setProcessStatus('success');
-                setCurrentStep(3);
-            }, 1500)
+            startTransition(() => {
+                setProcessStatus('processing');
+                setTimeout(() => {
+                    setProcessStatus('success');
+                    setCurrentStep(3);
+                }, 1500)
+            })
         }
     }
 
@@ -305,7 +313,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                       ))}
                     </ul>
                     <Separator className="my-6" />
-                     <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                    <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                         <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
                         <p>
                             <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
@@ -375,4 +383,4 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             </DialogContent>
         </Dialog>
     );
-}
+
