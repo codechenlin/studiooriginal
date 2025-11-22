@@ -25,26 +25,50 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+  MoreHorizontal,
+  FileIcon,
+  ImageIcon,
+  Film,
+  FileText,
+  Music,
+  Archive,
+  Edit,
+  Trash2,
+  Download,
+  Eye,
+  UploadCloud,
+  Loader2,
+  Search,
+  XCircle,
+  AlertTriangle,
+  FolderOpen,
+  Check,
   Globe,
   GitBranch,
-  Dna,
-  ArrowRight,
+  Mail,
   X,
+  MailOpen,
+  Code,
+  Signal,
   CheckCircle,
-  AlertTriangle,
-  Loader2,
-  RefreshCw,
-  Search,
-  Eye,
-  Info
+  Layers,
+  Plug,
+  Hourglass,
+  KeyRound,
+  Shield,
+  ArrowRight,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
-import { type Domain } from './types';
-import { getVerifiedDomains } from './db-actions';
+import { format, formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MediaPreview } from '@/components/admin/media-preview';
 import { Separator } from '@/components/ui/separator';
+import { getVerifiedDomains } from './db-actions';
+
 
 interface CreateSubdomainModalProps {
   isOpen: boolean;
@@ -90,7 +114,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
         });
     }, [toast]);
     
-    const truncateName = (name: string, maxLength: number = 14): string => {
+    const truncateName = (name: string, maxLength: number = 19): string => {
         if (!name || name.length <= maxLength) return name || '';
         return `${name.substring(0, maxLength)}...`;
     };
@@ -136,11 +160,6 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                                   <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name)}</p>
                                 </div>
                             </div>
-                            {domain.is_verified && (
-                                <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary hover:bg-primary/80">
-                                    Aceptar
-                                </Button>
-                            )}
                         </motion.div>
                     ))}
                 </div>
@@ -224,8 +243,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                           </li>
                       ))}
                     </ul>
-                     <Separator className="my-6" />
-                     <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                    <Separator className="my-6" />
+                    <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                         <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
                         <p>
                             <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
@@ -334,19 +353,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                         )}
                     </div>
                      <div className="w-full mt-auto pt-4 space-y-2">
-                         <Button
-                            onClick={handleNextStep}
-                            disabled={currentStep !== 2 || !subdomainName}
-                            className="w-full h-12 text-base text-white hover:opacity-90"
-                             style={{
-                              background: 'linear-gradient(to right, #1700E6, #009AFF)'
-                            }}
-                             onMouseOver={(e) => { e.currentTarget.style.background = 'linear-gradient(to right, #00CE07, #A6EE00)'; }}
-                             onMouseOut={(e) => { e.currentTarget.style.background = 'linear-gradient(to right, #1700E6, #009AFF)'; }}
-                          >
-                           <RefreshCw className="mr-2"/>
-                           Actualizar
-                          </Button>
                         <Button variant="outline" className="w-full h-12 text-base text-white border-white hover:bg-white hover:text-black" onClick={handleClose}>
                             <X className="mr-2"/>Cancelar
                         </Button>
@@ -356,3 +362,5 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </Dialog>
     );
 }
+
+    
