@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -57,6 +57,7 @@ import {
   KeyRound,
   Shield,
   ArrowRight,
+  Dna,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -210,51 +211,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         transition: { duration: 0.3 }
     };
     
-    const renderLeftPanel = () => {
-        const stepInfo = [
-            { title: "Seleccionar Dominio", icon: Globe },
-            { title: "Añadir Subdominio", icon: GitBranch },
-            { title: "Análisis DNS", icon: Dna },
-        ];
-        
-        return (
-            <div className="bg-muted/30 p-8 flex flex-col justify-between h-full">
-                <div>
-                   <DialogTitle className="text-xl font-bold flex items-center gap-2">Asociar Subdominio</DialogTitle>
-                   <DialogDescription className="text-muted-foreground mt-1">Sigue los pasos para verificar tu nuevo subdominio.</DialogDescription>
-                    
-                    <ul className="space-y-4 mt-8">
-                      {stepInfo.map((step, index) => (
-                          <li key={index} className="flex items-center gap-4">
-                             <div className={cn(
-                                  "size-10 rounded-full flex items-center justify-center border-2 transition-all",
-                                  currentStep === index + 1 && "bg-primary/10 border-primary text-primary animate-pulse",
-                                  currentStep > index + 1 && "bg-green-500/20 border-green-500 text-green-400",
-                                  currentStep < index + 1 && "bg-muted/50 border-border"
-                             )}>
-                                 <step.icon className="size-5" />
-                             </div>
-                             <span className={cn(
-                                 "font-semibold transition-colors",
-                                 currentStep === index + 1 && "text-primary",
-                                 currentStep > index + 1 && "text-green-400",
-                                 currentStep < index + 1 && "text-muted-foreground"
-                             )}>{step.title}</span>
-                          </li>
-                      ))}
-                    </ul>
-                    <Separator className="my-6" />
-                    <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
-                        <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
-                        <p>
-                            <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
     const renderStepContent = () => {
         switch (currentStep) {
             case 1:
@@ -314,6 +270,51 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       );
     };
 
+    const renderLeftPanel = () => {
+        const stepInfo = [
+            { title: "Seleccionar Dominio", icon: Globe },
+            { title: "Añadir Subdominio", icon: GitBranch },
+            { title: "Análisis DNS", icon: Dna },
+        ];
+        
+        return (
+            <div className="bg-muted/30 p-8 flex flex-col justify-between h-full">
+                <div>
+                   <DialogTitle className="text-xl font-bold flex items-center gap-2">Asociar Subdominio</DialogTitle>
+                   <DialogDescription className="text-muted-foreground mt-1">Sigue los pasos para verificar tu nuevo subdominio.</DialogDescription>
+                    
+                    <ul className="space-y-4 mt-8">
+                      {stepInfo.map((step, index) => (
+                          <li key={index} className="flex items-center gap-4">
+                             <div className={cn(
+                                  "size-10 rounded-full flex items-center justify-center border-2 transition-all",
+                                  currentStep === index + 1 && "bg-primary/10 border-primary text-primary animate-pulse",
+                                  currentStep > index + 1 && "bg-green-500/20 border-green-500 text-green-400",
+                                  currentStep < index + 1 && "bg-muted/50 border-border"
+                             )}>
+                                 <step.icon className="size-5" />
+                             </div>
+                             <span className={cn(
+                                 "font-semibold transition-colors",
+                                 currentStep === index + 1 && "text-primary",
+                                 currentStep > index + 1 && "text-green-400",
+                                 currentStep < index + 1 && "text-muted-foreground"
+                             )}>{step.title}</span>
+                          </li>
+                      ))}
+                    </ul>
+                    <Separator className="my-6" />
+                    <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                        <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
+                        <p>
+                            <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+    
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[98vh]" showCloseButton={false}>
@@ -353,6 +354,18 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                         )}
                     </div>
                      <div className="w-full mt-auto pt-4 space-y-2">
+                        {currentStep === 2 && (
+                            <Button
+                                onClick={handleNextStep}
+                                disabled={isPending || !subdomainName}
+                                className="text-white hover:opacity-90 w-full h-12 text-base"
+                                 style={{
+                                  background: 'linear-gradient(to right, #1700E6, #009AFF)'
+                                }}
+                            >
+                                Siguiente
+                            </Button>
+                        )}
                         <Button variant="outline" className="w-full h-12 text-base text-white border-white hover:bg-white hover:text-black" onClick={handleClose}>
                             <X className="mr-2"/>Cancelar
                         </Button>
@@ -362,5 +375,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </Dialog>
     );
 }
+
+    
 
     
