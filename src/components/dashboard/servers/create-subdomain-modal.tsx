@@ -84,7 +84,7 @@ const mockDomains: Domain[] = [
     // @ts-ignore
     { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}]},
     // @ts-ignore
-    { id: '4', name: 'another-domain.dev', is_verified: false, emails: []},
+    { id: '4', domain_name: 'another-domain.dev', is_verified: false, emails: []},
 ];
 
 interface CreateSubdomainModalProps {
@@ -160,13 +160,13 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input placeholder="Buscar por nombre..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <div className="text-xs text-amber-300/80 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-400/20 flex items-start gap-3">
+             <div className="text-xs text-amber-300/80 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-400/20 flex items-start gap-3">
                 <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
                 <div>
                     <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
                 </div>
             </div>
-            <ScrollArea className="flex-1 pr-1">
+            <ScrollArea className="flex-1">
                 <div className="space-y-2">
                     {filteredDomains.map((domain) => (
                         <motion.div
@@ -386,7 +386,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             <DialogFooter className="p-4 border-t bg-muted/20">
                  <Button
                     variant="outline"
-                    className="border-[#F00000] text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000]"
+                    className="border-white text-white hover:bg-[#F00000] hover:border-[#F00000]"
                     onClick={handleClose}
                 >
                   <X className="mr-2" />
@@ -412,3 +412,5 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       </>
   );
 }
+
+    
