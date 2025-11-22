@@ -60,7 +60,8 @@ import {
   ArrowRight,
   ArrowLeft,
   Dna,
-  RefreshCw
+  RefreshCw,
+  BrainCircuit,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -133,7 +134,6 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
 
     useEffect(() => {
         setIsLoading(true);
-        // Simulate fetching data
         setTimeout(() => {
             setDomains(mockDomains);
             setIsLoading(false);
@@ -147,7 +147,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
         return `${name.substring(0, maxLength)}...`;
     };
     
-    const filteredDomains = domains.filter(domain => domain.domain_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredDomains = domains.filter(domain => domain.domain_name && domain.domain_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     if (isLoading) {
         return <>{renderLoading()}</>;
@@ -155,16 +155,6 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
 
     return (
         <div className="h-full flex flex-col">
-             <div className="relative mb-4 shrink-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input placeholder="Buscar por nombre..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-            </div>
-            <div className="text-xs text-amber-300/80 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-400/20 flex items-start gap-3">
-                <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
-                <div>
-                    <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
-                </div>
-            </div>
             <ScrollArea className="flex-1">
                 <div className="space-y-2">
                     {filteredDomains.map((domain) => (
@@ -202,18 +192,6 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
     );
 }
 
-const StatusIndicator = () => {
-    return (
-        <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
-            <div className="relative flex items-center justify-center w-4 h-4">
-                <div className={cn('absolute w-full h-full rounded-full bg-amber-500 animate-pulse')} style={{filter: `blur(4px)`}}/>
-                <div className={cn('w-2 h-2 rounded-full bg-amber-500')} />
-            </div>
-            <p className="text-xs font-semibold tracking-wider text-white/80">MODO DE ESPERA</p>
-        </div>
-    );
-};
-
 export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainModalProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
@@ -250,8 +228,58 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         setSubdomainName('');
     }, 300);
   }
+  
+  const renderLeftPanelContent = () => {
+    const stepInfo = [
+      { title: "Seleccionar Dominio Principal", icon: Globe },
+      { title: "Asignar Subdominio", icon: GitBranch },
+      { title: "Análisis DNS", icon: Dna },
+    ];
 
-  const renderStepContent = () => {
+    return (
+      <div className="bg-muted/30 p-8 flex flex-col h-full">
+         <h2 className="text-lg font-bold flex items-center gap-2 mb-8"><GitBranch /> Crear Subdominio</h2>
+        <ul className="space-y-6">
+          {stepInfo.map((step, index) => {
+              const stepNumber = index + 1;
+              const isActive = currentStep === stepNumber;
+              const isCompleted = currentStep > stepNumber;
+              return (
+                <li key={index} className="flex items-center gap-4">
+                  <div className={cn(
+                    "size-10 rounded-full flex items-center justify-center border-2 transition-all",
+                    isCompleted ? "bg-green-500/20 border-green-500 text-green-400" :
+                    isActive ? "bg-primary/10 border-primary text-primary animate-pulse" :
+                    "bg-muted/50 border-border"
+                  )}>
+                    {isCompleted ? <Check /> : <step.icon className="size-5" />}
+                  </div>
+                  <span className={cn(
+                    "font-semibold",
+                    isCompleted && "text-green-400",
+                    isActive && "text-primary",
+                    !isActive && !isCompleted && "text-muted-foreground"
+                  )}>{step.title}</span>
+                </li>
+              )
+          })}
+        </ul>
+        <div className="mt-auto space-y-4">
+             <div className="relative w-full h-px my-2" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
+                <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
+            </div>
+            <div className="text-xs text-amber-300/80 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-400/20 flex items-start gap-3">
+                <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+                <div>
+                    <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
+                </div>
+            </div>
+        </div>
+      </div>
+    );
+  };
+  
+  const renderRightPanelContent = () => {
     switch (currentStep) {
       case 1:
         return <DomainList onSelect={handleDomainSelect} renderLoading={() => <LoadingPlaceholder />} />;
@@ -295,14 +323,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       default:
         return null;
     }
-  };
-  
-    const stepInfo = [
-      { title: "Seleccionar Dominio Principal", icon: Globe },
-      { title: "Asignar Subdominio", icon: GitBranch },
-      { title: "Análisis DNS", icon: Dna },
-    ];
-  
+  }
 
   return (
     <>
@@ -315,72 +336,29 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
               Un asistente para guiarte en la creación y configuración de un nuevo subdominio.
             </DialogDescription>
           </DialogHeader>
-          <div className="hidden md:block col-span-1 bg-muted/30 p-8">
-            <h2 className="text-lg font-bold flex items-center gap-2"><GitBranch /> Crear Subdominio</h2>
-            <p className="text-sm text-muted-foreground mt-1">Sigue los pasos para configurar tu nuevo subdominio.</p>
-            <ul className="space-y-6 mt-8">
-              {stepInfo.map((step, index) => {
-                  const stepNumber = index + 1;
-                  const isActive = currentStep === stepNumber;
-                  const isCompleted = currentStep > stepNumber;
-                  return (
-                    <li key={index} className="flex items-center gap-4">
-                      <div className={cn(
-                        "size-10 rounded-full flex items-center justify-center border-2 transition-all",
-                        isCompleted ? "bg-green-500/20 border-green-500 text-green-400" :
-                        isActive ? "bg-primary/10 border-primary text-primary animate-pulse" :
-                        "bg-muted/50 border-border"
-                      )}>
-                        {isCompleted ? <Check /> : <step.icon className="size-5" />}
-                      </div>
-                      <span className={cn(
-                        "font-semibold",
-                        isCompleted && "text-green-400",
-                        isActive && "text-primary",
-                        !isActive && !isCompleted && "text-muted-foreground"
-                      )}>{step.title}</span>
-                    </li>
-                  )
-              })}
-            </ul>
-             <div className="relative w-full h-px my-8" style={{ background: 'linear-gradient(to right, transparent, #E18700, transparent)' }}>
-                <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{backgroundColor: '#E18700', boxShadow: '0 0 8px #E18700'}}/>
-            </div>
-             <div className="mt-8 space-y-3">
-                <Label>Búsqueda Rápida de Dominio</Label>
-                <div className="relative">
-                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <Input placeholder="Buscar por nombre..." className="pl-10"/>
-                </div>
-                 <div className="mt-4 p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
-                    <AlertTriangle className="size-8 text-amber-400 shrink-0 mt-1" />
-                    <div>
-                        <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
-                    </div>
-                </div>
-            </div>
+          <div className="hidden md:block col-span-1">
+            {renderLeftPanelContent()}
           </div>
           
           <div className="md:col-span-2 flex flex-col">
               <div className="p-4 border-b flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-left truncate flex items-center gap-2">
                         <Eye className="size-4 text-muted-foreground"/>
-                        {stepInfo[currentStep - 1].title}
+                        {currentStep === 1 ? 'Seleccionar Dominio Principal' : (currentStep === 2 ? 'Asignar Subdominio' : 'Análisis DNS')}
                     </h3>
                 </div>
-                <StatusIndicator />
               </div>
               
             <div className="flex-1 overflow-y-auto">
               <AnimatePresence mode="wait">
-                {renderStepContent()}
+                {renderRightPanelContent()}
               </AnimatePresence>
             </div>
             <DialogFooter className="p-4 border-t bg-muted/20">
                  <Button
                     variant="outline"
-                    className="border-destructive/50 text-white hover:text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000]"
+                    className="border-destructive/50 hover:border-[#F00000] bg-transparent text-white hover:bg-[#F00000] hover:text-white"
                     onClick={handleClose}
                 >
                   <X className="mr-2" />
@@ -391,6 +369,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 {currentStep < 3 ? (
                     <Button 
                         onClick={handleNextStep}
+                        disabled={isPending}
                         className="text-white hover:opacity-90"
                          style={{
                           background: 'linear-gradient(to right, #1700E6, #009AFF)'
@@ -402,8 +381,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                             e.currentTarget.style.background = 'linear-gradient(to right, #1700E6, #009AFF)';
                         }}
                     >
-                        <RefreshCw className="mr-2" />
-                        Actualizar
+                      <RefreshCw className="mr-2" />
+                      Actualizar
                     </Button>
                 ) : (
                     <Button onClick={handleClose}><Check className="mr-2" />Finalizar</Button>
@@ -416,5 +395,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       </>
   );
 }
-
-    
