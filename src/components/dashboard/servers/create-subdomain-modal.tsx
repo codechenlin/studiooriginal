@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   MoreHorizontal,
   FileIcon,
@@ -72,6 +73,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { DnsStatusModal } from './dns-status-modal';
 import { Separator } from '@/components/ui/separator';
+// import { createOrGetDomainAction } from './db-actions';
 
 // Mock Data
 const mockDomains: Domain[] = [
@@ -82,7 +84,7 @@ const mockDomains: Domain[] = [
     // @ts-ignore
     { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}]},
     // @ts-ignore
-    { id: '4', domain_name: 'another-domain.dev', is_verified: false, emails: []},
+    { id: '4', name: 'another-domain.dev', is_verified: false, emails: []},
 ];
 
 interface CreateSubdomainModalProps {
@@ -128,9 +130,11 @@ const LoadingPlaceholder = () => (
 function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) => void; renderLoading: () => React.ReactNode; }) {
     const [domains, setDomains] = useState<Domain[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         setIsLoading(true);
+        // Simulate fetching data
         setTimeout(() => {
             setDomains(mockDomains);
             setIsLoading(false);
@@ -143,45 +147,59 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
         }
         return `${name.substring(0, maxLength)}...`;
     };
+    
+    const filteredDomains = domains.filter(domain => domain.domain_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     if (isLoading) {
         return <>{renderLoading()}</>;
     }
 
     return (
-        <ScrollArea className="flex-1 -mx-4">
-            <div className="space-y-2 px-4">
-                {domains.map((domain) => (
-                    <motion.div
-                        key={domain.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={cn(
-                            "group relative p-3 rounded-lg border-2 transition-all duration-300 flex items-center justify-between",
-                            domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-muted text-muted-foreground"
-                        )}
-                        onClick={() => domain.is_verified && onSelect(domain)}
-                    >
-                        <div className="absolute inset-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(120,119,198,0.15)_0%,rgba(255,255,255,0)_100%)] opacity-0 group-hover:opacity-100 transition-opacity"/>
-                        <div className="flex items-center gap-3 min-w-0">
-                            {domain.is_verified ? 
-                                <CheckCircle className="size-6 text-green-400 flex-shrink-0" /> : 
-                                <AlertTriangle className="size-6 text-red-400 flex-shrink-0" />
-                            }
-                            <div className="min-w-0">
-                              <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name, 25)}</p>
-                              <p className="text-xs text-muted-foreground">{domain.is_verified ? 'Verificado' : 'Verificación pendiente'}</p>
-                            </div>
-                        </div>
-                        {domain.is_verified && (
-                            <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                Seleccionar
-                            </Button>
-                        )}
-                    </motion.div>
-                ))}
+        <div className="h-full flex flex-col">
+            <div className="relative mb-4 shrink-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input placeholder="Buscar por nombre..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-        </ScrollArea>
+            <div className="text-xs text-amber-300/80 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-400/20 flex items-start gap-3">
+                <AlertTriangle className="size-8 text-amber-400 shrink-0"/>
+                <div>
+                    <strong className="text-amber-300">¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
+                </div>
+            </div>
+            <ScrollArea className="flex-1 pr-1">
+                <div className="space-y-2">
+                    {filteredDomains.map((domain) => (
+                        <motion.div
+                            key={domain.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={cn(
+                                "group relative p-3 rounded-lg border-2 transition-all duration-300 flex items-center justify-between",
+                                domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-muted text-muted-foreground"
+                            )}
+                            onClick={() => domain.is_verified && onSelect(domain)}
+                        >
+                            <div className="absolute inset-0 w-full h-full bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,rgba(120,119,198,0.15)_0%,rgba(255,255,255,0)_100%)] opacity-0 group-hover:opacity-100 transition-opacity"/>
+                            <div className="flex items-center gap-3 min-w-0">
+                                {domain.is_verified ? 
+                                    <CheckCircle className="size-6 text-green-400 flex-shrink-0" /> : 
+                                    <AlertTriangle className="size-6 text-red-400 flex-shrink-0" />
+                                }
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-foreground truncate" title={domain.domain_name}>{truncateName(domain.domain_name, 25)}</p>
+                                  <p className="text-xs text-muted-foreground">{domain.is_verified ? 'Verificado' : 'Verificación pendiente'}</p>
+                                </div>
+                            </div>
+                            {domain.is_verified && (
+                                <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Seleccionar
+                                </Button>
+                            )}
+                        </motion.div>
+                    ))}
+                </div>
+            </ScrollArea>
+        </div>
     );
 }
 
@@ -273,7 +291,25 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       { title: "Asignar Subdominio", icon: GitBranch },
       { title: "Análisis DNS", icon: Dna },
     ];
-  const stepTitles = ["Seleccionar Dominio Principal", "Asignar Subdominio", "Análisis DNS"];
+  
+  const StatusIndicator = () => {
+    let text = 'ESTADO DEL SISTEMA';
+    switch(currentStep) {
+        case 1: text = 'BUSCANDO DOMINIOS'; break;
+        case 2: text = 'ASIGNANDO SUBDOMINIO'; break;
+        case 3: text = 'LISTO PARA ANÁLISIS'; break;
+    }
+
+    return (
+        <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
+             <div className="relative flex items-center justify-center w-4 h-4">
+                <div className="absolute w-full h-full rounded-full bg-amber-500 animate-pulse" style={{filter: `blur(4px)`}}/>
+                <div className="w-2 h-2 rounded-full bg-amber-500" />
+             </div>
+            <p className="text-xs font-semibold tracking-wider text-white/80">{text}</p>
+        </div>
+    );
+  };
 
   return (
     <>
@@ -336,8 +372,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
               <div className="p-4 border-b flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0 flex items-center gap-2">
                     <h3 className="font-semibold text-left truncate flex items-center gap-2">
-                        {currentStep === 1 && <Eye className="size-4 text-muted-foreground"/>}
-                        {stepTitles[currentStep - 1]}
+                        <Eye className="size-4 text-muted-foreground"/>
+                        {stepInfo[currentStep - 1].title}
                     </h3>
                 </div>
               </div>
@@ -350,7 +386,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             <DialogFooter className="p-4 border-t bg-muted/20">
                  <Button
                     variant="outline"
-                    className="border-[#F00000] text-white hover:text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000]"
+                    className="border-[#F00000] text-white bg-transparent hover:bg-[#F00000] hover:border-[#F00000]"
                     onClick={handleClose}
                 >
                   <X className="mr-2" />
@@ -376,5 +412,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
       </>
   );
 }
-
-    
