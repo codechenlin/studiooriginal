@@ -273,11 +273,20 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                             )}
                             <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center space-y-3">
                                 <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
-                                <p className="font-mono text-lg truncate">
+                                <div className="font-mono text-lg truncate" title={fullSubdomain}>
                                     <strong style={{color: '#AD00EC'}}>{subdomainName.toLowerCase()}</strong>
                                     <span className="text-white">.{selectedDomain?.domain_name}</span>
-                                </p>
+                                </div>
                                 <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setIsSubdomainDetailModalOpen(true)}>Mostrar Subdominio</Button>
+                            </div>
+
+                            <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-green-500/10 text-green-400 border border-green-500/20">
+                                <CheckCircle className="size-4 shrink-0 mt-0.5" />
+                                <span>Permitido: letras minúsculas (a-z), números (0-9) y guiones (-).</span>
+                            </div>
+                            <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
+                                <XCircle className="size-4 shrink-0 mt-0.5" />
+                                <span>Prohibido: espacios, mayúsculas, acentos, símbolos especiales, puntos, comas, ni empezar/terminar con guion.</span>
                             </div>
 
                             {processStatus === 'success' && (
