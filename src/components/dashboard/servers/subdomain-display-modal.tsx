@@ -1,10 +1,9 @@
-
 "use client";
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Fingerprint, BrainCircuit, X } from 'lucide-react';
+import { AlertTriangle, Fingerprint, BrainCircuit, X, CheckCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 
@@ -17,23 +16,29 @@ interface SubdomainDisplayModalProps {
 export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain }: SubdomainDisplayModalProps) {
     
     const truncateSubdomain = (name: string): React.ReactNode => {
-        const prefix = name.split('.')[0];
-        const domain = name.substring(prefix.length);
-
-        if (name.length > 60) {
-            const truncatedPrefix = `${prefix.substring(0, 60 - domain.length - 3)}...`;
-            return <><strong style={{color: '#AD00EC'}}>{truncatedPrefix}</strong><span>{domain}</span></>;
+        const parts = name.split('.');
+        if (name.length <= 75 || parts.length < 2) {
+            return <><strong style={{color: '#AD00EC'}}>{parts[0]}</strong><span>.{parts.slice(1).join('.')}</span></>;
         }
-        return <><strong style={{color: '#AD00EC'}}>{prefix}</strong><span>{domain}</span></>;
+        
+        const prefix = parts[0];
+        const domainPart = parts.slice(1).join('.');
+        
+        const availableLength = 75 - prefix.length - 4; // 4 for ".","..."
+        const truncatedDomain = `${domainPart.substring(0, availableLength)}...`;
+        
+        return <><strong style={{color: '#AD00EC'}}>{prefix}</strong><span>.{truncatedDomain}</span></>;
     };
     
     const truncatedSubdomain = truncateSubdomain(fullSubdomain);
-    const isTooLong = fullSubdomain.length > 60;
+    const charCount = fullSubdomain.length;
+    const isRecommendedLength = charCount > 0 && charCount <= 60;
+    const isTooLong = charCount > 60;
     const recommendationColor = "#00ADEC";
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-4xl w-full h-[650px] flex p-0 gap-0 bg-black/80 backdrop-blur-xl border text-white overflow-hidden" style={{borderColor: `${recommendationColor}4D`}}>
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full h-[650px] flex flex-col p-0 gap-0 bg-black/80 backdrop-blur-xl border text-white overflow-hidden" style={{borderColor: `${recommendationColor}4D`}}>
                  <style>{`
                     .info-grid {
                         background-image:
@@ -126,16 +131,21 @@ export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain }: S
                             <h4 className="text-sm font-semibold text-cyan-300">Conteo de Caracteres</h4>
                             <div
                                 className="mt-2 px-4 py-2 rounded-md font-mono text-4xl font-bold character-cell"
-                                style={{ color: isTooLong ? '#F00000' : 'white' }}
+                                style={{ color: isTooLong ? '#F00000' : '#00CB07' }}
                             >
-                                {fullSubdomain.length}
+                                {charCount}
                             </div>
-                             {isTooLong && (
-                                <div className="mt-3 p-2 text-xs rounded-md flex items-center justify-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
+                            {isTooLong ? (
+                                <div className="mt-3 p-2 text-xs rounded-md flex items-center justify-center gap-2 bg-red-500/10 text-red-300 border border-red-500/20">
                                     <AlertTriangle className="size-4 shrink-0" />
                                     <span>El nombre del subdominio es demasiado largo. El receptor podría rechazar tu dirección de correo electrónico.</span>
                                 </div>
-                            )}
+                            ) : isRecommendedLength ? (
+                                 <div className="mt-3 p-2 text-xs rounded-md flex items-center justify-center gap-2 bg-green-500/10 text-green-300 border border-green-500/20">
+                                    <CheckCircle className="size-4 shrink-0" />
+                                    <span>¡Longitud recomendada! Ideal para máxima entregabilidad.</span>
+                                </div>
+                            ) : null}
                         </motion.div>
                     </div>
                 </div>

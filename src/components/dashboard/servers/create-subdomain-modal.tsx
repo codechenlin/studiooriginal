@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
@@ -59,7 +58,6 @@ import { MediaPreview } from '@/components/admin/media-preview';
 import { Separator } from '@/components/ui/separator';
 import {
   createOrGetDomainAction,
-  getVerifiedDomains,
 } from './db-actions';
 import { DomainInfoModal } from './domain-info-modal';
 import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
@@ -80,6 +78,7 @@ import { PauseVerificationModal } from './pause-verification-modal';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { SubdomainDisplayModal } from './subdomain-display-modal';
 import {
+  getVerifiedDomains,
   setDomainAsVerified,
   updateDkimKey,
   saveDnsChecks,
