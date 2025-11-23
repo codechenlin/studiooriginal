@@ -57,6 +57,7 @@ import {
   KeyRound,
   Shield,
   Dna,
+  Info,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { type Domain } from './types';
@@ -520,3 +521,5 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </>
     );
 }
+
+    
