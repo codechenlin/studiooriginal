@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
@@ -58,8 +57,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { Separator } from '@/components/ui/separator';
 import {
-  createOrGetDomainAction,
-  getVerifiedDomains,
+  createOrGetDomainAction
 } from './db-actions';
 import { DomainInfoModal } from './domain-info-modal';
 import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
@@ -72,7 +70,7 @@ import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analy
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
-import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
+import { type DnsHealthOutput } from '@/ai/flows/dns_verification-flow';
 import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToastProvider, ToastViewport } from '@/components/ui/toast';
@@ -108,17 +106,24 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        const fetchDomains = async () => {
-            setIsLoading(true);
-            const { success, data, error } = await getVerifiedDomains();
-            if (success && data) {
-                setDomains(data);
-            } else {
-                console.error("Failed to fetch domains:", error);
-            }
+        setIsLoading(true);
+        // MOCK DATA: Replace with real data fetching when ready
+        const mockDomains: Domain[] = [
+            // @ts-ignore
+            { id: '1', domain_name: 'mailflow.ai', is_verified: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            // @ts-ignore
+            { id: '2', domain_name: 'daybuu.com', is_verified: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            // @ts-ignore
+            { id: '3', domain_name: 'marketing-super-largo-para-probar.com', is_verified: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            // @ts-ignore
+            { id: '4', domain_name: 'analytics.data.info', is_verified: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            // @ts-ignore
+            { id: '5', domain_name: 'mi-dominio-fallido.dev', is_verified: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        ];
+        setTimeout(() => {
+            setDomains(mockDomains);
             setIsLoading(false);
-        };
-        fetchDomains();
+        }, 1200);
     }, []);
     
     const truncateName = (name: string, maxLength: number = 19): string => {
@@ -152,7 +157,7 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                             animate={{ opacity: 1, y: 0 }}
                             className={cn(
                                 "group relative p-3 rounded-lg border-2 transition-all duration-300 flex items-center justify-between",
-                                domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-red-500/30 text-muted-foreground"
+                                domain.is_verified ? "border-transparent bg-background/50 hover:bg-primary/10 hover:border-primary cursor-pointer" : "bg-muted/30 border-red-500/30 text-muted-foreground cursor-not-allowed"
                             )}
                             onClick={() => domain.is_verified && onSelect(domain)}
                         >
@@ -167,7 +172,6 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
                                    {!domain.is_verified && (
                                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                                         <span className="text-amber-300">Última comprobación: {formatDistanceToNow(new Date(domain.updated_at), { addSuffix: true, locale: es })}</span>
-                                        <Button variant="outline" size="sm" className="h-6 px-2 text-xs border-amber-500/50 text-amber-300 hover:bg-amber-500/20">Análisis</Button>
                                     </div>
                                    )}
                                 </div>
@@ -337,7 +341,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                           <p className="text-xs text-muted-foreground">Dominio Seleccionado</p>
                           <div className="flex items-center justify-center gap-2 mt-1">
                               <Workflow className="size-5 text-primary animate-spin-slow" />
-                              <span className="font-semibold text-base text-white/90">{selectedDomain.domain_name}</span>
+                              <span className="font-semibold text-base text-white/90">{truncateName(selectedDomain.domain_name || '', 20)}</span>
                           </div>
                       </div>
                     )}
@@ -548,13 +552,31 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                       <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" style={{filter: 'blur(10px)'}} />
                                       <Code className="size-12 text-primary/80 absolute inset-0 m-auto" />
                                     </div>
+                                  ) : processStatus === 'success' && isSubdomainAvailable ? (
+                                    <div className="relative w-24 h-24 mx-auto mb-4">
+                                        <CheckCircle className="size-24 text-green-400" style={{filter: 'drop-shadow(0 0 10px #00CB07)'}}/>
+                                    </div>
+                                  ) : processStatus === 'success' && !isSubdomainAvailable ? (
+                                     <div className="relative w-24 h-24 mx-auto mb-4">
+                                        <AlertTriangle className="size-24 text-red-500" style={{filter: 'drop-shadow(0 0 10px #F00000)'}}/>
+                                    </div>
                                   ) : (
                                     <div className="flex justify-center mb-4"><GitBranch className="size-16 text-primary/80" /></div>
                                   )}
-                                  <h4 className="font-bold text-lg">{processStatus === 'processing' ? 'Verificando Disponibilidad...' : 'Define tu Subdominio'}</h4>
+                                  <h4 className="font-bold text-lg">
+                                    {processStatus === 'processing' ? 'Verificando Disponibilidad...' : 
+                                    (processStatus === 'success' && isSubdomainAvailable) ? '¡Subdominio Disponible!' : 
+                                    (processStatus === 'success' && !isSubdomainAvailable) ? 'Subdominio no Disponible' : 'Define tu Subdominio'}
+                                  </h4>
                                   <p className="text-sm text-muted-foreground">
-                                    {processStatus === 'processing' ? 'La IA está comprobando si el subdominio está disponible en la red.' : 'Introduce el prefijo del subdominio que deseas verificar.'}
+                                    {processStatus === 'processing' ? 'La IA está comprobando si el subdominio está disponible en la red.' : 
+                                    (processStatus === 'success' && isSubdomainAvailable) ? 'Puedes continuar con la configuración.' :
+                                    (processStatus === 'success' && !isSubdomainAvailable) ? 'Este subdominio ya está en uso. Por favor, elige otro.' :
+                                    'Introduce el prefijo del subdominio que deseas verificar.'}
                                   </p>
+                                  {processStatus === 'success' && !isSubdomainAvailable && (
+                                    <Button variant="outline" size="sm" className="mt-4" onClick={() => { setProcessStatus('idle'); setIsSubdomainAvailable(null); }}>Intentar con otro nombre</Button>
+                                  )}
                                 </div>
                               )}
                              {currentStep === 3 && (
@@ -573,13 +595,13 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     {currentStep === 2 && (
                         <Button
                             onClick={handleNextStep}
-                            disabled={processStatus === 'processing' || !subdomainName}
+                            disabled={processStatus === 'processing' || !subdomainName || (processStatus === 'success' && !isSubdomainAvailable)}
                             className="text-white hover:opacity-90 w-full h-12 text-base"
                              style={{
                               background: 'linear-gradient(to right, #1700E6, #009AFF)'
                             }}
                         >
-                            {processStatus === 'processing' ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : <>Siguiente</>}
+                            {processStatus === 'processing' ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : isSubdomainAvailable ? <>Siguiente <ArrowRight className="ml-2"/></> : 'Verificar Ahora'}
                         </Button>
                     )}
                     <Button variant="outline" className="w-full h-12 text-base border-[#F00000] text-white hover:bg-[#F00000] hover:text-white" onClick={handleClose}>
@@ -609,7 +631,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 </div>
             </DialogContent>
         </Dialog>
-        <SubdomainDisplayModal isOpen={isSubdomainDetailModalOpen} onOpenChange={setIsSubdomainDetailModalOpen} fullSubdomain={fullSubdomain} isAvailable={isSubdomainAvailable} />
+        <SubdomainDisplayModal isOpen={isSubdomainDetailModalOpen} onOpenChange={setIsSubdomainDetailModalOpen} fullSubdomain={fullSubdomain} />
         </>
     );
 }

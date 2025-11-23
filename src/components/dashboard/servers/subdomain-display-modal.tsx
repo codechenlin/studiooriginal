@@ -1,10 +1,9 @@
-
 "use client";
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, AlertTriangle, Fingerprint } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Fingerprint, BrainCircuit } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
@@ -13,10 +12,9 @@ interface SubdomainDisplayModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   fullSubdomain: string;
-  isAvailable: boolean | null;
 }
 
-export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain, isAvailable }: SubdomainDisplayModalProps) {
+export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain }: SubdomainDisplayModalProps) {
     
     const truncateSubdomain = (name: string, maxLength: number = 60): string => {
         if (name.length <= maxLength) {
@@ -27,32 +25,11 @@ export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain, isA
     
     const truncatedSubdomain = truncateSubdomain(fullSubdomain);
 
-    const statusConfig = isAvailable === null
-        ? {
-            title: "Nombre Inválido",
-            description: "El formato del subdominio no es válido. Revisa los caracteres permitidos.",
-            icon: AlertTriangle,
-            color: "#E18700", // Orange
-        }
-        : isAvailable
-        ? {
-            title: "Subdominio Disponible",
-            description: "¡Excelente! Este subdominio está libre y listo para ser configurado.",
-            icon: CheckCircle,
-            color: "#00CB07", // Green
-        }
-        : {
-            title: "Subdominio en Uso",
-            description: "Este subdominio ya está registrado en otra cuenta. Por favor, elige uno diferente.",
-            icon: XCircle,
-            color: "#F00000", // Red
-        };
-
-    const Icon = statusConfig.icon;
+    const recommendationColor = "#00ADEC";
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent showCloseButton={false} className="max-w-4xl w-full bg-black/80 backdrop-blur-xl border text-white overflow-hidden p-0" style={{borderColor: statusConfig.color+'4D'}}>
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full bg-black/80 backdrop-blur-xl border text-white overflow-hidden p-0" style={{borderColor: recommendationColor+'4D'}}>
                  <style>{`
                     .animated-grid {
                         background-image:
@@ -66,7 +43,7 @@ export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain, isA
                         left: 0;
                         right: 0;
                         height: 3px;
-                        background: radial-gradient(ellipse 50% 100% at 50% 0%, ${statusConfig.color}80, transparent 80%);
+                        background: radial-gradient(ellipse 50% 100% at 50% 0%, ${recommendationColor}80, transparent 80%);
                         animation: scan-info 5s infinite linear;
                     }
                     @keyframes scan-info {
@@ -76,16 +53,21 @@ export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain, isA
                 `}</style>
                 
                 <DialogHeader className="sr-only">
-                    <DialogTitle>{statusConfig.title}</DialogTitle>
-                    <DialogDescription>{statusConfig.description}</DialogDescription>
+                    <DialogTitle>Detalles del Subdominio</DialogTitle>
+                    <DialogDescription>Información y recomendaciones para el subdominio.</DialogDescription>
                 </DialogHeader>
 
                 <div className="absolute inset-0 z-0 opacity-20 animated-grid"/>
                 <div className="p-8 space-y-8 z-10">
-                    <div className="text-center p-6 rounded-lg border-2 border-dashed" style={{borderColor: statusConfig.color+'80', background: `radial-gradient(ellipse at center, ${statusConfig.color}1A, transparent 70%)`}}>
-                        <Icon className="mx-auto size-16 mb-4" style={{color: statusConfig.color, filter: `drop-shadow(0 0 10px ${statusConfig.color})`}}/>
-                        <h3 className="text-2xl font-bold" style={{color: statusConfig.color}}>{statusConfig.title}</h3>
-                        <p className="text-sm text-white/70">{statusConfig.description}</p>
+                    <div className="text-center p-6 rounded-lg border-2 border-dashed" style={{borderColor: recommendationColor+'80', background: `radial-gradient(ellipse at center, ${recommendationColor}1A, transparent 70%)`}}>
+                        <BrainCircuit className="mx-auto size-16 mb-4" style={{color: recommendationColor, filter: `drop-shadow(0 0 10px ${recommendationColor})`}}/>
+                        <h3 className="text-2xl font-bold" style={{color: recommendationColor}}>Recomendación de la IA</h3>
+                        <p className="text-sm text-white/70 mt-2 max-w-2xl mx-auto">
+                            Para maximizar la entregabilidad y evitar que tus correos sean marcados como spam, es crucial que los nombres de subdominios no sean excesivamente largos. Un subdominio largo puede ser una señal de alerta para los filtros de correo.
+                        </p>
+                         <p className="text-sm text-white/70 mt-2 max-w-2xl mx-auto">
+                            <strong className="text-white">Recomendamos mantener los nombres de subdominio por debajo de los 60 caracteres.</strong>
+                        </p>
                     </div>
 
                     <motion.div
@@ -121,8 +103,8 @@ export function SubdomainDisplayModal({ isOpen, onOpenChange, fullSubdomain, isA
                         </div>
                     </motion.div>
                 </div>
-                 <DialogFooter className="p-4 bg-black/30 border-t" style={{borderColor: statusConfig.color+'4D'}}>
-                    <Button onClick={() => onOpenChange(false)} className="w-full text-white" style={{backgroundColor: statusConfig.color}}>Entendido</Button>
+                 <DialogFooter className="p-4 bg-black/30 border-t" style={{borderColor: recommendationColor+'4D'}}>
+                    <Button onClick={() => onOpenChange(false)} className="w-full text-white" style={{backgroundColor: recommendationColor}}>Entendido</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
