@@ -23,6 +23,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Check,
   Globe,
@@ -35,7 +36,7 @@ import {
   Search,
   XCircle,
   Eye,
-  Info
+  Dna
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { type Domain } from './types';
@@ -43,7 +44,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getVerifiedDomains } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface CreateSubdomainModalProps {
@@ -198,7 +198,7 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, status }: {
                     <div className="relative z-10 p-4 rounded-xl bg-black/50 border border-white/10">
                         <p className="text-sm text-muted-foreground">Nombre completo del subdominio:</p>
                         <p className="text-2xl font-mono truncate text-cyan-300" title={fullSubdomain}>
-                            {fullSubdomain}
+                            {fullSubdomain.length > 60 ? fullSubdomain.substring(0, 60) + '...' : fullSubdomain}
                         </p>
                         <p className="text-right text-xs text-muted-foreground mt-2">
                            Total de caracteres: {fullSubdomain.length}
@@ -299,7 +299,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                             <div className="font-mono text-lg truncate">
+                                            <div className="font-mono text-lg truncate">
                                                 <span className="font-bold" style={{color: '#AD00EC'}}>{subdomainName.toLowerCase()}</span>
                                                 <span className="text-white">.{selectedDomain?.domain_name}</span>
                                             </div>
@@ -310,7 +310,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     </Tooltip>
                                 </TooltipProvider>
                             </div>
-
+                            
                             <Button variant="outline" className="w-full" onClick={() => setIsDetailModalOpen(true)}>
                                 <Eye className="mr-2"/> Mostrar Subdominio
                             </Button>
@@ -499,3 +499,5 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </>
     );
 }
+
+    
