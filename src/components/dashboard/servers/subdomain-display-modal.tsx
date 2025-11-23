@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertTriangle, Fingerprint } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 interface SubdomainDisplayModalProps {
   isOpen: boolean;

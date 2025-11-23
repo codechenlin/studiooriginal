@@ -337,7 +337,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                           <p className="text-xs text-muted-foreground">Dominio Seleccionado</p>
                           <div className="flex items-center justify-center gap-2 mt-1">
                               <Workflow className="size-5 text-primary animate-spin-slow" />
-                              <span className="font-semibold text-base text-white/90">{truncateName(selectedDomain.domain_name || '', 20)}</span>
+                              <span className="font-semibold text-base text-white/90">{selectedDomain.domain_name}</span>
                           </div>
                       </div>
                     )}
