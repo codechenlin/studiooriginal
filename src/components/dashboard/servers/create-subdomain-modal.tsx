@@ -72,7 +72,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
-import { createOrGetDomainAction, getVerifiedDomains } from './db-actions';
+import { getVerifiedDomains } from './db-actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CreateSubdomainModalProps {
@@ -224,11 +224,8 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         transition: { duration: 0.3 }
     };
     
-    const truncateName = (name: string, maxLength: number): string => {
-        if (!name || name.length <= maxLength) return name || '';
-        return `${name.substring(0, maxLength)}...`;
-    };
-
+    const fullSubdomain = `${subdomainName.toLowerCase()}.${selectedDomain?.domain_name || ''}`;
+    
     const renderStepContent = () => {
         switch (currentStep) {
             case 1:
@@ -240,17 +237,14 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     </div>
                 );
             case 2:
-                const fullSubdomain = `${subdomainName}.${selectedDomain?.domain_name}`;
                 const isSubdomainTaken = subdomainName === 'blog'; // mock taken
-                const truncatedFullSubdomain = truncateName(fullSubdomain, 24);
                 const isMaxLength = subdomainName.length === 21;
-
 
                 return (
                     <div className="flex flex-col h-full justify-start pt-1">
                         <div className="text-left mb-4">
                              <h3 className="text-lg font-semibold">Añadir Subdominio</h3>
-                             <p className="text-sm text-muted-foreground">Introduce el prefijo del nombre para el subdominio.</p>
+                             <p className="text-sm text-muted-foreground">Introduce el prefijo para tu subdominio.</p>
                         </div>
                         <div className="space-y-4">
                             <Input 
@@ -265,15 +259,15 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     <span>Solo se permiten 21 caracteres como máximo.</span>
                                 </div>
                             )}
-                            <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
+                           <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
                                 <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
-                                 <TooltipProvider>
+                                <TooltipProvider>
                                     <Tooltip>
-                                        <TooltipTrigger>
-                                            <p className="font-mono text-lg" title={fullSubdomain}>
-                                                <span className="font-bold" style={{color: '#AD00EC'}}>{subdomainName}</span>
+                                        <TooltipTrigger asChild>
+                                            <div className="font-mono text-lg truncate">
+                                                <span className="font-bold" style={{color: '#AD00EC'}}>{subdomainName.toLowerCase()}</span>
                                                 <span className="text-white">.{selectedDomain?.domain_name}</span>
-                                            </p>
+                                            </div>
                                         </TooltipTrigger>
                                         <TooltipContent>
                                             <p>{fullSubdomain}</p>
@@ -282,12 +276,12 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 </TooltipProvider>
                             </div>
                             {subdomainName && (
-                                <div className={cn("p-2 text-xs rounded-md flex items-center gap-2", 
+                                <div className={cn("p-2 text-xs rounded-md flex items-start gap-2 text-left", 
                                     isSubdomainTaken ? "bg-red-500/10 text-red-400" : "bg-green-500/10 text-green-400"
                                 )}>
-                                    {isSubdomainTaken ? <XCircle className="size-4" /> : <CheckCircle className="size-4"/>}
-                                    <span>
-                                        {isSubdomainTaken ? `El subdominio "${truncateName(subdomainName, 21)}" ya está en uso.` : `El subdominio "${truncateName(subdomainName, 21)}" está disponible.`}
+                                    {isSubdomainTaken ? <XCircle className="size-4 shrink-0 mt-0.5" /> : <CheckCircle className="size-4 shrink-0 mt-0.5"/>}
+                                    <span className="flex-1">
+                                        {isSubdomainTaken ? `El subdominio "${subdomainName}" ya está en uso.` : `El subdominio "${subdomainName}" está disponible.`}
                                     </span>
                                 </div>
                             )}
