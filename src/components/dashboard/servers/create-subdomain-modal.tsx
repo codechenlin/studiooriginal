@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   MoreHorizontal,
   FileIcon,
@@ -80,13 +79,15 @@ const renderLoading = () => (
 // Mock Data
 const mockDomains: Domain[] = [
     // @ts-ignore
-    { id: '1', domain_name: 'mailflow.ai', is_verified: true, emails: [{address: 'ventas@mailflow.ai', connected: true}, {address: 'soporte@mailflow.ai', connected: true}, {address: 'info@mailflow.ai', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    { id: '1', domain_name: 'mailflow.ai', is_verified: true, emails: [{address: 'ventas@mailflow.ai', connected: true}, {address: 'soporte@mailflow.ai', connected: true}, {address: 'info@mailflow.ai', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: new Date().toISOString() },
     // @ts-ignore
-    { id: '2', domain_name: 'daybuu.com', is_verified: true, emails: [{address: 'contacto@daybuu.com', connected: true}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    { id: '2', domain_name: 'daybuu.com', is_verified: true, emails: [{address: 'contacto@daybuu.com', connected: true}], user_id: '', verification_code: '', created_at: '', updated_at: new Date().toISOString() },
     // @ts-ignore
-    { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: new Date().toISOString() },
     // @ts-ignore
-    { id: '4', name: 'another-domain.dev', is_verified: false, emails: [], user_id: '', verification_code: '', created_at: '', updated_at: new Date().toISOString() },
+    { id: '4', domain_name: 'another-domain.dev', is_verified: false, emails: [], user_id: '', verification_code: '', created_at: '', updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() },
+    // @ts-ignore
+    { id: '5', domain_name: 'pending-verification.org', is_verified: false, emails: [], user_id: '', verification_code: '', created_at: '', updated_at: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
 ];
 
 
@@ -97,7 +98,6 @@ function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) =>
 
     useEffect(() => {
         setIsLoading(true);
-        // Simulate fetching data
         setTimeout(() => {
             setDomains(mockDomains);
             setIsLoading(false);
@@ -271,26 +271,27 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     <span>Solo se permiten 21 caracteres como máximo.</span>
                                 </div>
                             )}
-                             <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center space-y-3">
-                                 <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
-                                 <p className="font-mono text-lg truncate">
-                                    <span className="font-bold" style={{color: '#AD00EC'}}>{subdomainName.toLowerCase()}</span>
+                            <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center space-y-3">
+                                <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
+                                <p className="font-mono text-lg truncate">
+                                    <strong style={{color: '#AD00EC'}}>{subdomainName.toLowerCase()}</strong>
                                     <span className="text-white">.{selectedDomain?.domain_name}</span>
                                 </p>
-                                 <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setIsSubdomainDetailModalOpen(true)}>Mostrar Subdominio</Button>
+                                <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setIsSubdomainDetailModalOpen(true)}>Mostrar Subdominio</Button>
                             </div>
 
-                             {processStatus === 'success' && isSubdomainAvailable === false && (
-                                <div className="p-2 text-xs rounded-md flex items-center gap-2 bg-red-500/10 text-red-400">
-                                    <XCircle className="size-4 shrink-0" />
-                                    <span>Este subdominio ya está en uso.</span>
-                                </div>
-                            )}
-                            {processStatus === 'success' && isSubdomainAvailable === true && (
-                                <div className="p-2 text-xs rounded-md flex items-center gap-2 bg-green-500/10 text-green-400">
-                                    <CheckCircle className="size-4 shrink-0" />
-                                    <span>¡El subdominio está disponible!</span>
-                                </div>
+                            {processStatus === 'success' && (
+                              <div
+                                className={cn(
+                                  "p-2 text-xs rounded-md flex items-center gap-2",
+                                  isSubdomainAvailable === false ? "bg-red-500/10 text-red-400" : (isSubdomainAvailable === true ? "bg-green-500/10 text-green-400" : "")
+                                )}
+                              >
+                                {isSubdomainAvailable === false && <XCircle className="size-4 shrink-0" />}
+                                {isSubdomainAvailable === true && <CheckCircle className="size-4 shrink-0" />}
+                                {isSubdomainAvailable === false && <span>Este subdominio ya está en uso.</span>}
+                                {isSubdomainAvailable === true && <span>¡El subdominio está disponible!</span>}
+                              </div>
                             )}
                         </div>
                     </div>
@@ -494,12 +495,12 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full bg-black/80 backdrop-blur-xl border text-white overflow-hidden p-0" style={{borderColor: currentStatus.color+'4D'}}>
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Detalles del Subdominio</DialogTitle>
+                    <DialogDescription>Información sobre la disponibilidad y el nombre completo del subdominio.</DialogDescription>
+                </DialogHeader>
                 <div className="absolute inset-0 z-0 opacity-10 bg-grid-zinc-400/30"/>
                 <div className="p-8 space-y-6">
-                    <DialogHeader>
-                        <DialogTitle className="sr-only">Detalles del Subdominio</DialogTitle>
-                        <DialogDescription className="sr-only">Información sobre la disponibilidad y el nombre completo del subdominio.</DialogDescription>
-                    </DialogHeader>
                     <div className="text-center p-6 rounded-lg border-2 border-dashed" style={{borderColor: currentStatus.color+'80', background: `radial-gradient(ellipse at center, ${currentStatus.color}1A, transparent 70%)`}}>
                         <Icon className="mx-auto size-16 mb-4" style={{color: currentStatus.color, filter: `drop-shadow(0 0 10px ${currentStatus.color})`}}/>
                         <h3 className="text-xl font-bold" style={{color: currentStatus.color}}>{currentStatus.title}</h3>
@@ -518,3 +519,5 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
         </Dialog>
     );
 };
+
+    
