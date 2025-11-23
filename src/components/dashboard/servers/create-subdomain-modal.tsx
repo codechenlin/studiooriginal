@@ -45,7 +45,8 @@ import {
   Dna,
   Info,
   ArrowRight,
-  Workflow
+  Workflow,
+  RefreshCw,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -78,7 +79,6 @@ import { PauseVerificationModal } from './pause-verification-modal';
 import { ScoreDisplay } from '@/components/dashboard/score-display';
 import { SubdomainDisplayModal } from './subdomain-display-modal';
 import {
-  getVerifiedDomains,
   setDomainAsVerified,
   updateDkimKey,
   saveDnsChecks,
@@ -501,7 +501,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             status = processStatus;
             if (processStatus === 'processing') text = 'VERIFICANDO SUBDOMINIO';
             else if (processStatus === 'success' && isSubdomainAvailable === true) { text = 'SUBDOMINIO DISPONIBLE'; status = 'success'; }
-            else if (processStatus === 'success' && isSubdomainAvailable === false) { text = 'SUBDOMINIO EN USO'; status = 'error'; }
+            else if (processStatus === 'success' && !isSubdomainAvailable) { text = 'SUBDOMINIO EN USO'; status = 'error'; }
             else { text = 'ESPERANDO ACCIÓN'; }
         }
         
@@ -583,7 +583,15 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     'Introduce el prefijo del subdominio que deseas verificar.'}
                                   </p>
                                   {processStatus === 'success' && !isSubdomainAvailable && (
-                                    <Button variant="outline" size="sm" className="mt-4" onClick={() => { setProcessStatus('idle'); setIsSubdomainAvailable(null); }}>Intentar con otro nombre</Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="group mt-4 text-amber-300 border-amber-500/50 hover:bg-[#00ADEC] hover:border-[#00ADEC] hover:text-white"
+                                      onClick={() => { setProcessStatus('idle'); setIsSubdomainAvailable(null); }}
+                                    >
+                                      <RefreshCw className="mr-2 size-4 text-amber-300 group-hover:text-white" />
+                                      Intentar con otro nombre
+                                    </Button>
                                   )}
                                 </div>
                               )}
@@ -609,7 +617,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                               background: 'linear-gradient(to right, #1700E6, #009AFF)'
                             }}
                         >
-                            {processStatus === 'processing' ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : isSubdomainAvailable ? <>Siguiente <ArrowRight className="ml-2"/></> : 'Verificar Ahora'}
+                            {processStatus === 'processing' ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : isSubdomainAvailable ? <>Siguiente <ArrowRight className="ml-2"/></> : <><Search className="mr-2"/>Verificar Ahora</>}
                         </Button>
                     )}
                     <Button variant="outline" className="w-full h-12 text-base border-[#F00000] text-white hover:bg-[#F00000] hover:text-white" onClick={handleClose}>
