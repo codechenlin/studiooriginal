@@ -5,24 +5,8 @@ import React, { useState, useEffect, useCallback, useTransition, useActionState 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -71,10 +55,10 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getVerifiedDomains } from './db-actions';
 import {
   createOrGetDomainAction,
 } from './db-actions';
+import { DomainInfoModal } from './domain-info-modal';
 import { Separator } from '@/components/ui/separator';
 
 interface CreateSubdomainModalProps {
@@ -93,22 +77,32 @@ const renderLoading = () => (
     </div>
 );
 
+// Mock Data
+const mockDomains: Domain[] = [
+    // @ts-ignore
+    { id: '1', domain_name: 'mailflow.ai', is_verified: true, emails: [{address: 'ventas@mailflow.ai', connected: true}, {address: 'soporte@mailflow.ai', connected: true}, {address: 'info@mailflow.ai', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    // @ts-ignore
+    { id: '2', domain_name: 'daybuu.com', is_verified: true, emails: [{address: 'contacto@daybuu.com', connected: true}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    // @ts-ignore
+    { id: '3', domain_name: 'my-super-long-domain-name-that-needs-truncation.com', is_verified: true, emails: [{address: 'test@my-super-long-domain-name-that-needs-truncation.com', connected: false}], user_id: '', verification_code: '', created_at: '', updated_at: '' },
+    // @ts-ignore
+    { id: '4', name: 'another-domain.dev', is_verified: false, emails: [], user_id: '', verification_code: '', created_at: '', updated_at: new Date().toISOString() },
+];
+
+
 function DomainList({ onSelect, renderLoading }: { onSelect: (domain: Domain) => void; renderLoading: () => React.ReactNode }) {
-    const { toast } = useToast();
     const [domains, setDomains] = useState<Domain[]>([]);
-    const [isLoading, startLoading] = useTransition();
+    const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        startLoading(async () => {
-            const result = await getVerifiedDomains();
-            if (result.success && result.data) {
-                setDomains(result.data);
-            } else {
-                toast({ title: "Error al cargar dominios", description: result.error });
-            }
-        });
-    }, [toast]);
+        setIsLoading(true);
+        // Simulate fetching data
+        setTimeout(() => {
+            setDomains(mockDomains);
+            setIsLoading(false);
+        }, 1500);
+    }, []);
     
     const truncateName = (name: string, maxLength: number = 19): string => {
         if (!name || name.length <= maxLength) return name || '';
@@ -194,22 +188,13 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
     const [subdomainName, setSubdomainName] = useState('');
     const [processStatus, setProcessStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
-
+    const [isSubdomainAvailable, setIsSubdomainAvailable] = useState<boolean | null>(null);
+    const [isSubdomainDetailModalOpen, setIsSubdomainDetailModalOpen] = useState(false);
+    
     const [state, formAction] = useActionState(createOrGetDomainAction, initialState);
 
     const { toast } = useToast();
 
-    useEffect(() => {
-        if (state.status !== 'idle') {
-            if (state.success && state.domain) {
-                setSelectedDomain(state.domain);
-                setCurrentStep(2);
-            } else {
-                toast({ title: "Error", description: state.message, variant: "destructive" });
-            }
-        }
-    }, [state, toast]);
-    
     const handleSelectDomain = (domain: Domain) => {
         setSelectedDomain(domain);
         setCurrentStep(2);
@@ -220,8 +205,12 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         if (currentStep === 2 && subdomainName) {
             setProcessStatus('processing');
             setTimeout(() => {
+                const isTaken = Math.random() > 0.5; // Simulate availability
+                setIsSubdomainAvailable(!isTaken);
                 setProcessStatus('success');
-                setCurrentStep(3);
+                if(!isTaken) {
+                   setCurrentStep(3);
+                }
             }, 1500)
         }
     }
@@ -231,6 +220,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         setSelectedDomain(null);
         setSubdomainName('');
         setProcessStatus('idle');
+        setIsSubdomainAvailable(null);
     };
 
     const handleClose = () => {
@@ -267,7 +257,11 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                         <div className="space-y-4">
                             <Input 
                                 value={subdomainName}
-                                onChange={(e) => setSubdomainName(e.target.value)}
+                                onChange={(e) => {
+                                  if (e.target.value.length <= 21) {
+                                    setSubdomainName(e.target.value);
+                                  }
+                                }}
                                 placeholder="ej: marketing"
                                 maxLength={21}
                             />
@@ -277,13 +271,27 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     <span>Solo se permiten 21 caracteres como máximo.</span>
                                 </div>
                             )}
-                            <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
-                                <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
-                                <p className="font-mono text-lg truncate">
+                             <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center space-y-3">
+                                 <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
+                                 <p className="font-mono text-lg truncate">
                                     <span className="font-bold" style={{color: '#AD00EC'}}>{subdomainName.toLowerCase()}</span>
                                     <span className="text-white">.{selectedDomain?.domain_name}</span>
                                 </p>
+                                 <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setIsSubdomainDetailModalOpen(true)}>Mostrar Subdominio</Button>
                             </div>
+
+                             {processStatus === 'success' && isSubdomainAvailable === false && (
+                                <div className="p-2 text-xs rounded-md flex items-center gap-2 bg-red-500/10 text-red-400">
+                                    <XCircle className="size-4 shrink-0" />
+                                    <span>Este subdominio ya está en uso.</span>
+                                </div>
+                            )}
+                            {processStatus === 'success' && isSubdomainAvailable === true && (
+                                <div className="p-2 text-xs rounded-md flex items-center gap-2 bg-green-500/10 text-green-400">
+                                    <CheckCircle className="size-4 shrink-0" />
+                                    <span>¡El subdominio está disponible!</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
@@ -429,7 +437,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
             </div>
         )
     };
-
+    
     return (
         <>
             <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -449,6 +457,64 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     </div>
                 </DialogContent>
             </Dialog>
+            <SubdomainDetailModal isOpen={isSubdomainDetailModalOpen} onOpenChange={setIsSubdomainDetailModalOpen} fullSubdomain={fullSubdomain} isAvailable={isSubdomainAvailable} />
         </>
     );
 }
+
+
+const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable }: { isOpen: boolean, onOpenChange: (open: boolean) => void, fullSubdomain: string, isAvailable: boolean | null }) => {
+    
+    const statusConfig = {
+      available: {
+        title: "Subdominio Disponible",
+        description: "Este subdominio está libre y listo para ser verificado por ti.",
+        icon: CheckCircle,
+        color: "#00CB07",
+      },
+      taken: {
+        title: "Subdominio en Uso",
+        description: "Este subdominio ya está siendo utilizado en otra cuenta. No puedes verificarlo.",
+        icon: XCircle,
+        color: "#F00000",
+      },
+      invalid: {
+        title: "Subdominio Inválido",
+        description: "El formato del subdominio no es válido. Por favor, revísalo.",
+        icon: AlertTriangle,
+        color: "#E18700",
+      },
+    };
+
+    const currentStatus = isAvailable === null ? statusConfig.invalid : (isAvailable ? statusConfig.available : statusConfig.taken);
+    const Icon = currentStatus.icon;
+
+    const truncatedSubdomain = fullSubdomain.length > 60 ? `${fullSubdomain.substring(0, 60)}...` : fullSubdomain;
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent showCloseButton={false} className="max-w-4xl w-full bg-black/80 backdrop-blur-xl border text-white overflow-hidden p-0" style={{borderColor: currentStatus.color+'4D'}}>
+                <div className="absolute inset-0 z-0 opacity-10 bg-grid-zinc-400/30"/>
+                <div className="p-8 space-y-6">
+                    <DialogHeader>
+                        <DialogTitle className="sr-only">Detalles del Subdominio</DialogTitle>
+                        <DialogDescription className="sr-only">Información sobre la disponibilidad y el nombre completo del subdominio.</DialogDescription>
+                    </DialogHeader>
+                    <div className="text-center p-6 rounded-lg border-2 border-dashed" style={{borderColor: currentStatus.color+'80', background: `radial-gradient(ellipse at center, ${currentStatus.color}1A, transparent 70%)`}}>
+                        <Icon className="mx-auto size-16 mb-4" style={{color: currentStatus.color, filter: `drop-shadow(0 0 10px ${currentStatus.color})`}}/>
+                        <h3 className="text-xl font-bold" style={{color: currentStatus.color}}>{currentStatus.title}</h3>
+                        <p className="text-sm text-white/70">{currentStatus.description}</p>
+                    </div>
+                     <div className="p-4 rounded-lg bg-black/40 border border-white/10">
+                        <Label className="text-xs text-muted-foreground">Nombre completo del subdominio:</Label>
+                        <p className="text-2xl font-mono break-all truncate" title={fullSubdomain}>{truncatedSubdomain}</p>
+                        <p className="text-xs text-muted-foreground mt-2">Total de caracteres: {fullSubdomain.length}</p>
+                    </div>
+                </div>
+                 <DialogFooter className="p-4 bg-black/30 border-t" style={{borderColor: currentStatus.color+'4D'}}>
+                    <Button onClick={() => onOpenChange(false)} className="w-full" style={{backgroundColor: currentStatus.color, color: 'white'}}>Entendido</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
