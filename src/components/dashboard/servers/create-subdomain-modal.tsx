@@ -236,10 +236,11 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
 
     const truncateName = (name: string, maxLength: number = 20): string => {
-        if (!name || name.length <= maxLength) return name || '';
+        if (!name || name.length <= maxLength) {
+            return name || '';
+        }
         return `${name.substring(0, maxLength)}...`;
     };
-    
 
     const handleSelectDomain = (domain: Domain) => {
         setSelectedDomain(domain);
@@ -334,10 +335,10 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                             );
                         })}
                     </ul>
-                </div>
-                 <div className="mt-8 space-y-4">
-                    <Separator />
-                     {currentStep === 1 && (
+                    
+                    <Separator className="my-8" />
+                    
+                    {currentStep === 1 && (
                         <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                             <AlertTriangle className="size-10 text-amber-400 shrink-0" />
                             <p>
