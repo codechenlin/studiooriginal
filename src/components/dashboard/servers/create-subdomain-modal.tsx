@@ -54,11 +54,35 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MediaPreview } from '@/components/admin/media-preview';
+import { Separator } from '@/components/ui/separator';
 import {
   createOrGetDomainAction,
 } from './db-actions';
 import { DomainInfoModal } from './domain-info-modal';
-import { Separator } from '@/components/ui/separator';
+import { DnsStatusModal } from '@/components/dashboard/servers/dns-status-modal';
+import { DomainManagerModal } from '@/components/dashboard/servers/domain-manager-modal';
+import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
+import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
+import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/domain-verification-success-modal';
+import { verifyDnsAction, verifyDomainOwnershipAction, validateDomainWithAIAction } from '@/app/dashboard/servers/actions';
+import { sendTestEmailAction } from '@/app/dashboard/servers/send-email-actions';
+import { analyzeSmtpErrorAction } from '@/app/dashboard/servers/smtp-error-analysis-actions';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { generateDkimKeys, type DkimGenerationOutput } from '@/ai/flows/dkim-generation-flow';
+import { type DnsHealthOutput } from '@/ai/flows/dns-verification-flow';
+import { type VmcAnalysisOutput } from '@/app/dashboard/demo/types';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ToastProvider, ToastViewport } from '@/components/ui/toast';
+import { PauseVerificationModal } from './pause-verification-modal';
+import { ScoreDisplay } from '@/components/dashboard/score-display';
+import {
+  setDomainAsVerified,
+  updateDkimKey,
+  saveDnsChecks,
+  updateDomainVerificationCode,
+} from '@/app/dashboard/servers/db-actions';
 
 interface CreateSubdomainModalProps {
   isOpen: boolean;
@@ -183,6 +207,10 @@ function SubmitButtonContent({ isPending }: { isPending: boolean }) {
   );
 }
 
+type VerificationStatus = 'idle' | 'pending' | 'verifying' | 'verified' | 'failed';
+type HealthCheckStatus = 'idle' | 'verifying' | 'verified' | 'failed';
+type InfoViewRecord = 'spf' | 'dkim' | 'dmarc' | 'mx' | 'bimi' | 'vmc';
+
 export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainModalProps) {
     const [currentStep, setCurrentStep] = useState(1);
     const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
@@ -194,6 +222,17 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     const [state, formAction] = useActionState(createOrGetDomainAction, initialState);
 
     const { toast } = useToast();
+    
+    const [healthCheckStatus, setHealthCheckStatus] = useState<HealthCheckStatus>('idle');
+    const [dnsAnalysis, setDnsAnalysis] = useState<DnsHealthOutput | VmcAnalysisOutput | null>(null);
+    const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+    const [showNotification, setShowNotification] = useState(false);
+    const [healthCheckStep, setHealthCheckStep] = useState<'mandatory' | 'optional'>('mandatory');
+    const [acceptedDkimKey, setAcceptedDkimKey] = useState<string | null>(null);
+    const [showDkimAcceptWarning, setShowDkimAcceptWarning] = useState(false);
+    const [dkimData, setDkimData] = useState<DkimGenerationOutput | null>(null);
+    const [isGeneratingDkim, setIsGeneratingDkim] = useState(false);
+    const [activeInfoModal, setActiveInfoModal] = useState<InfoViewRecord | null>(null);
 
     const handleSelectDomain = (domain: Domain) => {
         setSelectedDomain(domain);
@@ -237,6 +276,25 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     
     const fullSubdomain = `${subdomainName.toLowerCase()}.${selectedDomain?.domain_name || ''}`;
 
+     const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
+        <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
+            <span className='font-semibold'>{name}</span>
+            <div className="flex items-center gap-2">
+              {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
+              <div className="relative">
+                <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
+                {recordKey === 'dkim' && showDkimAcceptWarning && (
+                   <div className="absolute -top-1 -right-1">
+                      <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
+                          <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
+                      </div>
+                  </div>
+                )}
+              </div>
+            </div>
+        </div>
+      );
+
     const renderStepContent = () => {
         switch (currentStep) {
             case 1:
@@ -279,8 +337,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 </div>
                                 <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setIsSubdomainDetailModalOpen(true)}>Mostrar Subdominio</Button>
                             </div>
-
-                             {isSubdomainAvailable === false && (
+                             {processStatus === 'success' && isSubdomainAvailable === false && (
                                 <div className="p-2 text-xs rounded-md flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
                                     <XCircle className="size-4 shrink-0" />
                                     <span>Este subdominio ya está en uso. Por favor, elige otro.</span>
@@ -291,7 +348,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                 <CheckCircle className="size-4 shrink-0 mt-0.5" />
                                 <span><strong className="font-bold">Permitido:</strong> todas las letras (a-z), números del (0-9) y guiones (-).</span>
                             </div>
-                            <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
+                             <div className="p-2 text-xs rounded-md flex items-start gap-2 bg-red-500/10 text-red-400 border border-red-500/20">
                                 <XCircle className="size-4 shrink-0 mt-0.5" />
                                 <span><strong className="font-bold">Prohibido:</strong> espacios, acentos, símbolos especiales, puntos, comas, ni empezar/terminar con guion.</span>
                             </div>
@@ -299,83 +356,92 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     </div>
                 );
             case 3:
-                return (
-                     <div className="flex flex-col h-full justify-center text-center">
-                         <CheckCircle className="size-16 mx-auto text-green-400 mb-4"/>
-                        <h3 className="text-lg font-semibold mb-1">Análisis Completado</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            El dominio principal <span className="font-bold">{selectedDomain?.domain_name}</span> está apto para la creación de subdominios.
-                        </p>
-                    </div>
-                );
+                 return (
+                     <div className="flex flex-col h-full">
+                      <h3 className="text-lg font-semibold mb-1">Salud del Dominio</h3>
+                      <p className="text-sm text-muted-foreground">Nuestra IA analizará los registros DNS de tu dominio para asegurar una alta entregabilidad.</p>
+                      <div className="space-y-3 mt-4 flex-grow">
+                          {healthCheckStep === 'mandatory' ? (
+                          <>
+                            <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
+                            {renderRecordStatus('SPF', 'idle', 'spf')}
+                            {renderRecordStatus('DKIM', 'idle', 'dkim')}
+                            {renderRecordStatus('DMARC', 'idle', 'dmarc')}
+                          </>
+                          ) : (
+                          <>
+                             <h4 className='font-semibold text-sm'>Registros Opcionales</h4>
+                             {renderRecordStatus('MX', 'idle', 'mx')}
+                             {renderRecordStatus('BIMI', 'idle', 'bimi')}
+                             {renderRecordStatus('VMC', 'idle', 'vmc')}
+                          </>
+                          )}
+                           
+                           {dnsAnalysis && (
+                               <div className="pt-4 flex justify-center">
+                                <div className="relative">
+                                    <button
+                                        className="ai-core-button relative inline-flex items-center justify-center overflow-hidden rounded-lg p-3 group hover:bg-[#00ADEC]"
+                                        onClick={() => {
+                                            setIsAnalysisModalOpen(true);
+                                            setShowNotification(false);
+                                        }}
+                                    >
+                                        <div className="ai-core-border-animation group-hover/hidden"></div>
+                                        <div className="ai-core group-hover:scale-125"></div>
+                                        <div className="relative z-10 flex items-center justify-center gap-2 text-white">
+                                            <div className="flex gap-1 items-end h-4">
+                                                <span className="w-0.5 h-2/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0s'}}/>
+                                                <span className="w-0.5 h-full bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.2s'}}/>
+                                                <span className="w-0.5 h-3/5 bg-white rounded-full thinking-dot-animation" style={{animationDelay: '0.4s'}}/>
+                                            </div>
+                                            <span className="text-sm font-semibold">Análisis de la IA</span>
+                                        </div>
+                                    </button>
+                                     {showNotification && (
+                                        <div 
+                                            className="absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center text-xs font-bold text-white animate-bounce"
+                                            style={{ backgroundColor: '#F00000' }}
+                                        >
+                                            !
+                                        </div>
+                                    )}
+                                </div>
+                               </div>
+                           )}
+
+                      </div>
+                      </div>
+                  );
             default:
                 return null;
         }
     };
 
     const StatusIndicator = () => {
-      const statusConfig = {
-          idle: { text: 'EN ESPERA', color: 'bg-blue-500' },
-          processing: { text: 'PROCESANDO', color: 'bg-amber-500' },
-          success: { text: 'COMPLETADO', color: 'bg-green-500' },
-          error: { text: 'ERROR', color: 'bg-red-500' }
-      };
-      const currentConfig = statusConfig[processStatus];
-      return (
-        <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
-          <div className="relative flex items-center justify-center w-4 h-4">
-            <div className={cn('absolute w-full h-full rounded-full', currentConfig.color, processStatus !== 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
-            {processStatus === 'processing' ? <Loader2 className='w-4 h-4 text-amber-300 animate-spin'/> : <div className={cn('w-2 h-2 rounded-full', currentConfig.color)} /> }
-          </div>
-          <p className="text-xs font-semibold tracking-wider text-white/80">{currentConfig.text}</p>
-        </div>
-      );
-    };
-
-    const renderLeftPanel = () => {
-        const stepInfo = [
-            { title: "Seleccionar Dominio", icon: Globe },
-            { title: "Añadir Subdominio", icon: GitBranch },
-            { title: "Análisis DNS", icon: Dna },
-        ];
+        let status: 'idle' | 'processing' | 'success' | 'error' = 'idle';
+        let text = 'ESTADO DEL SISTEMA';
         
+        if (currentStep === 2) {
+            status = processStatus;
+            if (processStatus === 'processing') text = 'VERIFICANDO SUBDOMINIO';
+            else if (processStatus === 'success' && isSubdomainAvailable === true) { text = 'SUBDOMINIO DISPONIBLE'; status = 'success'; }
+            else if (processStatus === 'success' && isSubdomainAvailable === false) { text = 'SUBDOMINIO EN USO'; status = 'error'; }
+            else { text = 'ESPERANDO ACCIÓN'; }
+        }
+        
+        const ledColor = { idle: 'bg-blue-500', processing: 'bg-amber-500', success: 'bg-green-500', error: 'bg-red-500' }[status];
+    
         return (
-            <div className="bg-muted/30 p-8 flex flex-col justify-between h-full">
-                <div>
-                   <DialogTitle className="text-xl font-bold flex items-center gap-2">Asociar Subdominio</DialogTitle>
-                   <DialogDescription className="text-muted-foreground mt-1">Sigue los pasos para verificar tu nuevo subdominio.</DialogDescription>
-                    
-                    <ul className="space-y-4 mt-8">
-                      {stepInfo.map((step, index) => (
-                          <li key={index} className="flex items-center gap-4">
-                             <div className={cn(
-                                  "size-10 rounded-full flex items-center justify-center border-2 transition-all",
-                                  currentStep === index + 1 && "bg-primary/10 border-primary text-primary animate-pulse",
-                                  currentStep > index + 1 && "bg-green-500/20 border-green-500 text-green-400",
-                                  currentStep < index + 1 && "bg-muted/50 border-border"
-                             )}>
-                                 <step.icon className="size-5" />
-                             </div>
-                             <span className={cn(
-                                 "font-semibold transition-colors",
-                                 currentStep === index + 1 && "text-primary",
-                                 currentStep > index + 1 && "text-green-400",
-                                 currentStep < index + 1 && "text-muted-foreground"
-                             )}>{step.title}</span>
-                          </li>
-                      ))}
-                    </ul>
-                     <Separator className="my-6" />
-                     <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
-                        <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
-                        <p>
-                            ¡Atención! Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
-                        </p>
-                    </div>
-                </div>
+          <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-black/10 border border-white/5">
+            <div className="relative flex items-center justify-center w-4 h-4">
+              <div className={cn('absolute w-full h-full rounded-full', ledColor, status !== 'processing' && 'animate-pulse')} style={{filter: `blur(4px)`}}/>
+              {status === 'processing' ? <Loader2 className='w-4 h-4 text-amber-300 animate-spin'/> : <div className={cn('w-2 h-2 rounded-full', ledColor)} /> }
             </div>
-        )
-    }
+            <p className="text-xs font-semibold tracking-wider text-white/80">{text}</p>
+          </div>
+        );
+      };
 
     const renderRightPanelContent = () => {
         return (
@@ -480,6 +546,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                 </DialogContent>
             </Dialog>
             <SubdomainDetailModal isOpen={isSubdomainDetailModalOpen} onOpenChange={setIsSubdomainDetailModalOpen} fullSubdomain={fullSubdomain} isAvailable={isSubdomainAvailable} />
+            <DeleteConfirmationModal />
         </>
     );
 }
@@ -516,7 +583,7 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full bg-black/80 backdrop-blur-xl border text-white overflow-hidden p-0" style={{borderColor: currentStatus.color+'4D'}}>
-                 <DialogHeader className="sr-only">
+                <DialogHeader className="sr-only">
                     <DialogTitle>Detalles del Subdominio</DialogTitle>
                     <DialogDescription>Información sobre la disponibilidad y el nombre completo del subdominio.</DialogDescription>
                 </DialogHeader>
@@ -540,3 +607,7 @@ const SubdomainDetailModal = ({ isOpen, onOpenChange, fullSubdomain, isAvailable
         </Dialog>
     );
 };
+
+const DeleteConfirmationModal = () => (
+    <div/>
+)
