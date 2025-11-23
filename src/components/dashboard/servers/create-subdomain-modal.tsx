@@ -61,6 +61,8 @@ import {
   KeyRound,
   Shield,
   Info,
+  ArrowRight,
+  Dna,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -192,26 +194,21 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
     const [subdomainName, setSubdomainName] = useState('');
     const [processStatus, setProcessStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
-    const [isDomainInfoModalOpen, setIsDomainInfoModalOpen] = useState(false);
-    const [infoModalDomain, setInfoModalDomain] = useState<Domain | null>(null);
-    const { toast } = useToast();
 
     const [state, formAction] = useActionState(createOrGetDomainAction, initialState);
-    const [isPending, startTransition] = useTransition();
+
+    const { toast } = useToast();
 
     useEffect(() => {
-        if (state.status !== 'idle' && !isPending) {
-            if(state.status === 'DOMAIN_FOUND' && state.domain) {
-                setInfoModalDomain(state.domain);
-                setIsDomainInfoModalOpen(true);
-            } else if (state.success && state.domain) {
+        if (state.status !== 'idle') {
+            if (state.success && state.domain) {
                 setSelectedDomain(state.domain);
                 setCurrentStep(2);
-            } else if (!state.success && state.status !== 'DOMAIN_TAKEN') {
+            } else {
                 toast({ title: "Error", description: state.message, variant: "destructive" });
             }
         }
-    }, [state, isPending, toast]);
+    }, [state, toast]);
     
     const handleSelectDomain = (domain: Domain) => {
         setSelectedDomain(domain);
@@ -221,13 +218,11 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
     
     const handleNextStep = () => {
         if (currentStep === 2 && subdomainName) {
-            startTransition(() => {
-                setProcessStatus('processing');
-                setTimeout(() => {
-                    setProcessStatus('success');
-                    setCurrentStep(3);
-                }, 1500)
-            })
+            setProcessStatus('processing');
+            setTimeout(() => {
+                setProcessStatus('success');
+                setCurrentStep(3);
+            }, 1500)
         }
     }
 
@@ -418,13 +413,13 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     {currentStep === 2 && (
                         <Button
                             onClick={handleNextStep}
-                            disabled={isPending || !subdomainName}
+                            disabled={processStatus === 'processing' || !subdomainName}
                             className="text-white hover:opacity-90 w-full h-12 text-base"
                              style={{
                               background: 'linear-gradient(to right, #1700E6, #009AFF)'
                             }}
                         >
-                            {isPending ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : <>Siguiente</>}
+                            {processStatus === 'processing' ? <><Loader2 className="mr-2 animate-spin"/> Verificando...</> : <>Siguiente</>}
                         </Button>
                     )}
                     <Button variant="outline" className="w-full h-12 text-base text-white border-[#F00000] hover:bg-[#F00000] hover:text-white" onClick={handleClose}>
@@ -457,5 +452,3 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
         </>
     );
 }
-
-    
