@@ -60,7 +60,6 @@ import {
   Hourglass,
   KeyRound,
   Shield,
-  Dna,
   Info,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -74,7 +73,7 @@ import { getVerifiedDomains } from './db-actions';
 import {
   createOrGetDomainAction,
 } from './db-actions';
-import { DomainInfoModal } from './domain-info-modal';
+import { Separator } from '@/components/ui/separator';
 
 interface CreateSubdomainModalProps {
   isOpen: boolean;
@@ -455,7 +454,6 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     </div>
                 </DialogContent>
             </Dialog>
-            <DomainInfoModal domain={infoModalDomain} isOpen={isDomainInfoModalOpen} onOpenChange={setIsDomainInfoModalOpen} />
         </>
     );
 }
