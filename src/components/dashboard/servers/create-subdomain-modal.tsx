@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import React, { useState, useEffect, useCallback, useTransition, useActionState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -57,19 +57,23 @@ import {
   Hourglass,
   KeyRound,
   Shield,
-  ArrowRight,
   Dna,
   Info,
+  MailWarning,
+  PlusCircle,
+  ArrowRight,
+  Pause,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { type Domain } from './types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaPreview } from '@/components/admin/media-preview';
 import { createOrGetDomainAction, getVerifiedDomains } from './db-actions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CreateSubdomainModalProps {
   isOpen: boolean;
@@ -236,16 +240,17 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                     </div>
                 );
             case 2:
-                const isSubdomainValid = subdomainName.length > 2 && !subdomainName.includes(' ');
-                const isSubdomainTaken = subdomainName === 'blog'; // mock taken
                 const fullSubdomain = `${subdomainName}.${selectedDomain?.domain_name}`;
+                const isSubdomainTaken = subdomainName === 'blog'; // mock taken
+                const truncatedFullSubdomain = truncateName(fullSubdomain, 24);
                 const isMaxLength = subdomainName.length === 21;
+
 
                 return (
                     <div className="flex flex-col h-full justify-start pt-1">
                         <div className="text-left mb-4">
-                            <h3 className="text-lg font-semibold">Añadir Subdominio</h3>
-                            <p className="text-sm text-muted-foreground">Introduce el prefijo del nombre para el subdominio.</p>
+                             <h3 className="text-lg font-semibold">Añadir Subdominio</h3>
+                             <p className="text-sm text-muted-foreground">Introduce el prefijo del nombre para el subdominio.</p>
                         </div>
                         <div className="space-y-4">
                             <Input 
@@ -262,10 +267,19 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                             )}
                             <div className="p-3 bg-black/20 rounded-md border border-white/10 text-center">
                                 <p className="text-xs text-muted-foreground">Tu subdominio será:</p>
-                                 <p className="font-mono text-lg" title={fullSubdomain}>
-                                    <span className="font-bold" style={{color: '#E18700'}}>{truncateName(subdomainName, 21)}</span>
-                                    <span className="text-white">.{truncateName(selectedDomain?.domain_name || '', 21)}</span>
-                                </p>
+                                 <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <p className="font-mono text-lg" title={fullSubdomain}>
+                                                <span className="font-bold" style={{color: '#AD00EC'}}>{subdomainName}</span>
+                                                <span className="text-white">.{selectedDomain?.domain_name}</span>
+                                            </p>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{fullSubdomain}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                             {subdomainName && (
                                 <div className={cn("p-2 text-xs rounded-md flex items-center gap-2", 
@@ -347,11 +361,11 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                           </li>
                       ))}
                     </ul>
-                    <Separator className="my-6" />
-                    <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
+                     <Separator className="my-6" />
+                     <div className="p-3 bg-amber-500/10 text-amber-200/90 rounded-lg border border-amber-400/20 text-xs flex items-start gap-3">
                         <AlertTriangle className="size-10 text-amber-400 shrink-0"/>
                         <p>
-                            <strong>¡Atención!</strong> Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
+                            ¡Atención! Antes de poder iniciar sesión con una dirección de correo SMTP asociada a un subdominio, es crucial que verifiques el estado y la configuración del mismo.
                         </p>
                     </div>
                 </div>
@@ -386,7 +400,7 @@ export function CreateSubdomainModal({ isOpen, onOpenChange }: CreateSubdomainMo
                                     <div className="flex justify-center mb-4"><GitBranch className="size-16 text-primary/80" /></div>
                                     <h4 className="font-bold text-lg">Define tu Subdominio</h4>
                                     <p className="text-sm text-muted-foreground">
-                                        Introduce el prefijo del subdominio que deseas verificar, el cual estará asociado al nombre de dominio principal.
+                                       Introduce el prefijo del subdominio que deseas verificar, el cual estará asociado al nombre de dominio principal.
                                     </p>
                                 </div>
                             )}
