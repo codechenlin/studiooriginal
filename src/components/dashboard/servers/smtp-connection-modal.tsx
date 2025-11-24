@@ -488,7 +488,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                       </div>
                   )}
 
-                  {currentStep > 1 && (
+                  {currentStep > 2 && (
                       <div className="mt-8 space-y-4">
                           <DomainStatusIndicator />
                           <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
