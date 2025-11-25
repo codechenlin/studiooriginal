@@ -498,7 +498,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   {currentStep > 1 && (
                       <div className="mt-8 space-y-4">
                           <DomainStatusIndicator />
-                          {currentStep > 2 && (
+                          {currentStep > 1 && currentStep < 4 && (
                              <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
                                 <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
                                 <Button
@@ -515,8 +515,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           </div>
       )
   }
-
-  // ... (el resto de las funciones render, onSubmitSmtp, etc. permanecen igual) ...
 
   const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
     <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
@@ -628,9 +626,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                         {healthCheckStep === 'mandatory' ? (
                         <>
                           <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                          {renderRecordStatus('SPF', dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' ? 'verified' : 'idle', 'spf')}
-                          {renderRecordStatus('DKIM', dnsAnalysis && 'dkimStatus' in dnsAnalysis && dnsAnalysis.dkimStatus === 'verified' ? 'verified' : 'idle', 'dkim')}
-                          {renderRecordStatus('DMARC', dnsAnalysis && 'dmarcStatus' in dnsAnalysis && dnsAnalysis.dmarcStatus === 'verified' ? 'verified' : 'idle', 'dmarc')}
+                          {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus ? ((dnsAnalysis as DnsHealthOutput).spfStatus === 'verified' ? 'verified' : 'failed') : 'idle', 'spf')}
+                          {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus ? ((dnsAnalysis as DnsHealthOutput).dkimStatus === 'verified' ? 'verified' : 'failed') : 'idle', 'dkim')}
+                          {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus ? ((dnsAnalysis as DnsHealthOutput).dmarcStatus === 'verified' ? 'verified' : 'failed') : 'idle', 'dmarc')}
                           <div className="pt-2 text-xs text-muted-foreground">
                               <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
                               <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
@@ -1210,13 +1208,13 @@ function DnsInfoModal({
   acceptedKey,
   onAcceptKey,
 }: {
-  recordType: InfoViewRecord | null,
-  domain: string,
-  isOpen: boolean,
-  onOpenChange: () => void,
-  onCopy: (text: string) => void,
-  dkimData: DkimGenerationOutput | null,
-  isGeneratingDkim: boolean,
+  recordType: InfoViewRecord | null;
+  domain: string;
+  isOpen: boolean;
+  onOpenChange: () => void;
+  onCopy: (text: string) => void;
+  dkimData: DkimGenerationOutput | null;
+  isGeneratingDkim: boolean;
   onRegenerateDkim: () => void;
   acceptedKey: string | null;
   onAcceptKey: (key: string) => void;
@@ -1241,15 +1239,15 @@ function DnsInfoModal({
       },
        mx: {
         title: "Registro MX",
-        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Gmail, Yandex, ProtonMail o QQ Mail sepan dónde recibes tus correos electrónicos.",
+        description: "MX es un registro que indica a qué servidor de correo deben entregarse los mensajes enviados a tu dominio. Permite que servicios como Gmail, Yandex, ProtonMail o QQ Mail sepan dónde recibes tus correos electrónicos."
       },
       bimi: {
         title: "Registro BIMI",
-        description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles.",
+        description: "BIMI es un registro que dice “Este es el logotipo oficial de mi marca para mostrar junto a mis correos”. Apunta a un archivo SVG con tu logo y requiere tener SPF, DKIM y DMARC correctos. Formato vectorial puro: No puede contener imágenes incrustadas (JPG, PNG, etc.) ni scripts, fuentes externas o elementos interactivos. Ejemplo real: Hace que tu logo aparezca junto a tus correos en Gmail, Yahoo y otros proveedores compatibles."
       },
       vmc: {
         title: "Certificado VMC",
-        description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'.",
+        description: "Un VMC es un certificado digital que va un paso más allá de BIMI. Verifica que el logotipo que estás usando realmente te pertenece como marca registrada. Es emitido por Autoridades Certificadoras externas, tiene un costo y es un requisito para que Gmail muestre tu logo.\n\nRequisitos previos: Tener configurados correctamente SPF, DKIM y DMARC con política 'quarantine' o 'reject'."
       },
     };
 
@@ -1694,3 +1692,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
