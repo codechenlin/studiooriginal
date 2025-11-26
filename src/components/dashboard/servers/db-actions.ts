@@ -254,20 +254,46 @@ export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_veri
     return { success: true, data };
 }
 
-
-export async function saveSmtpCredentials(domainId: string, credentials: { host: string, port: number, encryption: string, username: string, password?: string, is_validated: boolean }) {
+export async function setProcessAsPaused(domainId: string) {
     const supabase = createClient();
-    // In a real app, password should be encrypted or stored in a secure vault.
-    // For this example, we'll store it directly, but this is NOT recommended for production.
-    const { data, error } = await supabase
-        .from('smtp_credentials')
-        .upsert({ domain_id: domainId, ...credentials }, { onConflict: 'domain_id' })
-        .select();
+    const { error } = await supabase
+        .from('dns_checks')
+        .update({ is_paused: true })
+        .eq('domain_id', domainId);
     
     if (error) {
-        console.error('Error saving SMTP credentials:', error);
+        console.error('Error pausing process:', error);
         return { success: false, error: error.message };
     }
+    return { success: true };
+}
 
-    return { success: true, data };
+export async function getPausedProcess(): Promise<{ success: boolean; data?: Domain | null; error?: string }> {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Usuario no autenticado.' };
+
+    try {
+        const { data, error } = await supabase
+            .from('domains')
+            .select(`
+                *,
+                dns_checks!inner(*)
+            `)
+            .eq('user_id', user.id)
+            .eq('dns_checks.is_paused', true)
+            .eq('is_verified', false)
+            .order('updated_at', { foreignTable: 'dns_checks', ascending: false })
+            .limit(1)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+             throw error;
+        }
+
+        return { success: true, data: data as Domain | null };
+    } catch (error: any) {
+        console.error("Error fetching paused process:", error);
+        return { success: false, error: error.message };
+    }
 }

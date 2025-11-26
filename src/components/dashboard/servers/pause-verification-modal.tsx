@@ -7,17 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Hourglass, Pause, Play, AlertTriangle, X, PowerOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type Domain } from './types';
+import { setProcessAsPaused } from './db-actions';
+import { useToast } from '@/hooks/use-toast';
 
 interface PauseVerificationModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onPause: () => void;
   onCancelProcess: () => void;
   domain: Domain | null;
 }
 
-export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancelProcess, domain }: PauseVerificationModalProps) {
+export function PauseVerificationModal({ isOpen, onOpenChange, onCancelProcess, domain }: PauseVerificationModalProps) {
   const [timeLeft, setTimeLeft] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -36,6 +38,25 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancel
     return () => clearInterval(timer);
   }, [isOpen, domain]);
   
+  const handlePauseProcess = async () => {
+    if (!domain) return;
+    const result = await setProcessAsPaused(domain.id);
+    if (result.success) {
+      toast({
+          title: "Proceso Pausado",
+          description: "Tu progreso ha sido guardado. Tienes 48 horas para continuar.",
+          className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white'
+      });
+      onOpenChange(false);
+    } else {
+       toast({
+          title: "Error al Pausar",
+          description: result.error,
+          variant: "destructive"
+      });
+    }
+  }
+
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
     const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
@@ -83,7 +104,7 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onPause, onCancel
             <Button variant="destructive" onClick={onCancelProcess}>
                 <PowerOff className="mr-2"/> Cancelar Proceso
             </Button>
-            <Button className="bg-purple-600 text-white hover:bg-purple-500" onClick={onPause}>
+            <Button className="bg-purple-600 text-white hover:bg-purple-500" onClick={handlePauseProcess}>
                 <Pause className="mr-2"/> Pausar Proceso
             </Button>
         </DialogFooter>

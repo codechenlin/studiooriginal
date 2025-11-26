@@ -12,9 +12,10 @@ import { DomainManagerModal } from '@/components/dashboard/servers/domain-manage
 import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
 import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
 import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/domain-verification-success-modal';
-import { type Domain } from './types';
+import { CreateSubdomainModal } from '@/components/dashboard/servers/create-subdomain-modal';
 import { getVerifiedDomainsCount } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
+import { ProcessSelectorModal } from './process-selector-modal';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
@@ -126,6 +127,7 @@ export default function ServersPage() {
   const [selectedStatus, setSelectedStatus] = useState<ProviderStatus | null>(null);
   
   const [isSubdomainModalOpen, setIsSubdomainModalOpen] = useState(false);
+  const [isCreateSubdomainModalOpen, setIsCreateSubdomainModalOpen] = useState(false);
   const [isAddEmailModalOpen, setIsAddEmailModalOpen] = useState(false);
   
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -134,28 +136,22 @@ export default function ServersPage() {
   const [domainsCount, setDomainsCount] = useState(0);
   const [isLoading, startLoading] = useTransition();
   const { toast } = useToast();
+  const [isSelectorModalOpen, setIsSelectorModalOpen] = useState(false);
 
   const handleSubdomainClick = (hasVerified: boolean) => {
     if (hasVerified) {
-      setIsSubdomainModalOpen(true);
+      setIsCreateSubdomainModalOpen(true);
     } else {
-      toast({
-        title: "Acción Requerida",
-        description: "Debes verificar al menos un dominio principal para poder añadir subdominios.",
-        variant: "destructive"
-      })
+      setIsSubdomainModalOpen(true);
     }
   };
   
   const handleAddEmailClick = (hasVerified: boolean) => {
     if (hasVerified) {
-       setIsAddEmailModalOpen(true);
+       // Future: Open functional "add email" modal
+       setIsAddEmailModalOpen(true); 
     } else {
-       toast({
-        title: "Acción Requerida",
-        description: "Debes verificar al menos un dominio principal para poder añadir correos.",
-        variant: "destructive"
-      })
+       setIsAddEmailModalOpen(true);
     }
   };
   
@@ -184,7 +180,6 @@ export default function ServersPage() {
       ...p,
       domainsCount: domainsCount,
       hasVerifiedDomains: domainsCount > 0,
-      // Placeholder for other counts, as we are only fetching the main domain count now
       subdomainsCount: 0, 
       emailsCount: 0,
       formattedEmailsCount: (0).toLocaleString()
@@ -193,7 +188,7 @@ export default function ServersPage() {
   
   const handleConnectClick = (providerId: string) => {
     if (providerId === 'smtp') {
-      setIsSmtpModalOpen(true);
+      setIsSelectorModalOpen(true);
     }
   };
   
@@ -213,6 +208,15 @@ export default function ServersPage() {
 
   return (
     <>
+    <ProcessSelectorModal
+        isOpen={isSelectorModalOpen}
+        onOpenChange={setIsSelectorModalOpen}
+        onSelectNew={() => setIsSmtpModalOpen(true)}
+        onSelectContinue={() => {
+            // Future logic to load paused state
+            setIsSmtpModalOpen(true);
+        }}
+    />
     <SmtpConnectionModal 
       isOpen={isSmtpModalOpen} 
       onOpenChange={setIsSmtpModalOpen} 
@@ -225,6 +229,7 @@ export default function ServersPage() {
     />
     <DomainManagerModal isOpen={isDomainManagerModalOpen} onOpenChange={setIsDomainManagerModalOpen} />
     <SubdomainModal isOpen={isSubdomainModalOpen} onOpenChange={setIsSubdomainModalOpen} />
+    <CreateSubdomainModal isOpen={isCreateSubdomainModalOpen} onOpenChange={setIsCreateSubdomainModalOpen} />
     <AddEmailModal isOpen={isAddEmailModalOpen} onOpenChange={setIsAddEmailModalOpen} />
     {successModalData && (
         <DomainVerificationSuccessModal 
