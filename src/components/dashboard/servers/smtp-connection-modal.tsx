@@ -531,14 +531,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
     </div>
   );
 
-  const renderContent = () => {
+  const renderStepContent = () => {
     return (
       <Form {...form}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[99vh]" showCloseButton={false}>
-            <div className="hidden md:block md:col-span-1 h-full">
-              {renderLeftPanel()}
-            </div>
-            <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
+        <div className="md:col-span-1 h-full p-8 flex flex-col justify-start">
               <AnimatePresence mode="wait">
               <motion.div
                   key={currentStep}
@@ -687,10 +683,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
               </motion.div>
               </AnimatePresence>
             </div>
-            <div className="md:col-span-1 h-full">
-              {renderRightPanelContent()}
-            </div>
-        </DialogContent>
       </Form>
     );
   };
@@ -1012,6 +1004,16 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                             Cancelar
                         </Button>
                     )}
+                     {currentStep === 1 && (
+                        <Button
+                            variant="outline"
+                            className="w-full h-12 text-base bg-transparent transition-colors border-white text-white hover:bg-white hover:text-black"
+                            onClick={() => handleClose(false)}
+                        >
+                            <X className="mr-2" />
+                            Cerrar
+                        </Button>
+                    )}
                 </div>
               </motion.div>
           </AnimatePresence>
@@ -1077,13 +1079,20 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 resetState();
             }
         }}>
-            {renderContent()}
+            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} className="max-w-6xl p-0 grid grid-cols-1 md:grid-cols-3 gap-0 h-[99vh]" showCloseButton={false}>
+                <div className="hidden md:block md:col-span-1 h-full">
+                  {renderLeftPanel()}
+                </div>
+                {renderStepContent()}
+                <div className="md:col-span-1 h-full">
+                  {renderRightPanelContent()}
+                </div>
+            </DialogContent>
         </Dialog>
         <PauseVerificationModal
           isOpen={isPauseModalOpen}
           onOpenChange={(open) => {
             if (!open) {
-                // If closing pause modal, close main modal too
                 onOpenChange(false);
                 resetState();
             } else {
@@ -1198,6 +1207,8 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   );
 }
 
+// ... Rest of the modals (DnsInfoModal, AiAnalysisModal, SmtpErrorAnalysisModal) remain unchanged ...
+// The copy of these modals is omitted for brevity but they are part of the file
 function DnsInfoModal({
   recordType,
   domain,
@@ -1694,3 +1705,5 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
+
+    
