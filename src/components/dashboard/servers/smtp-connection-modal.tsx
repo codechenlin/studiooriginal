@@ -504,6 +504,17 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                                 </Button>
                              </div>
                           )}
+                           {currentStep === 2 && (
+                             <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
+                                <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
+                                <Button
+                                    onClick={() => setIsPauseModalOpen(true)}
+                                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
+                                >
+                                    <Pause className="mr-2"/> Pausar Proceso
+                                </Button>
+                             </div>
+                          )}
                       </div>
                   )}
               </div>
@@ -1004,16 +1015,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                             Cancelar
                         </Button>
                     )}
-                     {currentStep === 1 && (
-                        <Button
-                            variant="outline"
-                            className="w-full h-12 text-base bg-transparent transition-colors border-white text-white hover:bg-white hover:text-black"
-                            onClick={() => handleClose(false)}
-                        >
-                            <X className="mr-2" />
-                            Cerrar
-                        </Button>
-                    )}
                 </div>
               </motion.div>
           </AnimatePresence>
@@ -1092,12 +1093,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         <PauseVerificationModal
           isOpen={isPauseModalOpen}
           onOpenChange={(open) => {
-            if (!open) {
-                onOpenChange(false);
-                resetState();
-            } else {
-                setIsPauseModalOpen(open);
-            }
+              if(!open) {
+                  setIsPauseModalOpen(false);
+              }
           }}
           onCancelProcess={handleCancelProcess}
           domain={state.domain}
@@ -1705,5 +1703,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    

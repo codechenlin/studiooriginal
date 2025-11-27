@@ -47,7 +47,7 @@ export function PauseVerificationModal({ isOpen, onOpenChange, onCancelProcess, 
           description: "Tu progreso ha sido guardado. Tienes 48 horas para continuar.",
           className: 'bg-gradient-to-r from-[#AD00EC] to-[#1700E6] border-none text-white'
       });
-      // This will close both modals as requested
+      // This will close both modals as requested by the user flow.
       onOpenChange(false);
     } else {
        toast({

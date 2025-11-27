@@ -57,10 +57,10 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
 
                 <DialogHeader className="p-6 text-center z-10">
                     <DialogTitle className="flex items-center justify-center gap-4 text-3xl font-bold">
-                        <div className="relative w-12 h-12">
+                        <div className="relative w-16 h-16">
                            <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-full animate-spin" style={{ animationDuration: '6s' }}/>
-                           <div className="absolute inset-1 border-2 border-dashed border-accent/50 rounded-full animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }}/>
-                           <BrainCircuit className="absolute inset-0 m-auto text-primary size-8 icon-ai-animation"/>
+                           <div className="absolute inset-2 border-2 border-dashed border-accent/50 rounded-full animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }}/>
+                           <BrainCircuit className="absolute inset-0 m-auto text-primary size-10 icon-ai-animation"/>
                         </div>
                         Selecciona una Acción
                     </DialogTitle>
@@ -110,7 +110,7 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                             </div>
                          ) : !pausedProcess ? (
                              <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                                <div className="relative flex flex-col items-center justify-center gap-2 rounded-lg p-3 bg-zinc-800/50 border border-zinc-700 backdrop-blur-sm">
+                                <div className="relative flex flex-col items-center justify-center gap-2 rounded-lg p-3 bg-zinc-800/80 border border-zinc-700 backdrop-blur-sm">
                                     <div className="flex items-center gap-2 text-red-400">
                                        <AlertTriangle className="size-5"/>
                                        <span className="text-sm font-semibold">No hay procesos pausados</span>
