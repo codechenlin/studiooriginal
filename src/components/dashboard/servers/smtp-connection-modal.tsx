@@ -317,7 +317,6 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
       await saveDnsChecks(state.domain.id, {
           mx_verified: dnsStatus.mx,
           bimi_verified: dnsStatus.bimi,
-          vmc_verified: dnsStatus.bimi,
           vmc_verified: dnsStatus.vmc,
       });
       
@@ -494,18 +493,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                   {currentStep > 1 && (
                       <div className="mt-8 space-y-4">
                           <DomainStatusIndicator />
-                           {currentStep > 2 && (
-                             <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
-                                <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
-                                <Button
-                                    onClick={() => setIsPauseModalOpen(true)}
-                                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
-                                >
-                                    <Pause className="mr-2"/> Pausar Proceso
-                                </Button>
-                             </div>
-                          )}
-                           {currentStep === 2 && (
+                           {currentStep > 1 && (
                              <div className="p-4 rounded-lg bg-black/20 border border-purple-500/20 text-center">
                                 <p className="text-xs text-purple-200/80 mb-2">¿Necesitas tiempo? Pausa el proceso y continúa después.</p>
                                 <Button
@@ -524,24 +512,27 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
   };
 
 
-  const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => (
-    <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
-        <span className='font-semibold'>{name}</span>
-        <div className="flex items-center gap-2">
-          {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
-          <div className="relative">
-            <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
-            {recordKey === 'dkim' && showDkimAcceptWarning && (
-               <div className="absolute -top-1 -right-1">
-                  <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
-                      <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
-                  </div>
-              </div>
-            )}
-          </div>
+  const renderRecordStatus = (name: string, status: HealthCheckStatus, recordKey: InfoViewRecord) => {
+    return (
+        <div className="p-3 bg-muted/50 rounded-md text-sm border flex justify-between items-center">
+            <span className='font-semibold'>{name}</span>
+            <div className="flex items-center gap-2">
+                {status === 'verifying' ? <Loader2 className="animate-spin text-primary" /> : (status === 'verified' ? <CheckCircle className="text-green-500"/> : (status === 'idle' ? <div className="size-5" /> : <AlertTriangle className="text-red-500"/>))}
+                <div className="relative">
+                    <Button size="sm" variant="outline" className="h-7" onClick={() => setActiveInfoModal(recordKey)}>Instrucciones</Button>
+                    {recordKey === 'dkim' && showDkimAcceptWarning && (
+                       <div className="absolute -top-1 -right-1">
+                          <div className="relative size-3 rounded-full flex items-center justify-center text-xs font-bold text-white bg-red-500">
+                              <div className="absolute inset-0 rounded-full bg-red-500 animate-ping"></div>
+                          </div>
+                      </div>
+                    )}
+                </div>
+            </div>
         </div>
-    </div>
-  );
+    );
+};
+
 
   const renderStepContent = () => {
     return (
@@ -631,9 +622,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                           {healthCheckStep === 'mandatory' ? (
                           <>
                             <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                            {renderRecordStatus('SPF', (dnsAnalysis as DnsHealthOutput)?.spfStatus === 'verified' ? 'verified' : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'spf')}
-                            {renderRecordStatus('DKIM', (dnsAnalysis as DnsHealthOutput)?.dkimStatus === 'verified' ? 'verified' : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'dkim')}
-                            {renderRecordStatus('DMARC', (dnsAnalysis as DnsHealthOutput)?.dmarcStatus === 'verified' ? 'verified' : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'dmarc')}
+                            {renderRecordStatus('SPF', dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' ? 'verified' : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'spf')}
+                            {renderRecordStatus('DKIM', dnsAnalysis && 'dkimStatus' in dnsAnalysis && dnsAnalysis.dkimStatus === 'verified' ? 'verified' : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'dkim')}
+                            {renderRecordStatus('DMARC', dnsAnalysis && 'dmarcStatus' in dnsAnalysis && dnsAnalysis.dmarcStatus === 'verified' ? 'verified' : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'dmarc')}
                             <div className="pt-2 text-xs text-muted-foreground">
                                 <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
                                 <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
@@ -766,12 +757,18 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                 {currentStep === 2 && (
                   <div className="text-center flex-grow flex flex-col">
                       <div className="relative w-full h-40 flex flex-col justify-center overflow-hidden items-center flex-grow">
+                          <style>{`
+                              @keyframes pulse-radar {
+                                  0% { transform: scale(0.5); opacity: 0; }
+                                  50% { opacity: 1; }
+                                  100% { transform: scale(1.2); opacity: 0; }
+                              }
+                          `}</style>
                           {verificationStatus === 'verifying' && (
-                             <div className="relative w-32 h-32 flex items-center justify-center">
-                                <motion.div className="absolute inset-0 border-2 border-dashed rounded-full" style={{ borderColor: '#AD00EC' }} animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }} />
-                                <motion.div className="absolute inset-2 border-2 border-dashed rounded-full" style={{ borderColor: '#1700E6' }} animate={{ rotate: -360 }} transition={{ duration: 6, repeat: Infinity, ease: 'linear' }} />
-                                <Dna className="size-16 text-[#00ADEC]" />
-                            </div>
+                             <div className="absolute w-full h-full flex items-center justify-center">
+                               <div className="absolute w-32 h-32 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite` }} />
+                               <div className="absolute w-32 h-32 rounded-full bg-primary/10" style={{ animation: `pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite`, animationDelay: '1s' }} />
+                             </div>
                           )}
                           <div className="z-10 flex flex-col items-center gap-3">
                               {verificationStatus === 'pending' && (
@@ -783,8 +780,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                               )}
                               {verificationStatus === 'verifying' && (
                                   <>
-                                      <h4 className="font-bold text-lg mt-4">Analizando Estructura DNS...</h4>
-                                      <p className="text-sm text-muted-foreground">El núcleo de IA está procesando los datos de tu dominio.</p>
+                                      <Search className="size-16 text-primary"/>
+                                      <h4 className="font-bold text-lg">Verificando...</h4>
+                                      <p className="text-sm text-muted-foreground">Buscando el registro DNS.</p>
                                   </>
                               )}
                               {verificationStatus === 'verified' && (
@@ -1098,13 +1096,10 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
         </Dialog>
         <PauseVerificationModal
           isOpen={isPauseModalOpen}
-          onOpenChange={(open) => {
-              if(!open) setIsPauseModalOpen(false);
-          }}
+          onOpenChange={setIsPauseModalOpen}
           onCancelProcess={handleCancelProcess}
           onPause={() => {
             handleClose();
-            setIsPauseModalOpen(false);
           }}
           domain={state.domain}
         />
