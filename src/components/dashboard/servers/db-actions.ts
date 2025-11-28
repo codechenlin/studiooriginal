@@ -140,31 +140,7 @@ export async function deleteDomainAction(domainId: string): Promise<{ success: b
     }
 }
 
-export async function getVerifiedDomains(): Promise<{ success: boolean; data?: Domain[]; error?: string; }> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { success: false, error: 'Usuario no autenticado.' };
-  }
-  
-  try {
-    const { data, error } = await supabase
-      .from('domains')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('is_verified', true);
-      
-    if (error) throw error;
-    
-    return { success: true, data: data as Domain[] || [] };
-  } catch (error: any) {
-    console.error('Error fetching verified domains:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-export async function getVerifiedDomainsCountFromProfile(): Promise<{ success: boolean; count?: number; error?: string; }> {
+export async function getVerifiedDomainsCount(): Promise<{ success: boolean; count?: number; error?: string; }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -180,8 +156,7 @@ export async function getVerifiedDomainsCountFromProfile(): Promise<{ success: b
       .single();
       
     if (error) {
-        if (error.code === 'PGRST116') {
-            console.warn("Profile not found for user. Returning domain count 0.");
+        if (error.code === 'PGRST116') { // Row not found
             return { success: true, count: 0 };
         }
       throw error;
@@ -277,36 +252,32 @@ export async function getPausedProcess(): Promise<{ success: boolean; data?: Dom
     if (!user) return { success: false, error: 'Usuario no autenticado.' };
 
     try {
-        // Query dns_checks first to find a paused process for the user
-        const { data: pausedCheck, error: pausedCheckError } = await supabase
+        const { data, error } = await supabase
             .from('dns_checks')
-            .select('domain_id')
+            .select(`
+                domain_id,
+                domains (
+                    *
+                )
+            `)
             .eq('is_paused', true)
+            .eq('domains.user_id', user.id)
             .limit(1)
             .maybeSingle();
 
-        if (pausedCheckError) throw pausedCheckError;
-
-        // If no paused check is found, return null
-        if (!pausedCheck) {
-            return { success: true, data: null };
+        if (error) {
+            console.error("Error fetching paused process:", error.message);
+            throw error;
         }
 
-        // Now, fetch the corresponding domain ensuring it belongs to the user
-        const { data: domainData, error: domainError } = await supabase
-            .from('domains')
-            .select(`*, dns_checks ( * )`)
-            .eq('id', pausedCheck.domain_id)
-            .eq('user_id', user.id)
-            .eq('is_verified', false) // Ensure we only get unverified domains
-            .maybeSingle();
-            
-        if (domainError) throw domainError;
-
-        return { success: true, data: domainData as Domain | null };
+        // The result will have the shape { domain_id: '...', domains: { ...domain_data } }
+        // We need to return just the domain data.
+        const domainData = data?.domains as Domain | null;
+        
+        return { success: true, data: domainData };
 
     } catch (error: any) {
-        console.error("Error fetching paused process:", error.message);
+        console.error("Error in getPausedProcess:", error.message);
         return { success: false, error: error.message };
     }
 }
