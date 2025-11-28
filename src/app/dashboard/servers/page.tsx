@@ -135,7 +135,7 @@ export default function ServersPage() {
   const [successModalData, setSuccessModalData] = useState<{domain: string, dnsStatus: DnsStatus} | null>(null);
   
   const [domainsCount, setDomainsCount] = useState(0);
-  const [isLoading, startLoading] = useTransition();
+  const [isCountLoading, setIsCountLoading] = useState(true);
   const { toast } = useToast();
   const [isSelectorModalOpen, setIsSelectorModalOpen] = useState(false);
 
@@ -157,18 +157,26 @@ export default function ServersPage() {
   };
   
   const fetchDomainCount = useCallback(async () => {
-    startLoading(async () => {
-      const result = await getVerifiedDomainsCount();
-      if (result.success && result.count !== undefined) {
-        setDomainsCount(result.count);
-      } else {
-        toast({
-          title: 'Error al cargar dominios',
-          description: result.error,
-          variant: 'destructive',
-        });
-      }
-    });
+    setIsCountLoading(true);
+    try {
+        const result = await getVerifiedDomainsCount();
+        if (result.success && result.count !== undefined) {
+            setDomainsCount(result.count);
+        } else {
+            toast({
+                title: 'Error al cargar dominios',
+                description: result.error,
+                variant: 'destructive',
+            });
+            setDomainsCount(0); // Fallback to 0 on error
+        }
+    } catch (error) {
+        console.error(error);
+        toast({ title: 'Error', description: 'No se pudo conectar con el servidor.', variant: 'destructive' });
+        setDomainsCount(0);
+    } finally {
+        setIsCountLoading(false);
+    }
   }, [toast]);
 
   useEffect(() => {
@@ -177,13 +185,17 @@ export default function ServersPage() {
   }, [fetchDomainCount]);
 
   const providers = initialProviders.map(p => {
+    if (p.id === 'smtp') {
+      return {
+        ...p,
+        domainsCount: domainsCount,
+        hasVerifiedDomains: domainsCount > 0,
+      }
+    }
     return {
       ...p,
-      domainsCount: domainsCount,
-      hasVerifiedDomains: domainsCount > 0,
-      subdomainsCount: 0, 
-      emailsCount: 0,
-      formattedEmailsCount: (0).toLocaleString()
+      domainsCount: 0, 
+      hasVerifiedDomains: false,
     }
   });
   
@@ -293,7 +305,7 @@ export default function ServersPage() {
             )}>
               <div className={cn("absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br", provider.colors)} />
               
-                <div className="p-6 pb-0 z-10 flex flex-col flex-grow">
+                <div className="p-6 pb-4 z-10 flex flex-col flex-grow">
                      <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-4">
                             <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
@@ -340,23 +352,23 @@ export default function ServersPage() {
                         </div>
                     </div>
 
-                    <p className="text-muted-foreground text-sm mb-4 px-6 z-10">{provider.description}</p>
+                    <p className="text-muted-foreground text-sm px-6 mb-4 z-10">{provider.description}</p>
                     
                     <div className="mt-auto space-y-3 px-6 z-10">
                       <div className="flex items-center gap-6 text-sm">
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Globe className="size-4"/>
-                            {isLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.domainsCount}</span>}
+                            {isCountLoading && provider.id === 'smtp' ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.domainsCount}</span>}
                             <span>Dominios</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <GitBranch className="size-4"/>
-                             {isLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.subdomainsCount}</span>}
+                            <span className="font-semibold text-foreground">{provider.subdomainsCount}</span>
                             <span>Subdominios</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Send className="size-4"/>
-                             {isLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.formattedEmailsCount}</span>}
+                            <span className="font-semibold text-foreground">{provider.emailsCount}</span>
                             <span>Correos</span>
                           </div>
                       </div>
