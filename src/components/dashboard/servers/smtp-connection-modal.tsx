@@ -622,9 +622,9 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
                           {healthCheckStep === 'mandatory' ? (
                           <>
                             <h4 className='font-semibold text-sm'>Registros Obligatorios</h4>
-                            {renderRecordStatus('SPF', dnsAnalysis && 'spfStatus' in dnsAnalysis && dnsAnalysis.spfStatus === 'verified' ? 'verified' : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'spf')}
-                            {renderRecordStatus('DKIM', dnsAnalysis && 'dkimStatus' in dnsAnalysis && dnsAnalysis.dkimStatus === 'verified' ? 'verified' : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'dkim')}
-                            {renderRecordStatus('DMARC', dnsAnalysis && 'dmarcStatus' in dnsAnalysis && dnsAnalysis.dmarcStatus === 'verified' ? 'verified' : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'dmarc')}
+                            {renderRecordStatus('SPF', dnsAnalysis && 'spfStatus' in dnsAnalysis ? (dnsAnalysis.spfStatus === 'verified' ? 'verified' : 'failed') : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'spf')}
+                            {renderRecordStatus('DKIM', dnsAnalysis && 'dkimStatus' in dnsAnalysis ? (dnsAnalysis.dkimStatus === 'verified' ? 'verified' : 'failed') : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'dkim')}
+                            {renderRecordStatus('DMARC', dnsAnalysis && 'dmarcStatus' in dnsAnalysis ? (dnsAnalysis.dmarcStatus === 'verified' ? 'verified' : 'failed') : (healthCheckStatus === 'verifying' ? 'verifying' : 'idle'), 'dmarc')}
                             <div className="pt-2 text-xs text-muted-foreground">
                                 <h5 className="font-bold text-sm mb-1 flex items-center gap-2">🔗 Cómo trabajan juntos</h5>
                                 <p><span className="font-semibold">✉️ SPF:</span> ¿Quién puede enviar?</p>
@@ -1098,9 +1098,7 @@ export function SmtpConnectionModal({ isOpen, onOpenChange, onVerificationComple
           isOpen={isPauseModalOpen}
           onOpenChange={setIsPauseModalOpen}
           onCancelProcess={handleCancelProcess}
-          onPause={() => {
-            handleClose();
-          }}
+          onPause={() => handleClose(false)}
           domain={state.domain}
         />
         <AlertDialog open={isCancelConfirmOpen} onOpenChange={setIsCancelConfirmOpen}>
@@ -1706,5 +1704,3 @@ function DeliveryTimeline({ deliveryStatus, testError }: { deliveryStatus: Deliv
         </div>
     )
 }
-
-    
