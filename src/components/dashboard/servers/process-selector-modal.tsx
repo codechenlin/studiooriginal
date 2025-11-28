@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useTransition } from 'react';
@@ -20,19 +19,22 @@ interface ProcessSelectorModalProps {
 
 export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSelectContinue }: ProcessSelectorModalProps) {
     const [pausedProcess, setPausedProcess] = useState<Domain | null>(null);
-    const [isLoading, startLoading] = useTransition();
+    const [isLoading, setIsLoading] = useState(true);
     const [isContinueModalOpen, setIsContinueModalOpen] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
-            startLoading(async () => {
+            setIsLoading(true);
+            const fetchProcess = async () => {
                 const result = await getPausedProcess();
                 if (result.success) {
                     setPausedProcess(result.data || null);
                 } else {
                     console.error(result.error);
                 }
-            });
+                setIsLoading(false);
+            };
+            fetchProcess();
         }
     }, [isOpen]);
 
