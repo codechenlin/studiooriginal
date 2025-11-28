@@ -13,7 +13,7 @@ import { SubdomainModal } from '@/components/dashboard/servers/subdomain-modal';
 import { AddEmailModal } from '@/components/dashboard/servers/add-email-modal';
 import { DomainVerificationSuccessModal } from '@/components/dashboard/servers/domain-verification-success-modal';
 import { CreateSubdomainModal } from '@/components/dashboard/servers/create-subdomain-modal';
-import { getVerifiedDomainsCount } from './db-actions';
+import { getVerifiedDomainsCountFromProfile } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
 import { ProcessSelectorModal } from '@/components/dashboard/servers/process-selector-modal';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -159,7 +159,7 @@ export default function ServersPage() {
   const fetchDomainCount = useCallback(async () => {
     setIsCountLoading(true);
     try {
-        const result = await getVerifiedDomainsCount();
+        const result = await getVerifiedDomainsCountFromProfile();
         if (result.success && result.count !== undefined) {
             setDomainsCount(result.count);
         } else {

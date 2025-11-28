@@ -117,6 +117,29 @@ export async function createOrGetDomainAction(
   }
 }
 
+export async function deleteDomainAction(domainId: string): Promise<{ success: boolean; error?: string }> {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Usuario no autenticado.' };
+    }
+    
+    try {
+        const { error } = await supabase.rpc('delete_user_domain', {
+            domain_id_to_delete: domainId
+        });
+
+        if (error) throw error;
+        
+        revalidatePath('/dashboard/servers');
+        return { success: true };
+    } catch (error: any) {
+        console.error('Error deleting domain:', error);
+        return { success: false, error: 'No se pudo eliminar el dominio: ' + error.message };
+    }
+}
+
 export async function getVerifiedDomains(): Promise<{ success: boolean; data?: Domain[]; error?: string; }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -141,7 +164,7 @@ export async function getVerifiedDomains(): Promise<{ success: boolean; data?: D
   }
 }
 
-export async function getVerifiedDomainsCount(): Promise<{ success: boolean; count?: number; error?: string; }> {
+export async function getVerifiedDomainsCountFromProfile(): Promise<{ success: boolean; count?: number; error?: string; }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -150,17 +173,24 @@ export async function getVerifiedDomainsCount(): Promise<{ success: boolean; cou
   }
   
   try {
-    const { count, error } = await supabase
-      .from('domains')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('is_verified', true);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('verified_domains_count')
+      .eq('id', user.id)
+      .single();
       
-    if (error) throw error;
+    if (error) {
+        // If the user's profile doesn't exist yet, it's not a critical error, just return 0.
+        if (error.code === 'PGRST116') {
+            console.warn("Profile not found for user. Returning domain count 0.");
+            return { success: true, count: 0 };
+        }
+      throw error;
+    }
     
-    return { success: true, count: count || 0 };
+    return { success: true, count: data?.verified_domains_count || 0 };
   } catch (error: any) {
-    console.error('Error fetching verified domains count:', error);
+    console.error('Error fetching verified domains count from profile:', error);
     return { success: false, error: error.message };
   }
 }
@@ -232,19 +262,37 @@ export async function saveDnsChecks(domainId: string, checks: Partial<{ spf_veri
 }
 
 
-export async function saveSmtpCredentials(domainId: string, credentials: { host: string, port: number, encryption: string, username: string, password?: string, is_validated: boolean }) {
+export async function setProcessAsPaused(domainId: string) {
     const supabase = createClient();
-    // In a real app, password should be encrypted or stored in a secure vault.
-    // For this example, we'll store it directly, but this is NOT recommended for production.
-    const { data, error } = await supabase
-        .from('smtp_credentials')
-        .upsert({ domain_id: domainId, ...credentials }, { onConflict: 'domain_id' })
-        .select();
+    const { error } = await supabase
+        .from('dns_checks')
+        .update({ is_paused: true })
+        .eq('domain_id', domainId);
     
     if (error) {
-        console.error('Error saving SMTP credentials:', error);
+        console.error('Error pausing process:', error);
         return { success: false, error: error.message };
     }
+    return { success: true };
+}
 
-    return { success: true, data };
+export async function getPausedProcess(): Promise<{ success: boolean; data?: Domain | null; error?: string }> {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Usuario no autenticado.' };
+
+    try {
+        const { data, error } = await supabase.rpc('get_user_paused_domain');
+
+        if (error) throw error;
+
+        // The RPC returns an array, we expect at most one result.
+        const domainData = data.length > 0 ? data[0] : null;
+
+        return { success: true, data: domainData as Domain | null };
+
+    } catch (error: any) {
+        console.error("Error fetching paused process via RPC:", error.message);
+        return { success: false, error: error.message };
+    }
 }
