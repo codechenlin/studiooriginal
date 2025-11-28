@@ -138,7 +138,6 @@ export default function ServersPage() {
   const [isCountLoading, setIsCountLoading] = useState(true);
   const { toast } = useToast();
   const [isSelectorModalOpen, setIsSelectorModalOpen] = useState(false);
-  const [isLoading, startLoading] = useTransition();
 
   const handleSubdomainClick = (hasVerified: boolean) => {
     if (hasVerified) {
@@ -352,7 +351,7 @@ export default function ServersPage() {
                       <div className="flex items-center gap-6 text-sm">
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <Globe className="size-4"/>
-                            {isCountLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.id === 'smtp' ? domainsCount : 0}</span>}
+                            {isCountLoading ? <Loader2 className="animate-spin size-4" /> : <span className="font-semibold text-foreground">{provider.domainsCount}</span>}
                             <span>Dominios</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
