@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, PlayCircle, Loader2, X, AlertTriangle, BrainCircuit, Hourglass } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { getPausedProcesses } from './db-actions';
 import { type Domain } from './types';
@@ -23,10 +23,9 @@ interface ProcessSelectorModalProps {
 export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSelectContinue }: ProcessSelectorModalProps) {
     const [pausedProcesses, setPausedProcesses] = useState<Domain[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isContinueModalOpen, setIsContinueModalOpen] = useState(false);
     const [isListModalOpen, setIsListModalOpen] = useState(false);
+    const [isContinueModalOpen, setIsContinueModalOpen] = useState(false);
     const [selectedDomainForContinue, setSelectedDomainForContinue] = useState<Domain | null>(null);
-    const [isTransitioning, setIsTransitioning] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -54,28 +53,27 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
     
     const handleContinueClick = () => {
         if (pausedProcesses.length > 0) {
-            onOpenChange(false);
-            setIsListModalOpen(true);
+            onOpenChange(false); // Close this modal first
+            setIsListModalOpen(true); // Then open the list
         }
     }
     
     const handleSelectDomainFromList = (domain: Domain) => {
         setSelectedDomainForContinue(domain);
-        setIsListModalOpen(false);
-        setIsTransitioning(true);
-        setTimeout(() => {
-            setIsContinueModalOpen(true);
-            setIsTransitioning(false);
-        }, 150);
+        // Do not close the list modal, just open the continue modal on top
+        setIsContinueModalOpen(true);
     }
     
     const handleBackToList = () => {
+        // Just close the top modal, the list underneath will become active again
         setIsContinueModalOpen(false);
-        setIsTransitioning(true);
-        setTimeout(() => {
-            setIsListModalOpen(true);
-            setIsTransitioning(false);
-        }, 150);
+        setSelectedDomainForContinue(null);
+    }
+
+    const handleCloseAll = () => {
+      onOpenChange(false);
+      setIsListModalOpen(false);
+      setIsContinueModalOpen(false);
     }
 
     return (
@@ -175,30 +173,26 @@ export function ProcessSelectorModal({ isOpen, onOpenChange, onSelectNew, onSele
                 </DialogContent>
             </Dialog>
 
-            <AnimatePresence>
-                {isListModalOpen && !isTransitioning && (
-                    <PausedProcessListModal
-                        isOpen={isListModalOpen}
-                        onOpenChange={setIsListModalOpen}
-                        pausedProcesses={pausedProcesses}
-                        onSelectDomain={handleSelectDomainFromList}
-                    />
-                )}
-            </AnimatePresence>
-            
-            <AnimatePresence>
-                {isContinueModalOpen && selectedDomainForContinue && !isTransitioning && (
-                    <ContinueProcessModal
-                        isOpen={isContinueModalOpen}
-                        onOpenChange={setIsContinueModalOpen}
-                        domain={selectedDomainForContinue}
-                        onContinue={() => {
-                            setIsContinueModalOpen(false);
-                            onSelectContinue(selectedDomainForContinue);
-                        }}
-                    />
-                )}
-            </AnimatePresence>
+            <PausedProcessListModal
+                isOpen={isListModalOpen}
+                onOpenChange={setIsListModalOpen}
+                pausedProcesses={pausedProcesses}
+                onSelectDomain={handleSelectDomainFromList}
+                onGoBack={() => { setIsListModalOpen(false); onOpenChange(true); }}
+            />
+
+            {selectedDomainForContinue && (
+                <ContinueProcessModal
+                    isOpen={isContinueModalOpen}
+                    onOpenChange={setIsContinueModalOpen}
+                    domain={selectedDomainForContinue}
+                    onContinue={() => {
+                        setIsContinueModalOpen(false);
+                        onSelectContinue(selectedDomainForContinue);
+                    }}
+                    onGoBack={handleBackToList}
+                />
+            )}
         </>
     );
 }

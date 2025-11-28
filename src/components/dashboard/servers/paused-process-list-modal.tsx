@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlayCircle, Hourglass, Globe, X } from 'lucide-react';
+import { PlayCircle, Hourglass, Globe, X, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,22 +50,30 @@ interface PausedProcessListModalProps {
   onOpenChange: (isOpen: boolean) => void;
   pausedProcesses: Domain[];
   onSelectDomain: (domain: Domain) => void;
+  onGoBack: () => void;
 }
 
-export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain }: PausedProcessListModalProps) {
+export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain, onGoBack }: PausedProcessListModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl w-full h-[99vh] flex flex-col bg-zinc-900/90 backdrop-blur-xl border border-primary/20 text-white overflow-hidden p-0" showCloseButton={false}>
+            <DialogContent className="max-w-4xl w-full h-[99vh] flex flex-col bg-zinc-900/90 backdrop-blur-xl border border-primary/20 text-white overflow-hidden p-0" showCloseButton={false}>
                 <div className="absolute inset-0 z-0 opacity-10 bg-grid-primary/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
                 
                 <DialogHeader className="z-10 p-6 text-center shrink-0">
                     <div className="flex justify-center mb-4">
                         <div className="relative p-3 rounded-full bg-primary/20 border-2 border-primary/30">
                             <motion.div
-                                className="absolute inset-0 border-4 border-dashed border-accent/50 rounded-full"
+                                className="absolute inset-0 border-4 border-dashed rounded-full"
+                                style={{ borderColor: '#1700E6' }}
                                 animate={{ rotate: 360 }}
                                 transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                            />
+                            <motion.div
+                                className="absolute inset-2 border-2 border-dashed border-accent/50 rounded-full"
+                                style={{ borderColor: '#009AFF' }}
+                                animate={{ rotate: -360 }}
+                                transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
                             />
                             <PlayCircle className="relative size-12 text-primary" style={{ filter: 'drop-shadow(0 0 10px hsl(var(--primary)))' }}/>
                         </div>
@@ -115,7 +123,10 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                         </ScrollArea>
                     </div>
                 </div>
-                 <DialogFooter className="p-4 border-t border-primary/20 z-10 flex justify-end w-full">
+                 <DialogFooter className="p-4 border-t border-primary/20 z-10 flex justify-between w-full">
+                    <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={onGoBack}>
+                        <ArrowLeft className="mr-2"/> Regresar
+                    </Button>
                     <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
                         <X className="mr-2"/> Cerrar
                     </Button>
