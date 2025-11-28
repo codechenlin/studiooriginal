@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlayCircle, Hourglass, Globe, X } from 'lucide-react';
+import { PlayCircle, Hourglass, Globe, X, CheckCircle, XCircle, Code } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Domain } from './types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,13 +50,34 @@ interface PausedProcessListModalProps {
   onOpenChange: (isOpen: boolean) => void;
   pausedProcesses: Domain[];
   onSelectDomain: (domain: Domain) => void;
+  onGoBack: () => void;
 }
 
-export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain }: PausedProcessListModalProps) {
+export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, onSelectDomain, onGoBack }: PausedProcessListModalProps) {
+    const cardVariants = {
+        hidden: { opacity: 0, y: -20 },
+        visible: (i: number) => ({
+            opacity: 1,
+            y: 0,
+            transition: {
+                delay: i * 0.05,
+                duration: 0.3,
+                ease: 'easeOut',
+            },
+        }),
+        exit: { opacity: 0, y: -10 },
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent showCloseButton={false} className="max-w-4xl w-full h-[99vh] flex flex-col bg-zinc-900/90 backdrop-blur-xl border border-primary/20 text-white overflow-hidden p-0">
+                <style>{`
+                    @keyframes icon-pulse-wave {
+                        0% { transform: scale(0.8); opacity: 0; }
+                        50% { opacity: 1; }
+                        100% { transform: scale(1.5); opacity: 0; }
+                    }
+                `}</style>
                 <div className="absolute inset-0 z-0 opacity-10 bg-grid-primary/20 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"/>
                 
                 <DialogHeader className="z-10 p-6 text-center shrink-0">
@@ -83,17 +104,34 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                                             <motion.div
                                                 key={process.id}
                                                 layout
-                                                initial={{ opacity: 0, y: -10 }}
-                                                animate={{ opacity: 1, y: 0, transition: { delay: index * 0.1 } }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                className="group p-4 rounded-lg border border-primary/20 bg-black/30 flex items-center justify-between gap-4 transition-all hover:bg-primary/10 hover:border-primary/40"
+                                                variants={cardVariants}
+                                                initial="hidden"
+                                                animate="visible"
+                                                exit="exit"
+                                                custom={index}
+                                                className="group p-4 rounded-lg border border-primary/20 bg-black/30 flex items-center justify-between gap-4 transition-all"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <Globe className="size-5 text-primary/80"/>
                                                     <span className="font-semibold text-base">{process.domain_name}</span>
                                                 </div>
                                                 <div className="flex items-center gap-4">
+                                                    {process.is_verified ? (
+                                                        <div className="flex items-center gap-2 text-sm text-green-300">
+                                                            <CheckCircle className="size-5" />
+                                                            <span className="font-bold">Verificado</span>
+                                                        </div>
+                                                    ) : (
+                                                         <div className="flex items-center gap-2 text-sm text-red-400">
+                                                            <XCircle className="size-5" />
+                                                            <span className="font-bold">Inválido</span>
+                                                        </div>
+                                                    )}
                                                     <CountdownTimer expiryDate={expiryDate} />
+                                                     <Button variant="outline" className="h-9 px-3 text-xs bg-black/20 border-cyan-400/30 text-cyan-300 hover:bg-cyan-900/40 hover:text-cyan-200">
+                                                        <Code className="mr-2"/>
+                                                        Análisis
+                                                    </Button>
                                                     <Button
                                                         size="sm"
                                                         onClick={() => onSelectDomain(process)}
@@ -111,7 +149,10 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
                         </ScrollArea>
                     </div>
                 </div>
-                 <DialogFooter className="p-4 border-t border-primary/20 z-10 flex justify-end w-full">
+                 <DialogFooter className="p-4 border-t border-primary/20 z-10 flex justify-between w-full">
+                    <Button variant="ghost" className="text-white hover:bg-white/10" onClick={onGoBack}>
+                        Regresar
+                    </Button>
                     <Button variant="outline" className="text-white border-white/30 hover:bg-white hover:text-black" onClick={() => onOpenChange(false)}>
                         <X className="mr-2"/> Cerrar
                     </Button>
@@ -120,3 +161,4 @@ export function PausedProcessListModal({ isOpen, onOpenChange, pausedProcesses, 
         </Dialog>
     );
 }
+
