@@ -17,6 +17,7 @@ import { getVerifiedDomainsCount } from './db-actions';
 import { useToast } from '@/hooks/use-toast';
 import { ProcessSelectorModal } from '@/components/dashboard/servers/process-selector-modal';
 import { Skeleton } from '@/components/ui/skeleton';
+import { type Domain } from './types';
 
 
 type ProviderStatus = 'ok' | 'error';
@@ -158,7 +159,7 @@ export default function ServersPage() {
   const fetchDomainCount = useCallback(async () => {
     startLoading(async () => {
       const result = await getVerifiedDomainsCount();
-      if (result.success && result.count !== undefined) {
+      if (result.success && typeof result.count === 'number') {
         setDomainsCount(result.count);
       } else {
         toast({
@@ -205,21 +206,20 @@ export default function ServersPage() {
       setIsSuccessModalOpen(true);
     }, 300);
   };
+  
+  const handleSelectContinue = (domain: Domain) => {
+    // For now, this just opens the main SMTP modal.
+    // In the future, it would load the state from the paused `domain` object.
+    setIsSmtpModalOpen(true);
+  };
 
   return (
     <>
     <ProcessSelectorModal
         isOpen={isSelectorModalOpen}
         onOpenChange={setIsSelectorModalOpen}
-        onSelectNew={() => {
-            setIsSelectorModalOpen(false);
-            setIsSmtpModalOpen(true);
-        }}
-        onSelectContinue={() => {
-            setIsSelectorModalOpen(false);
-            // Future logic to load paused state
-            setIsSmtpModalOpen(true);
-        }}
+        onSelectNew={() => setIsSmtpModalOpen(true)}
+        onSelectContinue={handleSelectContinue}
     />
     <SmtpConnectionModal 
       isOpen={isSmtpModalOpen} 
@@ -424,5 +424,3 @@ export default function ServersPage() {
     </>
   );
 }
-
-    
