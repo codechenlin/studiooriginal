@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    unoptimized: true, // 👈 evita problemas en build con imágenes externas
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "placehold.co", pathname: "/**" },
       { protocol: "https", hostname: "picsum.photos", pathname: "/**" },
@@ -17,10 +17,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.supabase.co" },
       { protocol: "https", hostname: "*.fanton.cloud" },
     ],
-  },
-  experimental: {
-    // 👇 asegura que las páginas dinámicas no intenten exportarse
-    forceSwcTransforms: true,
   },
 };
 
