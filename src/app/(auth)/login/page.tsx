@@ -31,7 +31,6 @@ import React, { useState, useTransition, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingModal } from "@/components/common/loading-modal";
 import { useLanguage } from "@/context/language-context";
-import { LanguageProvider } from "@/context/language-context"; // 👈 Importa el provider
 import { SphereAnimation } from "@/components/login/sphere-animation";
 import { Logo } from "@/components/common/logo";
 import { motion } from "framer-motion";
@@ -118,7 +117,7 @@ export default function LoginPage() {
   const imageUrl = theme === "dark" ? loginImages.dark : loginImages.light;
 
   return (
-    <LanguageProvider>
+    <>
       <LoadingModal isOpen={isLoading} variant="login" />
       <div className="w-screen h-screen flex bg-background">
         <div className="w-1/2 h-full relative flex flex-col justify-center items-center p-10 overflow-hidden">
