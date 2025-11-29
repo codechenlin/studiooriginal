@@ -4791,18 +4791,20 @@ export default function CreateTemplatePage() {
             newBlock = { ...basePayload, type: 'text', payload: { fragments: [] } }; // Fallback
       }
 
-      setCanvasContent(prev => prev.map(row => {
-          if (row.type !== 'columns') return row;
-          const newColumns = row.payload.columns.map(col => {
-              if (col.id === activeContainer?.id) {
-                  return { ...col, blocks: [...col.blocks, newBlock] };
-              }
-              return col;
-          });
-          return { ...row, payload: { ...row.payload, columns: newColumns } };
-      });
-      setIsColumnBlockSelectorOpen(false);
-  };
+      setCanvasContent(prev =>
+  prev.map(row => {
+    if (row.type !== 'columns') return row;
+    const newColumns = row.payload.columns.map(col => {
+      if (col.id === activeContainer?.id) {
+        return { ...col, blocks: [...col.blocks, newBlock] };
+      }
+      return col;
+    });
+    return { ...row, payload: { ...row.payload, columns: newColumns } };
+  })
+);
+setIsColumnBlockSelectorOpen(false);
+};
   
   const handleAddBlockToWrapper = (type: InteractiveBlockType) => {
     if (!activeContainer || activeContainer.type !== 'wrapper' || !clickPosition) return;
