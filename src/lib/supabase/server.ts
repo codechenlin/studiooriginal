@@ -1,15 +1,17 @@
-
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+
+// Fuerza este módulo a ejecutarse en Node.js runtime
+export const runtime = "nodejs";
 
 export function createClient() {
   const cookieStore = cookies()
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error("Supabase URL or Anon Key is missing from .env file.");
+    throw new Error("Supabase URL or Anon Key is missing from .env file.")
   }
 
   return createServerClient(
@@ -24,18 +26,16 @@ export function createClient() {
           try {
             cookieStore.set({ name, value, ...options })
           } catch (error) {
-            // The `set` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            // El método `set` fue llamado desde un Server Component.
+            // Esto puede ignorarse si tienes middleware refrescando sesiones.
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: '', ...options })
           } catch (error) {
-            // The `delete` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            // El método `delete` fue llamado desde un Server Component.
+            // Esto puede ignorarse si tienes middleware refrescando sesiones.
           }
         },
       },
