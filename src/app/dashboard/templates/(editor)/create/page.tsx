@@ -4798,9 +4798,9 @@ export default function CreateTemplatePage() {
                   return { ...col, blocks: [...col.blocks, newBlock] };
               }
               return col;
-          }));
+          });
           return { ...row, payload: { ...row.payload, columns: newColumns } };
-      }));
+      });
       setIsColumnBlockSelectorOpen(false);
   };
   
