@@ -11,6 +11,9 @@ RUN npm ci --no-audit --no-fund
 # Copiamos el resto del proyecto
 COPY . .
 
+# Copiamos también el archivo de variables de entorno
+COPY .env .env
+
 # ====== Etapa de runtime ======
 FROM node:20-alpine AS runner
 WORKDIR /app
